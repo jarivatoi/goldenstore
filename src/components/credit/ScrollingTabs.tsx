@@ -109,7 +109,7 @@ const ScrollingTabs: React.FC<ScrollingTabsProps> = ({
       // Animate from start position to fully off-screen left
       .to(content, { 
         x: endPosition, 
-        duration: currentToEndDuration,
+        duration: Math.max(0.5, currentToEndDuration), // Minimum 0.5s for immediate emergence
         ease: "none",
         force3D: true
       })
@@ -118,7 +118,7 @@ const ScrollingTabs: React.FC<ScrollingTabsProps> = ({
       // Continue the loop from right to left
       .to(content, { 
         x: endPosition, 
-        duration: (Math.abs(loopStartPosition - endPosition) / (contentWidth + containerWidth)) * duration,
+        duration: Math.max(0.5, duration), // Minimum 0.5s for consistent speed
         ease: "none",
         force3D: true
       });
