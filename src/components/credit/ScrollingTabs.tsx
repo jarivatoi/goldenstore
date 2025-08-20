@@ -122,22 +122,6 @@ const ScrollingTabs: React.FC<ScrollingTabsProps> = ({
             // Map current position to timeline progress
             const progress = (containerWidth - currentX) / totalDistance;
             const normalizedProgress = ((progress % 1) + 1) % 1; // Keep between 0-1
-            
-            timelineRef.current.progress(normalizedProgress).resume();
-            console.log('Timeline resumed at progress:', normalizedProgress);
-          } else {
-            console.log('⚠️ Timeline not available for resume');
-            const currentX = gsap.getProperty(content, "x") as number;
-            
-            // Map current position to timeline progress
-            const progress = (containerWidth - currentX) / totalDistance;
-            const normalizedProgress = ((progress % 1) + 1) % 1; // Keep between 0-1
-            
-            // Set timeline to current position and resume
-            timelineRef.current.progress(normalizedProgress).resume();
-            console.log('Timeline resumed after throw at progress:', normalizedProgress);
-          } else {
-            console.log('⚠️ Timeline not available after throw');
           }
         }
       });
