@@ -228,29 +228,29 @@ const ScrollingTabs: React.FC<ScrollingTabsProps> = ({
         },
         onDragEnd: function() {
           setIsDragging(false);
-          // Don't create timeline here - wait for throw to complete
+          // Don't create timeline or snap - let inertia handle positioning
         },
         onThrowComplete: function() {
-          // Use longer delay to ensure throw is completely finished
+          // Capture final position and only resume timeline if user didn't drag backward significantly
           setTimeout(() => {
-            // Capture the final position after throw/inertia
             const currentPosition = gsap.getProperty(content, "x") as number;
             
-            // CRITICAL: Ensure no existing timeline before creating new one
             killExistingTimeline();
             
-            // Only create timeline if content is not manually positioned by user
-            // Check if user dragged significantly backward (negative position beyond threshold)
-            const isUserPositioned = currentPosition < -100; // User dragged backward significantly
+            // Only resume timeline if user didn't position content manually
+            // Allow user to keep content where they positioned it
+            const isUserPositioned = currentPosition < -50; // More lenient threshold
             
             if (!isUserPositioned) {
-              // Create new timeline after inertia/momentum has completely ended
               const newTimeline = createNewTimeline(currentPosition);
               if (newTimeline) {
                 newTimeline.play();
               }
+            } else {
+              // User positioned content manually - don't resume timeline
+              console.log('Content manually positioned by user, timeline paused');
             }
-          }, 200); // Longer delay to ensure throw is completely finished
+          }, 100);
         }
       });
     }
