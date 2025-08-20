@@ -117,13 +117,6 @@ const ScrollingTabs: React.FC<ScrollingTabsProps> = ({
           minX: -contentWidth,
           maxX: containerWidth
         },
-        inertia: true,
-        edgeResistance: 0.7,
-        dragResistance: 0.1, // Lower = easier to drag
-        throwResistance: 0.3, // Controls how much the throw slows down
-        maxDuration: 3, // Maximum duration for inertia
-        minDuration: 0.2, // Minimum duration for inertia
-        overshootTolerance: 0, // Prevent overshooting bounds
         onDragStart: function() {
           if (timelineRef.current) {
             timelineRef.current.pause();
@@ -182,18 +175,6 @@ const ScrollingTabs: React.FC<ScrollingTabsProps> = ({
               
               timelineRef.current = gsap.timeline({ repeat: -1, ease: "none" });
               timelineRef.current
-                .fromTo(content, 
-                  { x: containerWidth },
-                  { 
-                    x: -contentWidth,
-                    duration: duration,
-                    ease: "none"
-                  });
-              
-              console.log('🎯 New timeline created and started');
-            }
-          }
-        }
       });
     });
   }, [clients.length, calculateTimelineProgress]);
