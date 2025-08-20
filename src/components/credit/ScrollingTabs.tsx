@@ -38,6 +38,10 @@ const ScrollingTabs: React.FC<ScrollingTabsProps> = ({
   const [isDragging, setIsDragging] = React.useState(false);
 
   // Helper function to calculate timeline progress from drag distance
+  const calculateTimelineProgress = useCallback(() => {
+    // Implementation here
+  }, []);
+
   // Seamless continuous scroll setup
   const setupContinuousScroll = React.useCallback(() => {
     if (!contentRef.current || !containerRef.current || clients.length === 0) return;
@@ -108,6 +112,25 @@ const ScrollingTabs: React.FC<ScrollingTabsProps> = ({
       });
     });
   }, [clients.length]);
+
+  const handleTabClick = useCallback((client: Client) => {
+    if (timelineRef.current) {
+      timelineRef.current.pause();
+      console.log('🎯 Timeline paused for modal');
+    }
+    setSelectedClientForAction(client);
+  }, []);
+
+  const handleModalClose = useCallback(() => {
+    setSelectedClientForAction(null);
+    
+    // Resume timeline when modal closes
+    if (timelineRef.current) {
+      if (timelineRef.current.isActive()) {
+        console.log('🎯 Timeline already active, no need to resume');
+      } else {
+        requestAnimationFrame(() => {
+          if (timelineRef.current) {
             console.log('🎯 Timeline isActive before resume:', timelineRef.current.isActive());
             console.log('🎯 Timeline paused state:', timelineRef.current.paused());
             
@@ -148,10 +171,15 @@ const ScrollingTabs: React.FC<ScrollingTabsProps> = ({
               console.log('🎯 New timeline created and started');
             }
           }
-        }
-      });
-    });
-  }, [clients.length, calculateTimelineProgress]);
+        });
+      }
+    }
+  }, []);
+
+  const getClientTransactions = useCallback((clientId: string) => {
+    // Implementation here
+    return [];
+  }, []);
 
   // Duplicate content for seamless looping
   const duplicatedClients = clients.length > 0 ? [...clients, ...clients] : clients;
@@ -195,22 +223,51 @@ const ScrollingTabs: React.FC<ScrollingTabsProps> = ({
     }
   };
 
-  // Setup animation when clients change
-  // Handle tab click - pause timeline and show modal
-    setupContinuousScroll();
-  }, [setupContinuousScroll]);
-
-  // Cleanup on unmount
-  useEffect(() => {
-    return () => {
-      if (timelineRef.current) {
-        timelineRef.current.kill();
-      }
-      if (draggableRef.current) {
-        draggableRef.current.forEach(d => d.kill());
-      }
-    };
-  }, []);
+  return (
+    <>
+    <div className="relative w-full h-20 bg-gray-50 border-b border-gray-200 overflow-hidden">
+      <div className="absolute inset-0 flex items-center">
+        <div 
+          ref={containerRef}
+          className="w-full h-full overflow-hidden"
+        >
+          <div 
+            ref={contentRef}
+            className="flex items-center h-full whitespace-nowrap"
+          >
+            {duplicatedClients.map((client, index) => {
+              const totalDebt = getClientTotalDebt(client.id);
+              const isLinked = linkedClient?.id === client.id;
+              
+              return (
+                <div
+                  key={`${client.id}-${index}`}
+                  onClick={() => handleTabClick(client)}
+                  className={`
+                    flex-shrink-0 mx-2 px-4 py-2 rounded-lg cursor-pointer transition-all duration-200
+                    ${isLinked 
+                      ? 'bg-blue-100 border-2 border-blue-500 shadow-md' 
+                      : 'bg-white border border-gray-200 hover:bg-gray-50'
+                    }
+                    min-w-[120px] max-w-[160px]
+                  `}
+                >
+                  <div className="text-center">
+                    <div className="text-sm font-medium text-gray-900 truncate">
+                      {client.name}
+                    </div>
+                    {clientFilter === 'returnables' ? (
+                      <div className="text-xs font-semibold text-orange-600">
+                        {(() => {
+                          const clientTransactions = getClientTransactions(client.id);
+                          const returnableItems: {[key: string]: number} = {};
+                          
+                          clientTransactions.forEach(transaction => {
+                            if (transaction.type === 'payment' || transaction.description.toLowerCase().includes('returned')) {
+                              return;
+                            }
+                            
+                            const description = transaction.description.toLowerCase();
                             
                             if (!description.includes('chopine') && !description.includes('bouteille')) {
                               return;
