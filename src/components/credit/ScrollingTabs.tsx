@@ -230,33 +230,26 @@ const ScrollingTabs: React.FC<ScrollingTabsProps> = ({
         },
         onDragEnd: function() {
           setIsDragging(false);
-          // Don't do anything on drag end - wait for throw complete
+          // Don't resume timeline on drag end - let user control positioning
         },
         onThrowComplete: function() {
-          // Wait longer for physics to completely settle
-          setTimeout(() => {
-            const currentPosition = gsap.getProperty(content, "x") as number;
-            
-            killExistingTimeline();
-            
-            // Only resume timeline if content is positioned within reasonable bounds
-            // Allow more flexibility for user positioning
-            const isInReasonableBounds = currentPosition > -containerWidth && currentPosition < containerWidth;
-            
-            if (isInReasonableBounds) {
-              const newTimeline = createNewTimeline(currentPosition);
-              if (newTimeline) {
-                newTimeline.play();
-              }
-            } else {
-              // User positioned content manually - keep it there
-              console.log('Content manually positioned by user at:', currentPosition);
-            }
-          }, 200); // Delay to ensure physics are completely settled
+          // Don't automatically resume timeline - let user control when to restart
+          setIsDragging(false);
         }
       });
     }
   }, [clients, clientFilter, searchQuery]);
+
+  // Add manual timeline restart on double-tap or specific gesture
+  const handleTimelineRestart = () => {
+    if (contentRef.current) {
+      const currentPosition = gsap.getProperty(contentRef.current, "x") as number;
+      const newTimeline = createNewTimeline(currentPosition);
+      if (newTimeline) {
+        newTimeline.play();
+      }
+    }
+  };
 
   return (
     <>
@@ -278,6 +271,7 @@ const ScrollingTabs: React.FC<ScrollingTabsProps> = ({
         <div 
           ref={containerRef}
           className="overflow-hidden py-4 w-full h-30 flex items-center justify-center relative z-10"
+          onDoubleClick={handleTimelineRestart}
           style={{
             height: '106px'
           }}
