@@ -93,7 +93,7 @@ const ScrollingTabs: React.FC<ScrollingTabsProps> = ({
     
     // Calculate seamless loop positions
     const endPosition = -contentWidth;
-    const loopStartPosition = contentWidth;
+    const loopStartPosition = contentWidth-400;
     
     // If starting from a specific position (like after drag)
     if (startFromPosition !== undefined) {
@@ -120,7 +120,7 @@ const ScrollingTabs: React.FC<ScrollingTabsProps> = ({
         });
     } else {
       // Initial timeline - start with first tab at right edge (immediately visible)
-      const initialStartPosition = containerWidth;
+      const initialStartPosition = containerWidth-400;
       
       timelineRef.current
         .set(content, { x: initialStartPosition }) // Start with first tab at right edge
