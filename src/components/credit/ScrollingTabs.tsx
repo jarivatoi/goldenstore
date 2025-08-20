@@ -116,8 +116,10 @@ const ScrollingTabs: React.FC<ScrollingTabsProps> = ({
           }
         },
         onThrowComplete: function() {
-          // Resume after inertia completes
-          if (timelineRef.current) {
+            timelineRef.current.progress(normalizedProgress).resume();
+            console.log('Timeline resumed at progress:', normalizedProgress);
+          } else {
+            console.log('⚠️ Timeline not available for resume');
             const currentX = gsap.getProperty(content, "x") as number;
             
             // Map current position to timeline progress
@@ -125,8 +127,10 @@ const ScrollingTabs: React.FC<ScrollingTabsProps> = ({
             const normalizedProgress = ((progress % 1) + 1) % 1; // Keep between 0-1
             
             // Set timeline to current position and resume
-            timelineRef.current.progress(normalizedProgress);
-            timelineRef.current.resume();
+            timelineRef.current.progress(normalizedProgress).resume();
+            console.log('Timeline resumed after throw at progress:', normalizedProgress);
+          } else {
+            console.log('⚠️ Timeline not available after throw');
           }
         }
       });
@@ -140,6 +144,19 @@ const ScrollingTabs: React.FC<ScrollingTabsProps> = ({
   useEffect(() => {
     setupContinuousScroll();
   }, [setupContinuousScroll]);
+
+  // Debug effect to monitor timeline state
+  useEffect(() => {
+    const interval = setInterval(() => {
+      if (timelineRef.current && !isDragging) {
+        const progress = timelineRef.current.progress();
+        const isActive = timelineRef.current.isActive();
+        console.log('Timeline status - Progress:', progress.toFixed(3), 'Active:', isActive);
+      }
+    }, 2000);
+
+    return () => clearInterval(interval);
+  }, [isDragging]);
 
   // Cleanup on unmount
   useEffect(() => {
