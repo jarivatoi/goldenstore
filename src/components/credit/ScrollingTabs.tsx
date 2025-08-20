@@ -62,7 +62,7 @@ const ScrollingTabs: React.FC<ScrollingTabsProps> = ({
     const contentWidth = content.scrollWidth-350;
     
     // Calculate duration based on content width
-    const pixelsPerSecond = 60;
+    const pixelsPerSecond = 80; // Increase for faster scrolling, decrease for slower
     const totalDistance = contentWidth + containerWidth-350;
     const duration = totalDistance / pixelsPerSecond;
     
@@ -109,7 +109,7 @@ const ScrollingTabs: React.FC<ScrollingTabsProps> = ({
       // Animate from start position to fully off-screen left
       .to(content, { 
         x: endPosition, 
-        duration: currentToEndDuration,
+        duration: Math.max(0.3, currentToEndDuration), // Faster minimum emergence
         ease: "none",
         force3D: true
       })
@@ -118,7 +118,7 @@ const ScrollingTabs: React.FC<ScrollingTabsProps> = ({
       // Continue the loop from right to left
       .to(content, { 
         x: endPosition, 
-        duration: duration,
+        duration: Math.max(0.3, duration), // Faster minimum loop duration
         ease: "none",
         force3D: true
       });
@@ -177,7 +177,7 @@ const ScrollingTabs: React.FC<ScrollingTabsProps> = ({
       const contentWidth = content.scrollWidth;
       
       // Calculate duration based on content width
-      const pixelsPerSecond = 60;
+      const pixelsPerSecond = 80; // Keep consistent with getAnimationParams
       const totalDistance = contentWidth + containerWidth;
       const duration = totalDistance / pixelsPerSecond;
       
