@@ -56,6 +56,17 @@ const CreditManagement: React.FC = () => {
         // Trigger filter recalculation by setting to same value
         return prev;
       });
+      
+      // Force re-calculation of filtered clients for tabs
+      // This ensures tabs are updated when client conditions change
+      const newTabClients = getFilteredClientsForTabs();
+      
+      // If the current linked client no longer meets the filter condition, unlink it
+      if (linkedClient && !newTabClients.find(c => c.id === linkedClient.id)) {
+        setLinkedClient(null);
+        setCalculatorValue('0');
+        setIsCalculatorActive(false);
+      }
     };
 
     window.addEventListener('creditDataChanged', handleCreditDataChanged);
