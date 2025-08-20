@@ -36,6 +36,7 @@ const ScrollingTabs: React.FC<ScrollingTabsProps> = ({
   const draggableRef = useRef<Draggable[] | null>(null);
   const [selectedClientForAction, setSelectedClientForAction] = React.useState<Client | null>(null);
   const [isDragging, setIsDragging] = React.useState(false);
+  const [isPaused, setIsPaused] = React.useState(false);
 
   // Helper function to calculate timeline progress from drag distance
   // Helper function to track timeline progress
@@ -86,10 +87,16 @@ const ScrollingTabs: React.FC<ScrollingTabsProps> = ({
     // Reset position and wait for layout
     gsap.set(content, { x: 0 });
     requestAnimationFrame(() => {
-      const containerWidth = container.offsetWidth;
-      const contentWidth = content.scrollWidth;
+      const containerWidth = container.offsetWidth - 320;
+      const contentWidth = content.scrollWidth - 320;
       
       console.log('Setting up continuous scroll - Container:', containerWidth, 'Content:', contentWidth);
+      
+      // Only animate if content is wider than container
+      if (contentWidth <= containerWidth) {
+        console.log('Content fits in container, no animation needed');
+        return;
+      }
       
       // Only animate if content is wider than container
       if (contentWidth <= containerWidth) {
@@ -106,20 +113,25 @@ const ScrollingTabs: React.FC<ScrollingTabsProps> = ({
       
       console.log('Animation params - Distance:', totalDistance, 'Duration:', duration);
       
+      console.log('Animation params - Distance:', totalDistance, 'Duration:', duration);
+      
       // Create seamless infinite timeline with proper loop logic
       timelineRef.current = gsap.timeline({ 
         repeat: -1, 
         ease: "none",
+        immediateRender: false,
         immediateRender: false,
         onRepeat: function() {
           // When timeline repeats, reset position for seamless loop
           gsap.set(content, { x: containerWidth });
           currentPosition = containerWidth;
           console.log('Timeline repeating - reset to position:', containerWidth);
+          console.log('Timeline repeating - reset to position:', containerWidth);
         }
       });
       
       timelineRef.current
+        .set(content, { x: containerWidth }) // Start from right side
         .set(content, { x: containerWidth }) // Start from right side
         .to(content, { 
           x: -contentWidth,
@@ -133,6 +145,8 @@ const ScrollingTabs: React.FC<ScrollingTabsProps> = ({
           }
         });
 
+      console.log('Timeline created and starting...');
+      
       console.log('Timeline created and starting...');
       
       // Create draggable instance with proper event handling
@@ -159,8 +173,10 @@ const ScrollingTabs: React.FC<ScrollingTabsProps> = ({
           setIsDragging(false);
           
           if (timelineRef.current) {
-            // Calculate new progress based on current position
             // Calculate progress: how far we've moved through the animation
+            const totalAnimationDistance = containerWidth + contentWidth;
+            const distanceTraveled = containerWidth - currentPosition;
+            const progress = Math.max(0, Math.min(1, distanceTraveled / totalAnimationDistance));
             const totalAnimationDistance = containerWidth + contentWidth;
             const distanceTraveled = containerWidth - currentPosition;
             const progress = Math.max(0, Math.min(1, distanceTraveled / totalAnimationDistance));
@@ -178,8 +194,11 @@ const ScrollingTabs: React.FC<ScrollingTabsProps> = ({
             const totalAnimationDistance = containerWidth + contentWidth;
             const distanceTraveled = containerWidth - currentPosition;
             const progress = Math.max(0, Math.min(1, distanceTraveled / totalAnimationDistance));
+            const distanceTraveled = containerWidth - currentPosition;
+            const progress = Math.max(0, Math.min(1, distanceTraveled / totalAnimationDistance));
             timelineRef.current.progress(progress);
             timelineRef.current.play();
+            console.log('🎯 Throw complete - resuming from progress:', progress, 'position:', currentPosition);
             console.log('🎯 Throw complete - resuming from progress:', progress, 'position:', currentPosition);
           }
         }
@@ -290,6 +309,18 @@ const ScrollingTabs: React.FC<ScrollingTabsProps> = ({
   useEffect(() => {
     setupContinuousScroll();
   }, [clients, clientFilter, searchQuery]);
+
+  // Cleanup on unmount
+  useEffect(() => {
+    return () => {
+      if (timelineRef.current) {
+        timelineRef.current.kill();
+      }
+      if (draggableRef.current) {
+        draggableRef.current.forEach(d => d.kill());
+      }
+    };
+  }, []);
 
   // Cleanup on unmount
   useEffect(() => {
