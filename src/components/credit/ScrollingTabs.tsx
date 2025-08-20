@@ -120,19 +120,52 @@ const ScrollingTabs: React.FC<ScrollingTabsProps> = ({
         onDragStart: function() {
           if (timelineRef.current) {
             timelineRef.current.pause();
-            console.log('🎯 Drag started - timeline paused');
+            console.log('🎯 Drag started - timeline paused. Timeline exists:', !!timelineRef.current);
+            console.log('🎯 Timeline progress before pause:', timelineRef.current.progress());
+            console.log('🎯 Timeline isActive before pause:', timelineRef.current.isActive());
           }
           setIsDragging(true);
         },
         onDragEnd: function() {
           setIsDragging(false);
           
+          console.log('🎯 Drag ended - checking timeline state');
+          console.log('🎯 Timeline exists:', !!timelineRef.current);
+          
           if (timelineRef.current) {
-            console.log('🎯 Drag ended - resuming timeline');
+            console.log('🎯 Timeline progress before resume:', timelineRef.current.progress());
+            console.log('🎯 Timeline isActive before resume:', timelineRef.current.isActive());
+            console.log('🎯 Timeline paused state:', timelineRef.current.paused());
+            
             timelineRef.current.resume();
+            
+            console.log('🎯 Timeline progress after resume:', timelineRef.current.progress());
+            console.log('🎯 Timeline isActive after resume:', timelineRef.current.isActive());
+            console.log('🎯 Timeline paused state after resume:', timelineRef.current.paused());
           } else {
-            console.log('🎯 No timeline to resume, creating new one');
-            setupContinuousScroll();
+            console.log('🎯 No timeline exists, recreating...');
+            // Recreate the timeline if it doesn't exist
+            const container = containerRef.current;
+            const content = contentRef.current;
+            
+            if (container && content) {
+              const containerWidth = container.offsetWidth;
+              const contentWidth = content.scrollWidth;
+              const totalDistance = contentWidth + containerWidth;
+              const duration = totalDistance / 40;
+              
+              timelineRef.current = gsap.timeline({ repeat: -1, ease: "none" });
+              timelineRef.current
+                .fromTo(content, 
+                  { x: containerWidth },
+                  { 
+                    x: -contentWidth,
+                    duration: duration,
+                    ease: "none"
+                  });
+              
+              console.log('🎯 New timeline created and started');
+            }
           }
         }
       });
