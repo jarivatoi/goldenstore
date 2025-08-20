@@ -127,44 +127,12 @@ const ScrollingTabs: React.FC<ScrollingTabsProps> = ({
         onDragEnd: function() {
           setIsDragging(false);
           
-          // Get current position after drag
-          const currentX = gsap.getProperty(content, "x") as number;
-          const containerWidth = container.offsetWidth;
-          const contentWidth = content.scrollWidth;
-          
-          console.log('🎯 Drag ended - Current state:', {
-            currentX,
-            containerWidth,
-            contentWidth,
-            timelineExists: !!timelineRef.current,
-            timelineProgress: timelineRef.current?.progress(),
-            timelineIsActive: timelineRef.current?.isActive()
-          });
-          
-          // Calculate how far we've moved from the starting position
-          const dragDistance = containerWidth - currentX;
-          
-          // Calculate timeline progress using helper function
-          const normalizedProgress = calculateTimelineProgress(dragDistance, containerWidth, contentWidth);
-          
-          console.log('🎯 Calculated progress:', normalizedProgress);
-          
-          // Resume timeline from calculated position
           if (timelineRef.current) {
-            console.log('🎯 Setting timeline progress to:', normalizedProgress);
-            timelineRef.current.progress(normalizedProgress);
-            
-            console.log('🎯 Resuming timeline...');
+            console.log('🎯 Drag ended - resuming timeline');
             timelineRef.current.resume();
-            
-            // Verify timeline state after resume
-            setTimeout(() => {
-              console.log('🎯 Timeline state after resume:', {
-                progress: timelineRef.current?.progress(),
-                isActive: timelineRef.current?.isActive(),
-                paused: timelineRef.current?.paused()
-              });
-            }, 100);
+          } else {
+            console.log('🎯 No timeline to resume, creating new one');
+            setupContinuousScroll();
           }
         }
       });
