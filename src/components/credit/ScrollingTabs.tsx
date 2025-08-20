@@ -63,7 +63,7 @@ const getAnimationParams = () => {
   content.offsetWidth;
   
   const containerWidth = container.offsetWidth;
-  const contentWidth = content.scrollWidth;
+  const contentWidth = content.scrollWidth + OFFSET;
   
   // Calculate duration based on content width
   const pixelsPerSecond = 120;
@@ -195,7 +195,7 @@ if (startFromPosition !== undefined) {
       content.offsetWidth;
       
       const containerWidth = container.offsetWidth;
-      const contentWidth = content.scrollWidth;
+      const contentWidth = content.scrollWidth + OFFSET;
       
       // Calculate duration based on content width
       const pixelsPerSecond = 60;
@@ -219,7 +219,7 @@ if (startFromPosition !== undefined) {
     draggableRef.current = Draggable.create(content, {
   type: "x",
   bounds: {
-    minX: -contentWidth,
+    minX: -(content.scrollWidth + OFFSET),
     maxX: Math.max(contentWidth - OFFSET, containerWidth)
   },
         inertia: true,
