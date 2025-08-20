@@ -41,7 +41,7 @@ const ScrollingTabs: React.FC<ScrollingTabsProps> = ({
 
   // Define OFFSET constants at component level
   const OFFSET = 400;
-  const CONTENT_WIDTH_OFFSET = 0; // Additional offset for content width adjustment
+  const CONTENT_WIDTH_OFFSET = -200; // Additional offset for content width adjustment
 
   // Helper function to kill existing timeline
   const killExistingTimeline = useCallback(() => {
