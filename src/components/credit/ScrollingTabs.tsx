@@ -1,4 +1,5 @@
 import React, { useEffect, useRef } from 'react';
+import { useCallback } from 'react';
 import { gsap } from 'gsap';
 import { Draggable } from '../../lib/draggable.js';
 import { Client } from '../../types';
@@ -37,6 +38,14 @@ const ScrollingTabs: React.FC<ScrollingTabsProps> = ({
   const [isDragging, setIsDragging] = React.useState(false);
   const [isPaused, setIsPaused] = React.useState(false);
   const { getClientTransactions } = useCredit();
+
+  // Helper function to kill existing timeline
+  const killExistingTimeline = useCallback(() => {
+    if (timelineRef.current) {
+      timelineRef.current.kill();
+      timelineRef.current = null;
+    }
+  }, []);
 
   // Helper function to get animation parameters
 const getAnimationParams = () => {
