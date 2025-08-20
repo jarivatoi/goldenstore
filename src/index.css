@@ -135,6 +135,26 @@ body {
   animation: pulse 2s cubic-bezier(0.4, 0, 0.6, 1) infinite;
 }
 
+/* Attention-grabbing animation for clicked tabs */
+@keyframes pulse-attention {
+  0% {
+    transform: scale(1);
+    box-shadow: 0 0 0 0 rgba(251, 191, 36, 0.7);
+  }
+  50% {
+    transform: scale(1.1);
+    box-shadow: 0 0 0 10px rgba(251, 191, 36, 0.3);
+  }
+  100% {
+    transform: scale(1.05);
+    box-shadow: 0 0 0 20px rgba(251, 191, 36, 0);
+  }
+}
+
+.animate-pulse-attention {
+  animation: pulse-attention 0.6s ease-out;
+}
+
 .touch-manipulation {
   touch-action: pan-y;
   -webkit-user-select: none;

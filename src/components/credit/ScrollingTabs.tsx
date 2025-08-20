@@ -38,6 +38,7 @@ const ScrollingTabs: React.FC<ScrollingTabsProps> = ({
   const draggableRef = useRef<Draggable[] | null>(null);
   const [selectedClientForAction, setSelectedClientForAction] = React.useState<Client | null>(null);
   const [isDragging, setIsDragging] = React.useState(false);
+  const [clickedTabId, setClickedTabId] = React.useState<string | null>(null);
   const { getClientTransactions } = useCredit();
 
   // Sort clients based on sort option
@@ -238,6 +239,14 @@ const ScrollingTabs: React.FC<ScrollingTabsProps> = ({
 
   // Handle tab click - pause timeline and show modal
   const handleTabClick = (client: Client) => {
+    // Add click animation
+    setClickedTabId(client.id);
+    
+    // Remove animation after it completes
+    setTimeout(() => {
+      setClickedTabId(null);
+    }, 600); // Animation duration
+    
     // Pause the timeline
     if (timelineRef.current) {
       timelineRef.current.pause();
@@ -298,6 +307,10 @@ const ScrollingTabs: React.FC<ScrollingTabsProps> = ({
                       : isDragging
                         ? 'bg-gray-50 border-gray-200'
                         : 'bg-gray-50 border-gray-200 hover:bg-gray-100'
+                  } ${
+                    clickedTabId === client.id 
+                      ? 'animate-pulse-attention bg-yellow-200 border-yellow-400 shadow-lg scale-110 z-50' 
+                      : ''
                   }`}
                   style={{
                     userSelect: 'none',
