@@ -259,16 +259,16 @@ const ScrollingTabs: React.FC<ScrollingTabsProps> = ({
   // Handle modal close - resume timeline
   const handleModalClose = () => {
     setSelectedClientForAction(null);
-    setPersistentAnimationTabId(null); // Clear persistent animation when modal closes
+    // DON'T clear persistent animation when modal closes - let it persist
     // Resume timeline
     if (timelineRef.current) {
       timelineRef.current.resume();
     }
   };
 
-  // Clear persistent animation when timeline resumes (scroll initiated)
+  // Clear persistent animation when timeline is actively running (scroll initiated)
   React.useEffect(() => {
-    if (timelineRef.current && timelineRef.current.isActive() && persistentAnimationTabId) {
+    if (timelineRef.current && timelineRef.current.isActive() && !timelineRef.current.paused() && persistentAnimationTabId) {
       setPersistentAnimationTabId(null);
     }
   }, [persistentAnimationTabId]);
