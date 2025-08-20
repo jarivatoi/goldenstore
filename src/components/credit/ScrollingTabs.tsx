@@ -58,12 +58,12 @@ const ScrollingTabs: React.FC<ScrollingTabsProps> = ({
     container.offsetWidth;
     content.offsetWidth;
     
-    const containerWidth = 400; // Fixed small value for immediate emergence
-    const contentWidth = content.scrollWidth+400;
+    const containerWidth = container.offsetWidth-400;
+    const contentWidth = content.scrollWidth-400;
     
     // Calculate duration based on content width
     const pixelsPerSecond = 60;
-    const totalDistance = contentWidth + containerWidth-400;
+    const totalDistance = contentWidth + containerWidth-800;
     const duration = totalDistance / pixelsPerSecond;
     
     return { containerWidth, contentWidth, pixelsPerSecond, totalDistance, duration };
@@ -95,8 +95,8 @@ const ScrollingTabs: React.FC<ScrollingTabsProps> = ({
     });
     
     // Calculate seamless loop: content should emerge from right as it exits left
-    const endPosition = -contentWidth-400;
-    const loopStartPosition = 400;
+    const endPosition = -contentWidth;
+    const loopStartPosition = containerWidth;
     
     // Calculate duration from current position to end
     const totalDistance = contentWidth + containerWidth;
@@ -109,16 +109,16 @@ const ScrollingTabs: React.FC<ScrollingTabsProps> = ({
       // Animate from start position to fully off-screen left
       .to(content, { 
         x: endPosition, 
-        duration: Math.max(0.5, currentToEndDuration), // Minimum 0.5s for immediate emergence
+        duration: currentToEndDuration,
         ease: "none",
         force3D: true
       })
       // Instantly move to right side (off-screen right) for seamless loop
-      .set(content, { x: loopStartPosition })
+      .set(content, { x: loopStartPosition})
       // Continue the loop from right to left
       .to(content, { 
         x: endPosition, 
-        duration: Math.max(0.5, duration), // Minimum 0.5s for consistent speed
+        duration: duration,
         ease: "none",
         force3D: true
       });
@@ -173,7 +173,7 @@ const ScrollingTabs: React.FC<ScrollingTabsProps> = ({
       container.offsetWidth;
       content.offsetWidth;
       
-      const containerWidth = 50; // Fixed small value for immediate emergence
+      const containerWidth = container.offsetWidth-820;
       const contentWidth = content.scrollWidth;
       
       // Calculate duration based on content width
