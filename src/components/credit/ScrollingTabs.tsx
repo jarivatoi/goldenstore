@@ -153,6 +153,25 @@ const ScrollingTabs: React.FC<ScrollingTabsProps> = ({
             console.log('🎯 No timeline exists, recreating...');
             // Recreate the timeline if it doesn't exist
             const container = containerRef.current;
+            const content = contentRef.current;
+            
+            if (container && content) {
+              const containerWidth = container.offsetWidth;
+              const contentWidth = content.scrollWidth;
+              const totalDistance = contentWidth + containerWidth;
+              const duration = totalDistance / 40;
+              
+              timelineRef.current = gsap.timeline({ repeat: -1, ease: "none" });
+              timelineRef.current
+                .fromTo(content, 
+                  { x: containerWidth }, // Enter from right
+                  { 
+                    x: -contentWidth, // Exit to left
+                    duration: duration,
+                    ease: "none"
+                  });
+            }
+          }
         },
         onThrowComplete: function() {
           console.log('🎯 Throw completed - resuming timeline');
@@ -165,16 +184,7 @@ const ScrollingTabs: React.FC<ScrollingTabsProps> = ({
               timelineRef.current.resume();
             }
           }
-            const content = contentRef.current;
-            
-            if (container && content) {
-              const containerWidth = container.offsetWidth;
-              const contentWidth = content.scrollWidth;
-              const totalDistance = contentWidth + containerWidth;
-              const duration = totalDistance / 40;
-              
-              timelineRef.current = gsap.timeline({ repeat: -1, ease: "none" });
-              timelineRef.current
+        }
       });
     });
   }, [clients.length, calculateTimelineProgress]);
