@@ -95,7 +95,7 @@ const ScrollingTabs: React.FC<ScrollingTabsProps> = ({
     });
     
     // Calculate seamless loop: content should emerge from right as it exits left
-    const endPosition = -contentWidth;
+    const endPosition = -contentWidth-400;
     const loopStartPosition = 400;
     
     // Calculate duration from current position to end
