@@ -98,6 +98,12 @@ const ScrollingTabs: React.FC<ScrollingTabsProps> = ({
 
   // Seamless continuous scroll setup
   const setupContinuousScroll = useCallback(() => {
+    // Don't setup animation if there are no clients
+    if (sortedClients.length === 0) {
+      console.log('🎯 No clients to animate, skipping continuous scroll setup');
+      return;
+    }
+    
     if (!contentRef.current || !containerRef.current || sortedClients.length === 0) return;
 
     const container = containerRef.current;
@@ -201,12 +207,33 @@ const ScrollingTabs: React.FC<ScrollingTabsProps> = ({
 
   // Setup animation when clients change
   useEffect(() => {
+    // Don't setup animation if there are no clients
+    if (sortedClients.length === 0) {
+      // Clean up any existing animations
+      if (timelineRef.current) {
+        timelineRef.current.kill();
+        timelineRef.current = null;
+      }
+      
+      if (draggableRef.current) {
+        draggableRef.current.forEach(d => d.kill());
+        draggableRef.current = null;
+      }
+      return;
+    }
+    
     setupContinuousScroll();
   }, [setupContinuousScroll]);
 
   // Listen for timeline restart events from modals
   useEffect(() => {
     const handleRestartTimeline = () => {
+      // Don't restart if there are no clients
+      if (sortedClients.length === 0) {
+        console.log('🎯 No clients to animate, skipping timeline restart');
+        return;
+      }
+      
       console.log('🎯 Restart timeline event received');
       
       // Calculate current progress based on position
@@ -253,7 +280,7 @@ const ScrollingTabs: React.FC<ScrollingTabsProps> = ({
     return () => {
       window.removeEventListener('restartScrollingTimeline', handleRestartTimeline);
     };
-  }, [calculateTimelineProgress]);
+  }, [calculateTimelineProgress, sortedClients.length]);
   // Debug effect to monitor timeline state
   useEffect(() => {
     const interval = setInterval(() => {
