@@ -31,10 +31,14 @@ const ClientDetailModal: React.FC<ClientDetailModalProps> = ({ client, onClose, 
     onClose();
   };
 
-  // Also move to front when using the X button or any other close method
+  // Move to front and trigger data change event when modal closes
   const handleAnyClose = () => {
     // Move client to end (rightmost, near calculator) when modal is closed
     moveClientToFront(client.id);
+    
+    // Trigger credit data changed event to resume scrolling
+    window.dispatchEvent(new CustomEvent('creditDataChanged'));
+    
     onClose();
   };
 

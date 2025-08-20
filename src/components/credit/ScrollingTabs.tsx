@@ -248,25 +248,32 @@ const ScrollingTabs: React.FC<ScrollingTabsProps> = ({
   // Handle modal close - resume timeline
   const handleModalClose = () => {
     setSelectedClientForAction(null);
-    // Resume timeline after modal closes
-    if (timelineRef.current) {
-      timelineRef.current.resume();
-    } else {
-      // If timeline was killed during editing, recreate it
-      setupContinuousScroll();
-    }
-  };
-
-  // Listen for credit data changes to resume scrolling after editing
-  useEffect(() => {
-    const handleCreditDataChanged = () => {
-      // Resume scrolling after any credit data changes (like editing client names, transactions, etc.)
+    
+    // Use setTimeout to ensure modal is fully closed before resuming
+    setTimeout(() => {
+      console.log('🎯 Modal closed - attempting to resume timeline');
+      
       if (timelineRef.current && timelineRef.current.paused()) {
+        console.log('🎯 Resuming paused timeline');
         timelineRef.current.resume();
       } else if (!timelineRef.current) {
-        // Recreate timeline if it was destroyed
+        console.log('🎯 Timeline missing - recreating');
         setupContinuousScroll();
+      } else {
+        console.log('🎯 Timeline already playing');
       }
+    }, 100);
+  };
+
+  // Listen for credit data changes and force timeline recreation
+  useEffect(() => {
+    const handleCreditDataChanged = () => {
+      console.log('🎯 Credit data changed - forcing timeline recreation');
+      
+      // Always recreate timeline after data changes to ensure fresh state
+      setTimeout(() => {
+        setupContinuousScroll();
+      }, 200);
     };
 
     window.addEventListener('creditDataChanged', handleCreditDataChanged);
@@ -275,6 +282,28 @@ const ScrollingTabs: React.FC<ScrollingTabsProps> = ({
       window.removeEventListener('creditDataChanged', handleCreditDataChanged);
     };
   }, [setupContinuousScroll]);
+
+  // Add visibility change listener to resume when tab becomes visible
+  useEffect(() => {
+    const handleVisibilityChange = () => {
+      if (!document.hidden && !selectedClientForAction) {
+        console.log('🎯 Tab became visible - ensuring timeline is running');
+        setTimeout(() => {
+          if (timelineRef.current && timelineRef.current.paused()) {
+            timelineRef.current.resume();
+          } else if (!timelineRef.current) {
+            setupContinuousScroll();
+          }
+        }, 100);
+      }
+    };
+
+    document.addEventListener('visibilitychange', handleVisibilityChange);
+    
+    return () => {
+      document.removeEventListener('visibilitychange', handleVisibilityChange);
+    };
+  }, [selectedClientForAction, setupContinuousScroll]);
 
   return (
     <>
