@@ -206,18 +206,20 @@ const ScrollingTabs: React.FC<ScrollingTabsProps> = ({
       // Create draggable instance
       draggableRef.current = Draggable.create(content, {
         type: "x",
-        bounds: false, // Completely disable bounds
+        bounds: {
+          minX: -contentWidth * 2, // Allow extensive dragging left
+          maxX: containerWidth * 2  // Allow extensive dragging right
+        },
         inertia: true,
-        edgeResistance: 0, // No edge resistance
-        dragResistance: 0, // No drag resistance
-        throwResistance: 0.1, // Minimal throw resistance for momentum
-        maxDuration: 3, // Allow longer momentum
-        minDuration: 0.2, // Minimum duration for momentum
+        edgeResistance: 0.1, // Very light resistance at edges
+        dragResistance: 0.05, // Very light drag resistance
+        throwResistance: 0.2, // Light throw resistance for good momentum
+        maxDuration: 2.5, // Good momentum duration
+        minDuration: 0.3, // Minimum duration for momentum
         allowNativeTouchScrolling: false,
         allowEventDefault: false,
-        snap: false,
-        liveSnap: false,
-        autoScroll: 0, // Disable auto scroll
+        snap: false, // No snapping
+        liveSnap: false, // No live snapping
         minimumMovement: 2, // Minimum movement to trigger drag
         force3D: true, // Enable hardware acceleration
         cursor: "grab",
@@ -229,11 +231,27 @@ const ScrollingTabs: React.FC<ScrollingTabsProps> = ({
         },
         onDragEnd: function() {
           setIsDragging(false);
-          // Never resume timeline automatically
+          // Don't resume timeline immediately - let inertia finish first
         },
         onThrowComplete: function() {
           setIsDragging(false);
-          // Never resume timeline automatically - user has full control
+          // Only resume timeline if content is in a reasonable position
+          // and user hasn't dragged significantly backward
+          setTimeout(() => {
+            if (!contentRef.current) return;
+            
+            const currentX = gsap.getProperty(contentRef.current, "x") as number;
+            
+            // Only resume if content is not dragged too far backward
+            // This prevents snap-to-center while allowing natural timeline resumption
+            if (currentX > -containerWidth) {
+              const newTimeline = createNewTimeline(currentX);
+              if (newTimeline) {
+                newTimeline.play();
+              }
+            }
+            // If dragged far backward, leave it where user positioned it
+          }, 100); // Small delay to ensure inertia is completely finished
         }
       });
     }
