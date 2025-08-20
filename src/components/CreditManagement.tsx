@@ -42,6 +42,8 @@ const CreditManagement: React.FC = () => {
   const [showUnifiedDataManager, setShowUnifiedDataManager] = useState(false);
   const [clientFilter, setClientFilter] = useState<'all' | 'returnables' | 'overdue' | 'overlimit'>('all');
   const [showFilterDropdown, setShowFilterDropdown] = useState(false);
+  const [sortOption, setSortOption] = useState<'name' | 'date' | 'debt'>('date');
+  const [showSortDropdown, setShowSortDropdown] = useState(false);
 
   // Separate search query for main grid (bottom search bar)
   const [mainGridSearchQuery, setMainGridSearchQuery] = useState('');
@@ -379,6 +381,10 @@ const CreditManagement: React.FC = () => {
             onShowUnifiedDataManager={() => {
               setShowUnifiedDataManager(true);
             }}
+            sortOption={sortOption}
+            onSortChange={setSortOption}
+            showSortDropdown={showSortDropdown}
+            onToggleSortDropdown={() => setShowSortDropdown(!showSortDropdown)}
           />
 
           {/* Auto-scrolling Client Tabs */}
@@ -390,6 +396,7 @@ const CreditManagement: React.FC = () => {
             clientFilter={clientFilter}
             getClientTotalDebt={getClientTotalDebt}
             onResetCalculator={handleResetCalculator}
+            sortOption={sortOption}
           />
           
           {/* Client Grid */}

@@ -18,6 +18,7 @@ interface ScrollingTabsProps {
   clientFilter: 'all' | 'returnables' | 'overdue' | 'overlimit';
   getClientTotalDebt: (clientId: string) => number;
   onResetCalculator?: () => void;
+  sortOption: 'name' | 'date' | 'debt';
 }
 
 const ScrollingTabs: React.FC<ScrollingTabsProps> = ({
@@ -28,7 +29,8 @@ const ScrollingTabs: React.FC<ScrollingTabsProps> = ({
   searchQuery,
   clientFilter,
   getClientTotalDebt,
-  onResetCalculator
+  onResetCalculator,
+  sortOption
 }) => {
   const contentRef = useRef<HTMLDivElement>(null);
   const containerRef = useRef<HTMLDivElement>(null);
@@ -37,6 +39,25 @@ const ScrollingTabs: React.FC<ScrollingTabsProps> = ({
   const [selectedClientForAction, setSelectedClientForAction] = React.useState<Client | null>(null);
   const [isDragging, setIsDragging] = React.useState(false);
   const { getClientTransactions } = useCredit();
+
+  // Sort clients based on sort option
+  const sortedClients = React.useMemo(() => {
+    const clientsToSort = [...clients];
+    
+    switch (sortOption) {
+      case 'name':
+        return clientsToSort.sort((a, b) => a.name.localeCompare(b.name));
+      
+      case 'date':
+        return clientsToSort.sort((a, b) => b.lastTransactionAt.getTime() - a.lastTransactionAt.getTime());
+      
+      case 'debt':
+        return clientsToSort.sort((a, b) => getClientTotalDebt(b.id) - getClientTotalDebt(a.id));
+      
+      default:
+        return clientsToSort;
+    }
+  }, [clients, sortOption, getClientTotalDebt]);
 
   // Helper function to calculate timeline progress from current position
   const calculateTimelineProgress = useCallback(() => {
@@ -75,7 +96,7 @@ const ScrollingTabs: React.FC<ScrollingTabsProps> = ({
 
   // Seamless continuous scroll setup
   const setupContinuousScroll = useCallback(() => {
-    if (!contentRef.current || !containerRef.current || clients.length === 0) return;
+    if (!contentRef.current || !containerRef.current || sortedClients.length === 0) return;
 
     const container = containerRef.current;
     const content = contentRef.current;
@@ -174,7 +195,7 @@ const ScrollingTabs: React.FC<ScrollingTabsProps> = ({
         },
       });
     });
-  }, [clients.length, calculateTimelineProgress]);
+  }, [sortedClients.length, calculateTimelineProgress]);
 
   // Setup animation when clients change
   useEffect(() => {
@@ -243,7 +264,7 @@ const ScrollingTabs: React.FC<ScrollingTabsProps> = ({
             {getFilterLabel()}
           </h3>
           <span className="text-xs text-gray-500 bg-gray-100 px-2 py-1 rounded-full">
-            {clients.length} client{clients.length !== 1 ? 's' : ''}
+            {sortedClients.length} client{sortedClients.length !== 1 ? 's' : ''}
           </span>
         </div>
       </div>
@@ -260,7 +281,7 @@ const ScrollingTabs: React.FC<ScrollingTabsProps> = ({
             className="flex gap-6 whitespace-nowrap relative z-10"
             style={{ minWidth: 'max-content' }}
           >
-            {clients.map((client, index) => {
+            {sortedClients.map((client, index) => {
               const totalDebt = getClientTotalDebt(client.id);
               const isLinked = linkedClient?.id === client.id;
               

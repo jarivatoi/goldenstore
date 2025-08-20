@@ -1,5 +1,5 @@
 import React from 'react';
-import { Users, UserCheck, Database, Settings, Download, Upload } from 'lucide-react';
+import { Users, UserCheck, Database, Settings, Download, Upload, ArrowUpDown } from 'lucide-react';
 
 interface CreditHeaderProps {
   totalDebtAllClients: number;
@@ -11,6 +11,10 @@ interface CreditHeaderProps {
   onToggleFilterDropdown: () => void;
   onShowSettings: () => void;
   onShowUnifiedDataManager: () => void;
+  sortOption: 'name' | 'date' | 'debt';
+  onSortChange: (sort: 'name' | 'date' | 'debt') => void;
+  showSortDropdown: boolean;
+  onToggleSortDropdown: () => void;
 }
 
 /**
@@ -32,7 +36,11 @@ const CreditHeader: React.FC<CreditHeaderProps> = ({
   onShowSettings,
   onExportDatabase,
   onImportDatabase,
-  onShowUnifiedDataManager
+  onShowUnifiedDataManager,
+  sortOption,
+  onSortChange,
+  showSortDropdown,
+  onToggleSortDropdown
 }) => {
   return (
     <div className="mb-4">
@@ -75,7 +83,7 @@ const CreditHeader: React.FC<CreditHeaderProps> = ({
       </div>
       
       {/* Left-aligned Filter Dropdown Row */}
-      <div className="flex justify-start">
+      <div className="flex justify-start gap-3">
         <div className="relative">
           <button
             onClick={onToggleFilterDropdown}
@@ -141,11 +149,70 @@ const CreditHeader: React.FC<CreditHeaderProps> = ({
           )}
         </div>
         
+        {/* Sort Dropdown */}
+        <div className="relative">
+          <button
+            onClick={onToggleSortDropdown}
+            className="px-4 py-2 text-gray-600 hover:text-gray-800 hover:bg-gray-100 rounded-lg transition-colors flex items-center gap-2 border border-gray-200"
+            title="Sort clients"
+          >
+            <ArrowUpDown size={16} />
+            <span className="text-sm font-medium capitalize">Sort: {sortOption}</span>
+            <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
+            </svg>
+          </button>
+          
+          {/* Sort Dropdown Menu */}
+          {showSortDropdown && (
+            <div className="absolute left-0 top-full mt-2 w-36 bg-white rounded-lg shadow-lg border border-gray-200 overflow-hidden z-50">
+              <div className="py-1">
+                <button
+                  onClick={() => {
+                    onSortChange('name');
+                    onToggleSortDropdown();
+                  }}
+                  className={`w-full px-4 py-2 text-left text-sm hover:bg-gray-50 transition-colors ${
+                    sortOption === 'name' ? 'bg-blue-50 text-blue-700 font-medium' : 'text-gray-700'
+                  }`}
+                >
+                  Name (A-Z)
+                </button>
+                <button
+                  onClick={() => {
+                    onSortChange('date');
+                    onToggleSortDropdown();
+                  }}
+                  className={`w-full px-4 py-2 text-left text-sm hover:bg-gray-50 transition-colors ${
+                    sortOption === 'date' ? 'bg-blue-50 text-blue-700 font-medium' : 'text-gray-700'
+                  }`}
+                >
+                  Date (Recent)
+                </button>
+                <button
+                  onClick={() => {
+                    onSortChange('debt');
+                    onToggleSortDropdown();
+                  }}
+                  className={`w-full px-4 py-2 text-left text-sm hover:bg-gray-50 transition-colors ${
+                    sortOption === 'debt' ? 'bg-blue-50 text-blue-700 font-medium' : 'text-gray-700'
+                  }`}
+                >
+                  Debt (High-Low)
+                </button>
+              </div>
+            </div>
+          )}
+        </div>
+        
         {/* Invisible overlay to close dropdown when clicking outside */}
-        {showFilterDropdown && (
+        {(showFilterDropdown || showSortDropdown) && (
           <div 
             className="fixed inset-0 z-40"
-            onClick={onToggleFilterDropdown}
+            onClick={() => {
+              if (showFilterDropdown) onToggleFilterDropdown();
+              if (showSortDropdown) onToggleSortDropdown();
+            }}
           />
         )}
       </div>
