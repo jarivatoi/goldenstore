@@ -85,7 +85,7 @@ const ScrollingTabs: React.FC<ScrollingTabsProps> = ({
     // Create new timeline
     timelineRef.current = gsap.timeline({ 
       repeat: -1, 
-      paused: isPaused, // Start paused if we're in paused state
+      paused: isPaused,
       ease: "none",
       immediateRender: false,
       force3D: true
@@ -93,7 +93,7 @@ const ScrollingTabs: React.FC<ScrollingTabsProps> = ({
     
     // Calculate seamless loop positions
     const endPosition = -contentWidth;
-    const loopStartPosition = containerWidth;
+    const loopStartPosition = contentWidth;
     
     // If starting from a specific position (like after drag)
     if (startFromPosition !== undefined) {
@@ -119,9 +119,11 @@ const ScrollingTabs: React.FC<ScrollingTabsProps> = ({
           force3D: true
         });
     } else {
-      // Initial timeline - start immediately visible with no delay
+      // Initial timeline - start with first tab at right edge (immediately visible)
+      const initialStartPosition = containerWidth;
+      
       timelineRef.current
-        .set(content, { x: 0 }) // Start with first tab immediately visible
+        .set(content, { x: initialStartPosition }) // Start with first tab at right edge
         .to(content, { 
           x: endPosition, 
           duration: duration,
@@ -214,43 +216,31 @@ const ScrollingTabs: React.FC<ScrollingTabsProps> = ({
         type: "x",
         bounds: {
           minX: -contentWidth,
-          maxX: containerWidth
+          maxX: contentWidth
         },
         inertia: true,
         edgeResistance: 0.7,
-        dragResistance: 0.1, // Lower = easier to drag
-        throwResistance: 0.3, // Controls how much the throw slows down
-        maxDuration: 3, // Maximum duration for inertia
-        minDuration: 0.2, // Minimum duration for inertia
-        overshootTolerance: 0, // Prevent overshooting bounds
+        dragResistance: 0.1,
+        throwResistance: 0.3,
+        maxDuration: 3,
+        minDuration: 0.2,
+        overshootTolerance: 0,
         onDragStart: function() {
-          // Kill the timeline when user starts dragging
           killExistingTimeline();
           setIsDragging(true);
         },
         onDragEnd: function() {
-          // Capture the current position where drag ended
           const currentPosition = gsap.getProperty(content, "x") as number;
-          
           setIsDragging(false);
-          
-          // CRITICAL: Ensure no existing timeline before creating new one
           killExistingTimeline();
-          
-          // Create new timeline immediately from current position
           const newTimeline = createNewTimeline(currentPosition);
           if (newTimeline) {
             newTimeline.play();
           }
         },
         onThrowComplete: function() {
-          // Capture the final position after throw/inertia
           const currentPosition = gsap.getProperty(content, "x") as number;
-          
-          // CRITICAL: Ensure no existing timeline before creating new one
           killExistingTimeline();
-          
-          // Create new timeline immediately from current position
           const newTimeline = createNewTimeline(currentPosition);
           if (newTimeline) {
             newTimeline.play();
@@ -260,7 +250,6 @@ const ScrollingTabs: React.FC<ScrollingTabsProps> = ({
     }
   }, [clients, clientFilter, searchQuery]);
 
-  // Rest of the component remains the same...
   return (
     <>
     <div className="bg-white rounded-lg shadow-sm border border-gray-200">
@@ -298,14 +287,14 @@ const ScrollingTabs: React.FC<ScrollingTabsProps> = ({
                   key={client.id}
                   className={`flex-shrink-0 px-4 py-2 rounded-lg border cursor-pointer h-25 min-w-fit flex items-center ${
                     isDragging 
-                      ? 'transition-none' // Disable transitions during drag
-                      : 'transition-all duration-200' // Enable transitions when not dragging
+                      ? 'transition-none'
+                      : 'transition-all duration-200'
                   } ${
                     isLinked 
                       ? 'bg-blue-50 border-blue-200 shadow-md'
                       : isDragging
-                        ? 'bg-gray-50 border-gray-200' // No hover during drag
-                        : 'bg-gray-50 border-gray-200 hover:bg-gray-100' // Normal hover when not dragging
+                        ? 'bg-gray-50 border-gray-200'
+                        : 'bg-gray-50 border-gray-200 hover:bg-gray-100'
                   }`}
                   style={{
                     userSelect: 'none',
@@ -340,7 +329,6 @@ const ScrollingTabs: React.FC<ScrollingTabsProps> = ({
                               return;
                             }
                             
-                            // Look for Chopine items
                             const chopinePattern = /(\d+)\s+chopines?(?:\s+([^,]*))?/gi;
                             let chopineMatch;
                             
@@ -355,7 +343,6 @@ const ScrollingTabs: React.FC<ScrollingTabsProps> = ({
                               returnableItems[key] += quantity;
                             }
                             
-                            // Look for Bouteille items
                             const bouteillePattern = /(\d+)\s+(?:(\d+(?:\.\d+)?L)\s+)?bouteilles?(?:\s+([^,]*))?/gi;
                             let bouteilleMatch;
                             
@@ -381,7 +368,6 @@ const ScrollingTabs: React.FC<ScrollingTabsProps> = ({
                               returnableItems[key] += quantity;
                             }
                             
-                            // Handle items without explicit numbers (assume quantity 1)
                             if (description.includes('bouteille') && !bouteillePattern.test(description)) {
                               const sizeMatch = description.match(/(\d+(?:\.\d+)?L)/i);
                               const brandMatch = description.match(/bouteilles?\s+([^,]*)/i);
@@ -416,7 +402,6 @@ const ScrollingTabs: React.FC<ScrollingTabsProps> = ({
                             }
                           });
                           
-                          // Calculate returned quantities
                           const returnedQuantities: {[key: string]: number} = {};
                           clientTransactions
                             .filter(transaction => transaction.type === 'debt' && transaction.description.toLowerCase().includes('returned'))
@@ -435,13 +420,11 @@ const ScrollingTabs: React.FC<ScrollingTabsProps> = ({
                               });
                             });
                           
-                          // Calculate net returnable quantities and format for display
                           const truncatedItems: string[] = [];
                           Object.entries(returnableItems).forEach(([itemType, total]) => {
                             const returned = returnedQuantities[itemType] || 0;
                             const remaining = Math.max(0, total - returned);
                             if (remaining > 0) {
-                              // Truncate item names
                               let truncated = '';
                               if (itemType.includes('Chopine')) {
                                 truncated = `${remaining} Ch`;
@@ -458,7 +441,6 @@ const ScrollingTabs: React.FC<ScrollingTabsProps> = ({
                                   truncated = `${remaining} Bt`;
                                 }
                               } else {
-                                // For other items, just truncate to first 3 chars
                                 const shortName = itemType.substring(0, 3);
                                 truncated = `${remaining} ${shortName}`;
                               }
@@ -470,7 +452,6 @@ const ScrollingTabs: React.FC<ScrollingTabsProps> = ({
                         })()}
                       </div>
                     ) : totalDebt === 0 ? (
-                      // Show returnables when debt is 0
                       <div className="text-xs font-semibold text-orange-600">
                         {(() => {
                           const clientTransactions = getClientTransactions(client.id);
@@ -487,7 +468,6 @@ const ScrollingTabs: React.FC<ScrollingTabsProps> = ({
                               return;
                             }
                             
-                            // Look for Chopine items
                             const chopinePattern = /(\d+)\s+chopines?(?:\s+([^,]*))?/gi;
                             let chopineMatch;
                             
@@ -502,7 +482,6 @@ const ScrollingTabs: React.FC<ScrollingTabsProps> = ({
                               returnableItems[key] += quantity;
                             }
                             
-                            // Look for Bouteille items
                             const bouteillePattern = /(\d+)\s+(?:(\d+(?:\.\d+)?L)\s+)?bouteilles?(?:\s+([^,]*))?/gi;
                             let bouteilleMatch;
                             
@@ -528,7 +507,6 @@ const ScrollingTabs: React.FC<ScrollingTabsProps> = ({
                               returnableItems[key] += quantity;
                             }
                             
-                            // Handle items without explicit numbers (assume quantity 1)
                             if (description.includes('bouteille') && !bouteillePattern.test(description)) {
                               const sizeMatch = description.match(/(\d+(?:\.\d+)?L)/i);
                               const brandMatch = description.match(/bouteilles?\s+([^,]*)/i);
@@ -563,7 +541,6 @@ const ScrollingTabs: React.FC<ScrollingTabsProps> = ({
                             }
                           });
                           
-                          // Calculate returned quantities
                           const returnedQuantities: {[key: string]: number} = {};
                           clientTransactions
                             .filter(transaction => transaction.type === 'debt' && transaction.description.toLowerCase().includes('returned'))
@@ -582,13 +559,11 @@ const ScrollingTabs: React.FC<ScrollingTabsProps> = ({
                               });
                             });
                           
-                          // Calculate net returnable quantities and format for display
                           const truncatedItems: string[] = [];
                           Object.entries(returnableItems).forEach(([itemType, total]) => {
                             const returned = returnedQuantities[itemType] || 0;
                             const remaining = Math.max(0, total - returned);
                             if (remaining > 0) {
-                              // Truncate item names
                               let truncated = '';
                               if (itemType.includes('Chopine')) {
                                 truncated = `${remaining} Ch`;
@@ -605,7 +580,6 @@ const ScrollingTabs: React.FC<ScrollingTabsProps> = ({
                                   truncated = `${remaining} Bt`;
                                 }
                               } else {
-                                // For other items, just truncate to first 3 chars
                                 const shortName = itemType.substring(0, 3);
                                 truncated = `${remaining} ${shortName}`;
                               }
@@ -623,7 +597,6 @@ const ScrollingTabs: React.FC<ScrollingTabsProps> = ({
                         Rs {totalDebt.toFixed(2)}
                       </div>
                     )}
-                    {/* Date display */}
                     <div className="text-xs text-gray-500 mt-1 text-center">
               {client.lastTransactionAt.toLocaleDateString('en-GB', {
                         day: '2-digit',
