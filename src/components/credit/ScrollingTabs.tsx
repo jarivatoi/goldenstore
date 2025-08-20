@@ -83,7 +83,7 @@ const ScrollingTabs: React.FC<ScrollingTabsProps> = ({
     killExistingTimeline();
     
     // Start from the provided position or from containerWidth (off-screen right)
-    const startPosition = startFromPosition !== undefined ? startFromPosition : containerWidth;
+    const startPosition = startFromPosition !== undefined ? startFromPosition : 400;
     
     // Create new timeline
     timelineRef.current = gsap.timeline({ 
