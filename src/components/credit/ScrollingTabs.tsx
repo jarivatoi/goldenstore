@@ -83,7 +83,7 @@ const ScrollingTabs: React.FC<ScrollingTabsProps> = ({
     killExistingTimeline();
     
     // Start from the provided position or from containerWidth (off-screen right)
-    const startPosition = startFromPosition !== undefined ? startFromPosition : 400;
+    const startPosition = startFromPosition !== undefined ? startFromPosition : containerWidth;
     
     // Create new timeline
     timelineRef.current = gsap.timeline({ 
@@ -96,7 +96,7 @@ const ScrollingTabs: React.FC<ScrollingTabsProps> = ({
     
     // Calculate seamless loop: content should emerge from right as it exits left
     const endPosition = -contentWidth;
-    const loopStartPosition = containerWidth;
+    const loopStartPosition = 400;
     
     // Calculate duration from current position to end
     const totalDistance = contentWidth + containerWidth;
