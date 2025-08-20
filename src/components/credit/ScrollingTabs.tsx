@@ -36,117 +36,84 @@ const ScrollingTabs: React.FC<ScrollingTabsProps> = ({
   const draggableRef = useRef<Draggable[] | null>(null);
   const [selectedClientForAction, setSelectedClientForAction] = React.useState<Client | null>(null);
   const [isDragging, setIsDragging] = React.useState(false);
-  const [isPaused, setIsPaused] = React.useState(false);
   const { getClientTransactions } = useCredit();
 
-  // Define OFFSET constant at component level
-  const OFFSET = 400;
-  const CONTENT_OFFSET = -400; // Separate offset for content width calculations
+  
+  // Simplified seamless scroll setup
+  const setupSeamlessScroll = useCallback(() => {
+    if (!contentRef.current || !containerRef.current || clients.length === 0) return;
 
-  // Helper function to kill existing timeline
-  const killExistingTimeline = useCallback(() => {
+    const container = containerRef.current;
+    const content = contentRef.current;
+    
+    // Kill existing timeline and draggable
     if (timelineRef.current) {
       timelineRef.current.kill();
       timelineRef.current = null;
     }
-  }, []);
+    
+    if (draggableRef.current) {
+      draggableRef.current.forEach(d => d.kill());
+      draggableRef.current = null;
+    }
 
-  // Helper function to get animation parameters
-const getAnimationParams = () => {
-  if (!contentRef.current || !containerRef.current) return null;
-  
-  const container = containerRef.current;
-  const content = contentRef.current;
-  
-  // Force layout calculation
-  gsap.set(content, { x: 0 });
-  container.offsetWidth;
-  content.offsetWidth;
-  
-  const containerWidth = container.offsetWidth;
-  const contentWidth = content.scrollWidth + CONTENT_OFFSET;
-  
-  // Calculate duration based on content width
-  const pixelsPerSecond = 60;
-  const totalDistance = contentWidth + containerWidth;
-  const duration = totalDistance / pixelsPerSecond;
-  
-  return { containerWidth, contentWidth, pixelsPerSecond, totalDistance, duration };
-};
-
-  // Helper function to create new timeline
-const createNewTimeline = (startFromPosition?: number) => {
-  if (!contentRef.current) return null;
-  
-  const params = getAnimationParams();
-  if (!params) return null;
-  
-  const { containerWidth, contentWidth, duration } = params;
-  const content = contentRef.current;
-  
-  // CRITICAL: Always kill existing timeline first
-  killExistingTimeline();
-  
-  // Create new timeline
-  timelineRef.current = gsap.timeline({ 
-    repeat: -1, 
-    paused: isPaused,
-    ease: "none",
-    immediateRender: false,
-    force3D: true
-  });
-  
- // Calculate seamless loop positions with offset
-const endPosition = -contentWidth;
-// Ensure loopStartPosition doesn't go below containerWidth
-const loopStartPosition = Math.max(contentWidth - OFFSET, containerWidth);
-
-// If starting from a specific position (like after drag)
-if (startFromPosition !== undefined) {
-  // Calculate remaining duration based on current position
-  const totalDistance = contentWidth + containerWidth;
-  const currentToEndDistance = Math.abs(startFromPosition - endPosition);
-  const currentToEndDuration = (currentToEndDistance / totalDistance) * duration;
-  
-  // Create timeline from current position
-  timelineRef.current
-    .set(content, { x: startFromPosition })
-    .to(content, { 
-      x: endPosition, 
-      duration: currentToEndDuration,
+    // Force layout calculation
+    gsap.set(content, { x: 0 });
+    container.offsetWidth;
+    content.offsetWidth;
+    
+    const containerWidth = container.offsetWidth;
+    const contentWidth = content.scrollWidth;
+    
+    // Only proceed if content is wider than container
+    if (contentWidth <= containerWidth) return;
+    
+    // Create seamless loop by duplicating content
+    const totalWidth = contentWidth + containerWidth;
+    const duration = totalWidth / 50; // 50 pixels per second
+    
+    // Create infinite scroll timeline
+    timelineRef.current = gsap.timeline({ 
+      repeat: -1, 
       ease: "none",
-      force3D: true
-    })
-    .set(content, { x: loopStartPosition })
-    .to(content, { 
-      x: endPosition, 
-      duration: duration,
-      ease: "none",
-      force3D: true
+      paused: isDragging
     });
-} else {
-  // Initial timeline - start with offset from right edge
-  // Ensure initialStartPosition doesn't go below 0
-  const initialStartPosition = Math.max(containerWidth - OFFSET, 0);
-  
-  timelineRef.current
-    .set(content, { x: initialStartPosition }) // Start with offset from right edge
-    .to(content, { 
-      x: endPosition, 
-      duration: duration,
-      ease: "none",
-      force3D: true
-    })
-    .set(content, { x: loopStartPosition })
-    .to(content, { 
-      x: endPosition, 
-      duration: duration,
-      ease: "none",
-      force3D: true
+    
+    timelineRef.current
+      .set(content, { x: containerWidth }) // Start from right edge
+      .to(content, { 
+        x: -contentWidth, 
+        duration: duration,
+        ease: "none"
+      });
+    
+    // Create draggable
+    draggableRef.current = Draggable.create(content, {
+      type: "x",
+      bounds: {
+        minX: -contentWidth,
+        maxX: containerWidth
+      },
+      inertia: true,
+      edgeResistance: 0.5,
+      onDragStart: function() {
+        if (timelineRef.current) {
+          timelineRef.current.pause();
+        }
+        setIsDragging(true);
+      },
+      onDragEnd: function() {
+        setIsDragging(false);
+        // Resume animation from current position
+        if (timelineRef.current) {
+          const currentX = gsap.getProperty(content, "x") as number;
+          const progress = (containerWidth - currentX) / totalWidth;
+          timelineRef.current.progress(progress);
+          timelineRef.current.resume();
+        }
+      }
     });
-}
-  return timelineRef.current;
-};
+  }, [clients.length, isDragging]);
 
   const getFilterLabel = () => {
     switch (clientFilter) {
@@ -159,9 +126,9 @@ if (startFromPosition !== undefined) {
 
   // Handle tab click - pause timeline and show modal
   const handleTabClick = (client: Client) => {
-    // Kill the timeline completely
+    // Pause the timeline
     if (timelineRef.current) {
-      killExistingTimeline();
+      timelineRef.current.pause();
     }
     setSelectedClientForAction(client);
   };
@@ -169,91 +136,28 @@ if (startFromPosition !== undefined) {
   // Handle modal close - resume timeline
   const handleModalClose = () => {
     setSelectedClientForAction(null);
-    
-    // Create new timeline from current position
-    if (contentRef.current) {
-      const currentPosition = gsap.getProperty(contentRef.current, "x") as number;
-      
-      const newTimeline = createNewTimeline(currentPosition);
-      if (newTimeline) {
-        newTimeline.play();
-      }
+    // Resume timeline
+    if (timelineRef.current) {
+      timelineRef.current.resume();
     }
   };
 
-  // GSAP animation setup with length-based calculation
+  // Setup seamless scroll when clients change
   useEffect(() => {
-    if (!contentRef.current || !containerRef.current) return;
+    setupSeamlessScroll();
+  }, [setupSeamlessScroll]);
 
-    // Only animate if we have clients to show
-    if (clients.length > 0) {
-      const container = containerRef.current;
-      const content = contentRef.current;
-      
-      // Force layout calculation
-      gsap.set(content, { x: 0 });
-      container.offsetWidth;
-      content.offsetWidth;
-      
-      const containerWidth = container.offsetWidth;
-      const contentWidth = content.scrollWidth + CONTENT_OFFSET;
-      
-      // Calculate duration based on content width
-      const pixelsPerSecond = 60;
-      const totalDistance = contentWidth + containerWidth;
-      const duration = totalDistance / pixelsPerSecond;
-      
-      // Kill any existing timeline and draggable
-      killExistingTimeline();
-      
+  // Cleanup on unmount
+  useEffect(() => {
+    return () => {
+      if (timelineRef.current) {
+        timelineRef.current.kill();
+      }
       if (draggableRef.current) {
         draggableRef.current.forEach(d => d.kill());
-        draggableRef.current = null;
       }
-      
-      // Create initial timeline - start immediately visible
-      const newTimeline = createNewTimeline();
-      if (newTimeline) {
-        newTimeline.play();
-      }
-      
-    draggableRef.current = Draggable.create(content, {
-  type: "x",
-  bounds: {
-    minX: -(content.scrollWidth + CONTENT_OFFSET),
-    maxX: Math.max(contentWidth - OFFSET, containerWidth)
-  },
-        inertia: true,
-        edgeResistance: 0.7,
-        dragResistance: 0.1,
-        throwResistance: 0.3,
-        maxDuration: 3,
-        minDuration: 0.2,
-        overshootTolerance: 0,
-        onDragStart: function() {
-          killExistingTimeline();
-          setIsDragging(true);
-        },
-        onDragEnd: function() {
-          const currentPosition = gsap.getProperty(content, "x") as number;
-          setIsDragging(false);
-          killExistingTimeline();
-          const newTimeline = createNewTimeline(currentPosition);
-          if (newTimeline) {
-            newTimeline.play();
-          }
-        },
-        onThrowComplete: function() {
-          const currentPosition = gsap.getProperty(content, "x") as number;
-          killExistingTimeline();
-          const newTimeline = createNewTimeline(currentPosition);
-          if (newTimeline) {
-            newTimeline.play();
-          }
-        }
-      });
-    }
-  }, [clients, clientFilter, searchQuery]);
+    };
+  }, []);
 
   return (
     <>
