@@ -38,109 +38,102 @@ const ScrollingTabs: React.FC<ScrollingTabsProps> = ({
   const [isPaused, setIsPaused] = React.useState(false);
   const { getClientTransactions } = useCredit();
 
-  // Helper function to safely kill existing timeline
-  const killExistingTimeline = () => {
-    if (timelineRef.current) {
-      timelineRef.current.kill();
-      timelineRef.current = null;
-    }
-  };
-
   // Helper function to get animation parameters
-  const getAnimationParams = () => {
-    if (!contentRef.current || !containerRef.current) return null;
-    
-    const container = containerRef.current;
-    const content = contentRef.current;
-    
-    // Force layout calculation
-    gsap.set(content, { x: 0 });
-    container.offsetWidth;
-    content.offsetWidth;
-    
-    const containerWidth = container.offsetWidth-400;
-    const contentWidth = content.scrollWidth;
-    
-    // Calculate duration based on content width
-    const pixelsPerSecond = 40;
-    const totalDistance = contentWidth + containerWidth-400;
-    const duration = totalDistance / pixelsPerSecond;
-    
-    return { containerWidth, contentWidth, pixelsPerSecond, totalDistance, duration };
-  };
+const getAnimationParams = () => {
+  if (!contentRef.current || !containerRef.current) return null;
+  
+  const container = containerRef.current;
+  const content = contentRef.current;
+  
+  // Force layout calculation
+  gsap.set(content, { x: 0 });
+  container.offsetWidth;
+  content.offsetWidth;
+  
+  const containerWidth = container.offsetWidth;
+  const contentWidth = content.scrollWidth;
+  
+  // Calculate duration based on content width
+  const pixelsPerSecond = 40;
+  const totalDistance = contentWidth + containerWidth;
+  const duration = totalDistance / pixelsPerSecond;
+  
+  return { containerWidth, contentWidth, pixelsPerSecond, totalDistance, duration };
+};
 
   // Helper function to create new timeline
-  const createNewTimeline = (startFromPosition?: number) => {
-    if (!contentRef.current) return null;
+const createNewTimeline = (startFromPosition?: number) => {
+  if (!contentRef.current) return null;
+  
+  const params = getAnimationParams();
+  if (!params) return null;
+  
+  const { containerWidth, contentWidth, duration } = params;
+  const content = contentRef.current;
+  
+  // CRITICAL: Always kill existing timeline first
+  killExistingTimeline();
+  
+  // Create new timeline
+  timelineRef.current = gsap.timeline({ 
+    repeat: -1, 
+    paused: isPaused,
+    ease: "none",
+    immediateRender: false,
+    force3D: true
+  });
+  
+  // Calculate seamless loop positions with offset
+  const OFFSET = 400;
+  const endPosition = -contentWidth;
+  const loopStartPosition = contentWidth - OFFSET; // Apply offset to loop restart
+  
+  // If starting from a specific position (like after drag)
+  if (startFromPosition !== undefined) {
+    // Calculate remaining duration based on current position
+    const totalDistance = contentWidth + containerWidth;
+    const currentToEndDistance = Math.abs(startFromPosition - endPosition);
+    const currentToEndDuration = (currentToEndDistance / totalDistance) * duration;
     
-    const params = getAnimationParams();
-    if (!params) return null;
+    // Create timeline from current position
+    timelineRef.current
+      .set(content, { x: startFromPosition })
+      .to(content, { 
+        x: endPosition, 
+        duration: currentToEndDuration,
+        ease: "none",
+        force3D: true
+      })
+      .set(content, { x: loopStartPosition })
+      .to(content, { 
+        x: endPosition, 
+        duration: duration,
+        ease: "none",
+        force3D: true
+      });
+  } else {
+    // Initial timeline - start with offset from right edge
+    const initialStartPosition = containerWidth - OFFSET;
     
-    const { containerWidth, contentWidth, duration } = params;
-    const content = contentRef.current;
-    
-    // CRITICAL: Always kill existing timeline first
-    killExistingTimeline();
-    
-    // Create new timeline
-    timelineRef.current = gsap.timeline({ 
-      repeat: -1, 
-      paused: isPaused,
-      ease: "none",
-      immediateRender: false,
-      force3D: true
-    });
-    
-    // Calculate seamless loop positions
-    const endPosition = -contentWidth;
-    const loopStartPosition = contentWidth;
-    
-    // If starting from a specific position (like after drag)
-    if (startFromPosition !== undefined) {
-      // Calculate remaining duration based on current position
-      const totalDistance = contentWidth + containerWidth;
-      const currentToEndDistance = Math.abs(startFromPosition - endPosition);
-      const currentToEndDuration = (currentToEndDistance / totalDistance) * duration;
-      
-      // Create timeline from current position
-      timelineRef.current
-        .set(content, { x: startFromPosition })
-        .to(content, { 
-          x: endPosition, 
-          duration: currentToEndDuration,
-          ease: "none",
-          force3D: true
-        })
-        .set(content, { x: loopStartPosition })
-        .to(content, { 
-          x: endPosition, 
-          duration: duration,
-          ease: "none",
-          force3D: true
-        });
-    } else {
-      // Initial timeline - start with first tab at right edge (immediately visible)
-      const initialStartPosition = containerWidth;
-      
-      timelineRef.current
-        .set(content, { x: initialStartPosition }) // Start with first tab at right edge
-        .to(content, { 
-          x: endPosition, 
-          duration: duration,
-          ease: "none",
-          force3D: true
-        })
-        .set(content, { x: loopStartPosition })
-        .to(content, { 
-          x: endPosition, 
-          duration: duration,
-          ease: "none",
-          force3D: true
-        });
-    }
-    
-    return timelineRef.current;
-  };
+    timelineRef.current
+      .set(content, { x: initialStartPosition }) // Start with offset from right edge
+      .to(content, { 
+        x: endPosition, 
+        duration: duration,
+        ease: "none",
+        force3D: true
+      })
+      .set(content, { x: loopStartPosition })
+      .to(content, { 
+        x: endPosition, 
+        duration: duration,
+        ease: "none",
+        force3D: true
+      });
+  }
+  
+  return timelineRef.current;
+};
 
   const getFilterLabel = () => {
     switch (clientFilter) {
@@ -211,13 +204,13 @@ const ScrollingTabs: React.FC<ScrollingTabsProps> = ({
         newTimeline.play();
       }
       
-      // Create draggable instance
-      draggableRef.current = Draggable.create(content, {
-        type: "x",
-        bounds: {
-          minX: -contentWidth,
-          maxX: contentWidth
-        },
+     // Create draggable instance with proper bounds considering offset
+draggableRef.current = Draggable.create(content, {
+  type: "x",
+  bounds: {
+    minX: -contentWidth,
+    maxX: contentWidth - 400 // Adjust bounds for offset
+  },
         inertia: true,
         edgeResistance: 0.7,
         dragResistance: 0.1,
