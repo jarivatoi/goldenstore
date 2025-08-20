@@ -107,7 +107,7 @@ const ScrollingTabs: React.FC<ScrollingTabsProps> = ({
           { 
             x: -contentWidth, // Exit to left
             duration: duration,
-            ease: "none"
+            ease: "none",
         onDragStart: function() {
           if (timelineRef.current) {
             timelineRef.current.pause();
