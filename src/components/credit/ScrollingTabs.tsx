@@ -1,25 +1,22 @@
 import React, { useRef, useEffect, useCallback, useState } from 'react';
 import { gsap } from 'gsap';
 import { Draggable } from 'gsap/Draggable';
+import { Client } from '../../types';
 
 gsap.registerPlugin(Draggable);
 
-interface Client {
-  id: string;
-  name: string;
-  balance: number;
-}
-
 interface ScrollingTabsProps {
   clients: Client[];
-  onClientSelect: (client: Client) => void;
-  selectedClientId?: string;
+  linkedClient: Client | null;
+  onQuickAdd: (client: Client) => void;
+  getClientTotalDebt: (clientId: string) => number;
 }
 
 const ScrollingTabs: React.FC<ScrollingTabsProps> = ({ 
   clients, 
-  onClientSelect, 
-  selectedClientId 
+  linkedClient,
+  onQuickAdd,
+  getClientTotalDebt
 }) => {
   const containerRef = useRef<HTMLDivElement>(null);
   const contentRef = useRef<HTMLDivElement>(null);
@@ -198,10 +195,10 @@ const ScrollingTabs: React.FC<ScrollingTabsProps> = ({
           {clients.map((client) => (
             <button
               key={client.id}
-              onClick={() => onClientSelect(client)}
+              onClick={() => onQuickAdd(client)}
               className={`
                 flex-shrink-0 px-6 py-2 mx-2 rounded-lg font-medium text-sm transition-all duration-200
-                ${selectedClientId === client.id 
+                ${linkedClient?.id === client.id 
                   ? 'bg-blue-500 text-white shadow-md' 
                   : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
                 }
@@ -209,9 +206,9 @@ const ScrollingTabs: React.FC<ScrollingTabsProps> = ({
             >
               <span className="font-semibold">{client.name}</span>
               <span className={`ml-2 text-xs ${
-                selectedClientId === client.id ? 'text-blue-100' : 'text-gray-500'
+                linkedClient?.id === client.id ? 'text-blue-100' : 'text-gray-500'
               }`}>
-                ${client.balance.toFixed(2)}
+                ${getClientTotalDebt(client.id).toFixed(2)}
               </span>
             </button>
           ))}
