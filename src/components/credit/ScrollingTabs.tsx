@@ -82,9 +82,6 @@ const ScrollingTabs: React.FC<ScrollingTabsProps> = ({
     // CRITICAL: Always kill existing timeline first
     killExistingTimeline();
     
-    // Start from the provided position or from 0 (immediately visible)
-    const startPosition = startFromPosition !== undefined ? startFromPosition : containerWidth;
-    
     // Create new timeline
     timelineRef.current = gsap.timeline({ 
       repeat: -1, 
@@ -94,42 +91,51 @@ const ScrollingTabs: React.FC<ScrollingTabsProps> = ({
       force3D: true
     });
     
-    // Calculate seamless loop: content should emerge from right as it exits left
+    // Calculate seamless loop positions
     const endPosition = -contentWidth;
     const loopStartPosition = containerWidth;
     
-    // If starting from 0 (initial load), use full duration
-    // Otherwise calculate proportional duration based on current position
-    let currentToEndDuration;
-    if (startFromPosition === undefined) {
-      // Initial load: start immediately visible and use full duration
-      currentToEndDuration = duration;
-    } else {
-      // Resume from current position: calculate remaining duration
+    // If starting from a specific position (like after drag)
+    if (startFromPosition !== undefined) {
+      // Calculate remaining duration based on current position
       const totalDistance = contentWidth + containerWidth;
-      const currentToEndDistance = Math.abs(startPosition - endPosition);
-      currentToEndDuration = (currentToEndDistance / totalDistance) * duration;
+      const currentToEndDistance = Math.abs(startFromPosition - endPosition);
+      const currentToEndDuration = (currentToEndDistance / totalDistance) * duration;
+      
+      // Create timeline from current position
+      timelineRef.current
+        .set(content, { x: startFromPosition })
+        .to(content, { 
+          x: endPosition, 
+          duration: currentToEndDuration,
+          ease: "none",
+          force3D: true
+        })
+        .set(content, { x: loopStartPosition })
+        .to(content, { 
+          x: endPosition, 
+          duration: duration,
+          ease: "none",
+          force3D: true
+        });
+    } else {
+      // Initial timeline - start immediately visible with no delay
+      timelineRef.current
+        .set(content, { x: 0 }) // Start with first tab immediately visible
+        .to(content, { 
+          x: endPosition, 
+          duration: duration,
+          ease: "none",
+          force3D: true
+        })
+        .set(content, { x: loopStartPosition })
+        .to(content, { 
+          x: endPosition, 
+          duration: duration,
+          ease: "none",
+          force3D: true
+        });
     }
-    
-    // Create seamless loop animation
-    timelineRef.current
-      .set(content, { x: startPosition })
-      // Animate from start position to fully off-screen left
-      .to(content, { 
-        x: endPosition, 
-        duration: currentToEndDuration,
-        ease: "none",
-        force3D: true
-      })
-      // Instantly move to right side (off-screen right) for seamless loop
-      .set(content, { x: loopStartPosition})
-      // Continue the loop from right to left
-      .to(content, { 
-        x: endPosition, 
-        duration: duration,
-        ease: "none",
-        force3D: true
-      });
     
     return timelineRef.current;
   };
@@ -142,7 +148,6 @@ const ScrollingTabs: React.FC<ScrollingTabsProps> = ({
       default: return 'Active Clients';
     }
   };
-
 
   // Handle tab click - pause timeline and show modal
   const handleTabClick = (client: Client) => {
@@ -167,6 +172,7 @@ const ScrollingTabs: React.FC<ScrollingTabsProps> = ({
       }
     }
   };
+
   // GSAP animation setup with length-based calculation
   useEffect(() => {
     if (!contentRef.current || !containerRef.current) return;
@@ -197,7 +203,7 @@ const ScrollingTabs: React.FC<ScrollingTabsProps> = ({
         draggableRef.current = null;
       }
       
-      // Create initial timeline
+      // Create initial timeline - start immediately visible
       const newTimeline = createNewTimeline();
       if (newTimeline) {
         newTimeline.play();
@@ -254,6 +260,7 @@ const ScrollingTabs: React.FC<ScrollingTabsProps> = ({
     }
   }, [clients, clientFilter, searchQuery]);
 
+  // Rest of the component remains the same...
   return (
     <>
     <div className="bg-white rounded-lg shadow-sm border border-gray-200">
