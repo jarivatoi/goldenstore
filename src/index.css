@@ -1,0 +1,181 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+body {
+  @apply text-gray-900 bg-gray-50;
+  -webkit-tap-highlight-color: transparent;
+  touch-action: manipulation;
+  /* Basic responsive viewport handling */
+  width: 100%;
+  min-height: 100vh;
+  overflow-x: hidden;
+}
+
+#root {
+  width: 100%;
+  min-height: 100vh;
+  display: flex;
+  flex-direction: column;
+}
+
+/* Basic responsive breakpoints */
+
+/* Mobile Portrait - Natural orientation */
+@media screen and (max-width: 767px) and (orientation: portrait) {
+  body {
+    font-size: 16px;
+  }
+}
+
+/* Mobile Landscape - Natural orientation */
+@media screen and (max-width: 767px) and (orientation: landscape) {
+  body {
+    font-size: 14px;
+  }
+  
+  /* Compact spacing in landscape */
+  .py-4 {
+    padding-top: 0.75rem;
+    padding-bottom: 0.75rem;
+  }
+  
+  .py-3 {
+    padding-top: 0.5rem;
+    padding-bottom: 0.5rem;
+  }
+}
+
+/* Tablet Portrait */
+@media screen and (min-width: 768px) and (max-width: 1023px) and (orientation: portrait) {
+  body {
+    font-size: 18px;
+  }
+  
+  .container {
+    max-width: 600px;
+    margin: 0 auto;
+  }
+}
+
+/* Tablet Landscape */
+@media screen and (min-width: 768px) and (max-width: 1023px) and (orientation: landscape) {
+  /* Optimized for tablet landscape mode */
+  body {
+    font-size: 16px;
+  }
+  
+  .container {
+    max-width: 1200px;
+    margin: 0 auto;
+  }
+  
+  /* Tablet landscape layout optimizations */
+  .tablet-landscape-grid {
+    display: grid;
+    grid-template-columns: 1fr 400px;
+    gap: 2rem;
+  }
+}
+
+/* Desktop and Large Tablets */
+@media screen and (min-width: 1024px) {
+  body {
+    font-size: 16px;
+  }
+  
+  .container {
+    max-width: 1200px;
+    margin: 0 auto;
+  }
+  
+  /* Desktop layout optimizations */
+  .desktop-grid {
+    display: grid;
+    grid-template-columns: 300px 1fr;
+    gap: 2rem;
+  }
+}
+
+/* iOS Safari specific fixes */
+@supports (-webkit-touch-callout: none) {
+  body {
+    min-height: -webkit-fill-available;
+  }
+  
+  .min-h-screen {
+    min-height: -webkit-fill-available;
+  }
+}
+
+/* Custom animations */
+@keyframes fadeIn {
+  0% {
+    opacity: 0;
+  }
+  to {
+    opacity: 1;
+  }
+}
+
+.animate-fade-in {
+  animation: fadeIn .2s ease-out forwards;
+}
+
+@keyframes pulse {
+  0%, 100% {
+    opacity: 1;
+  }
+  50% {
+    opacity: 0.7;
+  }
+}
+
+.animate-pulse {
+  animation: pulse 2s cubic-bezier(0.4, 0, 0.6, 1) infinite;
+}
+
+.touch-manipulation {
+  touch-action: pan-y;
+  -webkit-user-select: none;
+  -moz-user-select: none;
+  user-select: none;
+}
+
+.overflow-y-auto::-webkit-scrollbar {
+  display: none;
+}
+
+.overflow-y-auto {
+  -ms-overflow-style: none;
+  scrollbar-width: none;
+}
+
+.overflow-x-auto::-webkit-scrollbar {
+  display: none;
+}
+
+.overflow-x-auto {
+  -ms-overflow-style: none;
+  scrollbar-width: none;
+}
+
+/* Hide all scrollbars globally */
+* {
+  scrollbar-width: none;
+  -ms-overflow-style: none;
+}
+
+*::-webkit-scrollbar {
+  display: none;
+}
+
+input[type=number]::-webkit-inner-spin-button,
+input[type=number]::-webkit-outer-spin-button {
+  -webkit-appearance: none;
+  margin: 0;
+}
+
+input[type=number] {
+  -moz-appearance: textfield;
+}
