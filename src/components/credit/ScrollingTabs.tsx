@@ -206,16 +206,13 @@ const ScrollingTabs: React.FC<ScrollingTabsProps> = ({
       // Create draggable instance
       draggableRef.current = Draggable.create(content, {
         type: "x",
-        bounds: {
-          minX: -contentWidth * 2, // Allow extensive dragging left
-          maxX: containerWidth * 2  // Allow extensive dragging right
-        },
-        inertia: true,
+        bounds: false,
+        edgeResistance: 0,
         edgeResistance: 0.1, // Very light resistance at edges
-        dragResistance: 0.05, // Very light drag resistance
-        throwResistance: 0.2, // Light throw resistance for good momentum
-        maxDuration: 2.5, // Good momentum duration
-        minDuration: 0.3, // Minimum duration for momentum
+        dragResistance: 0,
+        throwResistance: 0.2,
+        maxDuration: 3,
+        minDuration: 0.5,
         allowNativeTouchScrolling: false,
         allowEventDefault: false,
         snap: false, // No snapping
@@ -224,8 +221,6 @@ const ScrollingTabs: React.FC<ScrollingTabsProps> = ({
         force3D: true, // Enable hardware acceleration
         cursor: "grab",
         activeCursor: "grabbing",
-        onDragStart: function() {
-          // Kill the timeline when user starts dragging
           killExistingTimeline();
           setIsDragging(true);
         },
@@ -234,24 +229,8 @@ const ScrollingTabs: React.FC<ScrollingTabsProps> = ({
           // Don't resume timeline immediately - let inertia finish first
         },
         onThrowComplete: function() {
-          setIsDragging(false);
-          // Only resume timeline if content is in a reasonable position
-          // and user hasn't dragged significantly backward
-          setTimeout(() => {
-            if (!contentRef.current) return;
-            
-            const currentX = gsap.getProperty(contentRef.current, "x") as number;
-            
-            // Only resume if content is not dragged too far backward
-            // This prevents snap-to-center while allowing natural timeline resumption
-            if (currentX > -containerWidth) {
-              const newTimeline = createNewTimeline(currentX);
-              if (newTimeline) {
-                newTimeline.play();
-              }
-            }
-            // If dragged far backward, leave it where user positioned it
-          }, 100); // Small delay to ensure inertia is completely finished
+        onDrag: function() {
+          // Just track that we're dragging, no positioning logic
         }
       });
     }
