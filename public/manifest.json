@@ -2,7 +2,7 @@
   "name": "Golden Store",
   "short_name": "Golden Store",
   "description": "Golden Store - Complete store management solution",
-  "start_url": "./",
+  "start_url": "./index.html",
   "scope": "./",
   "display": "standalone",
   "background_color": "#ffffff",

@@ -19,8 +19,8 @@ class UpdateManager {
   private async init() {
     if ('serviceWorker' in navigator) {
       try {
-        const registration = await navigator.serviceWorker.register('/goldenstore/sw.js', {
-          scope: '/goldenstore/'
+        const registration = await navigator.serviceWorker.register('./sw.js', {
+          scope: './'
         });
         
         this.serviceWorker = registration;
