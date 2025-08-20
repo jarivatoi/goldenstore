@@ -182,11 +182,11 @@ const ScrollingTabs: React.FC<ScrollingTabsProps> = ({
       content.offsetWidth;
       
       const containerWidth = container.offsetWidth-320;
-      const contentWidth = content.scrollWidth;
+      const contentWidth = content.scrollWidth-320;
       
       // Calculate duration based on content width
       const pixelsPerSecond = 60;
-      const totalDistance = contentWidth + containerWidth-320;
+      const totalDistance = contentWidth + containerWidth;
       const duration = totalDistance / pixelsPerSecond;
       
       // Kill any existing timeline and draggable
