@@ -39,7 +39,7 @@ const ScrollingTabs: React.FC<ScrollingTabsProps> = ({
 
   // Helper function to calculate timeline progress from drag distance
   // Helper function to track timeline progress
-  const getTimelineProgress = () => {
+  const getTimelineProgress = useCallback(() => {
     const totalDistance = containerWidth + contentWidth;
     
     // Current position in the animation cycle
@@ -123,6 +123,11 @@ const ScrollingTabs: React.FC<ScrollingTabsProps> = ({
             console.log('🎯 Timeline progress before pause:', timelineRef.current.progress());
             console.log('🎯 Timeline isActive before pause:', timelineRef.current.isActive());
           }
+        }
+      });
+    });
+  }, [clients.length]);
+
   const getFilterLabel = () => {
     switch (clientFilter) {
       case 'returnables': return 'Returnable Items';
@@ -136,90 +141,91 @@ const ScrollingTabs: React.FC<ScrollingTabsProps> = ({
   const handleTabClick = (client: Client) => {
     if (!contentRef.current || !containerRef.current || clients.length === 0) return;
     if (timelineRef.current) {
-    const container = containerRef.current;
-    const content = contentRef.current;
-    
-    // Clean up existing animations
-    if (timelineRef.current) {
-      timelineRef.current.kill();
-      timelineRef.current = null;
-                            const description = transaction.description.toLowerCase();
-    
-    if (draggableRef.current) {
-      draggableRef.current.forEach(d => d.kill());
-      draggableRef.current = null;
-    }
+      const container = containerRef.current;
+      const content = contentRef.current;
+      
+      // Clean up existing animations
+      if (timelineRef.current) {
+        timelineRef.current.kill();
+        timelineRef.current = null;
+      }
+      
+      if (draggableRef.current) {
+        draggableRef.current.forEach(d => d.kill());
+        draggableRef.current = null;
+      }
 
-    // Reset position and wait for layout
-    gsap.set(content, { x: 0 });
-    requestAnimationFrame(() => {
-      const containerWidth = container.offsetWidth;
-      const contentWidth = content.scrollWidth;
-      
-      // Calculate total distance for seamless loop
-      const totalDistance = contentWidth + containerWidth;
-      const duration = totalDistance / 40; // 40px per second for smooth readable speed
-      
-      // Create seamless infinite timeline
-      timelineRef.current = gsap.timeline({ repeat: -1, ease: "none" });
-      
-      timelineRef.current
-        .fromTo(content, 
-          { x: containerWidth }, // Enter from right
-          { 
-            x: -contentWidth, // Exit to left
-            duration: duration,
-            ease: "none"
-          });
-      
-      // Create draggable instance
-      draggableRef.current = Draggable.create(content, {
-        type: "x",
-        bounds: {
-          minX: -contentWidth,
-          maxX: containerWidth
-        },
-        onDragStart: function() {
-          console.log('🎯 Drag started - killing timeline');
-          // Kill timeline on drag start
-          if (timelineRef.current) {
-            timelineRef.current.kill();
-            timelineRef.current = null;
+      // Reset position and wait for layout
+      gsap.set(content, { x: 0 });
+      requestAnimationFrame(() => {
+        const containerWidth = container.offsetWidth;
+        const contentWidth = content.scrollWidth;
+        
+        // Calculate total distance for seamless loop
+        const totalDistance = contentWidth + containerWidth;
+        const duration = totalDistance / 40; // 40px per second for smooth readable speed
+        
+        // Create seamless infinite timeline
+        timelineRef.current = gsap.timeline({ repeat: -1, ease: "none" });
+        
+        timelineRef.current
+          .fromTo(content, 
+            { x: containerWidth }, // Enter from right
+            { 
+              x: -contentWidth, // Exit to left
+              duration: duration,
+              ease: "none"
+            });
+        
+        // Create draggable instance
+        draggableRef.current = Draggable.create(content, {
+          type: "x",
+          bounds: {
+            minX: -contentWidth,
+            maxX: containerWidth
+          },
+          onDragStart: function() {
+            console.log('🎯 Drag started - killing timeline');
+            // Kill timeline on drag start
+            if (timelineRef.current) {
+              timelineRef.current.kill();
+              timelineRef.current = null;
+            }
+            setIsDragging(true);
+          },
+          onDragEnd: function() {
+            console.log('🎯 Drag ended - creating new timeline');
+            setIsDragging(false);
+            
+            // Get current position
+            const currentPosition = gsap.getProperty(content, "x") as number;
+            const progress = getTimelineProgress();
+            
+            console.log('🎯 Current position:', currentPosition, 'Progress:', progress);
+            
+            // Create new timeline starting from current position
+            const containerWidth = container.offsetWidth;
+            const contentWidth = content.scrollWidth;
+            const totalDistance = contentWidth + containerWidth;
+            const duration = totalDistance / 40;
+            
+            timelineRef.current = gsap.timeline({ repeat: -1, ease: "none" });
+            
+            timelineRef.current
+              .fromTo(content, 
+                { x: currentPosition }, // Start from current position
+                { 
+                  x: -contentWidth, // Exit to left
+                  duration: duration,
+                  ease: "none"
+                });
+            
+            console.log('🎯 New timeline created and started from position:', currentPosition);
           }
-          setIsDragging(true);
-        },
-        onDragEnd: function() {
-          console.log('🎯 Drag ended - creating new timeline');
-          setIsDragging(false);
-          
-          // Get current position
-          const currentPosition = gsap.getProperty(content, "x") as number;
-          const progress = getTimelineProgress();
-          
-          console.log('🎯 Current position:', currentPosition, 'Progress:', progress);
-          
-          // Create new timeline starting from current position
-          const containerWidth = container.offsetWidth;
-          const contentWidth = content.scrollWidth;
-          const totalDistance = contentWidth + containerWidth;
-          const duration = totalDistance / 40;
-          
-          timelineRef.current = gsap.timeline({ repeat: -1, ease: "none" });
-          
-          timelineRef.current
-            .fromTo(content, 
-              { x: currentPosition }, // Start from current position
-              { 
-                x: -contentWidth, // Exit to left
-                duration: duration,
-                ease: "none"
-              });
-          
-          console.log('🎯 New timeline created and started from position:', currentPosition);
-        }
+        });
       });
-    });
-  }, [clients.length]);
+    }
+  };
 
   // Cleanup on unmount
   useEffect(() => {
@@ -232,6 +238,47 @@ const ScrollingTabs: React.FC<ScrollingTabsProps> = ({
       }
     };
   }, []);
+
+  const handleModalClose = () => {
+    setSelectedClientForAction(null);
+  };
+
+  const getClientTransactions = (clientId: string) => {
+    // This function should be implemented to return client transactions
+    return [];
+  };
+
+  return (
+    <>
+      <div className="scrolling-tabs-container">
+        <div ref={containerRef} className="overflow-hidden">
+          <div ref={contentRef} className="flex">
+            {clients.map((client) => {
+              const totalDebt = getClientTotalDebt(client.id);
+              
+              return (
+                <div
+                  key={client.id}
+                  className="flex-shrink-0 p-2 cursor-pointer"
+                  onClick={() => handleTabClick(client)}
+                >
+                  <div className="bg-white rounded-lg shadow p-3">
+                    <div className="text-sm font-medium text-gray-900 mb-1">
+                      {client.name}
+                    </div>
+                    {clientFilter === 'returnables' ? (
+                      <div className="text-xs font-semibold text-blue-600">
+                        {(() => {
+                          const clientTransactions = getClientTransactions(client.id);
+                          const returnableItems: {[key: string]: number} = {};
+                          
+                          clientTransactions.forEach(transaction => {
+                            if (transaction.type === 'payment' || transaction.description.toLowerCase().includes('returned')) {
+                              return;
+                            }
+                            
+                            const description = transaction.description.toLowerCase();
+                            
                             if (!description.includes('chopine') && !description.includes('bouteille')) {
                               return;
                             }
@@ -505,11 +552,11 @@ const ScrollingTabs: React.FC<ScrollingTabsProps> = ({
                       </div>
                     )}
                     <div className="text-xs text-gray-500 mt-1 text-center">
-              {client.lastTransactionAt.toLocaleDateString('en-GB', {
+                      {client.lastTransactionAt.toLocaleDateString('en-GB', {
                         day: '2-digit',
-                month: 'short',
+                        month: 'short',
                         year: '2-digit'
-              }).replace(/\s/g, '-')}
+                      }).replace(/\s/g, '-')}
                     </div>
                     <div className="text-xs text-gray-500 text-center">
                       {client.lastTransactionAt.toLocaleTimeString('en-GB', {
@@ -517,8 +564,8 @@ const ScrollingTabs: React.FC<ScrollingTabsProps> = ({
                         minute: '2-digit'
                       })}
                     </div>
-                    </div>
                   </div>
+                </div>
               );
             })}
           </div>
@@ -533,7 +580,6 @@ const ScrollingTabs: React.FC<ScrollingTabsProps> = ({
           onResetCalculator={onResetCalculator}
         />
       )}
-    </div>
     </>
   );
 };
