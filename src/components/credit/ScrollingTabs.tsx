@@ -54,7 +54,7 @@ const ScrollingTabs: React.FC<ScrollingTabsProps> = ({
     const content = contentRef.current;
     
     // Force layout calculation
-    gsap.set(content, { x: -400 });
+    gsap.set(content, { x: 0 });
     container.offsetWidth;
     content.offsetWidth;
     
