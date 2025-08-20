@@ -211,15 +211,8 @@ const ScrollingTabs: React.FC<ScrollingTabsProps> = ({
         edgeResistance: 0.1, // Very light resistance at edges
         dragResistance: 0,
         throwResistance: 0.2,
-        maxDuration: 3,
-        minDuration: 0.5,
-        allowNativeTouchScrolling: false,
-        allowEventDefault: false,
-        snap: false, // No snapping
         liveSnap: false, // No live snapping
         minimumMovement: 2, // Minimum movement to trigger drag
-        force3D: true, // Enable hardware acceleration
-        cursor: "grab",
         activeCursor: "grabbing",
         onDragStart: function() {
           killExistingTimeline();
@@ -238,16 +231,6 @@ const ScrollingTabs: React.FC<ScrollingTabsProps> = ({
         },
         onThrowComplete: function() {
           // Create new timeline from final position after momentum completes
-          if (contentRef.current) {
-            const currentPosition = gsap.getProperty(contentRef.current, "x") as number;
-            const newTimeline = createNewTimeline(currentPosition);
-            if (newTimeline) {
-              newTimeline.play();
-            }
-          }
-        },
-        onDrag: function() {
-          // Just track that we're dragging, no positioning logic
         }
       });
     }
