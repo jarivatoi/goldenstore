@@ -214,12 +214,11 @@ if (startFromPosition !== undefined) {
         newTimeline.play();
       }
       
-     // Create draggable instance with proper bounds considering offset
-draggableRef.current = Draggable.create(content, {
+    draggableRef.current = Draggable.create(content, {
   type: "x",
   bounds: {
     minX: -contentWidth,
-    maxX: Math.max(contentWidth - 400, containerWidth) // Ensure positive value
+    maxX: Math.max(contentWidth - OFFSET, containerWidth) // Use the already declared OFFSET
   },
         inertia: true,
         edgeResistance: 0.7,
