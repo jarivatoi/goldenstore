@@ -38,6 +38,34 @@ const ScrollingTabs: React.FC<ScrollingTabsProps> = ({
   const [isDragging, setIsDragging] = React.useState(false);
   const { getClientTransactions } = useCredit();
 
+  // Helper function to calculate timeline progress from drag distance
+  const calculateTimelineProgress = useCallback((dragDistance: number, containerWidth: number, contentWidth: number) => {
+    // Total animation distance: from containerWidth to -contentWidth
+    const totalDistance = containerWidth + contentWidth;
+    
+    // Current position in the animation cycle
+    // dragDistance is how far we've moved from the starting position
+    const currentPosition = containerWidth - dragDistance;
+    
+    // Calculate progress (0 to 1) in the animation cycle
+    const progress = (containerWidth - currentPosition) / totalDistance;
+    
+    // Normalize to 0-1 range for seamless looping
+    const normalizedProgress = ((progress % 1) + 1) % 1;
+    
+    console.log('📊 Progress calculation:', {
+      dragDistance,
+      containerWidth,
+      contentWidth,
+      totalDistance,
+      currentPosition,
+      progress,
+      normalizedProgress
+    });
+    
+    return normalizedProgress;
+  }, []);
+
   // Seamless continuous scroll setup
   const setupContinuousScroll = useCallback(() => {
     if (!contentRef.current || !containerRef.current || clients.length === 0) return;
@@ -95,38 +123,55 @@ const ScrollingTabs: React.FC<ScrollingTabsProps> = ({
         onDragStart: function() {
           if (timelineRef.current) {
             timelineRef.current.pause();
+            console.log('🎯 Drag started - timeline paused');
           }
           setIsDragging(true);
         },
         onDragEnd: function() {
           setIsDragging(false);
-          // Calculate current progress and resume
+          
+          // Get current position after drag
+          const currentX = gsap.getProperty(content, "x") as number;
+          const containerWidth = container.offsetWidth;
+          const contentWidth = content.scrollWidth;
+          
+          // Calculate how far we've moved from the starting position
+          const dragDistance = containerWidth - currentX;
+          
+          // Calculate timeline progress using helper function
+          const normalizedProgress = calculateTimelineProgress(dragDistance, containerWidth, contentWidth);
+          
+          console.log('🎯 Drag ended - resuming timeline at progress:', normalizedProgress);
+          
+          // Resume timeline from calculated position
           if (timelineRef.current) {
-            // Calculate where we are in the animation cycle
-            const currentX = gsap.getProperty(content, "x") as number;
-            
-            // Map current position to timeline progress (0 to 1)
-            // Timeline goes from containerWidth to -contentWidth
-            const progress = (containerWidth - currentX) / totalDistance;
-            const normalizedProgress = ((progress % 1) + 1) % 1; // Keep between 0-1
-            
-            // Set timeline to current position and resume
-            timelineRef.current.progress(normalizedProgress);
-            timelineRef.current.resume();
+            timelineRef.current.progress(normalizedProgress).resume();
           }
         },
         onThrowComplete: function() {
+          // Get current position after throw/inertia
+          const currentX = gsap.getProperty(content, "x") as number;
+          const containerWidth = container.offsetWidth;
+          const contentWidth = content.scrollWidth;
+          
+          // Calculate how far we've moved from the starting position
+          const dragDistance = containerWidth - currentX;
+          
+          // Calculate timeline progress using helper function
+          const normalizedProgress = calculateTimelineProgress(dragDistance, containerWidth, contentWidth);
+          
+          console.log('🎯 Throw completed - resuming timeline at progress:', normalizedProgress);
+          
+          // Resume timeline from calculated position
           if (timelineRef.current) {
-            const currentX = gsap.getProperty(content, "x") as number;
-            
-            // Map current position to timeline progress
-            const progress = (containerWidth - currentX) / totalDistance;
-            const normalizedProgress = ((progress % 1) + 1) % 1; // Keep between 0-1
+            timelineRef.current.progress(normalizedProgress).resume();
+          } else {
+            console.log('⚠️ Timeline not available after throw');
           }
         }
       });
     });
-  }, [clients.length]);
+  }, [clients.length, calculateTimelineProgress]);
 
   // Duplicate content for seamless looping
   const duplicatedClients = clients.length > 0 ? [...clients, ...clients] : clients;
