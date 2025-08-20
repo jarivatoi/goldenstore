@@ -98,12 +98,6 @@ const ScrollingTabs: React.FC<ScrollingTabsProps> = ({
         return;
       }
       
-      // Only animate if content is wider than container
-      if (contentWidth <= containerWidth) {
-        console.log('Content fits in container, no animation needed');
-        return;
-      }
-      
       // Calculate total distance for seamless loop
       const totalDistance = contentWidth + containerWidth;
       const duration = totalDistance / 40; // 40px per second
