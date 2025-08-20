@@ -41,6 +41,7 @@ const ScrollingTabs: React.FC<ScrollingTabsProps> = ({
 
   // Define OFFSET constant at component level
   const OFFSET = 400;
+  const CONTENT_OFFSET = 200; // Separate offset for content width calculations
 
   // Helper function to kill existing timeline
   const killExistingTimeline = useCallback(() => {
@@ -63,7 +64,7 @@ const getAnimationParams = () => {
   content.offsetWidth;
   
   const containerWidth = container.offsetWidth;
-  const contentWidth = content.scrollWidth + OFFSET;
+  const contentWidth = content.scrollWidth + CONTENT_OFFSET;
   
   // Calculate duration based on content width
   const pixelsPerSecond = 120;
@@ -195,7 +196,7 @@ if (startFromPosition !== undefined) {
       content.offsetWidth;
       
       const containerWidth = container.offsetWidth;
-      const contentWidth = content.scrollWidth + OFFSET;
+      const contentWidth = content.scrollWidth + CONTENT_OFFSET;
       
       // Calculate duration based on content width
       const pixelsPerSecond = 60;
@@ -219,7 +220,7 @@ if (startFromPosition !== undefined) {
     draggableRef.current = Draggable.create(content, {
   type: "x",
   bounds: {
-    minX: -(content.scrollWidth + OFFSET),
+    minX: -(content.scrollWidth + CONTENT_OFFSET),
     maxX: Math.max(contentWidth - OFFSET, containerWidth)
   },
         inertia: true,
