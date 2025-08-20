@@ -65,19 +65,23 @@ const ScrollingTabs: React.FC<ScrollingTabsProps> = ({
       const containerWidth = container.offsetWidth;
       const contentWidth = content.scrollWidth;
       
-      console.log('Container width:', containerWidth, 'Content width:', contentWidth);
+      console.log('Container width:', containerWidth, 'Content width:', contentWidth, 'Clients:', clients.length);
       
-      // Only proceed if content is wider than container
-      if (contentWidth <= containerWidth) {
-        console.log('Content fits in container, no scrolling needed');
+      // Force minimum content width for animation even if content fits
+      const minContentWidth = containerWidth * 1.5; // Ensure content is at least 1.5x container width
+      const effectiveContentWidth = Math.max(contentWidth, minContentWidth);
+      
+      // Only skip animation if we have no clients
+      if (clients.length === 0) {
+        console.log('No clients, skipping animation');
         return;
       }
       
       // Calculate animation parameters
-      const totalDistance = contentWidth + containerWidth;
+      const totalDistance = effectiveContentWidth + containerWidth;
       const duration = totalDistance / 30; // 30 pixels per second for slower, more readable scroll
       
-      console.log('Setting up animation - Distance:', totalDistance, 'Duration:', duration);
+      console.log('Setting up animation - Distance:', totalDistance, 'Duration:', duration, 'Effective width:', effectiveContentWidth);
       
       // Create infinite scroll timeline
       timelineRef.current = gsap.timeline({ 
@@ -88,7 +92,7 @@ const ScrollingTabs: React.FC<ScrollingTabsProps> = ({
       timelineRef.current
         .set(content, { x: containerWidth, force3D: true }) // Start from right edge
         .to(content, { 
-          x: -contentWidth, 
+          x: -effectiveContentWidth, 
           duration: duration,
           ease: "none",
           force3D: true
@@ -98,7 +102,7 @@ const ScrollingTabs: React.FC<ScrollingTabsProps> = ({
       draggableRef.current = Draggable.create(content, {
         type: "x",
         bounds: {
-          minX: -contentWidth,
+          minX: -effectiveContentWidth,
           maxX: containerWidth
         },
         inertia: true,
@@ -197,7 +201,8 @@ const ScrollingTabs: React.FC<ScrollingTabsProps> = ({
         >
           <div 
             ref={contentRef}
-            className="flex gap-3 whitespace-nowrap relative z-10 justify-center min-w-full"
+            className="flex gap-6 whitespace-nowrap relative z-10"
+            style={{ minWidth: 'max-content' }}
           >
             {clients.map((client) => {
               const totalDebt = getClientTotalDebt(client.id);
