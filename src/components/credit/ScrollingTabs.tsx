@@ -223,19 +223,8 @@ const ScrollingTabs: React.FC<ScrollingTabsProps> = ({
           setIsDragging(true);
         },
         onDragEnd: function() {
-          // Capture the current position where drag ended
-          const currentPosition = gsap.getProperty(content, "x") as number;
-          
           setIsDragging(false);
-          
-          // CRITICAL: Ensure no existing timeline before creating new one
-          killExistingTimeline();
-          
-          // Create new timeline immediately from current position
-          const newTimeline = createNewTimeline(currentPosition);
-          if (newTimeline) {
-            newTimeline.play();
-          }
+          // Don't create timeline here - wait for inertia to complete
         },
         onThrowComplete: function() {
           // Capture the final position after throw/inertia
@@ -244,7 +233,7 @@ const ScrollingTabs: React.FC<ScrollingTabsProps> = ({
           // CRITICAL: Ensure no existing timeline before creating new one
           killExistingTimeline();
           
-          // Create new timeline immediately from current position
+          // Create new timeline after inertia/momentum has completely ended
           const newTimeline = createNewTimeline(currentPosition);
           if (newTimeline) {
             newTimeline.play();
