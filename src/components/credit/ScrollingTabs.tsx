@@ -219,6 +219,8 @@ const ScrollingTabs: React.FC<ScrollingTabsProps> = ({
         overshootTolerance: 50, // Allow some overshooting for better feel
         allowNativeTouchScrolling: false,
         allowEventDefault: false,
+        snap: false, // Disable automatic snapping
+        liveSnap: false, // Disable live snapping during drag
         onDragStart: function() {
           // Kill the timeline when user starts dragging
           killExistingTimeline();
@@ -229,7 +231,7 @@ const ScrollingTabs: React.FC<ScrollingTabsProps> = ({
           // Don't create timeline here - wait for throw to complete
         },
         onThrowComplete: function() {
-          // Use setTimeout to ensure throw is completely finished
+          // Use longer delay to ensure throw is completely finished
           setTimeout(() => {
             // Capture the final position after throw/inertia
             const currentPosition = gsap.getProperty(content, "x") as number;
@@ -237,12 +239,18 @@ const ScrollingTabs: React.FC<ScrollingTabsProps> = ({
             // CRITICAL: Ensure no existing timeline before creating new one
             killExistingTimeline();
             
-            // Create new timeline after inertia/momentum has completely ended
-            const newTimeline = createNewTimeline(currentPosition);
-            if (newTimeline) {
-              newTimeline.play();
+            // Only create timeline if content is not manually positioned by user
+            // Check if user dragged significantly backward (negative position beyond threshold)
+            const isUserPositioned = currentPosition < -100; // User dragged backward significantly
+            
+            if (!isUserPositioned) {
+              // Create new timeline after inertia/momentum has completely ended
+              const newTimeline = createNewTimeline(currentPosition);
+              if (newTimeline) {
+                newTimeline.play();
+              }
             }
-          }, 100); // Small delay to ensure throw is completely finished
+          }, 200); // Longer delay to ensure throw is completely finished
         }
       });
     }
