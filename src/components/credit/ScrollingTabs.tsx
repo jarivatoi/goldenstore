@@ -325,28 +325,30 @@ const ScrollingTabs: React.FC<ScrollingTabsProps> = ({
         const progress = timelineRef.current.progress();
         
         // Clear animation if timeline is running (not paused) and actually progressing
-        if (isActive && !isPaused) {
+        if (isActive && !isPaused && progress > 0) {
           console.log('🎯 Timeline is actively running, clearing persistent animation');
           setPersistentAnimationTabId(null);
         }
       }
     };
     
-    // Check immediately
-    checkTimelineActivity();
-    
-    // Also check periodically while timeline might be starting
-    const interval = setInterval(checkTimelineActivity, 100);
-    
-    // Cleanup interval after a short time
-    const timeout = setTimeout(() => {
-      clearInterval(interval);
-    }, 2000);
-    
-    return () => {
-      clearInterval(interval);
-      clearTimeout(timeout);
-    };
+    if (persistentAnimationTabId) {
+      // Check immediately
+      checkTimelineActivity();
+      
+      // Also check periodically while timeline might be starting
+      const interval = setInterval(checkTimelineActivity, 50);
+      
+      // Cleanup interval after a longer time to ensure detection
+      const timeout = setTimeout(() => {
+        clearInterval(interval);
+      }, 5000);
+      
+      return () => {
+        clearInterval(interval);
+        clearTimeout(timeout);
+      };
+    }
   }, [persistentAnimationTabId]);
   
   // Additional effect to clear animation when timeline resumes from pause
@@ -355,26 +357,34 @@ const ScrollingTabs: React.FC<ScrollingTabsProps> = ({
     
     const timeline = timelineRef.current;
     
-    // Monitor timeline state changes
+    // Monitor timeline state changes more aggressively
     const checkResume = () => {
       if (timeline.isActive() && !timeline.paused()) {
         console.log('🎯 Timeline resumed from pause, clearing persistent animation');
-      setPersistentAnimationTabId(null);
-    }
+        setPersistentAnimationTabId(null);
+      }
     };
     
-    // Check every 50ms for timeline state changes
-    const monitorInterval = setInterval(checkResume, 50);
+    // Check every 25ms for faster detection
+    const monitorInterval = setInterval(checkResume, 25);
     
-    // Cleanup after 3 seconds
-    setTimeout(() => {
+    // Also add a delayed check to catch timeline startup
+    const delayedCheck = setTimeout(() => {
+      checkResume();
+    }, 100);
+    
+    // Cleanup after 10 seconds
+    const cleanup = setTimeout(() => {
       clearInterval(monitorInterval);
-    }, 3000);
+    }, 10000);
     
     return () => {
+      clearInterval(interval);
       clearInterval(monitorInterval);
+      clearTimeout(delayedCheck);
+      clearTimeout(cleanup);
     };
-  }, [persistentAnimationTabId, isDragging]);
+  }, [persistentAnimationTabId]);
 
   return (
     <>
