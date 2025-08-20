@@ -182,7 +182,7 @@ const ScrollingTabs: React.FC<ScrollingTabsProps> = ({
       content.offsetWidth;
       
       const containerWidth = container.offsetWidth-820;
-      const contentWidth = content.scrollWidth
+      const contentWidth = content.scrollWidth;
       
       // Calculate duration based on content width
       const pixelsPerSecond = 60;
@@ -230,6 +230,13 @@ const ScrollingTabs: React.FC<ScrollingTabsProps> = ({
           // Don't resume timeline immediately - let inertia finish first
         },
         onThrowComplete: function() {
+          // Resume timeline after throw is complete
+          const currentPosition = gsap.getProperty(content, "x") as number;
+          const newTimeline = createNewTimeline(currentPosition);
+          if (newTimeline) {
+            newTimeline.play();
+          }
+        },
         onDrag: function() {
           // Just track that we're dragging, no positioning logic
         }
