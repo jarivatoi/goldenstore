@@ -93,7 +93,7 @@ const ScrollingTabs: React.FC<ScrollingTabsProps> = ({
     
     // Calculate seamless loop positions
     const endPosition = -contentWidth;
-    const loopStartPosition = contentWidth-400;
+    const loopStartPosition = contentWidth;
     
     // If starting from a specific position (like after drag)
     if (startFromPosition !== undefined) {
