@@ -82,7 +82,7 @@ const ScrollingTabs: React.FC<ScrollingTabsProps> = ({
     // CRITICAL: Always kill existing timeline first
     killExistingTimeline();
     
-    // Start from the provided position or from 0 (immediately visible)
+    // Start from the provided position or from containerWidth (off-screen right)
     const startPosition = startFromPosition !== undefined ? startFromPosition : containerWidth;
     
     // Create new timeline
@@ -98,18 +98,10 @@ const ScrollingTabs: React.FC<ScrollingTabsProps> = ({
     const endPosition = -contentWidth;
     const loopStartPosition = containerWidth;
     
-    // If starting from 0 (initial load), use full duration
-    // Otherwise calculate proportional duration based on current position
-    let currentToEndDuration;
-    if (startFromPosition === undefined) {
-      // Initial load: start immediately visible and use full duration
-      currentToEndDuration = duration;
-    } else {
-      // Resume from current position: calculate remaining duration
-      const totalDistance = contentWidth + containerWidth;
-      const currentToEndDistance = Math.abs(startPosition - endPosition);
-      currentToEndDuration = (currentToEndDistance / totalDistance) * duration;
-    }
+    // Calculate duration from current position to end
+    const totalDistance = contentWidth + containerWidth;
+    const currentToEndDistance = Math.abs(startPosition - endPosition);
+    const currentToEndDuration = (currentToEndDistance / totalDistance) * duration;
     
     // Create seamless loop animation
     timelineRef.current
