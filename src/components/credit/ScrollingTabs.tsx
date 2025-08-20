@@ -268,10 +268,63 @@ const ScrollingTabs: React.FC<ScrollingTabsProps> = ({
 
   // Clear persistent animation when timeline is actively running (scroll initiated)
   React.useEffect(() => {
-    if (timelineRef.current && timelineRef.current.isActive() && !timelineRef.current.paused() && persistentAnimationTabId) {
+    const checkTimelineActivity = () => {
+      if (timelineRef.current && persistentAnimationTabId) {
+        const isActive = timelineRef.current.isActive();
+        const isPaused = timelineRef.current.paused();
+        const progress = timelineRef.current.progress();
+        
+        // Clear animation if timeline is running (not paused) and actually progressing
+        if (isActive && !isPaused) {
+          console.log('🎯 Timeline is actively running, clearing persistent animation');
+          setPersistentAnimationTabId(null);
+        }
+      }
+    };
+    
+    // Check immediately
+    checkTimelineActivity();
+    
+    // Also check periodically while timeline might be starting
+    const interval = setInterval(checkTimelineActivity, 100);
+    
+    // Cleanup interval after a short time
+    const timeout = setTimeout(() => {
+      clearInterval(interval);
+    }, 2000);
+    
+    return () => {
+      clearInterval(interval);
+      clearTimeout(timeout);
+    };
+  }, [persistentAnimationTabId]);
+  
+  // Additional effect to clear animation when timeline resumes from pause
+  React.useEffect(() => {
+    if (!timelineRef.current || !persistentAnimationTabId) return;
+    
+    const timeline = timelineRef.current;
+    
+    // Monitor timeline state changes
+    const checkResume = () => {
+      if (timeline.isActive() && !timeline.paused()) {
+        console.log('🎯 Timeline resumed from pause, clearing persistent animation');
       setPersistentAnimationTabId(null);
     }
-  }, [persistentAnimationTabId]);
+    };
+    
+    // Check every 50ms for timeline state changes
+    const monitorInterval = setInterval(checkResume, 50);
+    
+    // Cleanup after 3 seconds
+    setTimeout(() => {
+      clearInterval(monitorInterval);
+    }, 3000);
+    
+    return () => {
+      clearInterval(monitorInterval);
+    };
+  }, [persistentAnimationTabId, isDragging]);
 
   return (
     <>
