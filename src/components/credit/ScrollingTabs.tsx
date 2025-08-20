@@ -99,7 +99,7 @@ const ScrollingTabs: React.FC<ScrollingTabsProps> = ({
       
       // Calculate total distance including container width gap
       const totalDistance = contentWidth + containerWidth;
-      const duration = totalDistance / 40; // 40px per second for smooth readable speed
+      const duration = totalDistance / 60; // 60px per second for faster speed
       
       console.log('Setting up continuous scroll - Container:', containerWidth, 'Content:', contentWidth, 'Total Distance:', totalDistance);
       
