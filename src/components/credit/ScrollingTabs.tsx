@@ -137,7 +137,14 @@ const ScrollingTabs: React.FC<ScrollingTabsProps> = ({
             console.log('🎯 Timeline isActive before resume:', timelineRef.current.isActive());
             console.log('🎯 Timeline paused state:', timelineRef.current.paused());
             
-            timelineRef.current.resume();
+            // If timeline has completed (progress = 1), restart it
+            if (timelineRef.current.progress() >= 1) {
+              console.log('🎯 Timeline completed, restarting from beginning');
+              timelineRef.current.restart();
+            } else {
+              console.log('🎯 Timeline resuming from current progress');
+              timelineRef.current.resume();
+            }
             
             console.log('🎯 Timeline progress after resume:', timelineRef.current.progress());
             console.log('🎯 Timeline isActive after resume:', timelineRef.current.isActive());
