@@ -39,6 +39,7 @@ const ScrollingTabs: React.FC<ScrollingTabsProps> = ({
   const [selectedClientForAction, setSelectedClientForAction] = React.useState<Client | null>(null);
   const [isDragging, setIsDragging] = React.useState(false);
   const [clickedTabId, setClickedTabId] = React.useState<string | null>(null);
+  const [persistentAnimationTabId, setPersistentAnimationTabId] = React.useState<string | null>(null);
   const { getClientTransactions } = useCredit();
 
   // Sort clients based on sort option
@@ -241,11 +242,12 @@ const ScrollingTabs: React.FC<ScrollingTabsProps> = ({
   const handleTabClick = (client: Client) => {
     // Add click animation
     setClickedTabId(client.id);
+    setPersistentAnimationTabId(client.id);
     
     // Remove animation after it completes
     setTimeout(() => {
       setClickedTabId(null);
-    }, 600); // Animation duration
+    }, 600);
     
     // Pause the timeline
     if (timelineRef.current) {
@@ -257,11 +259,19 @@ const ScrollingTabs: React.FC<ScrollingTabsProps> = ({
   // Handle modal close - resume timeline
   const handleModalClose = () => {
     setSelectedClientForAction(null);
+    setPersistentAnimationTabId(null); // Clear persistent animation when modal closes
     // Resume timeline
     if (timelineRef.current) {
       timelineRef.current.resume();
     }
   };
+
+  // Clear persistent animation when timeline resumes (scroll initiated)
+  React.useEffect(() => {
+    if (timelineRef.current && timelineRef.current.isActive() && persistentAnimationTabId) {
+      setPersistentAnimationTabId(null);
+    }
+  }, [persistentAnimationTabId]);
 
   return (
     <>
@@ -310,6 +320,8 @@ const ScrollingTabs: React.FC<ScrollingTabsProps> = ({
                   } ${
                     clickedTabId === client.id 
                       ? 'animate-pulse-attention bg-yellow-200 border-yellow-400 shadow-lg scale-110 z-50' 
+                      : persistentAnimationTabId === client.id
+                      ? 'animate-pulse-persistent bg-yellow-100 border-yellow-300 shadow-md scale-105 z-40'
                       : ''
                   }`}
                   style={{
