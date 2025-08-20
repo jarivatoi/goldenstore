@@ -59,7 +59,7 @@ const ScrollingTabs: React.FC<ScrollingTabsProps> = ({
     content.offsetWidth;
     
     const containerWidth = container.offsetWidth;
-    const contentWidth = content.scrollWidth;
+    const contentWidth = content.scrollWidth-400;
     
     // Calculate duration based on content width
     const pixelsPerSecond = 60;
@@ -93,7 +93,7 @@ const ScrollingTabs: React.FC<ScrollingTabsProps> = ({
     
     // Calculate seamless loop positions
     const endPosition = -contentWidth;
-    const loopStartPosition = contentWidth;
+    const loopStartPosition = contentWidth-400;
     
     // If starting from a specific position (like after drag)
     if (startFromPosition !== undefined) {
