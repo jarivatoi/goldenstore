@@ -67,7 +67,7 @@ const getAnimationParams = () => {
   const contentWidth = content.scrollWidth + CONTENT_OFFSET;
   
   // Calculate duration based on content width
-  const pixelsPerSecond = 120;
+  const pixelsPerSecond = 60;
   const totalDistance = contentWidth + containerWidth;
   const duration = totalDistance / pixelsPerSecond;
   
