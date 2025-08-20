@@ -59,7 +59,7 @@ const ScrollingTabs: React.FC<ScrollingTabsProps> = ({
     content.offsetWidth;
     
     const containerWidth = container.offsetWidth-1500;
-    const contentWidth = content.scrollWidth-320;
+    const contentWidth = content.scrollWidth;
     
     // Calculate duration based on content width
     const pixelsPerSecond = 60;
