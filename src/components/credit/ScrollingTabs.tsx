@@ -177,9 +177,6 @@ const ScrollingTabs: React.FC<ScrollingTabsProps> = ({
             const totalAnimationDistance = containerWidth + contentWidth;
             const distanceTraveled = containerWidth - currentPosition;
             const progress = Math.max(0, Math.min(1, distanceTraveled / totalAnimationDistance));
-            const totalAnimationDistance = containerWidth + contentWidth;
-            const distanceTraveled = containerWidth - currentPosition;
-            const progress = Math.max(0, Math.min(1, distanceTraveled / totalAnimationDistance));
             
             // Restart timeline from the correct position
             timelineRef.current.progress(progress);
@@ -194,9 +191,6 @@ const ScrollingTabs: React.FC<ScrollingTabsProps> = ({
             const totalAnimationDistance = containerWidth + contentWidth;
             const distanceTraveled = containerWidth - currentPosition;
             const progress = Math.max(0, Math.min(1, distanceTraveled / totalAnimationDistance));
-            const distanceTraveled = containerWidth - currentPosition;
-            const progress = Math.max(0, Math.min(1, distanceTraveled / totalAnimationDistance));
-            timelineRef.current.progress(progress);
             timelineRef.current.play();
             console.log('🎯 Throw complete - resuming from progress:', progress, 'position:', currentPosition);
             console.log('🎯 Throw complete - resuming from progress:', progress, 'position:', currentPosition);
