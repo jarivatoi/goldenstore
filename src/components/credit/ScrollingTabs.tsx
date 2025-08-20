@@ -194,8 +194,15 @@ const ScrollingTabs: React.FC<ScrollingTabsProps> = ({
           </span>
         </div>
       </div>
-
-      {/* Scrolling Container */}
+         edgeResistance: 0.1, // Lower resistance for smoother feel
+         inertia: true,
+         throwProps: {
+           resistance: 300, // Lower = more throw distance
+           minDuration: 0.3,
+           maxDuration: 3
+         },
+         dragResistance: 0, // No resistance during drag
+         throwResistance: 300, // Resistance for throw deceleration
       <div className="p-3">
         <div 
           ref={containerRef}
