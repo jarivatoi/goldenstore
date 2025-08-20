@@ -206,23 +206,22 @@ const ScrollingTabs: React.FC<ScrollingTabsProps> = ({
       // Create draggable instance
       draggableRef.current = Draggable.create(content, {
         type: "x",
-        bounds: {
-          minX: -contentWidth - containerWidth, // Allow dragging far left
-          maxX: containerWidth * 2 // Allow dragging far right
-        },
+        bounds: false, // Completely disable bounds
         inertia: true,
-        edgeResistance: 0.1, // Very low resistance
-        dragResistance: 0.1, // Very low drag resistance  
-        throwResistance: 0.3, // Lower throw resistance for better momentum
-        maxDuration: 2, // Shorter max duration
-        minDuration: 0.1, // Shorter min duration
+        edgeResistance: 0, // No edge resistance
+        dragResistance: 0, // No drag resistance
+        throwResistance: 0.1, // Minimal throw resistance for momentum
+        maxDuration: 3, // Allow longer momentum
+        minDuration: 0.2, // Minimum duration for momentum
         allowNativeTouchScrolling: false,
         allowEventDefault: false,
-        snap: false, // Disable automatic snapping
-        liveSnap: false, // Disable live snapping during drag
+        snap: false,
+        liveSnap: false,
         autoScroll: 0, // Disable auto scroll
         minimumMovement: 2, // Minimum movement to trigger drag
         force3D: true, // Enable hardware acceleration
+        cursor: "grab",
+        activeCursor: "grabbing",
         onDragStart: function() {
           // Kill the timeline when user starts dragging
           killExistingTimeline();
@@ -230,11 +229,11 @@ const ScrollingTabs: React.FC<ScrollingTabsProps> = ({
         },
         onDragEnd: function() {
           setIsDragging(false);
-          // Don't resume timeline on drag end - let user control positioning
+          // Never resume timeline automatically
         },
         onThrowComplete: function() {
-          // Don't automatically resume timeline - let user control when to restart
           setIsDragging(false);
+          // Never resume timeline automatically - user has full control
         }
       });
     }
