@@ -36,10 +36,11 @@ const ScrollingTabs: React.FC<ScrollingTabsProps> = ({
   const draggableRef = useRef<Draggable[] | null>(null);
   const [selectedClientForAction, setSelectedClientForAction] = React.useState<Client | null>(null);
   const [isDragging, setIsDragging] = React.useState(false);
+  const { getClientTransactions } = useCredit();
 
   // Helper function to calculate timeline progress from drag distance
-  // Helper function to track timeline progress
-  const getTimelineProgress = useCallback(() => {
+  const calculateTimelineProgress = useCallback((dragDistance: number, containerWidth: number, contentWidth: number) => {
+    // Total animation distance: from containerWidth to -contentWidth
     const totalDistance = containerWidth + contentWidth;
     
     // Current position in the animation cycle
@@ -74,9 +75,9 @@ const ScrollingTabs: React.FC<ScrollingTabsProps> = ({
     
     // Clean up existing animations
     if (timelineRef.current) {
-      return timelineRef.current.progress();
+      timelineRef.current.kill();
+      timelineRef.current = null;
     }
-    return 0;
     
     if (draggableRef.current) {
       draggableRef.current.forEach(d => d.kill());
@@ -123,109 +124,81 @@ const ScrollingTabs: React.FC<ScrollingTabsProps> = ({
             console.log('🎯 Timeline progress before pause:', timelineRef.current.progress());
             console.log('🎯 Timeline isActive before pause:', timelineRef.current.isActive());
           }
+          setIsDragging(true);
+        },
+        onDragEnd: function() {
+          setIsDragging(false);
+          
+          console.log('🎯 Drag ended - checking timeline state');
+          console.log('🎯 Timeline exists:', !!timelineRef.current);
+          
+          if (timelineRef.current) {
+            console.log('🎯 Timeline progress before resume:', timelineRef.current.progress());
+            console.log('🎯 Timeline isActive before resume:', timelineRef.current.isActive());
+            console.log('🎯 Timeline paused state:', timelineRef.current.paused());
+            
+            // If timeline has completed (progress = 1), restart it
+            if (timelineRef.current.progress() >= 1) {
+              console.log('🎯 Timeline completed, restarting from beginning');
+              timelineRef.current.restart();
+            } else {
+              console.log('🎯 Timeline resuming from current progress');
+              timelineRef.current.resume();
+            }
+            
+            console.log('🎯 Timeline progress after resume:', timelineRef.current.progress());
+            console.log('🎯 Timeline isActive after resume:', timelineRef.current.isActive());
+            console.log('🎯 Timeline paused state after resume:', timelineRef.current.paused());
+          } else {
+            console.log('🎯 No timeline exists, recreating...');
+            // Recreate the timeline if it doesn't exist
+            const container = containerRef.current;
+            const content = contentRef.current;
+            
+            if (container && content) {
+              const containerWidth = container.offsetWidth;
+              const contentWidth = content.scrollWidth;
+              const totalDistance = contentWidth + containerWidth;
+              const duration = totalDistance / 40;
+              
+              timelineRef.current = gsap.timeline({ repeat: -1, ease: "none" });
+              timelineRef.current
+                .fromTo(content, 
+                  { x: containerWidth },
+                  { 
+                    x: -contentWidth,
+                    duration: duration,
+                    ease: "none"
+                  });
+              
+              console.log('🎯 New timeline created and started');
+            }
+          }
         }
       });
     });
-  }, [clients.length]);
+  }, [clients.length, calculateTimelineProgress]);
 
-  const getFilterLabel = () => {
-    switch (clientFilter) {
-      case 'returnables': return 'Returnable Items';
-      case 'overdue': return 'Overdue Clients';
-      case 'overlimit': return 'Over Limit';
-      default: return 'Active Clients';
-    }
-  };
+  // Duplicate content for seamless looping
+  const duplicatedClients = clients.length > 0 ? [...clients, ...clients] : clients;
 
-  // Seamless continuous scroll setup
-  const handleTabClick = (client: Client) => {
-    if (!contentRef.current || !containerRef.current || clients.length === 0) return;
-    if (timelineRef.current) {
-      const container = containerRef.current;
-      const content = contentRef.current;
-      
-      // Clean up existing animations
-      if (timelineRef.current) {
-        timelineRef.current.kill();
-        timelineRef.current = null;
+  // Setup animation when clients change
+  useEffect(() => {
+    setupContinuousScroll();
+  }, [setupContinuousScroll]);
+
+  // Debug effect to monitor timeline state
+  useEffect(() => {
+    const interval = setInterval(() => {
+      if (timelineRef.current && !isDragging) {
+        const progress = timelineRef.current.progress();
+        const isActive = timelineRef.current.isActive();
+        console.log('Timeline status - Progress:', progress.toFixed(3), 'Active:', isActive);
       }
-      
-      if (draggableRef.current) {
-        draggableRef.current.forEach(d => d.kill());
-        draggableRef.current = null;
-      }
+    }, 2000);
 
-      // Reset position and wait for layout
-      gsap.set(content, { x: 0 });
-      requestAnimationFrame(() => {
-        const containerWidth = container.offsetWidth;
-        const contentWidth = content.scrollWidth;
-        
-        // Calculate total distance for seamless loop
-        const totalDistance = contentWidth + containerWidth;
-        const duration = totalDistance / 40; // 40px per second for smooth readable speed
-        
-        // Create seamless infinite timeline
-        timelineRef.current = gsap.timeline({ repeat: -1, ease: "none" });
-        
-        timelineRef.current
-          .fromTo(content, 
-            { x: containerWidth }, // Enter from right
-            { 
-              x: -contentWidth, // Exit to left
-              duration: duration,
-              ease: "none"
-            });
-        
-        // Create draggable instance
-        draggableRef.current = Draggable.create(content, {
-          type: "x",
-          bounds: {
-            minX: -contentWidth,
-            maxX: containerWidth
-          },
-          onDragStart: function() {
-            console.log('🎯 Drag started - killing timeline');
-            // Kill timeline on drag start
-            if (timelineRef.current) {
-              timelineRef.current.kill();
-              timelineRef.current = null;
-            }
-            setIsDragging(true);
-          },
-          onDragEnd: function() {
-            console.log('🎯 Drag ended - creating new timeline');
-            setIsDragging(false);
-            
-            // Get current position
-            const currentPosition = gsap.getProperty(content, "x") as number;
-            const progress = getTimelineProgress();
-            
-            console.log('🎯 Current position:', currentPosition, 'Progress:', progress);
-            
-            // Create new timeline starting from current position
-            const containerWidth = container.offsetWidth;
-            const contentWidth = content.scrollWidth;
-            const totalDistance = contentWidth + containerWidth;
-            const duration = totalDistance / 40;
-            
-            timelineRef.current = gsap.timeline({ repeat: -1, ease: "none" });
-            
-            timelineRef.current
-              .fromTo(content, 
-                { x: currentPosition }, // Start from current position
-                { 
-                  x: -contentWidth, // Exit to left
-                  duration: duration,
-                  ease: "none"
-                });
-            
-            console.log('🎯 New timeline created and started from position:', currentPosition);
-          }
-        });
-      });
-    }
-  };
+    return () => clearInterval(interval);
+  }, [isDragging]);
 
   // Cleanup on unmount
   useEffect(() => {
@@ -239,35 +212,96 @@ const ScrollingTabs: React.FC<ScrollingTabsProps> = ({
     };
   }, []);
 
-  const handleModalClose = () => {
-    setSelectedClientForAction(null);
+  const getFilterLabel = () => {
+    switch (clientFilter) {
+      case 'returnables': return 'Returnable Items';
+      case 'overdue': return 'Overdue Clients';
+      case 'overlimit': return 'Over Limit';
+      default: return 'Active Clients';
+    }
   };
 
-  const getClientTransactions = (clientId: string) => {
-    // This function should be implemented to return client transactions
-    return [];
+  // Handle tab click - pause timeline and show modal
+  const handleTabClick = (client: Client) => {
+    // Pause the timeline
+    if (timelineRef.current) {
+      timelineRef.current.pause();
+    }
+    setSelectedClientForAction(client);
+  };
+
+  // Handle modal close - resume timeline
+  const handleModalClose = () => {
+    setSelectedClientForAction(null);
+    // Resume timeline
+    if (timelineRef.current) {
+      timelineRef.current.resume();
+    }
   };
 
   return (
     <>
-      <div className="scrolling-tabs-container">
-        <div ref={containerRef} className="overflow-hidden">
-          <div ref={contentRef} className="flex">
-            {clients.map((client) => {
+    <div className="bg-white rounded-lg shadow-sm border border-gray-200">
+      {/* Header */}
+      <div className="p-3 border-b border-gray-200">
+        <div className="flex items-center justify-between">
+          <h3 className="text-sm font-medium text-gray-700">
+            {getFilterLabel()}
+          </h3>
+          <span className="text-xs text-gray-500 bg-gray-100 px-2 py-1 rounded-full">
+            {clients.length} client{clients.length !== 1 ? 's' : ''}
+          </span>
+        </div>
+      </div>
+      <div className="p-3">
+        <div 
+          ref={containerRef}
+          className="overflow-hidden py-4 w-full h-30 flex items-center relative z-10"
+          style={{
+            height: '106px'
+          }}
+        >
+          <div 
+            ref={contentRef}
+            className="flex gap-6 whitespace-nowrap relative z-10"
+            style={{ minWidth: 'max-content' }}
+          >
+            {duplicatedClients.map((client, index) => {
               const totalDebt = getClientTotalDebt(client.id);
+              const isLinked = linkedClient?.id === client.id;
               
               return (
                 <div
-                  key={client.id}
-                  className="flex-shrink-0 p-2 cursor-pointer"
+                  key={`${client.id}-${index}`} // Unique key for duplicated items
+                  className={`flex-shrink-0 px-4 py-2 rounded-lg border cursor-pointer h-25 min-w-fit flex items-center ${
+                    isDragging 
+                      ? 'transition-none'
+                      : 'transition-all duration-200'
+                  } ${
+                    isLinked 
+                      ? 'bg-blue-50 border-blue-200 shadow-md'
+                      : isDragging
+                        ? 'bg-gray-50 border-gray-200'
+                        : 'bg-gray-50 border-gray-200 hover:bg-gray-100'
+                  }`}
+                  style={{
+                    userSelect: 'none',
+                    WebkitUserSelect: 'none',
+                    MozUserSelect: 'none',
+                    msUserSelect: 'none',
+                    WebkitTouchCallout: 'none',
+                    WebkitTapHighlightColor: 'transparent',
+                    touchAction: 'pan-x'
+                  }}
                   onClick={() => handleTabClick(client)}
+                  onDoubleClick={() => onQuickAdd(client)}
                 >
-                  <div className="bg-white rounded-lg shadow p-3">
-                    <div className="text-sm font-medium text-gray-900 mb-1">
+                  <div className="text-center">
+                    <div className="text-sm font-medium text-gray-800 truncate select-none">
                       {client.name}
                     </div>
                     {clientFilter === 'returnables' ? (
-                      <div className="text-xs font-semibold text-blue-600">
+                      <div className="text-xs font-semibold text-orange-600">
                         {(() => {
                           const clientTransactions = getClientTransactions(client.id);
                           const returnableItems: {[key: string]: number} = {};
@@ -552,11 +586,11 @@ const ScrollingTabs: React.FC<ScrollingTabsProps> = ({
                       </div>
                     )}
                     <div className="text-xs text-gray-500 mt-1 text-center">
-                      {client.lastTransactionAt.toLocaleDateString('en-GB', {
+              {client.lastTransactionAt.toLocaleDateString('en-GB', {
                         day: '2-digit',
-                        month: 'short',
+                month: 'short',
                         year: '2-digit'
-                      }).replace(/\s/g, '-')}
+              }).replace(/\s/g, '-')}
                     </div>
                     <div className="text-xs text-gray-500 text-center">
                       {client.lastTransactionAt.toLocaleTimeString('en-GB', {
@@ -564,8 +598,8 @@ const ScrollingTabs: React.FC<ScrollingTabsProps> = ({
                         minute: '2-digit'
                       })}
                     </div>
+                    </div>
                   </div>
-                </div>
               );
             })}
           </div>
@@ -580,6 +614,7 @@ const ScrollingTabs: React.FC<ScrollingTabsProps> = ({
           onResetCalculator={onResetCalculator}
         />
       )}
+    </div>
     </>
   );
 };
