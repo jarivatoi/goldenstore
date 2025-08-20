@@ -102,17 +102,31 @@ const ScrollingTabs: React.FC<ScrollingTabsProps> = ({
           setIsDragging(false);
           // Calculate current progress and resume
           if (timelineRef.current) {
+            // Calculate where we are in the animation cycle
             const currentX = gsap.getProperty(content, "x") as number;
+            
+            // Map current position to timeline progress (0 to 1)
+            // Timeline goes from containerWidth to -contentWidth
             const progress = (containerWidth - currentX) / totalDistance;
-            timelineRef.current.progress(Math.max(0, Math.min(1, progress))).resume();
+            const normalizedProgress = ((progress % 1) + 1) % 1; // Keep between 0-1
+            
+            // Set timeline to current position and resume
+            timelineRef.current.progress(normalizedProgress);
+            timelineRef.current.resume();
           }
         },
         onThrowComplete: function() {
           // Resume after inertia completes
           if (timelineRef.current) {
             const currentX = gsap.getProperty(content, "x") as number;
+            
+            // Map current position to timeline progress
             const progress = (containerWidth - currentX) / totalDistance;
-            timelineRef.current.progress(Math.max(0, Math.min(1, progress))).resume();
+            const normalizedProgress = ((progress % 1) + 1) % 1; // Keep between 0-1
+            
+            // Set timeline to current position and resume
+            timelineRef.current.progress(normalizedProgress);
+            timelineRef.current.resume();
           }
         }
       });
