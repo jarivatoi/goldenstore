@@ -39,6 +39,9 @@ const ScrollingTabs: React.FC<ScrollingTabsProps> = ({
   const [isPaused, setIsPaused] = React.useState(false);
   const { getClientTransactions } = useCredit();
 
+  // Define OFFSET constant at component level
+  const OFFSET = 400;
+
   // Helper function to kill existing timeline
   const killExistingTimeline = useCallback(() => {
     if (timelineRef.current) {
@@ -93,7 +96,6 @@ const createNewTimeline = (startFromPosition?: number) => {
   });
   
  // Calculate seamless loop positions with offset
-const OFFSET = 400;
 const endPosition = -contentWidth;
 // Ensure loopStartPosition doesn't go below containerWidth
 const loopStartPosition = Math.max(contentWidth - OFFSET, containerWidth);
@@ -218,7 +220,7 @@ if (startFromPosition !== undefined) {
   type: "x",
   bounds: {
     minX: -contentWidth,
-    maxX: Math.max(contentWidth - OFFSET, containerWidth) // Use the already declared OFFSET
+    maxX: Math.max(contentWidth - OFFSET, containerWidth)
   },
         inertia: true,
         edgeResistance: 0.7,
