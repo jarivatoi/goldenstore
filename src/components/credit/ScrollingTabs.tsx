@@ -107,7 +107,18 @@ const ScrollingTabs: React.FC<ScrollingTabsProps> = ({
           { 
             x: -contentWidth, // Exit to left
             duration: duration,
-            ease: "none",
+            ease: "none"
+        onThrowComplete: function() {
+        }
+      });
+      
+      // Create draggable instance
+      draggableRef.current = Draggable.create(content, {
+        type: "x",
+        bounds: {
+          minX: -contentWidth,
+          maxX: containerWidth
+        },
         onDragStart: function() {
           if (timelineRef.current) {
             timelineRef.current.pause();
@@ -135,8 +146,6 @@ const ScrollingTabs: React.FC<ScrollingTabsProps> = ({
           if (timelineRef.current) {
             timelineRef.current.progress(normalizedProgress).resume();
           }
-        },
-        onThrowComplete: function() {
         }
       });
     });
