@@ -38,10 +38,6 @@ const ClientActionModal: React.FC<ClientActionModalProps> = ({ client, onClose, 
     try {
       setIsProcessing(true);
       await addPartialPayment(client.id, amount);
-      
-      // Trigger credit data changed event to resume scrolling
-      window.dispatchEvent(new CustomEvent('creditDataChanged'));
-      
       // Reset calculator after successful payment
       if (onResetCalculator) {
         onResetCalculator();
@@ -59,10 +55,6 @@ const ClientActionModal: React.FC<ClientActionModalProps> = ({ client, onClose, 
     try {
       setIsProcessing(true);
       await settleClient(client.id);
-      
-      // Trigger credit data changed event to resume scrolling
-      window.dispatchEvent(new CustomEvent('creditDataChanged'));
-      
       onClose();
       if (onResetCalculator) {
         onResetCalculator();
