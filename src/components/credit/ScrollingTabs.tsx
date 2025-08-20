@@ -108,18 +108,6 @@ const ScrollingTabs: React.FC<ScrollingTabsProps> = ({
             x: -contentWidth, // Exit to left
             duration: duration,
             ease: "none"
-          }
-        );
-      
-      // Create draggable with matching bounds
-      draggableRef.current = Draggable.create(content, {
-        type: "x",
-        bounds: {
-          minX: -(contentWidth + 100), // Allow dragging beyond content
-          maxX: containerWidth
-        },
-        edgeResistance: 0.3,
-        inertia: true,
         onDragStart: function() {
           if (timelineRef.current) {
             timelineRef.current.pause();
@@ -149,25 +137,6 @@ const ScrollingTabs: React.FC<ScrollingTabsProps> = ({
           }
         },
         onThrowComplete: function() {
-          // Get current position after throw/inertia
-          const currentX = gsap.getProperty(content, "x") as number;
-          const containerWidth = container.offsetWidth;
-          const contentWidth = content.scrollWidth;
-          
-          // Calculate how far we've moved from the starting position
-          const dragDistance = containerWidth - currentX;
-          
-          // Calculate timeline progress using helper function
-          const normalizedProgress = calculateTimelineProgress(dragDistance, containerWidth, contentWidth);
-          
-          console.log('🎯 Throw completed - resuming timeline at progress:', normalizedProgress);
-          
-          // Resume timeline from calculated position
-          if (timelineRef.current) {
-            timelineRef.current.progress(normalizedProgress).resume();
-          } else {
-            console.log('⚠️ Timeline not available after throw');
-          }
         }
       });
     });
