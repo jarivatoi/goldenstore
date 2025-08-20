@@ -147,7 +147,7 @@ const ScrollingTabs: React.FC<ScrollingTabsProps> = ({
             const containerWidth = container.offsetWidth;
             const contentWidth = content.scrollWidth;
             const totalDistance = contentWidth + containerWidth;
-            const duration = totalDistance / 40;
+            const duration = totalDistance / 60;
             
             // Create new timeline
             timelineRef.current = gsap.timeline({ repeat: -1, ease: "none" });
