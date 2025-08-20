@@ -114,11 +114,11 @@ const ScrollingTabs: React.FC<ScrollingTabsProps> = ({
         force3D: true
       })
       // Instantly move to right side (off-screen right) for seamless loop
-      .set(content, { x: loopStartPosition})
+      .set(content, { x: loopStartPosition })
       // Continue the loop from right to left
       .to(content, { 
         x: endPosition, 
-        duration: duration,
+        duration: (Math.abs(loopStartPosition - endPosition) / (contentWidth + containerWidth)) * duration,
         ease: "none",
         force3D: true
       });
