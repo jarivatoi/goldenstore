@@ -58,7 +58,7 @@ const ScrollingTabs: React.FC<ScrollingTabsProps> = ({
     container.offsetWidth;
     content.offsetWidth;
     
-    const containerWidth = container.offsetWidth-400;
+    const containerWidth = 50; // Fixed small value for immediate emergence
     const contentWidth = content.scrollWidth;
     
     // Calculate duration based on content width
@@ -173,7 +173,7 @@ const ScrollingTabs: React.FC<ScrollingTabsProps> = ({
       container.offsetWidth;
       content.offsetWidth;
       
-      const containerWidth = container.offsetWidth-820;
+      const containerWidth = 50; // Fixed small value for immediate emergence
       const contentWidth = content.scrollWidth;
       
       // Calculate duration based on content width
