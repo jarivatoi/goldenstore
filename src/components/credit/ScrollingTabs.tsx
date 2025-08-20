@@ -83,55 +83,56 @@ const createNewTimeline = (startFromPosition?: number) => {
     force3D: true
   });
   
-  // Calculate seamless loop positions with offset
-  const OFFSET = 400;
-  const endPosition = -contentWidth;
-  const loopStartPosition = contentWidth - OFFSET; // Apply offset to loop restart
+ // Calculate seamless loop positions with offset
+const OFFSET = 400;
+const endPosition = -contentWidth;
+// Ensure loopStartPosition doesn't go below containerWidth
+const loopStartPosition = Math.max(contentWidth - OFFSET, containerWidth);
+
+// If starting from a specific position (like after drag)
+if (startFromPosition !== undefined) {
+  // Calculate remaining duration based on current position
+  const totalDistance = contentWidth + containerWidth;
+  const currentToEndDistance = Math.abs(startFromPosition - endPosition);
+  const currentToEndDuration = (currentToEndDistance / totalDistance) * duration;
   
-  // If starting from a specific position (like after drag)
-  if (startFromPosition !== undefined) {
-    // Calculate remaining duration based on current position
-    const totalDistance = contentWidth + containerWidth;
-    const currentToEndDistance = Math.abs(startFromPosition - endPosition);
-    const currentToEndDuration = (currentToEndDistance / totalDistance) * duration;
-    
-    // Create timeline from current position
-    timelineRef.current
-      .set(content, { x: startFromPosition })
-      .to(content, { 
-        x: endPosition, 
-        duration: currentToEndDuration,
-        ease: "none",
-        force3D: true
-      })
-      .set(content, { x: loopStartPosition })
-      .to(content, { 
-        x: endPosition, 
-        duration: duration,
-        ease: "none",
-        force3D: true
-      });
-  } else {
-    // Initial timeline - start with offset from right edge
-    const initialStartPosition = containerWidth - OFFSET;
-    
-    timelineRef.current
-      .set(content, { x: initialStartPosition }) // Start with offset from right edge
-      .to(content, { 
-        x: endPosition, 
-        duration: duration,
-        ease: "none",
-        force3D: true
-      })
-      .set(content, { x: loopStartPosition })
-      .to(content, { 
-        x: endPosition, 
-        duration: duration,
-        ease: "none",
-        force3D: true
-      });
-  }
+  // Create timeline from current position
+  timelineRef.current
+    .set(content, { x: startFromPosition })
+    .to(content, { 
+      x: endPosition, 
+      duration: currentToEndDuration,
+      ease: "none",
+      force3D: true
+    })
+    .set(content, { x: loopStartPosition })
+    .to(content, { 
+      x: endPosition, 
+      duration: duration,
+      ease: "none",
+      force3D: true
+    });
+} else {
+  // Initial timeline - start with offset from right edge
+  // Ensure initialStartPosition doesn't go below 0
+  const initialStartPosition = Math.max(containerWidth - OFFSET, 0);
   
+  timelineRef.current
+    .set(content, { x: initialStartPosition }) // Start with offset from right edge
+    .to(content, { 
+      x: endPosition, 
+      duration: duration,
+      ease: "none",
+      force3D: true
+    })
+    .set(content, { x: loopStartPosition })
+    .to(content, { 
+      x: endPosition, 
+      duration: duration,
+      ease: "none",
+      force3D: true
+    });
+}
   return timelineRef.current;
 };
 
@@ -209,7 +210,7 @@ draggableRef.current = Draggable.create(content, {
   type: "x",
   bounds: {
     minX: -contentWidth,
-    maxX: contentWidth - 400 // Adjust bounds for offset
+    maxX: Math.max(contentWidth - 400, containerWidth) // Ensure positive value
   },
         inertia: true,
         edgeResistance: 0.7,
