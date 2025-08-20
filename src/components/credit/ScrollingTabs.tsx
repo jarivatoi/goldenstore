@@ -221,6 +221,7 @@ const ScrollingTabs: React.FC<ScrollingTabsProps> = ({
         force3D: true, // Enable hardware acceleration
         cursor: "grab",
         activeCursor: "grabbing",
+        onDragStart: function() {
           killExistingTimeline();
           setIsDragging(true);
         },
