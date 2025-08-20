@@ -58,12 +58,12 @@ const ScrollingTabs: React.FC<ScrollingTabsProps> = ({
     container.offsetWidth;
     content.offsetWidth;
     
-    const containerWidth =  container.offsetWidth-400;
-    const contentWidth = content.scrollWidth-400;
+    const containerWidth =  500;
+    const contentWidth = content.scrollWidth;
     
     // Calculate duration based on content width
     const pixelsPerSecond = 80; // Increase for faster scrolling, decrease for slower
-    const totalDistance = contentWidth + containerWidth-800; 
+    const totalDistance = contentWidth + containerWidth; 
     const duration = totalDistance / pixelsPerSecond;
     
     return { containerWidth, contentWidth, pixelsPerSecond, totalDistance, duration };
@@ -96,7 +96,7 @@ const ScrollingTabs: React.FC<ScrollingTabsProps> = ({
     
     // Calculate seamless loop: content should emerge from right as it exits left
     const endPosition = -contentWidth;
-    const loopStartPosition = containerWidth; // Start just off-screen to the right
+    const loopStartPosition = containerWidth+400; // Start just off-screen to the right
     
     // Calculate duration from current position to end
     const totalDistance = contentWidth + containerWidth;
