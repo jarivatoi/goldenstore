@@ -336,80 +336,41 @@ const ScrollingTabs: React.FC<ScrollingTabsProps> = ({
   // Handle modal close - resume timeline
   const handleModalClose = () => {
     setSelectedClientForAction(null);
-    // Keep persistent animation active when modal closes
-    // Resume timeline
-    if (timelineRef.current) {
-      timelineRef.current.resume();
-    }
+    // Don't resume timeline immediately - let the animation detection handle it
+    // The timeline will resume once the persistent animation is cleared
   };
 
-  // Clear persistent animation when timeline is actively running (scroll initiated)
+  // Monitor timeline and persistent animation interaction
   React.useEffect(() => {
-    const checkTimelineActivity = () => {
-      if (timelineRef.current && persistentAnimationTabId) {
-        const isActive = timelineRef.current.isActive();
-        const isPaused = timelineRef.current.paused();
-        const progress = timelineRef.current.progress();
-        
-        // Clear animation if timeline is running (not paused) and actually progressing
-        if (isActive && !isPaused && progress > 0) {
-          console.log('🎯 Timeline is actively running, clearing persistent animation');
-          setPersistentAnimationTabId(null);
-        }
-      }
-    };
-    
     if (persistentAnimationTabId) {
-      // Check immediately
-      checkTimelineActivity();
+      // Pause timeline when persistent animation is active
+      if (timelineRef.current && !timelineRef.current.paused()) {
+        console.log('🎯 Pausing timeline due to persistent animation');
+        timelineRef.current.pause();
+      }
       
-      // Also check periodically while timeline might be starting
-      const interval = setInterval(checkTimelineActivity, 50);
-      
-      // Cleanup interval after a longer time to ensure detection
-      const timeout = setTimeout(() => {
-        clearInterval(interval);
-      }, 5000);
+      // Set up timer to clear animation and resume timeline after 3 seconds
+      const clearAnimationTimer = setTimeout(() => {
+        console.log('🎯 Auto-clearing persistent animation after 3 seconds');
+        setPersistentAnimationTabId(null);
+        
+        // Resume timeline after clearing animation
+        if (timelineRef.current && timelineRef.current.paused()) {
+          console.log('🎯 Resuming timeline after clearing persistent animation');
+          timelineRef.current.resume();
+        }
+      }, 3000);
       
       return () => {
-        clearInterval(interval);
-        clearTimeout(timeout);
+        clearTimeout(clearAnimationTimer);
       };
-    }
-  }, [persistentAnimationTabId]);
-  
-  // Additional effect to clear animation when timeline resumes from pause
-  React.useEffect(() => {
-    if (!timelineRef.current || !persistentAnimationTabId) return;
-    
-    const timeline = timelineRef.current;
-    
-    // Monitor timeline state changes more aggressively
-    const checkResume = () => {
-      if (timeline.isActive() && !timeline.paused()) {
-        console.log('🎯 Timeline resumed from pause, clearing persistent animation');
-        setPersistentAnimationTabId(null);
+    } else {
+      // No persistent animation - ensure timeline is running if it should be
+      if (timelineRef.current && timelineRef.current.paused() && sortedClients.length > 0) {
+        console.log('🎯 No persistent animation, resuming timeline');
+        timelineRef.current.resume();
       }
-    };
-    
-    // Check every 25ms for faster detection
-    const monitorInterval = setInterval(checkResume, 25);
-    
-    // Also add a delayed check to catch timeline startup
-    const delayedCheck = setTimeout(() => {
-      checkResume();
-    }, 100);
-    
-    // Cleanup after 10 seconds
-    const cleanup = setTimeout(() => {
-      clearInterval(monitorInterval);
-    }, 10000);
-    
-    return () => {
-      clearInterval(monitorInterval);
-      clearTimeout(delayedCheck);
-      clearTimeout(cleanup);
-    };
+    }
   }, [persistentAnimationTabId]);
 
   return (
