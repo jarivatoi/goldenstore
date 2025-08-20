@@ -171,9 +171,6 @@ const ScrollingTabs: React.FC<ScrollingTabsProps> = ({
     });
   }, [clients.length, calculateTimelineProgress]);
 
-  // Duplicate content for seamless looping
-  const duplicatedClients = clients.length > 0 ? [...clients, ...clients, ...clients] : clients;
-
   // Setup animation when clients change
   useEffect(() => {
     setupContinuousScroll();
@@ -258,13 +255,13 @@ const ScrollingTabs: React.FC<ScrollingTabsProps> = ({
             className="flex gap-6 whitespace-nowrap relative z-10"
             style={{ minWidth: 'max-content' }}
           >
-            {duplicatedClients.map((client, index) => {
+            {clients.map((client, index) => {
               const totalDebt = getClientTotalDebt(client.id);
               const isLinked = linkedClient?.id === client.id;
               
               return (
                 <div
-                  key={`${client.id}-${index}`} // Unique key for duplicated items
+                  key={client.id}
                   className={`flex-shrink-0 px-4 py-2 rounded-lg border cursor-pointer h-25 min-w-fit flex items-center ${
                     isDragging 
                       ? 'transition-none'
