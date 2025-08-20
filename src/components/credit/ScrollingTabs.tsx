@@ -108,7 +108,7 @@ const ScrollingTabs: React.FC<ScrollingTabsProps> = ({
             x: -contentWidth, // Exit to left
             duration: duration,
             ease: "none"
-      });
+          });
       
       // Create draggable instance
       draggableRef.current = Draggable.create(content, {
