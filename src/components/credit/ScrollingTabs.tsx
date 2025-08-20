@@ -206,21 +206,19 @@ const ScrollingTabs: React.FC<ScrollingTabsProps> = ({
       // Create draggable instance
       draggableRef.current = Draggable.create(content, {
         type: "x",
-        bounds: {
-          minX: -contentWidth - containerWidth,
-          maxX: containerWidth
-        },
+        bounds: false, // Remove bounds completely to prevent snapping
         inertia: true,
-        edgeResistance: 0.3,
-        dragResistance: 0.1, // Lower = easier to drag
-        throwResistance: 0.3, // Controls how much the throw slows down
-        maxDuration: 3, // Maximum duration for inertia
-        minDuration: 0.2, // Minimum duration for inertia
-        overshootTolerance: 50, // Allow some overshooting for better feel
+        edgeResistance: 0, // No resistance at edges
+        dragResistance: 0, // No drag resistance
+        throwResistance: 0.5, // Moderate throw resistance
+        maxDuration: 2, // Shorter max duration
+        minDuration: 0.1, // Shorter min duration
         allowNativeTouchScrolling: false,
         allowEventDefault: false,
         snap: false, // Disable automatic snapping
         liveSnap: false, // Disable live snapping during drag
+        autoScroll: 0, // Disable auto scroll
+        minimumMovement: 2, // Minimum movement to trigger drag
         onDragStart: function() {
           // Kill the timeline when user starts dragging
           killExistingTimeline();
@@ -228,29 +226,29 @@ const ScrollingTabs: React.FC<ScrollingTabsProps> = ({
         },
         onDragEnd: function() {
           setIsDragging(false);
-          // Don't create timeline or snap - let inertia handle positioning
+          // Don't do anything on drag end - wait for throw complete
         },
         onThrowComplete: function() {
-          // Capture final position and only resume timeline if user didn't drag backward significantly
+          // Wait longer for physics to completely settle
           setTimeout(() => {
             const currentPosition = gsap.getProperty(content, "x") as number;
             
             killExistingTimeline();
             
-            // Only resume timeline if user didn't position content manually
-            // Allow user to keep content where they positioned it
-            const isUserPositioned = currentPosition < -50; // More lenient threshold
+            // Only resume timeline if content is near the starting position
+            // If user dragged significantly in any direction, respect their positioning
+            const isNearStart = Math.abs(currentPosition) < 100;
             
-            if (!isUserPositioned) {
+            if (isNearStart) {
               const newTimeline = createNewTimeline(currentPosition);
               if (newTimeline) {
                 newTimeline.play();
               }
             } else {
-              // User positioned content manually - don't resume timeline
-              console.log('Content manually positioned by user, timeline paused');
+              // User positioned content manually - keep it there
+              console.log('Content manually positioned by user at:', currentPosition);
             }
-          }, 100);
+          }, 300); // Longer delay to ensure physics are completely settled
         }
       });
     }
