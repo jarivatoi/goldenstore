@@ -266,7 +266,7 @@ const ScrollingTabs: React.FC<ScrollingTabsProps> = ({
         >
           <div 
             ref={contentRef}
-            className="flex gap-3 whitespace-nowrap relative z-10 justify-center min-w-full"
+            className="flex gap-3 whitespace-nowrap relative z-10 min-w-full"
           >
             {clients.map((client) => {
               const totalDebt = getClientTotalDebt(client.id);
