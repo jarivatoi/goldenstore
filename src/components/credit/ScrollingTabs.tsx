@@ -57,61 +57,73 @@ const ScrollingTabs: React.FC<ScrollingTabsProps> = ({
       draggableRef.current = null;
     }
 
-    // Force layout calculation
-    gsap.set(content, { x: 0 });
-    container.offsetWidth;
-    content.offsetWidth;
+    // Force layout recalculation
+    gsap.set(content, { x: 0, force3D: true });
     
-    const containerWidth = container.offsetWidth;
-    const contentWidth = content.scrollWidth;
-    
-    // Only proceed if content is wider than container
-    if (contentWidth <= containerWidth) return;
-    
-    // Create seamless loop by duplicating content
-    const totalWidth = contentWidth + containerWidth;
-    const duration = totalWidth / 50; // 50 pixels per second
-    
-    // Create infinite scroll timeline
-    timelineRef.current = gsap.timeline({ 
-      repeat: -1, 
-      ease: "none",
-      paused: isDragging
-    });
-    
-    timelineRef.current
-      .set(content, { x: containerWidth }) // Start from right edge
-      .to(content, { 
-        x: -contentWidth, 
-        duration: duration,
+    // Wait for layout to settle
+    requestAnimationFrame(() => {
+      const containerWidth = container.offsetWidth;
+      const contentWidth = content.scrollWidth;
+      
+      console.log('Container width:', containerWidth, 'Content width:', contentWidth);
+      
+      // Only proceed if content is wider than container
+      if (contentWidth <= containerWidth) {
+        console.log('Content fits in container, no scrolling needed');
+        return;
+      }
+      
+      // Calculate animation parameters
+      const totalDistance = contentWidth + containerWidth;
+      const duration = totalDistance / 30; // 30 pixels per second for slower, more readable scroll
+      
+      console.log('Setting up animation - Distance:', totalDistance, 'Duration:', duration);
+      
+      // Create infinite scroll timeline
+      timelineRef.current = gsap.timeline({ 
+        repeat: -1, 
         ease: "none"
       });
-    
-    // Create draggable
-    draggableRef.current = Draggable.create(content, {
-      type: "x",
-      bounds: {
-        minX: -contentWidth,
-        maxX: containerWidth
-      },
-      inertia: true,
-      edgeResistance: 0.5,
-      onDragStart: function() {
-        if (timelineRef.current) {
-          timelineRef.current.pause();
+      
+      timelineRef.current
+        .set(content, { x: containerWidth, force3D: true }) // Start from right edge
+        .to(content, { 
+          x: -contentWidth, 
+          duration: duration,
+          ease: "none",
+          force3D: true
+        });
+      
+      // Create draggable
+      draggableRef.current = Draggable.create(content, {
+        type: "x",
+        bounds: {
+          minX: -contentWidth,
+          maxX: containerWidth
+        },
+        inertia: true,
+        edgeResistance: 0.5,
+        onDragStart: function() {
+          console.log('Drag started, pausing timeline');
+          if (timelineRef.current) {
+            timelineRef.current.pause();
+          }
+          setIsDragging(true);
+        },
+        onDragEnd: function() {
+          console.log('Drag ended, resuming timeline');
+          setIsDragging(false);
+          // Resume animation from current position
+          if (timelineRef.current) {
+            const currentX = gsap.getProperty(content, "x") as number;
+            const progress = (containerWidth - currentX) / totalDistance;
+            timelineRef.current.progress(Math.max(0, Math.min(1, progress)));
+            timelineRef.current.resume();
+          }
         }
-        setIsDragging(true);
-      },
-      onDragEnd: function() {
-        setIsDragging(false);
-        // Resume animation from current position
-        if (timelineRef.current) {
-          const currentX = gsap.getProperty(content, "x") as number;
-          const progress = (containerWidth - currentX) / totalWidth;
-          timelineRef.current.progress(progress);
-          timelineRef.current.resume();
-        }
-      }
+      });
+      
+      console.log('Animation setup complete');
     });
   }, [clients.length, isDragging]);
 
