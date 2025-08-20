@@ -222,11 +222,11 @@ const ClientActionModal: React.FC<ClientActionModalProps> = ({ client, onClose, 
       // Force a re-render of the parent component to update scrolling tabs
       window.dispatchEvent(new CustomEvent('creditDataChanged'));
       
-      // Close modal and reset calculator
-      onClose();
+      // Reset calculator after successful returns processing
       if (onResetCalculator) {
         onResetCalculator();
       }
+      onClose();
     } catch (error) {
       console.error('Error processing returns:', error);
       alert('Failed to process returns');
@@ -450,11 +450,6 @@ const ClientActionModal: React.FC<ClientActionModalProps> = ({ client, onClose, 
                             await processItemReturn(itemType, quantity);
                           }
                         }
-                        
-                        // Force a re-render of the parent component to update scrolling tabs
-                        window.dispatchEvent(new CustomEvent('creditDataChanged'));
-                        
-                        // Close modal and reset calculator
                         onClose();
                         // Reset calculator after settling all returnables
                         if (onResetCalculator) {
@@ -519,6 +514,10 @@ const ClientActionModal: React.FC<ClientActionModalProps> = ({ client, onClose, 
                                 } finally {
                                   setIsProcessing(false);
                                 }
+                                
+                                // Force a re-render of the parent component to update scrolling tabs
+                                window.dispatchEvent(new CustomEvent('creditDataChanged'));
+                                
                               }
                             }}
                             disabled={isProcessing}
