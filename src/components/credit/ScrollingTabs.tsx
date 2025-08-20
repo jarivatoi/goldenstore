@@ -97,13 +97,11 @@ const ScrollingTabs: React.FC<ScrollingTabsProps> = ({
       const containerWidth = container.offsetWidth;
       const contentWidth = content.scrollWidth;
       
-      console.log('Setting up continuous scroll - Container:', containerWidth, 'Content:', contentWidth);
-      
-      // Calculate total distance for seamless loop
+      // Calculate total distance including container width gap
       const totalDistance = contentWidth + containerWidth;
       const duration = totalDistance / 40; // 40px per second for smooth readable speed
       
-      console.log('Animation params - Distance:', totalDistance, 'Duration:', duration);
+      console.log('Setting up continuous scroll - Container:', containerWidth, 'Content:', contentWidth, 'Total Distance:', totalDistance);
       
       // Create seamless infinite timeline
       timelineRef.current = gsap.timeline({ repeat: -1, ease: "none" });
@@ -122,7 +120,7 @@ const ScrollingTabs: React.FC<ScrollingTabsProps> = ({
         type: "x",
         bounds: {
           minX: -contentWidth,
-          maxX: containerWidth
+          maxX: containerWidth + containerWidth // Allow dragging further right
         },
         onDragStart: function() {
           // Kill the timeline completely on drag start
@@ -174,7 +172,7 @@ const ScrollingTabs: React.FC<ScrollingTabsProps> = ({
   }, [clients.length, calculateTimelineProgress]);
 
   // Duplicate content for seamless looping
-  const duplicatedClients = clients.length > 0 ? [...clients, ...clients] : clients;
+  const duplicatedClients = clients.length > 0 ? [...clients, ...clients, ...clients] : clients;
 
   // Setup animation when clients change
   useEffect(() => {
