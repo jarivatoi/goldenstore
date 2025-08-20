@@ -206,11 +206,14 @@ const ScrollingTabs: React.FC<ScrollingTabsProps> = ({
       // Create draggable instance
       draggableRef.current = Draggable.create(content, {
         type: "x",
-        bounds: false, // Remove bounds completely to prevent snapping
+        bounds: {
+          minX: -contentWidth - containerWidth, // Allow dragging far left
+          maxX: containerWidth * 2 // Allow dragging far right
+        },
         inertia: true,
-        edgeResistance: 0, // No resistance at edges
-        dragResistance: 0, // No drag resistance
-        throwResistance: 0.5, // Moderate throw resistance
+        edgeResistance: 0.1, // Very low resistance
+        dragResistance: 0.1, // Very low drag resistance  
+        throwResistance: 0.3, // Lower throw resistance for better momentum
         maxDuration: 2, // Shorter max duration
         minDuration: 0.1, // Shorter min duration
         allowNativeTouchScrolling: false,
@@ -219,6 +222,7 @@ const ScrollingTabs: React.FC<ScrollingTabsProps> = ({
         liveSnap: false, // Disable live snapping during drag
         autoScroll: 0, // Disable auto scroll
         minimumMovement: 2, // Minimum movement to trigger drag
+        force3D: true, // Enable hardware acceleration
         onDragStart: function() {
           // Kill the timeline when user starts dragging
           killExistingTimeline();
@@ -235,11 +239,11 @@ const ScrollingTabs: React.FC<ScrollingTabsProps> = ({
             
             killExistingTimeline();
             
-            // Only resume timeline if content is near the starting position
-            // If user dragged significantly in any direction, respect their positioning
-            const isNearStart = Math.abs(currentPosition) < 100;
+            // Only resume timeline if content is positioned within reasonable bounds
+            // Allow more flexibility for user positioning
+            const isInReasonableBounds = currentPosition > -containerWidth && currentPosition < containerWidth;
             
-            if (isNearStart) {
+            if (isInReasonableBounds) {
               const newTimeline = createNewTimeline(currentPosition);
               if (newTimeline) {
                 newTimeline.play();
@@ -248,7 +252,7 @@ const ScrollingTabs: React.FC<ScrollingTabsProps> = ({
               // User positioned content manually - keep it there
               console.log('Content manually positioned by user at:', currentPosition);
             }
-          }, 300); // Longer delay to ensure physics are completely settled
+          }, 200); // Delay to ensure physics are completely settled
         }
       });
     }
