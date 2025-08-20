@@ -64,24 +64,8 @@ const ScrollingTabs: React.FC<ScrollingTabsProps> = ({
       
       console.log('Setting up continuous scroll - Container:', containerWidth, 'Content:', contentWidth);
       
-      // Calculate total distance for seamless loop
-      const totalDistance = contentWidth + containerWidth;
-      const duration = totalDistance / 40; // 40px per second for smooth readable speed
-      
-      console.log('Animation params - Distance:', totalDistance, 'Duration:', duration);
-      
-      // Create seamless infinite timeline
-      timelineRef.current = gsap.timeline({ repeat: -1, ease: "none" });
-      
-      timelineRef.current
-        .fromTo(content, 
-          { x: containerWidth }, // Enter from right
-          { 
-            x: -contentWidth, // Exit to left
-            duration: duration,
-            ease: "none"
-          }
-        );
+      // Start the initial timeline
+      startTimelineFromPosition(containerWidth, containerWidth, contentWidth);
       
       // Create draggable with matching bounds
       draggableRef.current = Draggable.create(content, {
@@ -99,35 +83,65 @@ const ScrollingTabs: React.FC<ScrollingTabsProps> = ({
           setIsDragging(true);
         },
         onDragEnd: function() {
-          setIsDragging(false);
-          // Calculate current progress and resume
-          if (timelineRef.current) {
-            // Calculate where we are in the animation cycle
-            const currentX = gsap.getProperty(content, "x") as number;
-            
-            // Map current position to timeline progress (0 to 1)
-            // Timeline goes from containerWidth to -contentWidth
-            const progress = (containerWidth - currentX) / totalDistance;
-            const normalizedProgress = ((progress % 1) + 1) % 1; // Keep between 0-1
-            
-            // Set timeline to current position and resume
-            timelineRef.current.progress(normalizedProgress);
-            timelineRef.current.resume();
-          }
-        },
-        onThrowComplete: function() {
-          if (timelineRef.current) {
-            const currentX = gsap.getProperty(content, "x") as number;
-            
-            // Map current position to timeline progress
-            const progress = (containerWidth - currentX) / totalDistance;
-            const normalizedProgress = ((progress % 1) + 1) % 1; // Keep between 0-1
-          }
-        }
-      });
-    });
+          // Create new timeline from throw end position
+          const currentX = gsap.getProperty(content, "x") as number;
+          console.log('Throw completed at position:', currentX, '- creating new timeline');
+          startTimelineFromPosition(currentX, containerWidth, contentWidth);
+          const currentX = gsap.getProperty(content, "x") as number;
+          console.log('Drag ended at position:', currentX, '- creating new timeline');
+          startTimelineFromPosition(currentX, containerWidth, contentWidth);
   }, [clients.length]);
 
+  // Helper function to start timeline from any position
+  const startTimelineFromPosition = (startX: number, containerWidth: number, contentWidth: number) => {
+    if (!contentRef.current) return;
+    
+    const content = contentRef.current;
+    const totalDistance = containerWidth + contentWidth;
+    
+    // Calculate remaining distance to complete the cycle
+    const targetX = -contentWidth; // Always end at left edge
+    const remainingDistance = startX - targetX;
+    const remainingDuration = remainingDistance / 40; // 40px per second
+    
+    console.log('Starting timeline from:', startX, 'to:', targetX, 'duration:', remainingDuration);
+    
+    // Kill any existing timeline
+    if (timelineRef.current) {
+      timelineRef.current.kill();
+    }
+    
+    // Create new timeline from current position
+    timelineRef.current = gsap.timeline({ 
+      repeat: -1, 
+      ease: "none",
+      onComplete: () => {
+        console.log('Timeline cycle completed, restarting from right');
+      }
+    });
+    
+    // First, complete current cycle from startX to left edge
+    if (remainingDuration > 0) {
+      timelineRef.current.fromTo(content, 
+        { x: startX },
+        { 
+          x: targetX,
+          duration: remainingDuration,
+          ease: "none"
+        }
+      );
+    }
+    
+    // Then continue with normal cycles (right to left)
+    timelineRef.current.fromTo(content, 
+      { x: containerWidth }, // Enter from right
+      { 
+        x: -contentWidth, // Exit to left
+        duration: totalDistance / 40,
+        ease: "none"
+      }
+    );
+  };
   // Duplicate content for seamless looping
   const duplicatedClients = clients.length > 0 ? [...clients, ...clients] : clients;
 
