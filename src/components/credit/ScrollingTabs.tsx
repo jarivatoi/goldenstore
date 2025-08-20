@@ -1,5 +1,5 @@
 import React, { useEffect, useRef } from 'react';
-import { useCallback } from 'react';
+import { useCallback, useState } from 'react';
 import { gsap } from 'gsap';
 import { Draggable } from '../../lib/draggable.js';
 import { Client } from '../../types';
@@ -46,34 +46,6 @@ const ScrollingTabs: React.FC<ScrollingTabsProps> = ({
     // Current position in the animation cycle
     // dragDistance is how far we've moved from the starting position
     const currentPosition = containerWidth - dragDistance;
-    
-    // Calculate progress (0 to 1) in the animation cycle
-    const progress = (containerWidth - currentPosition) / totalDistance;
-    
-    // Normalize to 0-1 range for seamless looping
-    const normalizedProgress = ((progress % 1) + 1) % 1;
-    
-    console.log('📊 Progress calculation:', {
-      dragDistance,
-      containerWidth,
-      contentWidth,
-      totalDistance,
-      currentPosition,
-      progress,
-      normalizedProgress
-    });
-    
-    return normalizedProgress;
-  }, []);
-
-  // Seamless continuous scroll setup
-  const setupContinuousScroll = useCallback(() => {
-    if (!contentRef.current || !containerRef.current || clients.length === 0) return;
-
-    const container = containerRef.current;
-    const content = contentRef.current;
-    
-    // Clean up existing animations
     if (timelineRef.current) {
       timelineRef.current.kill();
       timelineRef.current = null;
@@ -179,26 +151,10 @@ const ScrollingTabs: React.FC<ScrollingTabsProps> = ({
     });
   }, [clients.length, calculateTimelineProgress]);
 
-  // Duplicate content for seamless looping
-  const duplicatedClients = clients.length > 0 ? [...clients, ...clients] : clients;
-
   // Setup animation when clients change
   useEffect(() => {
     setupContinuousScroll();
   }, [setupContinuousScroll]);
-
-  // Debug effect to monitor timeline state
-  useEffect(() => {
-    const interval = setInterval(() => {
-      if (timelineRef.current && !isDragging) {
-        const progress = timelineRef.current.progress();
-        const isActive = timelineRef.current.isActive();
-        console.log('Timeline status - Progress:', progress.toFixed(3), 'Active:', isActive);
-      }
-    }, 2000);
-
-    return () => clearInterval(interval);
-  }, [isDragging]);
 
   // Cleanup on unmount
   useEffect(() => {
@@ -267,12 +223,13 @@ const ScrollingTabs: React.FC<ScrollingTabsProps> = ({
             style={{ minWidth: 'max-content' }}
           >
             {duplicatedClients.map((client, index) => {
+            {clients.map((client) => {
               const totalDebt = getClientTotalDebt(client.id);
               const isLinked = linkedClient?.id === client.id;
               
               return (
                 <div
-                  key={`${client.id}-${index}`} // Unique key for duplicated items
+                  key={client.id}
                   className={`flex-shrink-0 px-4 py-2 rounded-lg border cursor-pointer h-25 min-w-fit flex items-center ${
                     isDragging 
                       ? 'transition-none'
