@@ -39,8 +39,9 @@ const ScrollingTabs: React.FC<ScrollingTabsProps> = ({
   const [isPaused, setIsPaused] = React.useState(false);
   const { getClientTransactions } = useCredit();
 
-  // Define OFFSET constant at component level
+  // Define OFFSET constants at component level
   const OFFSET = 400;
+  const CONTENT_WIDTH_OFFSET = 200; // Additional offset for content width adjustment
 
   // Helper function to kill existing timeline
   const killExistingTimeline = useCallback(() => {
@@ -98,7 +99,7 @@ const createNewTimeline = (startFromPosition?: number) => {
  // Calculate seamless loop positions with offset
 const endPosition = -contentWidth;
 // Ensure loopStartPosition doesn't go below containerWidth
-const loopStartPosition = Math.max(contentWidth - OFFSET, containerWidth);
+const loopStartPosition = Math.max(contentWidth + CONTENT_WIDTH_OFFSET - OFFSET, containerWidth);
 
 // If starting from a specific position (like after drag)
 if (startFromPosition !== undefined) {
@@ -126,7 +127,7 @@ if (startFromPosition !== undefined) {
 } else {
   // Initial timeline - start with offset from right edge
   // Ensure initialStartPosition doesn't go below 0
-  const initialStartPosition = Math.max(containerWidth - OFFSET, 0);
+  const initialStartPosition = Math.max(containerWidth + CONTENT_WIDTH_OFFSET - OFFSET, 0);
   
   timelineRef.current
     .set(content, { x: initialStartPosition }) // Start with offset from right edge
@@ -219,8 +220,8 @@ if (startFromPosition !== undefined) {
     draggableRef.current = Draggable.create(content, {
   type: "x",
   bounds: {
-    minX: -contentWidth,
-    maxX: Math.max(contentWidth - OFFSET, containerWidth)
+    minX: -(contentWidth + CONTENT_WIDTH_OFFSET),
+    maxX: Math.max(contentWidth + CONTENT_WIDTH_OFFSET - OFFSET, containerWidth)
   },
         inertia: true,
         edgeResistance: 0.7,
