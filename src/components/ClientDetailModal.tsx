@@ -57,6 +57,9 @@ const ClientDetailModal: React.FC<ClientDetailModalProps> = ({ client, onClose, 
       
       await updateClient(updatedClient);
       setIsEditingName(false);
+      
+      // Trigger credit data changed event to resume scrolling
+      window.dispatchEvent(new CustomEvent('creditDataChanged'));
     } catch (error) {
       alert('Failed to update client name');
       setEditedName(client.name);

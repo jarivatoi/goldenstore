@@ -248,11 +248,33 @@ const ScrollingTabs: React.FC<ScrollingTabsProps> = ({
   // Handle modal close - resume timeline
   const handleModalClose = () => {
     setSelectedClientForAction(null);
-    // Resume timeline
+    // Resume timeline after modal closes
     if (timelineRef.current) {
       timelineRef.current.resume();
+    } else {
+      // If timeline was killed during editing, recreate it
+      setupContinuousScroll();
     }
   };
+
+  // Listen for credit data changes to resume scrolling after editing
+  useEffect(() => {
+    const handleCreditDataChanged = () => {
+      // Resume scrolling after any credit data changes (like editing client names, transactions, etc.)
+      if (timelineRef.current && timelineRef.current.paused()) {
+        timelineRef.current.resume();
+      } else if (!timelineRef.current) {
+        // Recreate timeline if it was destroyed
+        setupContinuousScroll();
+      }
+    };
+
+    window.addEventListener('creditDataChanged', handleCreditDataChanged);
+    
+    return () => {
+      window.removeEventListener('creditDataChanged', handleCreditDataChanged);
+    };
+  }, [setupContinuousScroll]);
 
   return (
     <>
