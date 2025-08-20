@@ -204,6 +204,56 @@ const ScrollingTabs: React.FC<ScrollingTabsProps> = ({
     setupContinuousScroll();
   }, [setupContinuousScroll]);
 
+  // Listen for timeline restart events from modals
+  useEffect(() => {
+    const handleRestartTimeline = () => {
+      console.log('🎯 Restart timeline event received');
+      
+      // Calculate current progress based on position
+      const currentProgress = calculateTimelineProgress();
+      console.log('🎯 Calculated progress for restart:', currentProgress);
+      
+      // Kill existing timeline
+      if (timelineRef.current) {
+        timelineRef.current.kill();
+        timelineRef.current = null;
+      }
+      
+      // Create new timeline starting from calculated progress
+      const container = containerRef.current;
+      const content = contentRef.current;
+      
+      if (container && content) {
+        const containerWidth = container.offsetWidth;
+        const contentWidth = content.scrollWidth;
+        const totalDistance = contentWidth + containerWidth;
+        const duration = totalDistance / 60;
+        
+        // Create new timeline
+        timelineRef.current = gsap.timeline({ repeat: -1, ease: "none" });
+        timelineRef.current
+          .fromTo(content, 
+            { x: containerWidth }, // Enter from right
+            { 
+              x: -contentWidth, // Exit to left
+              duration: duration,
+              ease: "none"
+            });
+        
+        // Set the timeline to the calculated progress and play
+        timelineRef.current.progress(currentProgress);
+        timelineRef.current.play();
+        
+        console.log('🎯 Timeline restarted from event at progress:', currentProgress);
+      }
+    };
+
+    window.addEventListener('restartScrollingTimeline', handleRestartTimeline);
+    
+    return () => {
+      window.removeEventListener('restartScrollingTimeline', handleRestartTimeline);
+    };
+  }, [calculateTimelineProgress]);
   // Debug effect to monitor timeline state
   useEffect(() => {
     const interval = setInterval(() => {

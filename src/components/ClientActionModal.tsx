@@ -28,6 +28,12 @@ const ClientActionModal: React.FC<ClientActionModalProps> = ({ client, onClose, 
   const bottlesOwed = getClientBottlesOwed(client.id);
   const clientTransactions = getClientTransactions(client.id);
 
+  // Enhanced close handler that restarts timeline
+  const handleClose = () => {
+    // Trigger timeline restart by dispatching a custom event
+    window.dispatchEvent(new CustomEvent('restartScrollingTimeline'));
+    onClose();
+  };
   const handlePartialPayment = async () => {
     const amount = parseFloat(paymentAmount);
     if (isNaN(amount) || amount <= 0 || amount > totalDebt) {
@@ -42,7 +48,7 @@ const ClientActionModal: React.FC<ClientActionModalProps> = ({ client, onClose, 
       if (onResetCalculator) {
         onResetCalculator();
       }
-      onClose();
+      handleClose();
     } catch (error) {
       console.error('Error processing partial payment:', error);
       alert('Failed to process payment');
@@ -55,7 +61,7 @@ const ClientActionModal: React.FC<ClientActionModalProps> = ({ client, onClose, 
     try {
       setIsProcessing(true);
       await settleClient(client.id);
-      onClose();
+      handleClose();
       if (onResetCalculator) {
         onResetCalculator();
       }
@@ -218,7 +224,7 @@ const ClientActionModal: React.FC<ClientActionModalProps> = ({ client, onClose, 
       if (onResetCalculator) {
         onResetCalculator();
       }
-      onClose();
+      handleClose();
     } catch (error) {
       console.error('Error processing returns:', error);
       alert('Failed to process returns');
@@ -304,7 +310,7 @@ const ClientActionModal: React.FC<ClientActionModalProps> = ({ client, onClose, 
             </div>
           </div>
           <button 
-            onClick={onClose}
+            onClick={handleClose}
             className="text-gray-500 hover:text-gray-700 transition-colors"
           >
             <X size={24} />
@@ -495,7 +501,7 @@ const ClientActionModal: React.FC<ClientActionModalProps> = ({ client, onClose, 
                                   // Force a re-render of the parent component to update scrolling tabs
                                   window.dispatchEvent(new CustomEvent('creditDataChanged'));
                                   
-                                  onClose();
+                                  handleClose();
                                   // Reset calculator after settling individual item
                                   if (onResetCalculator) {
                                     onResetCalculator();
