@@ -58,12 +58,12 @@ const ScrollingTabs: React.FC<ScrollingTabsProps> = ({
     container.offsetWidth;
     content.offsetWidth;
     
-    const containerWidth =  500;
+    const containerWidth = container.offsetWidth;
     const contentWidth = content.scrollWidth;
     
     // Calculate duration based on content width
-    const pixelsPerSecond = 80; // Increase for faster scrolling, decrease for slower
-    const totalDistance = contentWidth + containerWidth; 
+    const pixelsPerSecond = 60;
+    const totalDistance = contentWidth + containerWidth;
     const duration = totalDistance / pixelsPerSecond;
     
     return { containerWidth, contentWidth, pixelsPerSecond, totalDistance, duration };
@@ -82,7 +82,7 @@ const ScrollingTabs: React.FC<ScrollingTabsProps> = ({
     // CRITICAL: Always kill existing timeline first
     killExistingTimeline();
     
-    // Start from the provided position or from containerWidth (off-screen right)
+    // Start from the provided position or from 0 (immediately visible)
     const startPosition = startFromPosition !== undefined ? startFromPosition : containerWidth;
     
     // Create new timeline
@@ -96,12 +96,20 @@ const ScrollingTabs: React.FC<ScrollingTabsProps> = ({
     
     // Calculate seamless loop: content should emerge from right as it exits left
     const endPosition = -contentWidth;
-    const loopStartPosition = 2*containerWidth+400; // Start just off-screen to the right
+    const loopStartPosition = containerWidth;
     
-    // Calculate duration from current position to end
-    const totalDistance = contentWidth + containerWidth;
-    const currentToEndDistance = Math.abs(startPosition - endPosition);
-    const currentToEndDuration = (currentToEndDistance / totalDistance) * duration;
+    // If starting from 0 (initial load), use full duration
+    // Otherwise calculate proportional duration based on current position
+    let currentToEndDuration;
+    if (startFromPosition === undefined) {
+      // Initial load: start immediately visible and use full duration
+      currentToEndDuration = duration;
+    } else {
+      // Resume from current position: calculate remaining duration
+      const totalDistance = contentWidth + containerWidth;
+      const currentToEndDistance = Math.abs(startPosition - endPosition);
+      currentToEndDuration = (currentToEndDistance / totalDistance) * duration;
+    }
     
     // Create seamless loop animation
     timelineRef.current
@@ -109,7 +117,7 @@ const ScrollingTabs: React.FC<ScrollingTabsProps> = ({
       // Animate from start position to fully off-screen left
       .to(content, { 
         x: endPosition, 
-        duration: Math.max(0.3, currentToEndDuration), // Faster minimum emergence
+        duration: currentToEndDuration,
         ease: "none",
         force3D: true
       })
@@ -118,7 +126,7 @@ const ScrollingTabs: React.FC<ScrollingTabsProps> = ({
       // Continue the loop from right to left
       .to(content, { 
         x: endPosition, 
-        duration: Math.max(0.3, duration), // Faster minimum loop duration
+        duration: duration,
         ease: "none",
         force3D: true
       });
@@ -177,7 +185,7 @@ const ScrollingTabs: React.FC<ScrollingTabsProps> = ({
       const contentWidth = content.scrollWidth;
       
       // Calculate duration based on content width
-      const pixelsPerSecond = 80; // Keep consistent with getAnimationParams
+      const pixelsPerSecond = 60;
       const totalDistance = contentWidth + containerWidth;
       const duration = totalDistance / pixelsPerSecond;
       
@@ -198,46 +206,53 @@ const ScrollingTabs: React.FC<ScrollingTabsProps> = ({
       // Create draggable instance
       draggableRef.current = Draggable.create(content, {
         type: "x",
-        bounds: false,
-        edgeResistance: 0,
-        edgeResistance: 0.1, // Very light resistance at edges
-        dragResistance: 0,
-        throwResistance: 0.2,
-        liveSnap: false, // No live snapping
-        minimumMovement: 2, // Minimum movement to trigger drag
-        activeCursor: "grabbing",
+        bounds: {
+          minX: -contentWidth,
+          maxX: containerWidth
+        },
+        inertia: true,
+        edgeResistance: 0.7,
+        dragResistance: 0.1, // Lower = easier to drag
+        throwResistance: 0.3, // Controls how much the throw slows down
+        maxDuration: 3, // Maximum duration for inertia
+        minDuration: 0.2, // Minimum duration for inertia
+        overshootTolerance: 0, // Prevent overshooting bounds
         onDragStart: function() {
+          // Kill the timeline when user starts dragging
           killExistingTimeline();
           setIsDragging(true);
         },
         onDragEnd: function() {
+          // Capture the current position where drag ended
+          const currentPosition = gsap.getProperty(content, "x") as number;
+          
           setIsDragging(false);
-          // Create new timeline from current position after drag ends
-          if (contentRef.current) {
-            const currentPosition = gsap.getProperty(contentRef.current, "x") as number;
-            const newTimeline = createNewTimeline(currentPosition);
-            if (newTimeline) {
-              newTimeline.play();
-            }
+          
+          // CRITICAL: Ensure no existing timeline before creating new one
+          killExistingTimeline();
+          
+          // Create new timeline immediately from current position
+          const newTimeline = createNewTimeline(currentPosition);
+          if (newTimeline) {
+            newTimeline.play();
           }
         },
         onThrowComplete: function() {
-          // Create new timeline from final position after momentum completes
+          // Capture the final position after throw/inertia
+          const currentPosition = gsap.getProperty(content, "x") as number;
+          
+          // CRITICAL: Ensure no existing timeline before creating new one
+          killExistingTimeline();
+          
+          // Create new timeline immediately from current position
+          const newTimeline = createNewTimeline(currentPosition);
+          if (newTimeline) {
+            newTimeline.play();
+          }
         }
       });
     }
   }, [clients, clientFilter, searchQuery]);
-
-  // Add manual timeline restart on double-tap or specific gesture
-  const handleTimelineRestart = () => {
-    if (contentRef.current) {
-      const currentPosition = gsap.getProperty(contentRef.current, "x") as number;
-      const newTimeline = createNewTimeline(currentPosition);
-      if (newTimeline) {
-        newTimeline.play();
-      }
-    }
-  };
 
   return (
     <>
@@ -259,14 +274,13 @@ const ScrollingTabs: React.FC<ScrollingTabsProps> = ({
         <div 
           ref={containerRef}
           className="overflow-hidden py-4 w-full h-30 flex items-center justify-center relative z-10"
-          onDoubleClick={handleTimelineRestart}
           style={{
             height: '106px'
           }}
         >
           <div 
             ref={contentRef}
-            className="flex gap-3 whitespace-nowrap relative z-10 min-w-full"
+            className="flex gap-3 whitespace-nowrap relative z-10 justify-center min-w-full"
           >
             {clients.map((client) => {
               const totalDebt = getClientTotalDebt(client.id);
