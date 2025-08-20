@@ -226,20 +226,23 @@ const ScrollingTabs: React.FC<ScrollingTabsProps> = ({
         },
         onDragEnd: function() {
           setIsDragging(false);
-          // Don't create timeline here - wait for inertia to complete
+          // Don't create timeline here - wait for throw to complete
         },
         onThrowComplete: function() {
-          // Capture the final position after throw/inertia
-          const currentPosition = gsap.getProperty(content, "x") as number;
-          
-          // CRITICAL: Ensure no existing timeline before creating new one
-          killExistingTimeline();
-          
-          // Create new timeline after inertia/momentum has completely ended
-          const newTimeline = createNewTimeline(currentPosition);
-          if (newTimeline) {
-            newTimeline.play();
-          }
+          // Use setTimeout to ensure throw is completely finished
+          setTimeout(() => {
+            // Capture the final position after throw/inertia
+            const currentPosition = gsap.getProperty(content, "x") as number;
+            
+            // CRITICAL: Ensure no existing timeline before creating new one
+            killExistingTimeline();
+            
+            // Create new timeline after inertia/momentum has completely ended
+            const newTimeline = createNewTimeline(currentPosition);
+            if (newTimeline) {
+              newTimeline.play();
+            }
+          }, 100); // Small delay to ensure throw is completely finished
         }
       });
     }
