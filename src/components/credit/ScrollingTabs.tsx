@@ -379,7 +379,6 @@ const ScrollingTabs: React.FC<ScrollingTabsProps> = ({
     }, 10000);
     
     return () => {
-      clearInterval(interval);
       clearInterval(monitorInterval);
       clearTimeout(delayedCheck);
       clearTimeout(cleanup);
