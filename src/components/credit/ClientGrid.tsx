@@ -86,22 +86,62 @@ const ClientGrid: React.FC<ClientGridProps> = ({
             duration: 1.2,
             ease: "elastic.out(1, 0.5)",
             force3D: true
-          });
-        },
-        onThrowComplete: function() {
-          // Always snap back to center with elastic bounce after throw
-          gsap.to(content, {
-            x: 0,
-            duration: 1.2,
+            // Smart snapping based on position
+            const currentX = gsap.getProperty(content, "x") as number;
+            const containerWidth = container.offsetWidth;
+            const contentWidth = content.scrollWidth;
+            
+            // Define snap zones (30% from each edge)
+            const leftSnapZone = -(containerWidth * 0.3);
+            const rightSnapZone = containerWidth * 0.3;
+            
+            if (currentX < leftSnapZone) {
+              // Snap to left edge (show rightmost content)
+              gsap.to(content, {
+                x: -(contentWidth - containerWidth),
+                duration: 0.8,
+                ease: "back.out(1.7)",
+                force3D: true
+              });
+            } else if (currentX > rightSnapZone) {
+              // Snap to right edge (show leftmost content)
+              gsap.to(content, {
+                x: 0,
+                duration: 0.8,
+                ease: "back.out(1.7)",
+                force3D: true
+              });
+            }
+            // If in middle zone, don't snap - let it stay where it is
             ease: "elastic.out(1, 0.5)",
             force3D: true
-          });
-        }
-      });
-    }
-
-    return () => {
-      if (draggableRef.current) {
+            // Smart snapping after throw based on final position
+            const currentX = gsap.getProperty(content, "x") as number;
+            const containerWidth = container.offsetWidth;
+            const contentWidth = content.scrollWidth;
+            
+            // Define snap zones (30% from each edge)
+            const leftSnapZone = -(containerWidth * 0.3);
+            const rightSnapZone = containerWidth * 0.3;
+            
+            if (currentX < leftSnapZone) {
+              // Snap to left edge (show rightmost content)
+              gsap.to(content, {
+                x: -(contentWidth - containerWidth),
+                duration: 0.8,
+                ease: "back.out(1.7)",
+                force3D: true
+              });
+            } else if (currentX > rightSnapZone) {
+              // Snap to right edge (show leftmost content)
+              gsap.to(content, {
+                x: 0,
+                duration: 0.8,
+                ease: "back.out(1.7)",
+                force3D: true
+              });
+            }
+            // If in middle zone, don't snap - let it stay where it is
         draggableRef.current.forEach(d => d.kill());
         draggableRef.current = null;
       }
