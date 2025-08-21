@@ -156,13 +156,13 @@ const ScrollingTabs: React.FC<ScrollingTabsProps> = ({
           minX: -contentWidth,
           maxX: containerWidth + containerWidth, // Allow dragging further right
         },
-        edgeResistance: 0.02, // Much lower resistance at edges
+        edgeResistance: 0.01, // Even lower resistance at edges
         inertia: true,
-        dragResistance: 0.01, // Much lower = easier to drag and throw
-        throwResistance: 0.01, // Much lower resistance for longer throws
-        maxDuration: 8, // Longer maximum duration for inertia
-        minDuration: 0.05, // Lower minimum duration
-        overshootTolerance: 800, // Allow more overshooting
+        dragResistance: 0.005, // Even lower = much easier to drag and throw
+        throwResistance: 0.005, // Even lower resistance for much longer throws
+        maxDuration: 12, // Much longer maximum duration for inertia
+        minDuration: 0.02, // Even lower minimum duration
+        overshootTolerance: 1200, // Allow even more overshooting
         force3D: true,
         onDragStart: function() {
           // Kill the timeline completely on drag start
