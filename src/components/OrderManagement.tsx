@@ -154,6 +154,14 @@ const OrderManagement: React.FC = () => {
     } catch (error) {
       alert('Failed to delete category. Please try again.');
     }
+  };
+
+  const cancelDeleteCategory = () => {
+    setShowDeleteCategoryModal(false);
+    setCategoryToDelete(null);
+  };
+
+  const handleDeleteOrder = async (order: Order) => {
     setOrderToDelete(order);
     setShowDeleteOrderModal(true);
   };
@@ -191,6 +199,7 @@ const OrderManagement: React.FC = () => {
   }
 
   return (
+    <>
     <div className="flex-1 flex flex-col bg-gray-50 overflow-hidden select-none">
       
       {/* Header Section */}
@@ -413,10 +422,7 @@ const OrderManagement: React.FC = () => {
                       key={order.id}
                       order={order}
                       itemTemplates={getItemTemplatesByCategory(selectedCategory.id)}
-                      onDelete={() => {
-                        const confirmed = window.confirm('Are you sure you want to delete this order?');
-                        if (confirmed) deleteOrder(order.id);
-                      }}
+                      onDelete={() => handleDeleteOrder(order)}
                       onUpdate={updateOrder}
                     />
                   ))}
@@ -477,7 +483,7 @@ const OrderManagement: React.FC = () => {
         onConfirm={confirmDeleteCategory}
         onCancel={cancelDeleteCategory}
       />
-    </div>
+
       {/* Order Delete Confirmation Modal */}
       <ConfirmationModal
         isOpen={showDeleteOrderModal}
@@ -499,6 +505,8 @@ const OrderManagement: React.FC = () => {
         onCancel={cancelDeleteOrder}
       />
 
+    </div>
+    </>
   );
 };
 
