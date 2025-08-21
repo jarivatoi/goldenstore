@@ -96,6 +96,49 @@ const ScrollingTabs: React.FC<ScrollingTabsProps> = ({
     return progress;
   }, []);
 
+  const handleRestartTimeline = () => {
+    if (!contentRef.current || !containerRef.current || sortedClients.length === 0) return;
+    
+    const container = containerRef.current;
+    const content = contentRef.current;
+    const containerWidth = container.offsetWidth;
+    const contentWidth = content.scrollWidth;
+    
+    // Only restart if content overflows (big cards)
+    if (contentWidth > containerWidth) {
+      // Clean up existing timeline
+      if (timelineRef.current) {
+        timelineRef.current.kill();
+        timelineRef.current = null;
+      }
+      
+      const totalDistance = contentWidth + containerWidth;
+      const duration = totalDistance / 60; // 60px per second
+      
+      // Continue from current position without snapping
+      const currentX = gsap.getProperty(content, "x") as number;
+      
+      timelineRef.current = gsap.timeline({ repeat: -1 });
+      
+      // Create seamless infinite scroll from current position
+      timelineRef.current
+        .to(content, {
+          x: -contentWidth,
+          duration: (Math.abs(currentX - (-contentWidth)) / totalDistance) * duration,
+          ease: "none"
+        })
+        .set(content, { x: containerWidth }, 0) // Instant reset to right
+        .to(content, {
+          x: -contentWidth,
+          duration: duration,
+          ease: "none"
+        })
+        .repeat(-1); // Infinite repeat
+      
+      timelineRef.current.play();
+    }
+  };
+
   // Seamless continuous scroll setup
   const setupContinuousScroll = useCallback(() => {
     // Don't setup animation if there are no clients
