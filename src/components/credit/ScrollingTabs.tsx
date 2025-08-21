@@ -148,17 +148,9 @@ const ScrollingTabs: React.FC<ScrollingTabsProps> = ({
       draggableRef.current = Draggable.create(content, {
         type: "x",
         bounds: {
-          minX: -400, // Fixed left boundary regardless of content width
-          maxX: 400,  // Fixed right boundary for balanced feel
+          minX: -contentWidth,
+          maxX: containerWidth + containerWidth, // Allow dragging further right
         },
-        edgeResistance: 0.3, // Moderate resistance for better feel
-        inertia: true,
-        dragResistance: 0.1, // Lower = easier to drag
-        throwResistance: 0.1, // Controls how much the throw slows down
-        maxDuration: 3, // Maximum duration for inertia
-        minDuration: 0.2, // Minimum duration for inertia
-        overshootTolerance: 100, // Consistent overshoot for all card sizes
-        force3D: true,
         onDragStart: function() {
           // Kill the timeline completely on drag start
           if (timelineRef.current) {
@@ -172,24 +164,17 @@ const ScrollingTabs: React.FC<ScrollingTabsProps> = ({
           console.log('🎯 Drag ended - creating new timeline');
           setIsDragging(false);
           
-          // Check if content is smaller than container (few cards)
+          // Calculate current progress based on position
+          const currentProgress = calculateTimelineProgress();
+          console.log('🎯 Calculated progress for new timeline:', currentProgress);
+          
+          // Create new timeline starting from calculated progress
           const container = containerRef.current;
           const content = contentRef.current;
           
           if (container && content) {
             const containerWidth = container.offsetWidth;
             const contentWidth = content.scrollWidth;
-            
-            if (contentWidth <= containerWidth) {
-              // Small content: Don't restart timeline, let it stay where dragged
-              console.log('🎯 Small content detected, no timeline restart');
-              return;
-            }
-            
-            // Large content: Restart timeline from calculated progress
-            const currentProgress = calculateTimelineProgress();
-            console.log('🎯 Calculated progress for new timeline:', currentProgress);
-            
             const totalDistance = contentWidth + containerWidth;
             const duration = totalDistance / 60;
             
