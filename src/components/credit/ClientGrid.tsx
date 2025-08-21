@@ -86,6 +86,8 @@ const ClientGrid: React.FC<ClientGridProps> = ({
         onDragEnd: function() {
           // Smart snapping based on position
           const currentX = gsap.getProperty(content, "x") as number;
+          const startX = this.startX || 0;
+          const dragDirection = currentX - startX; // Positive = dragged right, Negative = dragged left
           const containerWidth = container.offsetWidth;
           const contentWidth = content.scrollWidth;
           
@@ -93,8 +95,8 @@ const ClientGrid: React.FC<ClientGridProps> = ({
           const leftSnapZone = -(containerWidth * 0.2);
           const rightSnapZone = containerWidth * 0.2;
           
-          // Snap to left edge if in left snap zone (regardless of drag direction)
-          if (currentX < leftSnapZone) {
+          // Snap to left edge if in left snap zone AND dragged left (or thrown left)
+          if (currentX < leftSnapZone && dragDirection <= 0) {
             // Snap to left edge (show rightmost content)
             gsap.to(content, {
               x: -(contentWidth - containerWidth),
@@ -102,8 +104,8 @@ const ClientGrid: React.FC<ClientGridProps> = ({
               ease: "back.out(1.7)",
               force3D: true
             });
-          // Snap to right edge if in right snap zone (regardless of drag direction)
-          } else if (currentX > rightSnapZone) {
+          // Snap to right edge if in right snap zone AND dragged right (or thrown right)
+          } else if (currentX > rightSnapZone && dragDirection >= 0) {
             // Snap to right edge (show leftmost content)
             gsap.to(content, {
               x: 0,
@@ -112,7 +114,7 @@ const ClientGrid: React.FC<ClientGridProps> = ({
               force3D: true
             });
           }
-          // If in middle zone, don't snap - let it stay where it is with natural physics
+          // If in wrong direction or middle zone, don't snap - let natural physics handle it
         }
       });
     }
