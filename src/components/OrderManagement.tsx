@@ -1434,8 +1434,12 @@ const CreateOrderModal: React.FC<CreateOrderModalProps> = ({ category, itemTempl
               </button>
               <button
                 type="submit"
-                disabled={isSubmitting || itemTemplates.length === 0}
-                className="flex-1 px-4 py-2 bg-green-500 text-white rounded-lg hover:bg-green-600 disabled:opacity-50 select-none"
+                disabled={isSubmitting || itemTemplates.length === 0 || orderItems.filter(item => item.isAvailable).reduce((sum, item) => sum + item.totalPrice, 0) === 0}
+                className={`flex-1 px-4 py-2 rounded-lg transition-colors select-none ${
+                  orderItems.filter(item => item.isAvailable).reduce((sum, item) => sum + item.totalPrice, 0) === 0
+                    ? 'bg-gray-300 text-gray-500 cursor-not-allowed'
+                    : 'bg-green-500 text-white hover:bg-green-600'
+                }`}
               >
                 {isSubmitting ? 'Creating...' : 'Create Order'}
               </button>
