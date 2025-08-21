@@ -224,6 +224,27 @@ body {
   animation: high-debt-pulsate 1.5s ease-in-out infinite;
 }
 
+/* Smooth text alternation animations */
+@keyframes text-fade-out {
+  0% { opacity: 1; }
+  100% { opacity: 0; }
+}
+
+@keyframes text-fade-in {
+  0% { opacity: 0; }
+  100% { opacity: 1; }
+}
+
+.text-fade-transition {
+  transition: opacity 400ms ease-in-out;
+}
+
+/* Respect reduced motion preferences */
+@media (prefers-reduced-motion: reduce) {
+  .text-fade-transition {
+    transition: none;
+  }
+}
 .touch-manipulation {
   touch-action: pan-y;
   -webkit-user-select: none;
