@@ -214,17 +214,6 @@ body {
   animation: small-debt-shake 1.5s ease-in-out infinite;
 }
 
-/* Text swap animation for returnables with debt */
-@keyframes text-swap-fade {
-  0%, 45% { opacity: 1; }
-  50%, 95% { opacity: 0; }
-  100% { opacity: 1; }
-}
-
-.animate-text-swap {
-  animation: text-swap-fade 3s ease-in-out infinite;
-}
-
 /* Pulsate animation for high debt amounts (over 1000) */
 @keyframes high-debt-pulsate {
   0%, 100% { transform: scale(1); opacity: 1; }
