@@ -385,9 +385,58 @@ const ScrollingTabs: React.FC<ScrollingTabsProps> = ({
   // Handle detail modal close - resume timeline
   const handleDetailModalClose = () => {
     setSelectedClientForDetails(null);
-    // Resume timeline when detail modal closes
-    if (timelineRef.current && timelineRef.current.paused()) {
-      timelineRef.current.resume();
+    
+    // Resume timeline when detail modal closes - ensure it's properly resumed
+    setTimeout(() => {
+      if (timelineRef.current) {
+        if (timelineRef.current.paused()) {
+          console.log('🎯 Resuming timeline after detail modal close');
+          timelineRef.current.resume();
+        } else {
+          console.log('🎯 Timeline was not paused, ensuring it continues');
+          // If timeline wasn't paused but stopped, restart it
+          if (!timelineRef.current.isActive()) {
+            timelineRef.current.play();
+          }
+        }
+      }
+    }, 100); // Small delay to ensure modal is fully closed
+  };
+
+  // Also handle the moveClientToFront call from ClientDetailModal
+  useEffect(() => {
+    const handleClientMoved = () => {
+      // When a client is moved to front, ensure timeline resumes
+      setTimeout(() => {
+        if (timelineRef.current && timelineRef.current.paused()) {
+          console.log('🎯 Resuming timeline after client moved to front');
+          timelineRef.current.resume();
+        }
+      }, 200);
+    };
+
+    window.addEventListener('clientMovedToFront', handleClientMoved);
+    
+    return () => {
+      window.removeEventListener('clientMovedToFront', handleClientMoved);
+    };
+  }, []);
+
+  // Monitor timeline state for debugging
+  useEffect(() => {
+    const interval = setInterval(() => {
+      if (timelineRef.current && !selectedClientForDetails && !selectedClientForAction) {
+        const isPaused = timelineRef.current.paused();
+        const isActive = timelineRef.current.isActive();
+        if (isPaused && !isDragging) {
+          console.log('🎯 Timeline is paused but should be running, resuming...');
+          timelineRef.current.resume();
+        }
+      }
+    }, 2000); // Check every 2 seconds
+
+    return () => clearInterval(interval);
+  }, [selectedClientForDetails, selectedClientForAction, isDragging]);
     }
   };
 
