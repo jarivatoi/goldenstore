@@ -571,6 +571,10 @@ const OrderManagement: React.FC = () => {
           setShowDuplicateOrderModal(false);
           setDuplicateOrderInfo(null);
         }}
+        onCancel={() => {
+          setShowDuplicateOrderModal(false);
+          setDuplicateOrderInfo(null);
+        }}
       />
 
     </div>
