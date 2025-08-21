@@ -78,10 +78,7 @@ const ScrollingTabs: React.FC<ScrollingTabsProps> = ({
       }
       
       const description = transaction.description.toLowerCase();
-      const hasReturnableItems = description.includes('chopine') || 
-                                 description.includes('bouteille') || 
-                                 description.includes('bt') ||
-                                 description.includes('bottle');
+      const hasReturnableItems = description.includes('chopine') || description.includes('bouteille');
       const isOlderThan3Weeks = transaction.date.getTime() < threeWeeksAgo;
       
       return hasReturnableItems && isOlderThan3Weeks;
