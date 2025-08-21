@@ -631,7 +631,7 @@ export const OrderProvider: React.FC<{ children: React.ReactNode }> = ({ childre
         // Add order items to Supabase
         if (items.length > 0) {
           const orderItemsToInsert = items.map(item => ({
-            id: item.id,
+            id: crypto.randomUUID(), // Generate new UUID for Supabase
             order_id: newOrder.id,
             template_id: item.templateId,
             quantity: item.quantity,
@@ -702,7 +702,7 @@ export const OrderProvider: React.FC<{ children: React.ReactNode }> = ({ childre
         // Insert updated order items
         if (items.length > 0) {
           const orderItemsToInsert = items.map(item => ({
-            id: item.id,
+            id: crypto.randomUUID(), // Generate new UUID for Supabase
             order_id: id,
             template_id: item.templateId,
             quantity: item.quantity,
