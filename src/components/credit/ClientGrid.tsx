@@ -39,6 +39,9 @@ const ClientGrid: React.FC<ClientGridProps> = ({
   const contentRef = useRef<HTMLDivElement>(null);
   const containerRef = useRef<HTMLDivElement>(null);
   const draggableRef = useRef<Draggable[] | null>(null);
+  const lastXRef = useRef(0);
+  const lastTimeRef = useRef(0);
+  const velocityRef = useRef(0);
 
   // GSAP Draggable setup
   useEffect(() => {
@@ -66,6 +69,11 @@ const ClientGrid: React.FC<ClientGridProps> = ({
       // Calculate bounds based on content and container width
       const maxDrag = Math.max(0, contentWidth - containerWidth);
       
+      // Track position and time for velocity calculation
+      let lastX = 0;
+      let lastTime = Date.now();
+      let velocity = 0;
+      
       // Create draggable instance
       draggableRef.current = Draggable.create(content, {
         type: "x",
@@ -81,15 +89,31 @@ const ClientGrid: React.FC<ClientGridProps> = ({
         minDuration: 0.02,
         overshootTolerance: 0,
         force3D: true,
+        onDrag: function() {
+          const currentX = gsap.getProperty(content, "x") as number;
+          const currentTime = Date.now();
+          const deltaTime = currentTime - lastTime;
+          
+          if (deltaTime > 0) {
+            velocity = (currentX - lastX) / deltaTime;
+            lastX = currentX;
+            lastTime = currentTime;
+          }
+        },
         onDragEnd: function() {
-          // Smart snapping based on position and velocity
           const currentX = gsap.getProperty(content, "x") as number;
           
           // Determine snap points
           let snapTo = 0;
           
-          // Snap to whichever edge is closer
-          snapTo = Math.abs(currentX) < maxDrag / 2 ? 0 : -maxDrag;
+          // If moving with significant velocity, snap in the direction of movement
+          if (Math.abs(velocity) > 0.5) {
+            snapTo = velocity > 0 ? 0 : -maxDrag;
+          } 
+          // If moving slowly, snap to whichever edge is closer
+          else {
+            snapTo = Math.abs(currentX) < maxDrag / 2 ? 0 : -maxDrag;
+          }
           
           // Animate to the snap position
           gsap.to(content, {
@@ -98,6 +122,9 @@ const ClientGrid: React.FC<ClientGridProps> = ({
             ease: "power2.out",
             force3D: true
           });
+          
+          // Reset velocity
+          velocity = 0;
         }
       });
     } else {
@@ -112,11 +139,6 @@ const ClientGrid: React.FC<ClientGridProps> = ({
       }
     };
   }, [clients.length]); // Recalculate when number of clients changes
-
-  // Calculate dynamic height based on card content
-  const calculateCardHeight = () => {
-    return 'min-h-[320px]';
-  };
 
   return (
     <div className="bg-white rounded-lg shadow-sm border border-gray-200 mb-4">
