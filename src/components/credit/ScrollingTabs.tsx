@@ -1100,14 +1100,13 @@ const ScrollingTabs: React.FC<ScrollingTabsProps> = ({
                         minute: '2-digit'
                       })}
                     </div>
+                    </div>
                   </div>
-                </div>
               );
             })}
           </div>
         </div>
       </div>
-    </div>
 
       {/* Action Modal */}
       {selectedClientForAction && (
@@ -1126,6 +1125,7 @@ const ScrollingTabs: React.FC<ScrollingTabsProps> = ({
           onQuickAdd={onQuickAdd}
         />
       )}
+    </div>
     </>
   );
 };
