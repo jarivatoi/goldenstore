@@ -136,25 +136,13 @@ const ScrollingTabs: React.FC<ScrollingTabsProps> = ({
       timelineRef.current = gsap.timeline({ repeat: -1, ease: "none" });
       
       timelineRef.current
-          // Only snap to center if content is small enough to fit in container
-          const container = containerRef.current;
-          const content = contentRef.current;
-          
-          if (container && content) {
-            const containerWidth = container.offsetWidth;
-            const contentWidth = content.scrollWidth;
-            
-            // If content fits in container, snap to center
-            if (contentWidth <= containerWidth) {
-              gsap.to(content, {
-                x: 0,
-                duration: 1.2,
-                ease: "elastic.out(1, 0.5)",
-                force3D: true
-              });
-            }
-            // If content is bigger, leave it where user dragged it
-          }
+        .fromTo(content, 
+          { x: containerWidth }, // Enter from right
+          { 
+            x: -contentWidth, // Exit to left
+            duration: duration,
+            ease: "none"
+          });
       
       // Create draggable instance
       draggableRef.current = Draggable.create(content, {
@@ -214,6 +202,26 @@ const ScrollingTabs: React.FC<ScrollingTabsProps> = ({
             timelineRef.current.play();
             
             console.log('🎯 New timeline created and started at progress:', currentProgress);
+          }
+          
+          // Only snap to center if content is small enough to fit in container
+          const container = containerRef.current;
+          const content = contentRef.current;
+          
+          if (container && content) {
+            const containerWidth = container.offsetWidth;
+            const contentWidth = content.scrollWidth;
+            
+            // If content fits in container, snap to center
+            if (contentWidth <= containerWidth) {
+              gsap.to(content, {
+                x: 0,
+                duration: 1.2,
+                ease: "elastic.out(1, 0.5)",
+                force3D: true
+              });
+            }
+            // If content is bigger, leave it where user dragged it
           }
         },
       });
@@ -366,25 +374,26 @@ const ScrollingTabs: React.FC<ScrollingTabsProps> = ({
       
       // Set up timer to clear animation and resume timeline after 3 seconds
       const clearAnimationTimer = setTimeout(() => {
-          // Only snap to center if content is small enough to fit in container
-          const container = containerRef.current;
-          const content = contentRef.current;
+        setPersistentAnimationTabId(null);
+        
+        // Only snap to center if content is small enough to fit in container
+        const container = containerRef.current;
+        const content = contentRef.current;
+        
+        if (container && content) {
+          const containerWidth = container.offsetWidth;
+          const contentWidth = content.scrollWidth;
           
-          if (container && content) {
-            const containerWidth = container.offsetWidth;
-            const contentWidth = content.scrollWidth;
-            
-            // If content fits in container, snap to center
-            if (contentWidth <= containerWidth) {
-              gsap.to(content, {
-                x: 0,
-                duration: 1.2,
-                ease: "elastic.out(1, 0.5)",
-                force3D: true
-              });
-            }
-            // If content is bigger, leave it where user dragged it
+          // If content fits in container, snap to center
+          if (contentWidth <= containerWidth) {
+            gsap.to(content, {
+              x: 0,
+              duration: 1.2,
+              ease: "elastic.out(1, 0.5)",
+              force3D: true
+            });
           }
+          // If content is bigger, leave it where user dragged it
         }
       }, 3000);
       
@@ -398,7 +407,7 @@ const ScrollingTabs: React.FC<ScrollingTabsProps> = ({
         timelineRef.current.resume();
       }
     }
-  }, [persistentAnimationTabId]);
+  }, [persistentAnimationTabId, sortedClients.length]);
 
   return (
     <>
@@ -753,11 +762,11 @@ const ScrollingTabs: React.FC<ScrollingTabsProps> = ({
                       </div>
                     )}
                     <div className="text-xs text-gray-500 mt-1 text-center">
-              {client.lastTransactionAt.toLocaleDateString('en-GB', {
+                      {client.lastTransactionAt.toLocaleDateString('en-GB', {
                         day: '2-digit',
-                month: 'short',
+                        month: 'short',
                         year: '2-digit'
-              }).replace(/\s/g, '-')}
+                      }).replace(/\s/g, '-')}
                     </div>
                     <div className="text-xs text-gray-500 text-center">
                       {client.lastTransactionAt.toLocaleTimeString('en-GB', {
@@ -765,13 +774,14 @@ const ScrollingTabs: React.FC<ScrollingTabsProps> = ({
                         minute: '2-digit'
                       })}
                     </div>
-                    </div>
                   </div>
+                </div>
               );
             })}
           </div>
         </div>
       </div>
+    </div>
 
       {/* Action Modal */}
       {selectedClientForAction && (
@@ -781,7 +791,6 @@ const ScrollingTabs: React.FC<ScrollingTabsProps> = ({
           onResetCalculator={onResetCalculator}
         />
       )}
-    </div>
     </>
   );
 };
