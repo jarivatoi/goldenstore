@@ -39,9 +39,8 @@ const ClientGrid: React.FC<ClientGridProps> = ({
   const contentRef = useRef<HTMLDivElement>(null);
   const containerRef = useRef<HTMLDivElement>(null);
   const draggableRef = useRef<Draggable[] | null>(null);
-  const lastXRef = useRef(0);
-  const lastTimeRef = useRef(0);
-  const velocityRef = useRef(0);
+  const dragStartXRef = useRef(0);
+  const dragDirectionRef = useRef<'left' | 'right' | null>(null);
 
   // GSAP Draggable setup
   useEffect(() => {
@@ -69,11 +68,6 @@ const ClientGrid: React.FC<ClientGridProps> = ({
       // Calculate bounds based on content and container width
       const maxDrag = Math.max(0, contentWidth - containerWidth);
       
-      // Track position and time for velocity calculation
-      let lastX = 0;
-      let lastTime = Date.now();
-      let velocity = 0;
-      
       // Create draggable instance
       draggableRef.current = Draggable.create(content, {
         type: "x",
@@ -83,48 +77,78 @@ const ClientGrid: React.FC<ClientGridProps> = ({
         },
         edgeResistance: 0.5,
         inertia: true,
+        snap: false, // Disable automatic snapping
         dragResistance: 0.1,
         throwResistance: 0.005,
         maxDuration: 2,
         minDuration: 0.02,
         overshootTolerance: 0,
         force3D: true,
+        onDragStart: function() {
+          const currentX = gsap.getProperty(content, "x") as number;
+          dragStartXRef.current = currentX;
+          dragDirectionRef.current = null;
+        },
         onDrag: function() {
           const currentX = gsap.getProperty(content, "x") as number;
-          const currentTime = Date.now();
-          const deltaTime = currentTime - lastTime;
+          const deltaX = currentX - dragStartXRef.current;
           
-          if (deltaTime > 0) {
-            velocity = (currentX - lastX) / deltaTime;
-            lastX = currentX;
-            lastTime = currentTime;
+          // Determine drag direction based on movement
+          if (Math.abs(deltaX) > 10) { // Only set direction after significant movement
+            if (deltaX > 0) {
+              dragDirectionRef.current = 'right'; // Dragging towards right
+            } else {
+              dragDirectionRef.current = 'left'; // Dragging towards left
+            }
           }
         },
         onDragEnd: function() {
           const currentX = gsap.getProperty(content, "x") as number;
+          const dragDirection = dragDirectionRef.current;
+          const velocity = this.getVelocity("x");
           
-          // Determine snap points
-          let snapTo = 0;
+          // Intelligent snapping based on drag direction and position
+          let shouldSnap = false;
+          let snapTo = currentX;
           
-          // If moving with significant velocity, snap in the direction of movement
-          if (Math.abs(velocity) > 0.5) {
-            snapTo = velocity > 0 ? 0 : -maxDrag;
-          } 
-          // If moving slowly, snap to whichever edge is closer
-          else {
-            snapTo = Math.abs(currentX) < maxDrag / 2 ? 0 : -maxDrag;
+          // Only snap to edges if:
+          // 1. High velocity carries to very close to edge, OR
+          // 2. User drags very close to edge manually
+          const edgeThreshold = 50; // pixels from edge
+          const highVelocityThreshold = 1000; // pixels per second
+          
+          if (Math.abs(velocity) > highVelocityThreshold) {
+            // High velocity - snap in direction of movement if close to edge
+            if (velocity > 0 && currentX > -edgeThreshold) {
+              shouldSnap = true;
+              snapTo = 0; // Snap to right edge
+            } else if (velocity < 0 && currentX < -(maxDrag - edgeThreshold)) {
+              shouldSnap = true;
+              snapTo = -maxDrag; // Snap to left edge
+            }
+          } else {
+            // Low velocity - only snap if very close to edges
+            if (currentX > -edgeThreshold && dragDirection !== 'left') {
+              shouldSnap = true;
+              snapTo = 0; // Snap to right edge
+            } else if (currentX < -(maxDrag - edgeThreshold) && dragDirection !== 'right') {
+              shouldSnap = true;
+              snapTo = -maxDrag; // Snap to left edge
+            }
           }
           
-          // Animate to the snap position
-          gsap.to(content, {
-            x: snapTo,
-            duration: 1.2,
-            ease: "back.out(4.0)",
-            force3D: true
-          });
+          // Apply snapping animation only if needed
+          if (shouldSnap && Math.abs(currentX - snapTo) > 5) {
+            gsap.to(content, {
+              x: snapTo,
+              duration: 0.8,
+              ease: "power2.out",
+              force3D: true
+            });
+          }
           
-          // Reset velocity
-          velocity = 0;
+          // Reset drag direction
+          dragDirectionRef.current = null;
         }
       });
     } else {
