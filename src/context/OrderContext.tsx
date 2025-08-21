@@ -595,6 +595,12 @@ export const OrderProvider: React.FC<{ children: React.ReactNode }> = ({ childre
 
   const addOrder = async (categoryId: string, orderDate: Date, items: OrderItem[]): Promise<Order> => {
     try {
+      // Validate that the category exists before creating the order
+      const categoryExists = categories.find(cat => cat.id === categoryId);
+      if (!categoryExists) {
+        throw new Error(`Category with ID "${categoryId}" does not exist. Please refresh the page and try again.`);
+      }
+      
       const totalCost = items
         .filter(item => item.isAvailable)
         .reduce((sum, item) => sum + item.totalPrice, 0);
