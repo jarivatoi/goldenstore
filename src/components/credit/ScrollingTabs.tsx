@@ -146,12 +146,10 @@ const ScrollingTabs: React.FC<ScrollingTabsProps> = ({
       
       // Create draggable instance
       draggableRef.current = Draggable.create(content, {
-        type: "x,y",
+        type: "x",
         bounds: {
           minX: -contentWidth,
           maxX: containerWidth + containerWidth, // Allow dragging further right
-          minY: -50, // Allow dragging up 50px
-          maxY: 50   // Allow dragging down 50px
         },
         onDragStart: function() {
           // Kill the timeline completely on drag start
@@ -175,9 +173,6 @@ const ScrollingTabs: React.FC<ScrollingTabsProps> = ({
           const content = contentRef.current;
           
           if (container && content) {
-            // Reset Y position to 0 when drag ends
-            gsap.set(content, { y: 0 });
-            
             const containerWidth = container.offsetWidth;
             const contentWidth = content.scrollWidth;
             const totalDistance = contentWidth + containerWidth;
