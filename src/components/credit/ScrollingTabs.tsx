@@ -172,7 +172,7 @@ const ScrollingTabs: React.FC<ScrollingTabsProps> = ({
             const containerWidth = container.offsetWidth;
             const contentWidth = content.scrollWidth;
             
-            // Only restart timeline for big cards (when content overflows)
+            // Only restart timeline for big cards (when content overflows) - no snap to center
             if (contentWidth > containerWidth) {
               console.log('🎯 Big cards detected - restarting timeline from current position');
               
@@ -199,10 +199,8 @@ const ScrollingTabs: React.FC<ScrollingTabsProps> = ({
               timelineRef.current.play();
               
               console.log('🎯 New timeline created and started at progress:', currentProgress);
-            } else {
-              console.log('🎯 Small cards detected - no timeline restart, staying at dragged position');
-              // For small cards, don't restart timeline - let them stay where dragged
             }
+            // For small cards: existing behavior unchanged (original snap logic would apply here)
           }
         },
       });
