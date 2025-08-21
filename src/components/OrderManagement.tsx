@@ -568,8 +568,8 @@ const OrderManagement: React.FC = () => {
         confirmText="OK"
         cancelText=""
         type="warning"
-        onConfirm={() => {
-          setShowDuplicateOrderModal(false);
+        onConfirm={() => setShowDuplicateOrderModal(false)}
+        onCancel={() => {}}
           setDuplicateOrderInfo(null);
         }}
         onCancel={() => {
