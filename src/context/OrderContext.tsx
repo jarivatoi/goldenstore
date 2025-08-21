@@ -614,53 +614,58 @@ export const OrderProvider: React.FC<{ children: React.ReactNode }> = ({ childre
         createdAt: new Date()
       };
       
+      // Optimistic update: Update local state first
+      setOrders(prev => [newOrder, ...prev]);
+      
+      // Update localStorage
+      const updatedOrders = [newOrder, ...orders];
+      localStorage.setItem('orders', JSON.stringify(updatedOrders.map(order => ({
+        ...order,
+        orderDate: order.orderDate.toISOString(),
+        createdAt: order.createdAt.toISOString(),
+        lastEditedAt: order.lastEditedAt?.toISOString()
+      }))));
+      
       if (supabase) {
-        // Add order to Supabase
-        const { error: orderError } = await supabase
-          .from('orders')
-          .insert({
-            id: newOrder.id,
-            category_id: newOrder.categoryId,
-            order_date: newOrder.orderDate.toISOString(),
-            total_cost: newOrder.totalCost,
-            created_at: newOrder.createdAt.toISOString()
-          });
-        
-        if (orderError) throw orderError;
-        
-        // Add order items to Supabase
-        if (items.length > 0) {
-          const orderItemsToInsert = items.map(item => ({
-            id: item.id,
-            order_id: newOrder.id,
-            template_id: item.templateId,
-            quantity: item.quantity,
-            unit_price: item.unitPrice,
-            is_vat_nil: item.isVatNil,
-            vat_amount: item.vatAmount,
-            total_price: item.totalPrice,
-            is_available: item.isAvailable
-          }));
+        // Attempt Supabase sync (don't revert local state on failure)
+        try {
+          // Add order to Supabase
+          const { error: orderError } = await supabase
+            .from('orders')
+            .insert({
+              id: newOrder.id,
+              category_id: newOrder.categoryId,
+              order_date: newOrder.orderDate.toISOString(),
+              total_cost: newOrder.totalCost,
+              created_at: newOrder.createdAt.toISOString()
+            });
           
-          const { error: itemsError } = await supabase
-            .from('order_items')
-            .insert(orderItemsToInsert);
+          if (orderError) throw orderError;
           
-          if (itemsError) throw itemsError;
+          // Add order items to Supabase
+          if (items.length > 0) {
+            const orderItemsToInsert = items.map(item => ({
+              id: item.id,
+              order_id: newOrder.id,
+              template_id: item.templateId,
+              quantity: item.quantity,
+              unit_price: item.unitPrice,
+              is_vat_nil: item.isVatNil,
+              vat_amount: item.vatAmount,
+              total_price: item.totalPrice,
+              is_available: item.isAvailable
+            }));
+            
+            const { error: itemsError } = await supabase
+              .from('order_items')
+              .insert(orderItemsToInsert);
+            
+            if (itemsError) throw itemsError;
+          }
+        } catch (supabaseError) {
+          // Log warning but don't revert local state
+          console.warn('Failed to sync order to Supabase:', supabaseError);
         }
-        
-        // Update local state
-        setOrders(prev => [newOrder, ...prev]);
-      } else {
-        // Fallback to localStorage
-        const updatedOrders = [newOrder, ...orders];
-        setOrders(updatedOrders);
-        localStorage.setItem('orders', JSON.stringify(updatedOrders.map(order => ({
-          ...order,
-          orderDate: order.orderDate.toISOString(),
-          createdAt: order.createdAt.toISOString(),
-          lastEditedAt: order.lastEditedAt?.toISOString()
-        }))));
       }
       
       return newOrder;
@@ -678,76 +683,81 @@ export const OrderProvider: React.FC<{ children: React.ReactNode }> = ({ childre
       
       const lastEditedAt = new Date();
       
+      // Optimistic update: Update local state first
+      setOrders(prev => prev.map(order => 
+        order.id === id ? { 
+          ...order, 
+          orderDate, 
+          items, 
+          totalCost,
+          lastEditedAt
+        } : order
+      ));
+      
+      // Update localStorage
+      const updatedOrders = orders.map(order => 
+        order.id === id ? { 
+          ...order, 
+          orderDate, 
+          items, 
+          totalCost,
+          lastEditedAt
+        } : order
+      );
+      localStorage.setItem('orders', JSON.stringify(updatedOrders.map(order => ({
+        ...order,
+        orderDate: order.orderDate.toISOString(),
+        createdAt: order.createdAt.toISOString(),
+        lastEditedAt: order.lastEditedAt?.toISOString()
+      }))));
+      
       if (supabase) {
-        // Update order in Supabase
-        const { error: orderError } = await supabase
-          .from('orders')
-          .update({
-            order_date: orderDate.toISOString(),
-            total_cost: totalCost,
-            last_edited_at: lastEditedAt.toISOString()
-          })
-          .eq('id', id);
-        
-        if (orderError) throw orderError;
-        
-        // Delete existing order items
-        const { error: deleteError } = await supabase
-          .from('order_items')
-          .delete()
-          .eq('order_id', id);
-        
-        if (deleteError) throw deleteError;
-        
-        // Insert updated order items
-        if (items.length > 0) {
-          const orderItemsToInsert = items.map(item => ({
-            id: item.id,
-            order_id: id,
-            template_id: item.templateId,
-            quantity: item.quantity,
-            unit_price: item.unitPrice,
-            is_vat_nil: item.isVatNil,
-            vat_amount: item.vatAmount,
-            total_price: item.totalPrice,
-            is_available: item.isAvailable
-          }));
+        // Attempt Supabase sync (don't revert local state on failure)
+        try {
+          // Update order in Supabase
+          const { error: orderError } = await supabase
+            .from('orders')
+            .update({
+              order_date: orderDate.toISOString(),
+              total_cost: totalCost,
+              last_edited_at: lastEditedAt.toISOString()
+            })
+            .eq('id', id);
           
-          const { error: itemsError } = await supabase
+          if (orderError) throw orderError;
+          
+          // Delete existing order items
+          const { error: deleteError } = await supabase
             .from('order_items')
-            .insert(orderItemsToInsert);
+            .delete()
+            .eq('order_id', id);
           
-          if (itemsError) throw itemsError;
+          if (deleteError) throw deleteError;
+          
+          // Insert updated order items
+          if (items.length > 0) {
+            const orderItemsToInsert = items.map(item => ({
+              id: item.id,
+              order_id: id,
+              template_id: item.templateId,
+              quantity: item.quantity,
+              unit_price: item.unitPrice,
+              is_vat_nil: item.isVatNil,
+              vat_amount: item.vatAmount,
+              total_price: item.totalPrice,
+              is_available: item.isAvailable
+            }));
+            
+            const { error: itemsError } = await supabase
+              .from('order_items')
+              .insert(orderItemsToInsert);
+            
+            if (itemsError) throw itemsError;
+          }
+        } catch (supabaseError) {
+          // Log warning but don't revert local state
+          console.warn('Failed to sync order update to Supabase:', supabaseError);
         }
-        
-        // Update local state
-        setOrders(prev => prev.map(order => 
-          order.id === id ? { 
-            ...order, 
-            orderDate, 
-            items, 
-            totalCost,
-            lastEditedAt
-          } : order
-        ));
-      } else {
-        // Fallback to localStorage
-        const updatedOrders = orders.map(order => 
-          order.id === id ? { 
-            ...order, 
-            orderDate, 
-            items, 
-            totalCost,
-            lastEditedAt
-          } : order
-        );
-        setOrders(updatedOrders);
-        localStorage.setItem('orders', JSON.stringify(updatedOrders.map(order => ({
-          ...order,
-          orderDate: order.orderDate.toISOString(),
-          createdAt: order.createdAt.toISOString(),
-          lastEditedAt: order.lastEditedAt?.toISOString()
-        }))));
       }
     } catch (err) {
       setError('Failed to update order');
@@ -757,27 +767,32 @@ export const OrderProvider: React.FC<{ children: React.ReactNode }> = ({ childre
 
   const deleteOrder = async (id: string): Promise<void> => {
     try {
+      // Optimistic update: Update local state first
+      setOrders(prev => prev.filter(order => order.id !== id));
+      
+      // Update localStorage
+      const updatedOrders = orders.filter(order => order.id !== id);
+      localStorage.setItem('orders', JSON.stringify(updatedOrders.map(order => ({
+        ...order,
+        orderDate: order.orderDate.toISOString(),
+        createdAt: order.createdAt.toISOString(),
+        lastEditedAt: order.lastEditedAt?.toISOString()
+      }))));
+      
       if (supabase) {
-        // Delete from Supabase (cascade will handle order items)
-        const { error } = await supabase
-          .from('orders')
-          .delete()
-          .eq('id', id);
-        
-        if (error) throw error;
-        
-        // Update local state
-        setOrders(prev => prev.filter(order => order.id !== id));
-      } else {
-        // Fallback to localStorage
-        const updatedOrders = orders.filter(order => order.id !== id);
-        setOrders(updatedOrders);
-        localStorage.setItem('orders', JSON.stringify(updatedOrders.map(order => ({
-          ...order,
-          orderDate: order.orderDate.toISOString(),
-          createdAt: order.createdAt.toISOString(),
-          lastEditedAt: order.lastEditedAt?.toISOString()
-        }))));
+        // Attempt Supabase sync (don't revert local state on failure)
+        try {
+          // Delete from Supabase (cascade will handle order items)
+          const { error } = await supabase
+            .from('orders')
+            .delete()
+            .eq('id', id);
+          
+          if (error) throw error;
+        } catch (supabaseError) {
+          // Log warning but don't revert local state
+          console.warn('Failed to sync order deletion to Supabase:', supabaseError);
+        }
       }
     } catch (err) {
       setError('Failed to delete order');
