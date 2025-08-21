@@ -64,12 +64,14 @@ const ConfirmationModal: React.FC<ConfirmationModalProps> = ({
             <div className={`${styles.iconBg} p-3 rounded-full`}>
               <AlertTriangle className={`${styles.iconColor}`} size={24} />
             </div>
-            <button 
-              onClick={onCancel}
-              className="text-gray-400 hover:text-gray-600 transition-colors select-none"
-            >
-              <X size={20} />
-            </button>
+            {cancelText && (
+              <button 
+                onClick={onCancel}
+                className="text-gray-400 hover:text-gray-600 transition-colors select-none"
+              >
+                <X size={20} />
+              </button>
+            )}
           </div>
 
           {/* Content */}
@@ -84,15 +86,17 @@ const ConfirmationModal: React.FC<ConfirmationModalProps> = ({
 
           {/* Action buttons */}
           <div className="flex gap-3 select-none">
-            <button
-              onClick={onCancel}
-              className="flex-1 px-4 py-2 border border-gray-300 rounded-lg text-gray-700 bg-white hover:bg-gray-50 transition-colors duration-200 font-medium select-none"
-            >
-              {cancelText}
-            </button>
+            {cancelText && (
+              <button
+                onClick={onCancel}
+                className="flex-1 px-4 py-2 border border-gray-300 rounded-lg text-gray-700 bg-white hover:bg-gray-50 transition-colors duration-200 font-medium select-none"
+              >
+                {cancelText}
+              </button>
+            )}
             <button
               onClick={onConfirm}
-              className={`flex-1 px-4 py-2 text-white rounded-lg transition-colors duration-200 font-medium focus:outline-none focus:ring-2 focus:ring-offset-2 ${styles.confirmBtn} select-none`}
+              className={`${cancelText ? 'flex-1' : 'w-full'} px-4 py-2 text-white rounded-lg transition-colors duration-200 font-medium focus:outline-none focus:ring-2 focus:ring-offset-2 ${styles.confirmBtn} select-none`}
             >
               {confirmText}
             </button>
