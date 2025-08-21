@@ -38,7 +38,7 @@ const ClientGrid: React.FC<ClientGridProps> = ({
 }) => {
   const contentRef = useRef<HTMLDivElement>(null);
   const containerRef = useRef<HTMLDivElement>(null);
-  const draggableInstance = useRef<Draggable | null>(null);
+  const draggableRef = useRef<Draggable[] | null>(null);
 
   // GSAP Draggable setup
   useEffect(() => {
@@ -48,9 +48,9 @@ const ClientGrid: React.FC<ClientGridProps> = ({
     const content = contentRef.current;
     
     // Kill any existing draggable
-    if (draggableInstance.current) {
-      draggableInstance.current.kill();
-      draggableInstance.current = null;
+    if (draggableRef.current) {
+      draggableRef.current.forEach(d => d.kill());
+      draggableRef.current = null;
     }
 
     // Force layout calculation
@@ -62,59 +62,84 @@ const ClientGrid: React.FC<ClientGridProps> = ({
     const contentWidth = content.scrollWidth;
     
     // Only enable dragging if content overflows container
-    if (contentWidth > containerWidth) {
-      // Calculate bounds based on content and container width
-      const maxDrag = Math.max(0, contentWidth - containerWidth);
-      
+    // Always enable dragging for better UX, even with single cards
+    if (true) {
       // Create draggable instance
-      draggableInstance.current = Draggable.create(content, {
+      draggableRef.current = Draggable.create(content, {
         type: "x",
         bounds: {
-          minX: -maxDrag,
-          maxX: 0
+          minX: -(contentWidth * 2), // Much wider bounds for better throws
+          maxX: containerWidth * 2 // Much wider bounds for better throws
         },
-        edgeResistance: 0.5,
+        edgeResistance: 0.05, // Even lower resistance
         inertia: true,
-        dragResistance: 0.1,
-        throwResistance: 0.005,
-        overshootTolerance: 0,
+        dragResistance: 0.02, // Much lower = easier to drag and throw
+        throwResistance: 0.02, // Much lower resistance for longer throws
+        maxDuration: 6, // Much longer maximum duration for inertia
+        minDuration: 0.1, // Lower minimum duration
+        overshootTolerance: 500, // Allow even more overshooting
+        force3D: true,
+        onDragStart: function() {
+          // Record the starting position to determine drag direction
+          this.startX = gsap.getProperty(content, "x") as number;
+        },
         onDragEnd: function() {
+          // Smart snapping based on position
           const currentX = gsap.getProperty(content, "x") as number;
-          const velocity = this.getVelocity("x");
+          const startX = this.startX || 0;
+          const dragDirection = currentX - startX; // Positive = dragged right, Negative = dragged left
+          const containerWidth = container.offsetWidth;
+          const contentWidth = content.scrollWidth;
           
-          // Determine snap points
-          let snapTo = 0;
+          // Define snap zones (30% from each edge)
+          const leftSnapZone = -(containerWidth * 0.3);
+          const rightSnapZone = containerWidth * 0.3;
           
-          // If moving quickly, snap in the direction of movement
-          if (Math.abs(velocity) > 500) {
-            snapTo = velocity > 0 ? 0 : -maxDrag;
-          } 
-          // If moving slowly, snap to whichever edge is closer
-          else {
-            snapTo = Math.abs(currentX) < maxDrag / 2 ? 0 : -maxDrag;
+          // Only snap to left edge if dragged LEFT (negative direction) and in left snap zone
+          if (currentX < leftSnapZone && dragDirection < 0) {
+            // Snap to left edge (show rightmost content)
+            gsap.to(content, {
+              x: -(contentWidth - containerWidth),
+              duration: 0.8,
+              ease: "back.out(1.7)",
+              force3D: true
+            });
+          // Only snap to right edge if dragged RIGHT (positive direction) and in right snap zone
+          } else if (currentX > rightSnapZone && dragDirection > 0) {
+            // Snap to right edge (show leftmost content)
+            gsap.to(content, {
+              x: 0,
+              duration: 0.8,
+              ease: "back.out(1.7)",
+              force3D: true
+            });
           }
-          
-          // Animate to the snap position
-          gsap.to(content, {
-            x: snapTo,
-            duration: 0.5,
-            ease: "power2.out",
-            force3D: true
-          });
+          // If in middle zone OR dragging in opposite direction, don't snap - let it stay where it is
         }
-      })[0];
-    } else {
-      // Reset position if content doesn't overflow
-      gsap.set(content, { x: 0 });
+      });
     }
 
     return () => {
-      if (draggableInstance.current) {
-        draggableInstance.current.kill();
-        draggableInstance.current = null;
+      if (draggableRef.current) {
+        draggableRef.current.forEach(d => d.kill());
+        draggableRef.current = null;
       }
     };
-  }, [clients.length]);
+  }, [clients.length]); // Recalculate when number of clients changes
+
+  // Calculate dynamic height based on card content
+  const calculateCardHeight = () => {
+    // Base padding: p-3 (12px) on mobile = 24px total vertical padding
+    // Client header: ~40px (icon + name + ID)
+    // Debt amount: ~60px (label + amount + bottles)
+    // Quick add button: ~40px
+    // Returnable items: 48px (3rem min-height)
+    // Date and instruction text: ~60px (increased for two lines)
+    // Total estimated: ~272px
+    
+    // Add some buffer for different screen sizes and content variations
+    return 'min-h-[320px]'; // 320px should accommodate all content comfortably including two-line instructions
+  };
 
   return (
     <div className="bg-white rounded-lg shadow-sm border border-gray-200 mb-4">
