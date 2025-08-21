@@ -19,7 +19,7 @@ const AlternatingText: React.FC<AlternatingTextProps> = ({
   amount,
   returnableItems,
   className = '',
-  interval = 3000, // 3 seconds between changes
+  interval = 2000, // 2 seconds between changes
   transitionDuration = 400 // 400ms fade transition
 }) => {
   const [showAmount, setShowAmount] = useState(true);
