@@ -203,26 +203,6 @@ const ScrollingTabs: React.FC<ScrollingTabsProps> = ({
             
             console.log('🎯 New timeline created and started at progress:', currentProgress);
           }
-          
-          // Only snap to center if content is small enough to fit in container
-          const container = containerRef.current;
-          const content = contentRef.current;
-          
-          if (container && content) {
-            const containerWidth = container.offsetWidth;
-            const contentWidth = content.scrollWidth;
-            
-            // If content fits in container, snap to center
-            if (contentWidth <= containerWidth) {
-              gsap.to(content, {
-                x: 0,
-                duration: 1.2,
-                ease: "elastic.out(1, 0.5)",
-                force3D: true
-              });
-            }
-            // If content is bigger, leave it where user dragged it
-          }
         },
       });
     });
@@ -374,26 +354,13 @@ const ScrollingTabs: React.FC<ScrollingTabsProps> = ({
       
       // Set up timer to clear animation and resume timeline after 3 seconds
       const clearAnimationTimer = setTimeout(() => {
+        console.log('🎯 Auto-clearing persistent animation after 3 seconds');
         setPersistentAnimationTabId(null);
         
-        // Only snap to center if content is small enough to fit in container
-        const container = containerRef.current;
-        const content = contentRef.current;
-        
-        if (container && content) {
-          const containerWidth = container.offsetWidth;
-          const contentWidth = content.scrollWidth;
-          
-          // If content fits in container, snap to center
-          if (contentWidth <= containerWidth) {
-            gsap.to(content, {
-              x: 0,
-              duration: 1.2,
-              ease: "elastic.out(1, 0.5)",
-              force3D: true
-            });
-          }
-          // If content is bigger, leave it where user dragged it
+        // Resume timeline after clearing animation
+        if (timelineRef.current && timelineRef.current.paused()) {
+          console.log('🎯 Resuming timeline after clearing persistent animation');
+          timelineRef.current.resume();
         }
       }, 3000);
       
@@ -407,7 +374,7 @@ const ScrollingTabs: React.FC<ScrollingTabsProps> = ({
         timelineRef.current.resume();
       }
     }
-  }, [persistentAnimationTabId, sortedClients.length]);
+  }, [persistentAnimationTabId]);
 
   return (
     <>
@@ -762,11 +729,11 @@ const ScrollingTabs: React.FC<ScrollingTabsProps> = ({
                       </div>
                     )}
                     <div className="text-xs text-gray-500 mt-1 text-center">
-                      {client.lastTransactionAt.toLocaleDateString('en-GB', {
+              {client.lastTransactionAt.toLocaleDateString('en-GB', {
                         day: '2-digit',
-                        month: 'short',
+                month: 'short',
                         year: '2-digit'
-                      }).replace(/\s/g, '-')}
+              }).replace(/\s/g, '-')}
                     </div>
                     <div className="text-xs text-gray-500 text-center">
                       {client.lastTransactionAt.toLocaleTimeString('en-GB', {
@@ -774,14 +741,13 @@ const ScrollingTabs: React.FC<ScrollingTabsProps> = ({
                         minute: '2-digit'
                       })}
                     </div>
+                    </div>
                   </div>
-                </div>
               );
             })}
           </div>
         </div>
       </div>
-    </div>
 
       {/* Action Modal */}
       {selectedClientForAction && (
@@ -791,6 +757,7 @@ const ScrollingTabs: React.FC<ScrollingTabsProps> = ({
           onResetCalculator={onResetCalculator}
         />
       )}
+    </div>
     </>
   );
 };
