@@ -84,6 +84,7 @@ const ScrollingTabs: React.FC<ScrollingTabsProps> = ({
       return hasReturnableItems && isOlderThan3Weeks;
     });
   };
+  
   // Helper function to calculate timeline progress from current position
   const calculateTimelineProgress = useCallback(() => {
     if (!contentRef.current || !containerRef.current) return 0;
@@ -117,6 +118,43 @@ const ScrollingTabs: React.FC<ScrollingTabsProps> = ({
     });
     
     return progress;
+  }, []);
+
+  // Add this helper function to restart the timeline from a specific position
+  const restartTimelineFromPosition = useCallback((startPosition: number) => {
+    const container = containerRef.current;
+    const content = contentRef.current;
+    
+    if (!container || !content) return;
+    
+    const containerWidth = container.offsetWidth;
+    const contentWidth = content.scrollWidth;
+    const totalDistance = contentWidth + containerWidth;
+    const duration = totalDistance / 60;
+    
+    // Create new timeline
+    timelineRef.current = gsap.timeline({ repeat: -1, ease: "none" });
+    timelineRef.current
+      .fromTo(content, 
+        { x: startPosition },
+        { 
+          x: -contentWidth,
+          duration: duration * Math.abs((startPosition - (-contentWidth)) / totalDistance),
+          ease: "none"
+        })
+      .to(content, {
+        x: containerWidth,
+        duration: 0,
+        ease: "none"
+      })
+      .to(content, {
+        x: -contentWidth,
+        duration: duration,
+        ease: "none",
+        repeat: -1
+      });
+    
+    console.log('🎯 Timeline restarted from position:', startPosition);
   }, []);
 
   // Seamless continuous scroll setup
@@ -167,20 +205,20 @@ const ScrollingTabs: React.FC<ScrollingTabsProps> = ({
             ease: "none"
           });
       
-      // Create draggable instance
+      // Create draggable instance with updated bounds
       draggableRef.current = Draggable.create(content, {
         type: "x",
         bounds: {
           minX: -contentWidth,
-          maxX: containerWidth * 2, // Allow dragging much further right
+          maxX: containerWidth,
         },
-        edgeResistance: 0.005, // Extremely low resistance at edges
+        edgeResistance: 0.8, // Increased resistance for better control
         inertia: true,
-        dragResistance: 0.001, // Extremely easy to drag and throw
-        throwResistance: 0.001, // Maximum throw distance
-        maxDuration: 20, // Very long inertia duration (20 seconds max)
-        minDuration: 0.01, // Instant response
-        overshootTolerance: 2000, // Massive overshooting allowed
+        dragResistance: 0.5, // Normal resistance for dragging
+        throwResistance: 1000, // Lower value = more throw, higher = less throw
+        maxDuration: 2, // Shorter inertia duration
+        minDuration: 0.1,
+        overshootTolerance: 0, // No overshooting
         force3D: true,
         onDragStart: function() {
           // Kill the timeline completely on drag start
@@ -192,44 +230,30 @@ const ScrollingTabs: React.FC<ScrollingTabsProps> = ({
           setIsDragging(true);
         },
         onDragEnd: function() {
-          console.log('🎯 Drag ended - creating new timeline');
+          console.log('🎯 Drag ended');
           setIsDragging(false);
           
-          // Calculate current progress based on position
-          const currentProgress = calculateTimelineProgress();
-          console.log('🎯 Calculated progress for new timeline:', currentProgress);
+          // Don't restart the timeline automatically
+          // Let the user continue dragging or let the position stay where it is
           
-          // Create new timeline starting from calculated progress
-          const container = containerRef.current;
-          const content = contentRef.current;
+          // Only restart if the content is near the edges
+          const currentX = gsap.getProperty(content, "x") as number;
+          const containerWidth = container.offsetWidth;
+          const contentWidth = content.scrollWidth;
           
-          if (container && content) {
-            const containerWidth = container.offsetWidth;
-            const contentWidth = content.scrollWidth;
-            const totalDistance = contentWidth + containerWidth;
-            const duration = totalDistance / 60;
-            
-            // Create new timeline
-            timelineRef.current = gsap.timeline({ repeat: -1, ease: "none" });
-            timelineRef.current
-              .fromTo(content, 
-                { x: containerWidth }, // Enter from right
-                { 
-                  x: -contentWidth, // Exit to left
-                  duration: duration,
-                  ease: "none"
-                });
-            
-            // Set the timeline to the calculated progress and play
-            timelineRef.current.progress(currentProgress);
-            timelineRef.current.play();
-            
-            console.log('🎯 New timeline created and started at progress:', currentProgress);
+          // If near the right edge (start position)
+          if (currentX > containerWidth * 0.8) {
+            restartTimelineFromPosition(containerWidth);
+          } 
+          // If near the left edge (end position)
+          else if (currentX < -contentWidth * 0.9) {
+            restartTimelineFromPosition(-contentWidth);
           }
+          // Otherwise, just let it stay where it is
         },
       });
     });
-  }, [sortedClients.length, calculateTimelineProgress]);
+  }, [sortedClients.length, calculateTimelineProgress, restartTimelineFromPosition]);
 
   // Setup animation when clients change
   useEffect(() => {
@@ -317,6 +341,7 @@ const ScrollingTabs: React.FC<ScrollingTabsProps> = ({
       window.removeEventListener('restartScrollingTimeline', handleRestartTimeline);
     };
   }, [calculateTimelineProgress, sortedClients.length]);
+  
   // Debug effect to monitor timeline state
   useEffect(() => {
     const interval = setInterval(() => {
