@@ -5,6 +5,7 @@ import { gsap } from 'gsap';
 import { Draggable } from '../../lib/draggable.js';
 import { Client } from '../../types';
 import ClientActionModal from '../ClientActionModal';
+import ClientDetailModal from '../ClientDetailModal';
 import { useCredit } from '../../context/CreditContext';
 
 // Register GSAP plugins
@@ -43,6 +44,8 @@ const ScrollingTabs: React.FC<ScrollingTabsProps> = ({
   const [isDragging, setIsDragging] = React.useState(false);
   const [clickedTabId, setClickedTabId] = React.useState<string | null>(null);
   const [persistentAnimationTabId, setPersistentAnimationTabId] = React.useState<string | null>(null);
+  const [selectedClientForDetails, setSelectedClientForDetails] = React.useState<Client | null>(null);
+  const [longPressTimer, setLongPressTimer] = React.useState<NodeJS.Timeout | null>(null);
   const { getClientTransactions } = useCredit();
 
   // Sort clients based on sort option
@@ -325,6 +328,12 @@ const ScrollingTabs: React.FC<ScrollingTabsProps> = ({
 
   // Handle tab click - pause timeline and show modal
   const handleTabClick = (client: Client) => {
+    // Clear any existing long press timer
+    if (longPressTimer) {
+      clearTimeout(longPressTimer);
+      setLongPressTimer(null);
+    }
+    
     // Add click animation
     setClickedTabId(client.id);
     setPersistentAnimationTabId(client.id);
@@ -341,11 +350,45 @@ const ScrollingTabs: React.FC<ScrollingTabsProps> = ({
     setSelectedClientForAction(client);
   };
 
+  // Handle long press start
+  const handleLongPressStart = (client: Client, e: React.TouchEvent | React.MouseEvent) => {
+    e.preventDefault();
+    e.stopPropagation();
+    
+    const timer = setTimeout(() => {
+      // Pause timeline during long press
+      if (timelineRef.current) {
+        timelineRef.current.pause();
+      }
+      setSelectedClientForDetails(client);
+      setLongPressTimer(null);
+    }, 1000); // 1 second long press
+    
+    setLongPressTimer(timer);
+  };
+
+  // Handle long press end
+  const handleLongPressEnd = () => {
+    if (longPressTimer) {
+      clearTimeout(longPressTimer);
+      setLongPressTimer(null);
+    }
+  };
+
   // Handle modal close - resume timeline
   const handleModalClose = () => {
     setSelectedClientForAction(null);
     // Don't resume timeline immediately - let the animation detection handle it
     // The timeline will resume once the persistent animation is cleared
+  };
+
+  // Handle detail modal close - resume timeline
+  const handleDetailModalClose = () => {
+    setSelectedClientForDetails(null);
+    // Resume timeline when detail modal closes
+    if (timelineRef.current && timelineRef.current.paused()) {
+      timelineRef.current.resume();
+    }
   };
 
   // Monitor timeline and persistent animation interaction
@@ -461,6 +504,12 @@ const ScrollingTabs: React.FC<ScrollingTabsProps> = ({
                   }}
                   onClick={() => handleTabClick(client)}
                   onDoubleClick={() => onQuickAdd(client)}
+                  onTouchStart={(e) => handleLongPressStart(client, e)}
+                  onTouchEnd={handleLongPressEnd}
+                  onTouchCancel={handleLongPressEnd}
+                  onMouseDown={(e) => handleLongPressStart(client, e)}
+                  onMouseUp={handleLongPressEnd}
+                  onMouseLeave={handleLongPressEnd}
                 >
                   <div className="text-center">
                     <div className="text-sm font-medium text-gray-800 truncate select-none">
@@ -778,6 +827,15 @@ const ScrollingTabs: React.FC<ScrollingTabsProps> = ({
           client={selectedClientForAction}
           onClose={handleModalClose}
           onResetCalculator={onResetCalculator}
+        />
+      )}
+
+      {/* Detail Modal */}
+      {selectedClientForDetails && (
+        <ClientDetailModal
+          client={selectedClientForDetails}
+          onClose={handleDetailModalClose}
+          onQuickAdd={onQuickAdd}
         />
       )}
     </div>
