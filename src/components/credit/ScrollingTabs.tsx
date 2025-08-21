@@ -66,6 +66,24 @@ const ScrollingTabs: React.FC<ScrollingTabsProps> = ({
     }
   }, [clients, sortOption, getClientTotalDebt]);
 
+  // Helper function to check if client has overdue returnables (3+ weeks old)
+  const hasOverdueReturnables = (client: Client): boolean => {
+    const clientTransactions = getClientTransactions(client.id);
+    const threeWeeksAgo = Date.now() - (21 * 24 * 60 * 60 * 1000); // 3 weeks in milliseconds
+    
+    return clientTransactions.some(transaction => {
+      // Only check debt transactions (not payments) and exclude already returned items
+      if (transaction.type === 'payment' || transaction.description.toLowerCase().includes('returned')) {
+        return false;
+      }
+      
+      const description = transaction.description.toLowerCase();
+      const hasReturnableItems = description.includes('chopine') || description.includes('bouteille');
+      const isOlderThan3Weeks = transaction.date.getTime() < threeWeeksAgo;
+      
+      return hasReturnableItems && isOlderThan3Weeks;
+    });
+  };
   // Helper function to calculate timeline progress from current position
   const calculateTimelineProgress = useCallback(() => {
     if (!contentRef.current || !containerRef.current) return 0;
@@ -521,6 +539,7 @@ const ScrollingTabs: React.FC<ScrollingTabsProps> = ({
             {sortedClients.map((client, index) => {
               const totalDebt = getClientTotalDebt(client.id);
               const isLinked = linkedClient?.id === client.id;
+              const hasOverdueItems = hasOverdueReturnables(client);
               
               // Determine card background color based on debt amount (same as big cards)
               const getCardBackgroundColor = () => {
@@ -542,7 +561,7 @@ const ScrollingTabs: React.FC<ScrollingTabsProps> = ({
                       ? 'bg-blue-50 border-blue-200 shadow-md'
                       : isDragging
                         ? getCardBackgroundColor()
-                        : `${getCardBackgroundColor()} hover:shadow-md`
+                        : `${getCardBackgroundColor()} hover:shadow-md ${hasOverdueItems ? 'animate-urgent-glow animate-subtle-shake' : ''}`
                   } ${
                     clickedTabId === client.id 
                       ? 'animate-pulse-attention bg-yellow-200 border-yellow-400 shadow-lg scale-110 z-50' 

@@ -171,6 +171,32 @@ body {
   animation: pulse-persistent 2s ease-in-out infinite;
 }
 
+/* Overdue returnables animation - urgent attention needed */
+@keyframes urgent-glow {
+  0%, 100% {
+    box-shadow: 0 0 5px rgba(239, 68, 68, 0.3), 0 0 10px rgba(239, 68, 68, 0.2), 0 0 15px rgba(239, 68, 68, 0.1);
+    border-color: rgba(239, 68, 68, 0.4);
+  }
+  50% {
+    box-shadow: 0 0 10px rgba(239, 68, 68, 0.6), 0 0 20px rgba(239, 68, 68, 0.4), 0 0 30px rgba(239, 68, 68, 0.2);
+    border-color: rgba(239, 68, 68, 0.8);
+  }
+}
+
+.animate-urgent-glow {
+  animation: urgent-glow 2s ease-in-out infinite;
+}
+
+/* Subtle shake animation for extra attention */
+@keyframes subtle-shake {
+  0%, 100% { transform: translateX(0); }
+  25% { transform: translateX(-1px); }
+  75% { transform: translateX(1px); }
+}
+
+.animate-subtle-shake {
+  animation: subtle-shake 3s ease-in-out infinite;
+}
 .touch-manipulation {
   touch-action: pan-y;
   -webkit-user-select: none;
