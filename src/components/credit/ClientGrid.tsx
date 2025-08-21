@@ -69,7 +69,7 @@ const ClientGrid: React.FC<ClientGridProps> = ({
         type: "x",
         bounds: {
           minX: -(contentWidth + containerWidth), // Allow dragging past left edge
-          maxX: containerWidth // Allow dragging past right edge
+          maxX: containerWidth + containerWidth // Allow dragging past right edge (symmetrical)
         },
         edgeResistance: 0.02, // Low resistance at edges
         inertia: true,
