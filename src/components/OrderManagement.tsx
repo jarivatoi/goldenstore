@@ -48,6 +48,8 @@ const OrderManagement: React.FC = () => {
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [showDeleteCategoryModal, setShowDeleteCategoryModal] = useState(false);
   const [categoryToDelete, setCategoryToDelete] = useState<OrderCategory | null>(null);
+  const [showDeleteOrderModal, setShowDeleteOrderModal] = useState(false);
+  const [orderToDelete, setOrderToDelete] = useState<Order | null>(null);
 
   // Get filtered categories
   const filteredCategories = searchCategories(searchQuery);
@@ -152,26 +154,29 @@ const OrderManagement: React.FC = () => {
     } catch (error) {
       alert('Failed to delete category. Please try again.');
     }
+    setOrderToDelete(order);
+    setShowDeleteOrderModal(true);
   };
 
-  const cancelDeleteCategory = () => {
-    setShowDeleteCategoryModal(false);
-    setCategoryToDelete(null);
-  };
-
-  // Handle delete item template
-  const handleDeleteItem = async (item: OrderItemTemplate) => {
-    const confirmed = window.confirm(
-      `Are you sure you want to delete "${item.name}"? This will also remove it from all orders.`
-    );
+  const confirmDeleteOrder = async () => {
+    if (!orderToDelete) return;
     
-    if (confirmed) {
-      try {
-        await deleteItemTemplate(item.id);
-      } catch (err) {
-        alert('Failed to delete item');
-      }
+    const category = categories.find(c => c.id === orderToDelete.categoryId);
+    const categoryName = category?.name || 'Unknown';
+    
+    try {
+      await deleteOrder(orderToDelete.id);
+      alert(`Order for "${categoryName}" has been deleted successfully.`);
+      setShowDeleteOrderModal(false);
+      setOrderToDelete(null);
+    } catch (error) {
+      alert('Failed to delete order. Please try again.');
     }
+  };
+
+  const cancelDeleteOrder = () => {
+    setShowDeleteOrderModal(false);
+    setOrderToDelete(null);
   };
 
   if (isLoading) {
@@ -473,6 +478,27 @@ const OrderManagement: React.FC = () => {
         onCancel={cancelDeleteCategory}
       />
     </div>
+      {/* Order Delete Confirmation Modal */}
+      <ConfirmationModal
+        isOpen={showDeleteOrderModal}
+        title="Delete Order"
+        message={orderToDelete ? (() => {
+          const category = categories.find(c => c.id === orderToDelete.categoryId);
+          const categoryName = category?.name || 'Unknown';
+          const orderDate = orderToDelete.orderDate.toLocaleDateString('en-GB', {
+            day: '2-digit',
+            month: 'short',
+            year: 'numeric'
+          });
+          return `Are you sure you want to delete the order for "${categoryName}" dated ${orderDate}?\n\nThis action cannot be undone.`;
+        })() : ''}
+        confirmText="Delete Order"
+        cancelText="Cancel"
+        type="danger"
+        onConfirm={confirmDeleteOrder}
+        onCancel={cancelDeleteOrder}
+      />
+
   );
 };
 
