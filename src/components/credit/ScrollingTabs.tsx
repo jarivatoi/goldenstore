@@ -148,9 +148,17 @@ const ScrollingTabs: React.FC<ScrollingTabsProps> = ({
       draggableRef.current = Draggable.create(content, {
         type: "x",
         bounds: {
-          minX: -contentWidth,
-          maxX: containerWidth + containerWidth, // Allow dragging further right
+          minX: -400, // Fixed left boundary regardless of content width
+          maxX: 400,  // Fixed right boundary for balanced feel
         },
+        edgeResistance: 0.3, // Moderate resistance for better feel
+        inertia: true,
+        dragResistance: 0.1, // Lower = easier to drag
+        throwResistance: 0.1, // Controls how much the throw slows down
+        maxDuration: 3, // Maximum duration for inertia
+        minDuration: 0.2, // Minimum duration for inertia
+        overshootTolerance: 100, // Consistent overshoot for all card sizes
+        force3D: true,
         onDragStart: function() {
           // Kill the timeline completely on drag start
           if (timelineRef.current) {
