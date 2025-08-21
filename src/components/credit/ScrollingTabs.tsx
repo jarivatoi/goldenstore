@@ -1098,15 +1098,16 @@ const ScrollingTabs: React.FC<ScrollingTabsProps> = ({
                       {client.lastTransactionAt.toLocaleTimeString('en-GB', {
                         hour: '2-digit',
                         minute: '2-digit'
-                    <p className="text-sm text-red-600 font-medium select-none">
-                    </div>
+                      })}
                     </div>
                   </div>
+                </div>
               );
             })}
           </div>
         </div>
       </div>
+    </div>
 
       {/* Action Modal */}
       {selectedClientForAction && (
@@ -1125,7 +1126,6 @@ const ScrollingTabs: React.FC<ScrollingTabsProps> = ({
           onQuickAdd={onQuickAdd}
         />
       )}
-    </div>
     </>
   );
 };
