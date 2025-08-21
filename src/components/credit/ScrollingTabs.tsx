@@ -178,19 +178,29 @@ const ScrollingTabs: React.FC<ScrollingTabsProps> = ({
             const totalDistance = contentWidth + containerWidth;
             const duration = totalDistance / 60;
             
+            // Get current position to continue from where user left it
+            const currentX = gsap.getProperty(content, "x") as number;
+            
             // Create new timeline
             timelineRef.current = gsap.timeline({ repeat: -1, ease: "none" });
             timelineRef.current
-              .fromTo(content, 
-                { x: containerWidth }, // Enter from right
-                { 
-                  x: -contentWidth, // Exit to left
-                  duration: duration,
-                  ease: "none"
-                });
+              .to(content, {
+                x: -contentWidth, // Continue to left exit point
+                duration: duration * (1 - currentProgress), // Adjust duration for remaining distance
+                ease: "none"
+              })
+              .to(content, {
+                x: containerWidth, // Reset to right entry point
+                duration: 0,
+                ease: "none"
+              })
+              .to(content, {
+                x: -contentWidth, // Full cycle
+                duration: duration,
+                ease: "none",
+                repeat: -1
+              });
             
-            // Set the timeline to the calculated progress and play
-            timelineRef.current.progress(currentProgress);
             timelineRef.current.play();
             
             console.log('🎯 New timeline created and started at progress:', currentProgress);
