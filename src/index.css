@@ -195,7 +195,7 @@ body {
 }
 
 .animate-subtle-shake {
-  animation: subtle-shake 3s ease-in-out infinite;
+  animation: subtle-shake 2s ease-in-out infinite;
 }
 .touch-manipulation {
   touch-action: pan-y;
