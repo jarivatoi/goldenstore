@@ -593,7 +593,7 @@ const ScrollingTabs: React.FC<ScrollingTabsProps> = ({
                       : persistentAnimationTabId === client.id
                       ? 'animate-pulse-persistent bg-yellow-100 border-yellow-300 shadow-md scale-105 z-40'
                       : totalDebt > 1000
-                      ? 'animate-high-debt-wobble'
+                      ? 'animate-high-debt-jump'
                       : (() => {
                           // Check if client has returnable items
                           const clientTransactions = getClientTransactions(client.id);
