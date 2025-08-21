@@ -136,13 +136,25 @@ const ScrollingTabs: React.FC<ScrollingTabsProps> = ({
       timelineRef.current = gsap.timeline({ repeat: -1, ease: "none" });
       
       timelineRef.current
-        .fromTo(content, 
-          { x: containerWidth }, // Enter from right
-          { 
-            x: -contentWidth, // Exit to left
-            duration: duration,
-            ease: "none"
-          });
+          // Only snap to center if content is small enough to fit in container
+          const container = containerRef.current;
+          const content = contentRef.current;
+          
+          if (container && content) {
+            const containerWidth = container.offsetWidth;
+            const contentWidth = content.scrollWidth;
+            
+            // If content fits in container, snap to center
+            if (contentWidth <= containerWidth) {
+              gsap.to(content, {
+                x: 0,
+                duration: 1.2,
+                ease: "elastic.out(1, 0.5)",
+                force3D: true
+              });
+            }
+            // If content is bigger, leave it where user dragged it
+          }
       
       // Create draggable instance
       draggableRef.current = Draggable.create(content, {
@@ -354,13 +366,25 @@ const ScrollingTabs: React.FC<ScrollingTabsProps> = ({
       
       // Set up timer to clear animation and resume timeline after 3 seconds
       const clearAnimationTimer = setTimeout(() => {
-        console.log('🎯 Auto-clearing persistent animation after 3 seconds');
-        setPersistentAnimationTabId(null);
-        
-        // Resume timeline after clearing animation
-        if (timelineRef.current && timelineRef.current.paused()) {
-          console.log('🎯 Resuming timeline after clearing persistent animation');
-          timelineRef.current.resume();
+          // Only snap to center if content is small enough to fit in container
+          const container = containerRef.current;
+          const content = contentRef.current;
+          
+          if (container && content) {
+            const containerWidth = container.offsetWidth;
+            const contentWidth = content.scrollWidth;
+            
+            // If content fits in container, snap to center
+            if (contentWidth <= containerWidth) {
+              gsap.to(content, {
+                x: 0,
+                duration: 1.2,
+                ease: "elastic.out(1, 0.5)",
+                force3D: true
+              });
+            }
+            // If content is bigger, leave it where user dragged it
+          }
         }
       }, 3000);
       
