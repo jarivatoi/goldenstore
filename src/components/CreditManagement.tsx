@@ -47,6 +47,10 @@ const CreditManagement: React.FC = () => {
 
   // Separate search query for main grid (bottom search bar)
   const [mainGridSearchQuery, setMainGridSearchQuery] = useState('');
+  
+  // Success modal state
+  const [showSuccessModal, setShowSuccessModal] = useState(false);
+  const [successMessage, setSuccessMessage] = useState('');
 
   // Listen for credit data changes to force re-render
   useEffect(() => {
@@ -358,9 +362,10 @@ const CreditManagement: React.FC = () => {
       setClientToDelete(null);
       setDeleteConfirmText('');
       setShowSettings(false);
-      alert(`Client ${clientToDelete.name} (${clientToDelete.id}) has been permanently deleted`);
+      setSuccessMessage(`Client ${clientToDelete.name} (${clientToDelete.id}) has been permanently deleted`);
+      setShowSuccessModal(true);
     } catch (error) {
-      alert('Failed to delete client');
+      console.error('Failed to delete client:', error);
     }
   };
 
@@ -476,6 +481,19 @@ const CreditManagement: React.FC = () => {
           setClientToDelete(null);
           setDeleteConfirmText('');
         }}
+        isDeleting={false}
+      />
+
+      {/* Success Modal */}
+      <ConfirmationModal
+        isOpen={showSuccessModal}
+        title="Success"
+        message={successMessage}
+        confirmText="OK"
+        cancelText=""
+        type="success"
+        onConfirm={() => setShowSuccessModal(false)}
+        onCancel={() => setShowSuccessModal(false)}
       />
     </div>
   );
