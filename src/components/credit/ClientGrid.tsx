@@ -84,19 +84,12 @@ const ClientGrid: React.FC<ClientGridProps> = ({
         onDragEnd: function() {
           // Smart snapping based on position and velocity
           const currentX = gsap.getProperty(content, "x") as number;
-          const velocity = this.getVelocity("x");
           
           // Determine snap points
           let snapTo = 0;
           
-          // If moving quickly, snap in the direction of movement
-          if (Math.abs(velocity) > 500) {
-            snapTo = velocity > 0 ? 0 : -maxDrag;
-          } 
-          // If moving slowly, snap to whichever edge is closer
-          else {
-            snapTo = Math.abs(currentX) < maxDrag / 2 ? 0 : -maxDrag;
-          }
+          // Snap to whichever edge is closer
+          snapTo = Math.abs(currentX) < maxDrag / 2 ? 0 : -maxDrag;
           
           // Animate to the snap position
           gsap.to(content, {
