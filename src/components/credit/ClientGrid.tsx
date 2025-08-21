@@ -38,10 +38,7 @@ const ClientGrid: React.FC<ClientGridProps> = ({
 }) => {
   const contentRef = useRef<HTMLDivElement>(null);
   const containerRef = useRef<HTMLDivElement>(null);
-  const draggableRef = useRef<Draggable[] | null>(null);
-  const lastXRef = useRef(0);
-  const lastTimeRef = useRef(0);
-  const velocityRef = useRef(0);
+  const draggableInstance = useRef<Draggable | null>(null);
 
   // GSAP Draggable setup
   useEffect(() => {
@@ -51,9 +48,9 @@ const ClientGrid: React.FC<ClientGridProps> = ({
     const content = contentRef.current;
     
     // Kill any existing draggable
-    if (draggableRef.current) {
-      draggableRef.current.forEach(d => d.kill());
-      draggableRef.current = null;
+    if (draggableInstance.current) {
+      draggableInstance.current.kill();
+      draggableInstance.current = null;
     }
 
     // Force layout calculation
@@ -69,13 +66,8 @@ const ClientGrid: React.FC<ClientGridProps> = ({
       // Calculate bounds based on content and container width
       const maxDrag = Math.max(0, contentWidth - containerWidth);
       
-      // Track position and time for velocity calculation
-      let lastX = 0;
-      let lastTime = Date.now();
-      let velocity = 0;
-      
       // Create draggable instance
-      draggableRef.current = Draggable.create(content, {
+      draggableInstance.current = Draggable.create(content, {
         type: "x",
         bounds: {
           minX: -maxDrag,
@@ -85,29 +77,16 @@ const ClientGrid: React.FC<ClientGridProps> = ({
         inertia: true,
         dragResistance: 0.1,
         throwResistance: 0.005,
-        maxDuration: 2,
-        minDuration: 0.02,
         overshootTolerance: 0,
-        force3D: true,
-        onDrag: function() {
-          const currentX = gsap.getProperty(content, "x") as number;
-          const currentTime = Date.now();
-          const deltaTime = currentTime - lastTime;
-          
-          if (deltaTime > 0) {
-            velocity = (currentX - lastX) / deltaTime;
-            lastX = currentX;
-            lastTime = currentTime;
-          }
-        },
         onDragEnd: function() {
           const currentX = gsap.getProperty(content, "x") as number;
+          const velocity = this.getVelocity("x");
           
           // Determine snap points
           let snapTo = 0;
           
-          // If moving with significant velocity, snap in the direction of movement
-          if (Math.abs(velocity) > 0.5) {
+          // If moving quickly, snap in the direction of movement
+          if (Math.abs(velocity) > 500) {
             snapTo = velocity > 0 ? 0 : -maxDrag;
           } 
           // If moving slowly, snap to whichever edge is closer
@@ -118,27 +97,24 @@ const ClientGrid: React.FC<ClientGridProps> = ({
           // Animate to the snap position
           gsap.to(content, {
             x: snapTo,
-            duration: 1.2,
-            ease: "back.out(4.0)",
+            duration: 0.5,
+            ease: "power2.out",
             force3D: true
           });
-          
-          // Reset velocity
-          velocity = 0;
         }
-      });
+      })[0];
     } else {
       // Reset position if content doesn't overflow
       gsap.set(content, { x: 0 });
     }
 
     return () => {
-      if (draggableRef.current) {
-        draggableRef.current.forEach(d => d.kill());
-        draggableRef.current = null;
+      if (draggableInstance.current) {
+        draggableInstance.current.kill();
+        draggableInstance.current = null;
       }
     };
-  }, [clients.length]); // Recalculate when number of clients changes
+  }, [clients.length]);
 
   return (
     <div className="bg-white rounded-lg shadow-sm border border-gray-200 mb-4">
