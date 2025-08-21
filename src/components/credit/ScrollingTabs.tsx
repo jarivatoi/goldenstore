@@ -604,7 +604,7 @@ const ScrollingTabs: React.FC<ScrollingTabsProps> = ({
                             const description = transaction.description.toLowerCase();
                             return description.includes('chopine') || description.includes('bouteille');
                           });
-                          return hasReturnableItems ? 'animate-small-debt-shake' : '';
+                          return hasReturnableItems ? 'animate-card-flip' : '';
                         })()
                   }`}
                   style={{
@@ -615,6 +615,7 @@ const ScrollingTabs: React.FC<ScrollingTabsProps> = ({
                     WebkitTouchCallout: 'none',
                     WebkitTapHighlightColor: 'transparent',
                     touchAction: 'pan-x',
+                    position: 'relative',
                     // Remove snap behavior for big card
                     ...(isBigCard && {
                       scrollSnapAlign: 'none'
@@ -629,7 +630,8 @@ const ScrollingTabs: React.FC<ScrollingTabsProps> = ({
                   onMouseUp={handleLongPressEnd}
                   onMouseLeave={handleLongPressEnd}
                 >
-                  <div className="text-center">
+                  {/* Card Front Face */}
+                  <div className="card-face text-center">
                     <div className="text-sm font-medium text-gray-800 truncate select-none">
                       {client.name}
                     </div>
@@ -932,6 +934,149 @@ const ScrollingTabs: React.FC<ScrollingTabsProps> = ({
                       })}
                     </div>
                     </div>
+                  
+                  {/* Card Back Face - Shows returnable count */}
+                  {(() => {
+                    // Check if client has returnable items for back face
+                    const clientTransactions = getClientTransactions(client.id);
+                    const returnableItems: {[key: string]: number} = {};
+                    
+                    clientTransactions.forEach(transaction => {
+                      if (transaction.type === 'payment' || transaction.description.toLowerCase().includes('returned')) {
+                        return;
+                      }
+                      
+                      const description = transaction.description.toLowerCase();
+                      
+                      if (!description.includes('chopine') && !description.includes('bouteille')) {
+                        return;
+                      }
+                      
+                      const chopinePattern = /(\d+)\s+chopines?(?:\s+([^,]*))?/gi;
+                      let chopineMatch;
+                      
+                      while ((chopineMatch = chopinePattern.exec(description)) !== null) {
+                        const quantity = parseInt(chopineMatch[1]);
+                        const brand = chopineMatch[2]?.trim() || '';
+                        const key = brand ? `Chopine ${brand}` : 'Chopine';
+                        
+                        if (!returnableItems[key]) {
+                          returnableItems[key] = 0;
+                        }
+                        returnableItems[key] += quantity;
+                      }
+                      
+                      const bouteillePattern = /(\d+)\s+(?:(\d+(?:\.\d+)?L)\s+)?bouteilles?(?:\s+([^,]*))?/gi;
+                      let bouteilleMatch;
+                      
+                      while ((bouteilleMatch = bouteillePattern.exec(description)) !== null) {
+                        const quantity = parseInt(bouteilleMatch[1]);
+                        const size = bouteilleMatch[2]?.trim() || '';
+                        const brand = bouteilleMatch[3]?.trim() || '';
+                        
+                        let key;
+                        if (size && brand) {
+                          key = `${size} ${brand}`;
+                        } else if (brand) {
+                          key = `Bouteille ${brand}`;
+                        } else if (size) {
+                          key = `${size} Bouteille`;
+                        } else {
+                          key = 'Bouteille';
+                        }
+                        
+                        if (!returnableItems[key]) {
+                          returnableItems[key] = 0;
+                        }
+                        returnableItems[key] += quantity;
+                      }
+                      
+                      if (description.includes('bouteille') && !bouteillePattern.test(description)) {
+                        const sizeMatch = description.match(/(\d+(?:\.\d+)?L)/i);
+                        const brandMatch = description.match(/bouteilles?\s+([^,]*)/i);
+                        const brand = brandMatch?.[1]?.trim() || '';
+                        
+                        let key;
+                        if (sizeMatch && brand) {
+                          key = `${sizeMatch[1]} ${brand}`;
+                        } else if (brand) {
+                          key = `Bouteille ${brand}`;
+                        } else if (sizeMatch) {
+                          key = `${sizeMatch[1]} Bouteille`;
+                        } else {
+                          key = 'Bouteille';
+                        }
+                        
+                        if (!returnableItems[key]) {
+                          returnableItems[key] = 0;
+                        }
+                        returnableItems[key] += 1;
+                      }
+                      
+                      if (description.includes('chopine') && !chopinePattern.test(description)) {
+                        const brandMatch = description.match(/chopines?\s+([^,]*)/i);
+                        const brand = brandMatch?.[1]?.trim() || '';
+                        const key = brand ? `Chopine ${brand}` : 'Chopine';
+                        
+                        if (!returnableItems[key]) {
+                          returnableItems[key] = 0;
+                        }
+                        returnableItems[key] += 1;
+                      }
+                    });
+                    
+                    // Calculate returned quantities
+                    const returnedQuantities: {[key: string]: number} = {};
+                    clientTransactions
+                      .filter(transaction => transaction.type === 'debt' && transaction.description.toLowerCase().includes('returned'))
+                      .forEach(transaction => {
+                        const description = transaction.description.toLowerCase();
+                        Object.keys(returnableItems).forEach(itemType => {
+                          if (description.includes(itemType.toLowerCase())) {
+                            const match = description.match(/returned:\s*(\d+)\s+/);
+                            if (match) {
+                              if (!returnedQuantities[itemType]) {
+                                returnedQuantities[itemType] = 0;
+                              }
+                              returnedQuantities[itemType] += parseInt(match[1]);
+                            }
+                          }
+                        });
+                      });
+                    
+                    // Calculate total returnable count
+                    let totalReturnableCount = 0;
+                    Object.entries(returnableItems).forEach(([itemType, total]) => {
+                      const returned = returnedQuantities[itemType] || 0;
+                      const remaining = Math.max(0, total - returned);
+                      totalReturnableCount += remaining;
+                    });
+                    
+                    // Only show back face if client has returnable items and is using flip animation
+                    const hasReturnableItems = clientTransactions.some(transaction => {
+                      if (transaction.type === 'payment' || transaction.description.toLowerCase().includes('returned')) {
+                        return false;
+                      }
+                      const description = transaction.description.toLowerCase();
+                      return description.includes('chopine') || description.includes('bouteille');
+                    });
+                    
+                    if (hasReturnableItems && totalReturnableCount > 0) {
+                      return (
+                        <div className="card-face card-face-back">
+                          <div className="text-center">
+                            <div className="text-lg font-bold">
+                              {totalReturnableCount}
+                            </div>
+                            <div className="text-xs">
+                              Returnable{totalReturnableCount > 1 ? 's' : ''}
+                            </div>
+                          </div>
+                        </div>
+                      );
+                    }
+                    return null;
+                  })()}
                   </div>
               );
             })}
