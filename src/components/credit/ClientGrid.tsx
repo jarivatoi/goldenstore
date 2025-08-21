@@ -73,6 +73,8 @@ const ClientGrid: React.FC<ClientGridProps> = ({
       let lastX = 0;
       let lastTime = Date.now();
       let velocity = 0;
+      let dragStartPosition = 0;
+      let dragDirection: 'left' | 'right' | null = null;
       
       // Create draggable instance
       draggableRef.current = Draggable.create(content, {
@@ -89,10 +91,19 @@ const ClientGrid: React.FC<ClientGridProps> = ({
         minDuration: 0.02,
         overshootTolerance: 0,
         force3D: true,
+        onDragStart: function() {
+          dragStartPosition = gsap.getProperty(content, "x") as number;
+          dragDirection = null;
+        },
         onDrag: function() {
           const currentX = gsap.getProperty(content, "x") as number;
           const currentTime = Date.now();
           const deltaTime = currentTime - lastTime;
+          
+          // Detect drag direction on first significant movement
+          if (dragDirection === null && Math.abs(currentX - dragStartPosition) > 10) {
+            dragDirection = currentX > dragStartPosition ? 'right' : 'left';
+          }
           
           if (deltaTime > 0) {
             velocity = (currentX - lastX) / deltaTime;
@@ -103,28 +114,46 @@ const ClientGrid: React.FC<ClientGridProps> = ({
         onDragEnd: function() {
           const currentX = gsap.getProperty(content, "x") as number;
           
-          // Determine snap points
-          let snapTo = 0;
+          // Smart snapping logic based on boundary position and drag direction
+          let snapTo = currentX; // Default: stay where released
+          let shouldSnap = true;
           
-          // If moving with significant velocity, snap in the direction of movement
-          if (Math.abs(velocity) > 0.5) {
-            snapTo = velocity > 0 ? 0 : -maxDrag;
-          } 
-          // If moving slowly, snap to whichever edge is closer
-          else {
-            snapTo = Math.abs(currentX) < maxDrag / 2 ? 0 : -maxDrag;
+          // Check if we're at or near boundaries
+          const isAtLeftBoundary = Math.abs(currentX - 0) < 50; // Within 50px of left boundary
+          const isAtRightBoundary = Math.abs(currentX - (-maxDrag)) < 50; // Within 50px of right boundary
+          
+          // Disable snapping when swiping away from boundaries
+          if (isAtLeftBoundary && dragDirection === 'right') {
+            // At left boundary, swiping right - disable left snapping
+            shouldSnap = false;
+          } else if (isAtRightBoundary && dragDirection === 'left') {
+            // At right boundary, swiping left - disable right snapping
+            shouldSnap = false;
+          }
+          
+          // Apply snapping logic only if snapping is enabled
+          if (shouldSnap) {
+            // If moving with significant velocity, snap in the direction of movement
+            if (Math.abs(velocity) > 0.5) {
+              snapTo = velocity > 0 ? 0 : -maxDrag;
+            } 
+            // If moving slowly, snap to whichever edge is closer
+            else {
+              snapTo = Math.abs(currentX) < maxDrag / 2 ? 0 : -maxDrag;
+            }
           }
           
           // Animate to the snap position
           gsap.to(content, {
             x: snapTo,
-            duration: 1.2,
-            ease: "back.out(4.0)",
+            duration: shouldSnap ? 1.2 : 0.8,
+            ease: shouldSnap ? "back.out(4.0)" : "power2.out",
             force3D: true
           });
           
           // Reset velocity
           velocity = 0;
+          dragDirection = null;
         }
       });
     } else {
