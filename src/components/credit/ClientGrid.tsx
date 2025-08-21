@@ -80,22 +80,38 @@ const ClientGrid: React.FC<ClientGridProps> = ({
         overshootTolerance: 150, // Allow more overshooting for single cards
         force3D: true,
         onDragEnd: function() {
-          // Always snap back to center position (0) regardless of drag direction
-          gsap.to(content, {
-            x: 0,
-            duration: 1.2,
-            ease: "elastic.out(1, 0.5)",
-            force3D: true
-          });
+          // For big cards (overflow), don't snap back - let them stay where dragged
+          // Only snap back if content is smaller than container
+          const containerWidth = container.offsetWidth;
+          const contentWidth = content.scrollWidth;
+          
+          if (contentWidth <= containerWidth) {
+            // Small content: snap back to center
+            gsap.to(content, {
+              x: 0,
+              duration: 1.2,
+              ease: "elastic.out(1, 0.5)",
+              force3D: true
+            });
+          }
+          // Big content: stay where dragged (no snap)
         },
         onThrowComplete: function() {
-          // Always snap back to center position (0) after throw/inertia
-          gsap.to(content, {
-            x: 0,
-            duration: 1.2,
-            ease: "elastic.out(1, 0.5)",
-            force3D: true
-          });
+          // For big cards (overflow), don't snap back after throw
+          // Only snap back if content is smaller than container
+          const containerWidth = container.offsetWidth;
+          const contentWidth = content.scrollWidth;
+          
+          if (contentWidth <= containerWidth) {
+            // Small content: snap back to center after throw
+            gsap.to(content, {
+              x: 0,
+              duration: 1.2,
+              ease: "elastic.out(1, 0.5)",
+              force3D: true
+            });
+          }
+          // Big content: stay where thrown (no snap)
         }
       });
     }
