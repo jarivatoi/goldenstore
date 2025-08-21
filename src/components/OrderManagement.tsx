@@ -1182,4 +1182,4 @@ interface CreateOrderModalProps {
 
 const CreateOrderModal: React.FC<CreateOrderModalProps> = ({ category, itemTemplates, onClose, onAdd }) => {
   const [orderDate, setOrderDate] = useState(new Date().toISOString().split('T')[0]);
-  const [orderItems, setOrderItems] = useState<OrderItem[]>([]);
+  const [orderItems, setOrderItems] = useState([]);
