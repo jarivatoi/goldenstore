@@ -68,16 +68,16 @@ const ClientGrid: React.FC<ClientGridProps> = ({
       draggableRef.current = Draggable.create(content, {
         type: "x",
         bounds: {
-          minX: -(contentWidth * 2), // Much wider bounds for better throws
-          maxX: containerWidth * 2 // Much wider bounds for better throws
+          minX: -(contentWidth + containerWidth), // Allow dragging past left edge
+          maxX: containerWidth // Allow dragging past right edge
         },
-        edgeResistance: 0.05, // Even lower resistance
+        edgeResistance: 0.02, // Low resistance at edges
         inertia: true,
-        dragResistance: 0.02, // Much lower = easier to drag and throw
-        throwResistance: 0.02, // Much lower resistance for longer throws
-        maxDuration: 6, // Much longer maximum duration for inertia
-        minDuration: 0.1, // Lower minimum duration
-        overshootTolerance: 500, // Allow even more overshooting
+        dragResistance: 0.005, // Much easier to drag and throw
+        throwResistance: 0.005, // Much longer throws
+        maxDuration: 12, // Longer inertia duration
+        minDuration: 0.02, // Snappier response
+        overshootTolerance: 1200, // Allow generous overshooting
         force3D: true,
         onDragStart: function() {
           // Record the starting position to determine drag direction
