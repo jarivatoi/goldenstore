@@ -1,4 +1,5 @@
 import React, { useState } from 'react';
+import { createPortal } from 'react-dom';
 import { Download, Upload, Database, X, AlertTriangle } from 'lucide-react';
 import { usePriceList } from '../context/PriceListContext';
 import { useCredit } from '../context/CreditContext';
@@ -8,6 +9,14 @@ import { useOrder } from '../context/OrderContext';
 interface UnifiedDataManagerProps {
   isOpen: boolean;
   onClose: () => void;
+}
+
+interface ModalState {
+  type: 'success' | 'error' | 'confirm' | null;
+  title: string;
+  message: string;
+  onConfirm?: () => void;
+  onCancel?: () => void;
 }
 
 /**
@@ -23,6 +32,7 @@ const UnifiedDataManager: React.FC<UnifiedDataManagerProps> = ({ isOpen, onClose
   const { categories, itemTemplates, orders } = useOrder();
   
   const [isProcessing, setIsProcessing] = useState(false);
+  const [modal, setModal] = useState<ModalState>({ type: null, title: '', message: '' });
 
   if (!isOpen) return null;
 
@@ -110,10 +120,23 @@ const UnifiedDataManager: React.FC<UnifiedDataManagerProps> = ({ isOpen, onClose
       document.body.removeChild(link);
       
       URL.revokeObjectURL(url);
-      onClose();
-      alert('Complete database exported successfully!');
+      
+      setModal({
+        type: 'success',
+        title: 'Export Successful',
+        message: 'Complete database exported successfully!',
+        onConfirm: () => {
+          setModal({ type: null, title: '', message: '' });
+          onClose();
+        }
+      });
     } catch (error) {
-      alert('Error exporting complete database. Please try again.');
+      setModal({
+        type: 'error',
+        title: 'Export Failed',
+        message: 'Error exporting complete database. Please try again.',
+        onConfirm: () => setModal({ type: null, title: '', message: '' })
+      });
     } finally {
       setIsProcessing(false);
     }
@@ -139,7 +162,13 @@ const UnifiedDataManager: React.FC<UnifiedDataManagerProps> = ({ isOpen, onClose
           
           // Validate file format
           if (!data.version || (!data.priceList && !data.creditManagement && !data.overManagement && !data.orderManagement)) {
-            throw new Error('Invalid Golden Store database file format');
+            setModal({
+              type: 'error',
+              title: 'Invalid File',
+              message: 'Invalid Golden Store database file format. Please select a valid backup file.',
+              onConfirm: () => setModal({ type: null, title: '', message: '' })
+            });
+            return;
           }
 
           // Count total items for confirmation
@@ -153,17 +182,15 @@ const UnifiedDataManager: React.FC<UnifiedDataManagerProps> = ({ isOpen, onClose
             (data.orderManagement?.itemTemplates?.length || 0) +
             (data.orderManagement?.orders?.length || 0);
 
-          const confirmImport = window.confirm(
-            `This will import a complete Golden Store database with ${totalItems} total records across all modules:\n\n` +
-            `• Price List: ${data.priceList?.items?.length || 0} items\n` +
-            `• Credit: ${data.creditManagement?.clients?.length || 0} clients, ${data.creditManagement?.transactions?.length || 0} transactions\n` +
-            `• Over Items: ${data.overManagement?.items?.length || 0} items\n` +
-            `• Orders: ${data.orderManagement?.categories?.length || 0} categories, ${data.orderManagement?.orders?.length || 0} orders\n\n` +
-            `This will REPLACE ALL your current data. This action cannot be undone.\n\n` +
-            `Are you sure you want to continue?`
-          );
-
-          if (confirmImport) {
+          // Show confirmation modal
+          setModal({
+            type: 'confirm',
+            title: 'Import Database',
+            message: `This will import a complete Golden Store database with ${totalItems} total records across all modules:\n\n• Price List: ${data.priceList?.items?.length || 0} items\n• Credit: ${data.creditManagement?.clients?.length || 0} clients, ${data.creditManagement?.transactions?.length || 0} transactions\n• Over Items: ${data.overManagement?.items?.length || 0} items\n• Orders: ${data.orderManagement?.categories?.length || 0} categories, ${data.orderManagement?.orders?.length || 0} orders\n\nThis will REPLACE ALL your current data. This action cannot be undone.`,
+            onConfirm: async () => {
+              setModal({ type: null, title: '', message: '' });
+              
+              try {
             // Import Price List data
             if (data.priceList?.items) {
               const priceListItems = data.priceList.items.map((item: any) => ({
@@ -266,12 +293,34 @@ const UnifiedDataManager: React.FC<UnifiedDataManagerProps> = ({ isOpen, onClose
               }
             }
             
-            onClose();
-            alert(`Successfully imported complete Golden Store database!\n\nPlease refresh the page to see all imported data.`);
-            
-          }
+                setModal({
+                  type: 'success',
+                  title: 'Import Successful',
+                  message: 'Successfully imported complete Golden Store database!\n\nPlease refresh the page to see all imported data.',
+                  onConfirm: () => {
+                    setModal({ type: null, title: '', message: '' });
+                    onClose();
+                    window.location.reload();
+                  }
+                });
+              } catch (importError) {
+                setModal({
+                  type: 'error',
+                  title: 'Import Failed',
+                  message: 'Error importing database file. Please check the file format and try again.',
+                  onConfirm: () => setModal({ type: null, title: '', message: '' })
+                });
+              }
+            },
+            onCancel: () => setModal({ type: null, title: '', message: '' })
+          });
         } catch (error) {
-          alert('Error importing database file. Please check the file format and try again.');
+          setModal({
+            type: 'error',
+            title: 'File Error',
+            message: 'Error reading database file. Please check the file format and try again.',
+            onConfirm: () => setModal({ type: null, title: '', message: '' })
+          });
         } finally {
           setIsProcessing(false);
         }
@@ -284,91 +333,148 @@ const UnifiedDataManager: React.FC<UnifiedDataManagerProps> = ({ isOpen, onClose
   };
 
   return (
-    <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center p-4 z-50 overflow-hidden select-none" style={{ height: '100vh' }}>
-      <div className="bg-white rounded-xl shadow-lg w-full max-w-md overflow-hidden select-none">
-        
-        {/* Header */}
-        <div className="flex justify-between items-center p-6 border-b border-gray-200 select-none">
-          <div className="flex items-center gap-3 select-none">
-            <div className="bg-blue-100 p-2 rounded-full select-none">
-              <Database size={20} className="text-blue-600" />
+    <>
+      <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center p-4 z-50 overflow-hidden select-none" style={{ height: '100vh' }}>
+        <div className="bg-white rounded-xl shadow-lg w-full max-w-md overflow-hidden select-none">
+          
+          {/* Header */}
+          <div className="flex justify-between items-center p-6 border-b border-gray-200 select-none">
+            <div className="flex items-center gap-3 select-none">
+              <div className="bg-blue-100 p-2 rounded-full select-none">
+                <Database size={20} className="text-blue-600" />
+              </div>
+              <h2 className="text-xl font-semibold text-gray-900 select-none">Database Manager</h2>
             </div>
-            <h2 className="text-xl font-semibold text-gray-900 select-none">Database Manager</h2>
-          </div>
-          <button 
-            onClick={onClose}
-            className="text-gray-500 hover:text-gray-700 transition-colors select-none"
-          >
-            <X size={24} />
-          </button>
-        </div>
-
-        {/* Content */}
-        <div className="p-6 select-none">
-          <p className="text-sm text-gray-600 mb-6 select-none">
-            Manage your complete Golden Store database including Price List, Credit, Over Items, and Orders.
-          </p>
-
-          <div className="space-y-4 select-none">
-            {/* Export All Data */}
-            <button
-              onClick={handleExportAll}
-              disabled={isProcessing}
-              className="w-full flex items-center gap-4 p-4 bg-green-50 hover:bg-green-100 rounded-lg border border-green-200 transition-colors disabled:opacity-50 select-none"
+            <button 
+              onClick={onClose}
+              className="text-gray-500 hover:text-gray-700 transition-colors select-none"
             >
-              <div className="bg-green-500 p-2 rounded-full select-none">
-                <Upload size={20} className="text-white" />
-              </div>
-              <div className="text-left flex-1 select-none">
-                <h4 className="font-medium text-gray-800 select-none">Export Complete Database</h4>
-                <p className="text-sm text-gray-600 select-none">Download all data from all modules</p>
-              </div>
-            </button>
-
-            {/* Import All Data */}
-            <button
-              onClick={handleImportAll}
-              disabled={isProcessing}
-              className="w-full flex items-center gap-4 p-4 bg-blue-50 hover:bg-blue-100 rounded-lg border border-blue-200 transition-colors disabled:opacity-50 select-none"
-            >
-              <div className="bg-blue-500 p-2 rounded-full select-none">
-                <Download size={20} className="text-white" />
-              </div>
-              <div className="text-left flex-1 select-none">
-                <h4 className="font-medium text-gray-800 select-none">Import Complete Database</h4>
-                <p className="text-sm text-gray-600 select-none">Replace all data with imported file</p>
-              </div>
+              <X size={24} />
             </button>
           </div>
 
-          {/* Warning */}
-          <div className="mt-6 bg-yellow-50 border border-yellow-200 rounded-lg p-4 select-none">
-            <div className="flex items-start gap-3 select-none">
-              <AlertTriangle size={20} className="text-yellow-600 flex-shrink-0 mt-0.5" />
-              <div className="select-none">
-                <h4 className="font-medium text-yellow-800 mb-1 select-none">Important Notes</h4>
-                <ul className="text-sm text-yellow-700 space-y-1 select-none">
-                  <li className="select-none">• Export includes ALL modules: Price List, Credit, Over Items, Orders</li>
-                  <li className="select-none">• Import will REPLACE all existing data</li>
-                  <li className="select-none">• Always backup before importing</li>
-                  <li className="select-none">• Page refresh required after import</li>
-                </ul>
-              </div>
-            </div>
-          </div>
+          {/* Content */}
+          <div className="p-6 select-none">
+            <p className="text-sm text-gray-600 mb-6 select-none">
+              Manage your complete Golden Store database including Price List, Credit, Over Items, and Orders.
+            </p>
 
-          {/* Processing State */}
-          {isProcessing && (
-            <div className="mt-4 text-center select-none">
-              <div className="inline-flex items-center gap-2 text-blue-600 select-none">
-                <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-blue-600"></div>
-                <span className="select-none">Processing...</span>
+            <div className="space-y-4 select-none">
+              {/* Export All Data */}
+              <button
+                onClick={handleExportAll}
+                disabled={isProcessing}
+                className="w-full flex items-center gap-4 p-4 bg-green-50 hover:bg-green-100 rounded-lg border border-green-200 transition-colors disabled:opacity-50 select-none"
+              >
+                <div className="bg-green-500 p-2 rounded-full select-none">
+                  <Upload size={20} className="text-white" />
+                </div>
+                <div className="text-left flex-1 select-none">
+                  <h4 className="font-medium text-gray-800 select-none">Export Complete Database</h4>
+                  <p className="text-sm text-gray-600 select-none">Download all data from all modules</p>
+                </div>
+              </button>
+
+              {/* Import All Data */}
+              <button
+                onClick={handleImportAll}
+                disabled={isProcessing}
+                className="w-full flex items-center gap-4 p-4 bg-blue-50 hover:bg-blue-100 rounded-lg border border-blue-200 transition-colors disabled:opacity-50 select-none"
+              >
+                <div className="bg-blue-500 p-2 rounded-full select-none">
+                  <Download size={20} className="text-white" />
+                </div>
+                <div className="text-left flex-1 select-none">
+                  <h4 className="font-medium text-gray-800 select-none">Import Complete Database</h4>
+                  <p className="text-sm text-gray-600 select-none">Replace all data with imported file</p>
+                </div>
+              </button>
+            </div>
+
+            {/* Warning */}
+            <div className="mt-6 bg-yellow-50 border border-yellow-200 rounded-lg p-4 select-none">
+              <div className="flex items-start gap-3 select-none">
+                <AlertTriangle size={20} className="text-yellow-600 flex-shrink-0 mt-0.5" />
+                <div className="select-none">
+                  <h4 className="font-medium text-yellow-800 mb-1 select-none">Important Notes</h4>
+                  <ul className="text-sm text-yellow-700 space-y-1 select-none">
+                    <li className="select-none">• Export includes ALL modules: Price List, Credit, Over Items, Orders</li>
+                    <li className="select-none">• Import will REPLACE all existing data</li>
+                    <li className="select-none">• Always backup before importing</li>
+                    <li className="select-none">• Page refresh required after import</li>
+                  </ul>
+                </div>
               </div>
             </div>
-          )}
+
+            {/* Processing State */}
+            {isProcessing && (
+              <div className="mt-4 text-center select-none">
+                <div className="inline-flex items-center gap-2 text-blue-600 select-none">
+                  <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-blue-600"></div>
+                  <span className="select-none">Processing...</span>
+                </div>
+              </div>
+            )}
+          </div>
         </div>
       </div>
-    </div>
+
+      {/* Modal Dialogs */}
+      {modal.type && createPortal(
+        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center p-4 z-[9999] overflow-hidden select-none" style={{ height: '100vh' }}>
+          <div className="bg-white rounded-xl shadow-lg w-full max-w-md overflow-hidden select-none">
+            
+            {/* Modal Header */}
+            <div className="flex justify-between items-center p-6 border-b border-gray-200 select-none">
+              <div className="flex items-center gap-3 select-none">
+                <div className={`p-2 rounded-full select-none ${
+                  modal.type === 'success' ? 'bg-green-100' :
+                  modal.type === 'error' ? 'bg-red-100' :
+                  'bg-yellow-100'
+                }`}>
+                  {modal.type === 'success' ? (
+                    <Database size={20} className="text-green-600" />
+                  ) : modal.type === 'error' ? (
+                    <X size={20} className="text-red-600" />
+                  ) : (
+                    <AlertTriangle size={20} className="text-yellow-600" />
+                  )}
+                </div>
+                <h2 className="text-xl font-semibold text-gray-900 select-none">{modal.title}</h2>
+              </div>
+            </div>
+
+            {/* Modal Content */}
+            <div className="p-6 select-none">
+              <p className="text-gray-700 whitespace-pre-line select-none">{modal.message}</p>
+              
+              <div className="flex gap-3 mt-6 select-none">
+                {modal.type === 'confirm' && modal.onCancel && (
+                  <button
+                    onClick={modal.onCancel}
+                    className="flex-1 px-4 py-2 bg-gray-200 text-gray-800 rounded-lg hover:bg-gray-300 transition-colors select-none"
+                  >
+                    Cancel
+                  </button>
+                )}
+                <button
+                  onClick={modal.onConfirm}
+                  className={`${modal.type === 'confirm' ? 'flex-1' : 'w-full'} px-4 py-2 rounded-lg transition-colors select-none ${
+                    modal.type === 'success' ? 'bg-green-500 hover:bg-green-600 text-white' :
+                    modal.type === 'error' ? 'bg-red-500 hover:bg-red-600 text-white' :
+                    'bg-blue-500 hover:bg-blue-600 text-white'
+                  }`}
+                >
+                  {modal.type === 'confirm' ? 'Continue' : 'OK'}
+                </button>
+              </div>
+            </div>
+          </div>
+        </div>
+        , document.body
+      )}
+    </>
   );
 };
 
