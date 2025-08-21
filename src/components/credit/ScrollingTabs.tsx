@@ -356,6 +356,15 @@ const ScrollingTabs: React.FC<ScrollingTabsProps> = ({
     e.stopPropagation();
     
     const timer = setTimeout(() => {
+      // Add click animation for long press
+      setClickedTabId(client.id);
+      setPersistentAnimationTabId(client.id);
+      
+      // Remove click animation after it completes
+      setTimeout(() => {
+        setClickedTabId(null);
+      }, 600);
+      
       // Pause timeline during long press
       if (timelineRef.current) {
         timelineRef.current.pause();
@@ -384,8 +393,8 @@ const ScrollingTabs: React.FC<ScrollingTabsProps> = ({
 
   // Handle detail modal close - resume timeline
   const handleDetailModalClose = () => {
-    // Trigger timeline restart by dispatching a custom event
-    window.dispatchEvent(new CustomEvent('restartScrollingTimeline'));
+    // Don't resume timeline immediately - let the animation detection handle it
+    // The timeline will resume once the persistent animation is cleared
     setSelectedClientForDetails(null);
   };
 
