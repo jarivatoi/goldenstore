@@ -64,14 +64,6 @@ const ConfirmationModal: React.FC<ConfirmationModalProps> = ({
             <div className={`${styles.iconBg} p-3 rounded-full`}>
               <AlertTriangle className={`${styles.iconColor}`} size={24} />
             </div>
-            {cancelText && (
-              <button 
-                onClick={onCancel}
-                className="text-gray-400 hover:text-gray-600 transition-colors select-none"
-              >
-                <X size={20} />
-              </button>
-            )}
           </div>
 
           {/* Content */}
