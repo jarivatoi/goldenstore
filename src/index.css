@@ -214,6 +214,18 @@ body {
   animation: small-debt-shake 1.5s ease-in-out infinite;
 }
 
+/* Bounce animation for high debt amounts (over 1000) */
+@keyframes high-debt-bounce {
+  0%, 100% { transform: translateY(0) scale(1); }
+  25% { transform: translateY(-8px) scale(1.05); }
+  50% { transform: translateY(-4px) scale(1.02); }
+  75% { transform: translateY(-2px) scale(1.01); }
+}
+
+.animate-high-debt-bounce {
+  animation: high-debt-bounce 2s ease-in-out infinite;
+}
+
 .touch-manipulation {
   touch-action: pan-y;
   -webkit-user-select: none;
