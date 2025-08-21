@@ -23,8 +23,17 @@ const UnifiedDataManager: React.FC<UnifiedDataManagerProps> = ({ isOpen, onClose
   const { categories, itemTemplates, orders } = useOrder();
   
   const [isProcessing, setIsProcessing] = useState(false);
+  const [showExportSuccess, setShowExportSuccess] = useState(false);
+  const [showImportConfirm, setShowImportConfirm] = useState(false);
+  const [importData, setImportData] = useState<any>(null);
 
   if (!isOpen) return null;
+
+  // Enhanced export handler
+  const handleExportAllEnhanced = async () => {
+    await handleExportAll();
+    setShowExportSuccess(true);
+  };
 
   // Export all data from all modules
   const handleExportAll = async () => {
@@ -111,9 +120,8 @@ const UnifiedDataManager: React.FC<UnifiedDataManagerProps> = ({ isOpen, onClose
       
       URL.revokeObjectURL(url);
       onClose();
-      alert('Complete database exported successfully!');
     } catch (error) {
-      alert('Error exporting complete database. Please try again.');
+      console.error('Error exporting complete database:', error);
     } finally {
       setIsProcessing(false);
     }
@@ -132,38 +140,39 @@ const UnifiedDataManager: React.FC<UnifiedDataManagerProps> = ({ isOpen, onClose
       const reader = new FileReader();
       reader.onload = async (e) => {
         try {
-          setIsProcessing(true);
-          
           const content = e.target?.result as string;
           const data = JSON.parse(content);
           
           // Validate file format
           if (!data.version || (!data.priceList && !data.creditManagement && !data.overManagement && !data.orderManagement)) {
-            throw new Error('Invalid Golden Store database file format');
+            console.error('Invalid Golden Store database file format');
+            return;
           }
 
-          // Count total items for confirmation
-          const totalItems = 
-            (data.priceList?.items?.length || 0) +
-            (data.creditManagement?.clients?.length || 0) +
-            (data.creditManagement?.transactions?.length || 0) +
-            (data.creditManagement?.payments?.length || 0) +
-            (data.overManagement?.items?.length || 0) +
-            (data.orderManagement?.categories?.length || 0) +
-            (data.orderManagement?.itemTemplates?.length || 0) +
-            (data.orderManagement?.orders?.length || 0);
+          // Store import data and show confirmation modal
+          setImportData(data);
+          setShowImportConfirm(true);
+        } catch (error) {
+          console.error('Error parsing import file:', error);
+        }
+      };
+      
+      reader.readAsText(file);
+    };
+    
+    input.click();
+  };
 
-          const confirmImport = window.confirm(
-            `This will import a complete Golden Store database with ${totalItems} total records across all modules:\n\n` +
-            `• Price List: ${data.priceList?.items?.length || 0} items\n` +
-            `• Credit: ${data.creditManagement?.clients?.length || 0} clients, ${data.creditManagement?.transactions?.length || 0} transactions\n` +
-            `• Over Items: ${data.overManagement?.items?.length || 0} items\n` +
-            `• Orders: ${data.orderManagement?.categories?.length || 0} categories, ${data.orderManagement?.orders?.length || 0} orders\n\n` +
-            `This will REPLACE ALL your current data. This action cannot be undone.\n\n` +
-            `Are you sure you want to continue?`
-          );
-
-          if (confirmImport) {
+  const confirmImport = async () => {
+    if (!importData) return;
+    
+    try {
+      setIsProcessing(true);
+      
+      const data = importData;
+      
+      // Import all data
+      if (true) {
             // Import Price List data
             if (data.priceList?.items) {
               const priceListItems = data.priceList.items.map((item: any) => ({
@@ -267,23 +276,41 @@ const UnifiedDataManager: React.FC<UnifiedDataManagerProps> = ({ isOpen, onClose
             }
             
             onClose();
-            alert(`Successfully imported complete Golden Store database!\n\nPlease refresh the page to see all imported data.`);
+            setShowImportConfirm(false);
+            setImportData(null);
             
             // Refresh the page to reload all data
             window.location.reload();
-          }
-        } catch (error) {
-          alert('Error importing database file. Please check the file format and try again.');
-        } finally {
-          setIsProcessing(false);
-        }
-      };
-      
-      reader.readAsText(file);
-    };
-    
-    input.click();
+    } catch (error) {
+      console.error('Error importing database:', error);
+    } finally {
+      setIsProcessing(false);
+    }
   };
+
+  // Calculate import statistics
+  const getImportStats = () => {
+    if (!importData) return null;
+    
+    return {
+      priceList: importData.priceList?.items?.length || 0,
+      creditClients: importData.creditManagement?.clients?.length || 0,
+      creditTransactions: importData.creditManagement?.transactions?.length || 0,
+      overItems: importData.overManagement?.items?.length || 0,
+      orderCategories: importData.orderManagement?.categories?.length || 0,
+      orders: importData.orderManagement?.orders?.length || 0,
+      total: (importData.priceList?.items?.length || 0) +
+             (importData.creditManagement?.clients?.length || 0) +
+             (importData.creditManagement?.transactions?.length || 0) +
+             (importData.creditManagement?.payments?.length || 0) +
+             (importData.overManagement?.items?.length || 0) +
+             (importData.orderManagement?.categories?.length || 0) +
+             (importData.orderManagement?.itemTemplates?.length || 0) +
+             (importData.orderManagement?.orders?.length || 0)
+    };
+  };
+
+  const importStats = getImportStats();
 
   return (
     <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center p-4 z-50 overflow-hidden select-none" style={{ height: '100vh' }}>
@@ -314,7 +341,7 @@ const UnifiedDataManager: React.FC<UnifiedDataManagerProps> = ({ isOpen, onClose
           <div className="space-y-4 select-none">
             {/* Export All Data */}
             <button
-              onClick={handleExportAll}
+              onClick={handleExportAllEnhanced}
               disabled={isProcessing}
               className="w-full flex items-center gap-4 p-4 bg-green-50 hover:bg-green-100 rounded-lg border border-green-200 transition-colors disabled:opacity-50 select-none"
             >
@@ -369,6 +396,49 @@ const UnifiedDataManager: React.FC<UnifiedDataManagerProps> = ({ isOpen, onClose
             </div>
           )}
         </div>
+
+        {/* Export Success Modal */}
+        <ConfirmationModal
+          isOpen={showExportSuccess}
+          title="Export Successful"
+          message="Your complete database has been exported successfully!"
+          confirmText="OK"
+          cancelText=""
+          type="success"
+          onConfirm={() => setShowExportSuccess(false)}
+          onCancel={() => setShowExportSuccess(false)}
+          details={[
+            'The file has been downloaded to your device',
+            'You can use this file to restore your data later',
+            'Keep this file safe as a backup'
+          ]}
+        />
+
+        {/* Import Confirmation Modal */}
+        <ConfirmationModal
+          isOpen={showImportConfirm}
+          title="Import Database"
+          message="This will replace ALL your current data with the imported database."
+          confirmText="Import Database"
+          cancelText="Cancel"
+          type="warning"
+          onConfirm={confirmImport}
+          onCancel={() => {
+            setShowImportConfirm(false);
+            setImportData(null);
+          }}
+          details={importStats ? [
+            `Total records: ${importStats.total}`,
+            `• Price List: ${importStats.priceList} items`,
+            `• Credit: ${importStats.creditClients} clients, ${importStats.creditTransactions} transactions`,
+            `• Over Items: ${importStats.overItems} items`,
+            `• Orders: ${importStats.orderCategories} categories, ${importStats.orders} orders`,
+            '',
+            'This action cannot be undone',
+            'Page will refresh after import'
+          ] : []}
+          isProcessing={isProcessing}
+        />
       </div>
     </div>
   );

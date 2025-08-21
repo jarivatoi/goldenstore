@@ -2,6 +2,7 @@ import React, { useState } from 'react';
 import { Plus, Search, Check, X, ShoppingCart, Package, Trash2 } from 'lucide-react';
 import { useOver } from '../context/OverContext';
 import { OverItem } from '../types';
+import ConfirmationModal from './ConfirmationModal';
 
 /**
  * OVER MANAGEMENT COMPONENT
@@ -25,6 +26,13 @@ const OverManagement: React.FC = () => {
   const [showAddForm, setShowAddForm] = useState(false);
   const [newItemName, setNewItemName] = useState('');
   const [isSubmitting, setIsSubmitting] = useState(false);
+  
+  // Modal states
+  const [showDeleteModal, setShowDeleteModal] = useState(false);
+  const [itemToDelete, setItemToDelete] = useState<{ id: string; name: string } | null>(null);
+  const [showClearModal, setShowClearModal] = useState(false);
+  const [clearType, setClearType] = useState<'pending' | 'completed'>('pending');
+  const [isDeleting, setIsDeleting] = useState(false);
 
   // Get filtered and sorted items
   const filteredItems = searchItems(searchQuery);
@@ -46,14 +54,12 @@ const OverManagement: React.FC = () => {
       await addItem(newItemName.trim());
       setNewItemName('');
       setShowAddForm(false);
-      // Debug info will be cleared automatically by the context after 3 seconds
     } catch (err) {
       const errorMessage = err instanceof Error ? err.message : 'Unknown error';
       
-      // iPhone PWA: Don't show alerts for validation errors (they're shown in the form)
-      // Only show alerts for unexpected system errors
+      // Don't show alerts for validation errors (they're shown in the form)
       if (!errorMessage.includes('enter') && !errorMessage.includes('already') && !errorMessage.includes('required')) {
-        alert(`System error: ${errorMessage}`);
+        console.error('System error:', errorMessage);
       }
     } finally {
       setIsSubmitting(false);
@@ -65,59 +71,61 @@ const OverManagement: React.FC = () => {
     try {
       await toggleItem(id);
     } catch (err) {
-      alert('Failed to update item');
+      console.error('Failed to update item:', err);
     }
   };
 
   // Handle delete item
-  const handleDeleteItem = async (id: string, itemName: string) => {
-    const confirmed = window.confirm(`Are you sure you want to delete "${itemName}"?`);
-    if (confirmed) {
-      try {
-        await deleteItem(id);
-      } catch (err) {
-        alert('Failed to delete item');
-      }
+  const handleDeleteItem = (id: string, itemName: string) => {
+    setItemToDelete({ id, name: itemName });
+    setShowDeleteModal(true);
+  };
+
+  const confirmDeleteItem = async () => {
+    if (!itemToDelete) return;
+    
+    try {
+      setIsDeleting(true);
+      await deleteItem(itemToDelete.id);
+      setShowDeleteModal(false);
+      setItemToDelete(null);
+    } catch (err) {
+      console.error('Failed to delete item:', err);
+    } finally {
+      setIsDeleting(false);
     }
   };
 
   // Handle clear all pending items
-  const handleClearAllPending = async () => {
+  const handleClearAllPending = () => {
     if (pendingItems.length === 0) return;
-    
-    const confirmed = window.confirm(
-      `Are you sure you want to clear all ${pendingItems.length} items from "Need to Buy"? This action cannot be undone.`
-    );
-    
-    if (confirmed) {
-      try {
-        for (const item of pendingItems) {
-          await deleteItem(item.id);
-        }
-      } catch (err) {
-        alert('Failed to clear items');
-      }
-    }
+    setClearType('pending');
+    setShowClearModal(true);
   };
 
   // Handle clear all completed items
-  const handleClearAllCompleted = async () => {
+  const handleClearAllCompleted = () => {
     if (completedItems.length === 0) return;
+    setClearType('completed');
+    setShowClearModal(true);
+  };
+
+  const confirmClearItems = async () => {
+    const itemsToDelete = clearType === 'pending' ? pendingItems : completedItems;
     
-    const confirmed = window.confirm(
-      `Are you sure you want to clear all ${completedItems.length} bought items? This action cannot be undone.`
-    );
-    
-    if (confirmed) {
-      try {
-        for (const item of completedItems) {
-          await deleteItem(item.id);
-        }
-      } catch (err) {
-        alert('Failed to clear items');
+    try {
+      setIsDeleting(true);
+      for (const item of itemsToDelete) {
+        await deleteItem(item.id);
       }
+      setShowClearModal(false);
+    } catch (err) {
+      console.error('Failed to clear items:', err);
+    } finally {
+      setIsDeleting(false);
     }
   };
+
   if (isLoading) {
     return (
       <div className="flex-1 flex items-center justify-center select-none">
@@ -299,6 +307,42 @@ const OverManagement: React.FC = () => {
           </div>
         )}
       </div>
+
+      {/* Delete Item Modal */}
+      <ConfirmationModal
+        isOpen={showDeleteModal}
+        title="Delete Item"
+        message={`Are you sure you want to delete "${itemToDelete?.name}"?`}
+        confirmText="Delete"
+        cancelText="Cancel"
+        type="delete"
+        onConfirm={confirmDeleteItem}
+        onCancel={() => {
+          setShowDeleteModal(false);
+          setItemToDelete(null);
+        }}
+        details={['This action cannot be undone']}
+        isProcessing={isDeleting}
+      />
+
+      {/* Clear All Items Modal */}
+      <ConfirmationModal
+        isOpen={showClearModal}
+        title={`Clear All ${clearType === 'pending' ? 'Pending' : 'Completed'} Items`}
+        message={`Are you sure you want to clear all ${
+          clearType === 'pending' ? pendingItems.length : completedItems.length
+        } ${clearType === 'pending' ? 'items from "Need to Buy"' : 'bought items'}?`}
+        confirmText="Clear All"
+        cancelText="Cancel"
+        type="danger"
+        onConfirm={confirmClearItems}
+        onCancel={() => setShowClearModal(false)}
+        details={[
+          'This action cannot be undone',
+          `${clearType === 'pending' ? pendingItems.length : completedItems.length} items will be permanently deleted`
+        ]}
+        isProcessing={isDeleting}
+      />
     </div>
   );
 };
