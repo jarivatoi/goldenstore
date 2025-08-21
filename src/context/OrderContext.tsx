@@ -601,6 +601,23 @@ export const OrderProvider: React.FC<{ children: React.ReactNode }> = ({ childre
         throw new Error(`Category with ID "${categoryId}" does not exist. Please refresh the page and try again.`);
       }
       
+      // Check for duplicate orders (same category and same date)
+      const orderDateString = orderDate.toDateString(); // Compare dates without time
+      const existingOrder = orders.find(order => 
+        order.categoryId === categoryId && 
+        order.orderDate.toDateString() === orderDateString
+      );
+      
+      if (existingOrder) {
+        const categoryName = categoryExists.name;
+        const formattedDate = orderDate.toLocaleDateString('en-GB', {
+          day: '2-digit',
+          month: 'short',
+          year: 'numeric'
+        });
+        throw new Error(`An order for "${categoryName}" already exists for ${formattedDate}. Please edit the existing order or choose a different date.`);
+      }
+      
       const totalCost = items
         .filter(item => item.isAvailable)
         .reduce((sum, item) => sum + item.totalPrice, 0);
