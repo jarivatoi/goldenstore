@@ -161,39 +161,48 @@ const ScrollingTabs: React.FC<ScrollingTabsProps> = ({
           setIsDragging(true);
         },
         onDragEnd: function() {
-          console.log('🎯 Drag ended - creating new timeline');
+          console.log('🎯 Drag ended');
           setIsDragging(false);
           
-          // Calculate current progress based on position
-          const currentProgress = calculateTimelineProgress();
-          console.log('🎯 Calculated progress for new timeline:', currentProgress);
-          
-          // Create new timeline starting from calculated progress
+          // Check if content overflows container
           const container = containerRef.current;
           const content = contentRef.current;
           
           if (container && content) {
             const containerWidth = container.offsetWidth;
             const contentWidth = content.scrollWidth;
-            const totalDistance = contentWidth + containerWidth;
-            const duration = totalDistance / 60;
             
-            // Create new timeline
-            timelineRef.current = gsap.timeline({ repeat: -1, ease: "none" });
-            timelineRef.current
-              .fromTo(content, 
-                { x: containerWidth }, // Enter from right
-                { 
-                  x: -contentWidth, // Exit to left
-                  duration: duration,
-                  ease: "none"
-                });
-            
-            // Set the timeline to the calculated progress and play
-            timelineRef.current.progress(currentProgress);
-            timelineRef.current.play();
-            
-            console.log('🎯 New timeline created and started at progress:', currentProgress);
+            // Only restart timeline for big cards (when content overflows)
+            if (contentWidth > containerWidth) {
+              console.log('🎯 Big cards detected - restarting timeline from current position');
+              
+              // Calculate current progress based on position
+              const currentProgress = calculateTimelineProgress();
+              console.log('🎯 Calculated progress for new timeline:', currentProgress);
+              
+              const totalDistance = contentWidth + containerWidth;
+              const duration = totalDistance / 60;
+              
+              // Create new timeline
+              timelineRef.current = gsap.timeline({ repeat: -1, ease: "none" });
+              timelineRef.current
+                .fromTo(content, 
+                  { x: containerWidth }, // Enter from right
+                  { 
+                    x: -contentWidth, // Exit to left
+                    duration: duration,
+                    ease: "none"
+                  });
+              
+              // Set the timeline to the calculated progress and play
+              timelineRef.current.progress(currentProgress);
+              timelineRef.current.play();
+              
+              console.log('🎯 New timeline created and started at progress:', currentProgress);
+            } else {
+              console.log('🎯 Small cards detected - no timeline restart, staying at dragged position');
+              // For small cards, don't restart timeline - let them stay where dragged
+            }
           }
         },
       });
