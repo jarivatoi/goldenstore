@@ -157,8 +157,6 @@ const OrderManagement: React.FC = () => {
   const cancelDeleteCategory = () => {
     setShowDeleteCategoryModal(false);
     setCategoryToDelete(null);
-      }
-    }
   };
 
   // Handle delete item template
@@ -462,6 +460,18 @@ const OrderManagement: React.FC = () => {
           onUpdate={updateOrder}
         />
       )}
+
+      {/* Category Delete Confirmation Modal */}
+      <ConfirmationModal
+        isOpen={showDeleteCategoryModal}
+        title="Delete Category"
+        message={categoryToDelete ? `Are you sure you want to delete "${categoryToDelete.name}"?\n\nThis will also delete:\n• All item templates in this category\n• All orders in this category\n\nThis action cannot be undone.` : ''}
+        confirmText="Delete Category"
+        cancelText="Cancel"
+        type="danger"
+        onConfirm={confirmDeleteCategory}
+        onCancel={cancelDeleteCategory}
+      />
     </div>
   );
 };
@@ -948,18 +958,6 @@ const OrderCard: React.FC<OrderCardProps> = ({ order, itemTemplates, onDelete, o
           </div>
         </div>
       )}
-
-      {/* Category Delete Confirmation Modal */}
-      <ConfirmationModal
-        isOpen={showDeleteCategoryModal}
-        title="Delete Category"
-        message={categoryToDelete ? `Are you sure you want to delete "${categoryToDelete.name}"?\n\nThis will also delete:\n• All item templates in this category\n• All orders in this category\n\nThis action cannot be undone.` : ''}
-        confirmText="Delete Category"
-        cancelText="Cancel"
-        type="danger"
-        onConfirm={confirmDeleteCategory}
-        onCancel={cancelDeleteCategory}
-      />
 
       <div className="border-t pt-3 flex justify-between items-center select-none">
         <span className="font-semibold text-gray-800 select-none">Total Amount:</span>
