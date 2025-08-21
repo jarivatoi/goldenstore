@@ -448,7 +448,7 @@ const ScrollingTabs: React.FC<ScrollingTabsProps> = ({
         setPersistentAnimationTabId(null);
         
         // Resume timeline after clearing animation
-        if (timelineRef.current && timelineRef.current.paused()) {
+        if (timelineRef.current && timelineRef.current.paused() && sortedClients.length > 0) {
           console.log('🎯 Resuming timeline after clearing persistent animation');
           timelineRef.current.resume();
         }
@@ -459,12 +459,12 @@ const ScrollingTabs: React.FC<ScrollingTabsProps> = ({
       };
     } else {
       // No persistent animation - ensure timeline is running if it should be
-      if (timelineRef.current && timelineRef.current.paused() && sortedClients.length > 0) {
+      if (timelineRef.current && timelineRef.current.paused() && sortedClients.length > 0 && !selectedClientForDetails && !selectedClientForAction && !isDragging) {
         console.log('🎯 No persistent animation, resuming timeline');
         timelineRef.current.resume();
       }
     }
-  }, [persistentAnimationTabId, sortedClients.length]);
+  }, [persistentAnimationTabId, sortedClients.length, selectedClientForDetails, selectedClientForAction, isDragging]);
 
   return (
     <>
