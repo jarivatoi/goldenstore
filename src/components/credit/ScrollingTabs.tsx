@@ -384,23 +384,9 @@ const ScrollingTabs: React.FC<ScrollingTabsProps> = ({
 
   // Handle detail modal close - resume timeline
   const handleDetailModalClose = () => {
+    // Trigger timeline restart by dispatching a custom event
+    window.dispatchEvent(new CustomEvent('restartScrollingTimeline'));
     setSelectedClientForDetails(null);
-    
-    // Resume timeline when detail modal closes - ensure it's properly resumed
-    setTimeout(() => {
-      if (timelineRef.current) {
-        if (timelineRef.current.paused()) {
-          console.log('🎯 Resuming timeline after detail modal close');
-          timelineRef.current.resume();
-        } else {
-          console.log('🎯 Timeline was not paused, ensuring it continues');
-          // If timeline wasn't paused but stopped, restart it
-          if (!timelineRef.current.isActive()) {
-            timelineRef.current.play();
-          }
-        }
-      }
-    }, 100); // Small delay to ensure modal is fully closed
   };
 
   // Also handle the moveClientToFront call from ClientDetailModal
