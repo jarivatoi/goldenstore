@@ -437,8 +437,6 @@ const ScrollingTabs: React.FC<ScrollingTabsProps> = ({
 
     return () => clearInterval(interval);
   }, [selectedClientForDetails, selectedClientForAction, isDragging]);
-    }
-  };
 
   // Monitor timeline and persistent animation interaction
   React.useEffect(() => {
@@ -471,7 +469,7 @@ const ScrollingTabs: React.FC<ScrollingTabsProps> = ({
         timelineRef.current.resume();
       }
     }
-  }, [persistentAnimationTabId]);
+  }, [persistentAnimationTabId, sortedClients.length]);
 
   return (
     <>
