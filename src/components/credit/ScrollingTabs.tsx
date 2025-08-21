@@ -205,6 +205,9 @@ const ScrollingTabs: React.FC<ScrollingTabsProps> = ({
           }
           
           // Only snap to center if content is small enough to fit in container
+          const container = containerRef.current;
+          const content = contentRef.current;
+          
           if (container && content) {
             const containerWidth = container.offsetWidth;
             const contentWidth = content.scrollWidth;
@@ -373,7 +376,10 @@ const ScrollingTabs: React.FC<ScrollingTabsProps> = ({
       const clearAnimationTimer = setTimeout(() => {
         setPersistentAnimationTabId(null);
         
-        // Only snap to center if content is small enough to fit in container        
+        // Only snap to center if content is small enough to fit in container
+        const container = containerRef.current;
+        const content = contentRef.current;
+        
         if (container && content) {
           const containerWidth = container.offsetWidth;
           const contentWidth = content.scrollWidth;
