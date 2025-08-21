@@ -77,7 +77,7 @@ const ClientSearchModal: React.FC<ClientSearchModalProps> = ({
   
   const handleAddToExistingClient = (client: Client) => {
     if (!description.trim()) {
-      setError('Please enter a description for this transaction');
+      alert('Please enter a description for this transaction');
       return;
     }
     
@@ -98,12 +98,12 @@ const ClientSearchModal: React.FC<ClientSearchModalProps> = ({
   }, [linkedClient, description]);
   const handleAddNewClient = async () => {
     if (!newClientName.trim()) {
-      setError('Please enter a client name');
+      alert('Please enter a client name');
       return;
     }
     
     if (!description.trim()) {
-      setError('Please enter a description for this transaction');
+      alert('Please enter a description for this transaction');
       return;
     }
 
@@ -114,11 +114,11 @@ const ClientSearchModal: React.FC<ClientSearchModalProps> = ({
       onAddToClient(newClient, description.trim());
     } catch (error) {
       setError(error instanceof Error ? error.message : 'Failed to add client');
-      // Don't close modal on error, let user try again
       if (error instanceof Error && error.name === 'DuplicateClientError') {
+        // Don't close modal on duplicate client error, let user try again
         setNewClientName(''); // Clear the duplicate name
+        return;
       }
-      return;
     } finally {
       setIsProcessing(false);
     }

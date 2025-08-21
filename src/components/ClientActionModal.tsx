@@ -3,7 +3,6 @@ import { createPortal } from 'react-dom';
 import { X, CreditCard, CheckCircle, DollarSign, RotateCcw, Minus, Plus } from 'lucide-react';
 import { Client } from '../types';
 import { useCredit } from '../context/CreditContext';
-import ConfirmationModal from './ConfirmationModal';
 
 interface ClientActionModalProps {
   client: Client;
@@ -24,12 +23,6 @@ const ClientActionModal: React.FC<ClientActionModalProps> = ({ client, onClose, 
   const [paymentAmount, setPaymentAmount] = useState('');
   const [returnItems, setReturnItems] = useState<{[key: string]: number}>({});
   const [isProcessing, setIsProcessing] = useState(false);
-  
-  // Modal states
-  const [showSettleModal, setShowSettleModal] = useState(false);
-  const [showSettleAllModal, setShowSettleAllModal] = useState(false);
-  const [showSettleItemModal, setShowSettleItemModal] = useState(false);
-  const [itemToSettle, setItemToSettle] = useState<{ type: string; quantity: number } | null>(null);
 
   const totalDebt = getClientTotalDebt(client.id);
   const bottlesOwed = getClientBottlesOwed(client.id);
@@ -64,17 +57,17 @@ const ClientActionModal: React.FC<ClientActionModalProps> = ({ client, onClose, 
     }
   };
 
-  const confirmSettle = async () => {
+  const handleSettle = async () => {
     try {
       setIsProcessing(true);
       await settleClient(client.id);
-      setShowSettleModal(false);
       handleClose();
       if (onResetCalculator) {
         onResetCalculator();
       }
     } catch (error) {
       console.error('Error settling client:', error);
+      alert('Failed to settle client');
     } finally {
       setIsProcessing(false);
     }
@@ -367,7 +360,7 @@ const ClientActionModal: React.FC<ClientActionModalProps> = ({ client, onClose, 
 
               {/* Settle Button */}
               <button
-                onClick={() => setShowSettleModal(true)}
+                onClick={handleSettle}
                 disabled={isProcessing}
                 className="w-full flex items-center gap-4 p-4 bg-green-50 hover:bg-green-100 rounded-lg border border-green-200 transition-colors disabled:opacity-50"
               >
@@ -437,7 +430,36 @@ const ClientActionModal: React.FC<ClientActionModalProps> = ({ client, onClose, 
                 <div className="flex-1"></div>
                 <button
                   onClick={async () => {
-                    setShowSettleAllModal(true);
+                    const confirmed = window.confirm(
+                      `Return ALL available Chopine & Bouteille items for ${client.name}? This will mark all returnable containers as returned.`
+                    );
+                    if (confirmed) {
+                      try {
+                        setIsProcessing(true);
+                        // Set all available items to be returned
+                        const allReturns: {[key: string]: number} = {};
+                        Object.entries(availableItems).forEach(([itemType, data]) => {
+                          allReturns[itemType] = data.total;
+                        });
+                        
+                        // Process all returns
+                        for (const [itemType, quantity] of Object.entries(allReturns)) {
+                          if (quantity > 0) {
+                            await processItemReturn(itemType, quantity);
+                          }
+                        }
+                        onClose();
+                        // Reset calculator after settling all returnables
+                        if (onResetCalculator) {
+                          onResetCalculator();
+                        }
+                      } catch (error) {
+                        console.error('Error settling all returnables:', error);
+                        alert('Failed to settle all returnables');
+                      } finally {
+                        setIsProcessing(false);
+                      }
+                    }
                   }}
                   disabled={isProcessing || Object.keys(availableItems).length === 0}
                   className="bg-red-500 hover:bg-red-600 text-white p-2 rounded-lg transition-colors disabled:opacity-50 flex items-center gap-1"
@@ -468,8 +490,33 @@ const ClientActionModal: React.FC<ClientActionModalProps> = ({ client, onClose, 
                           <button
                             type="button"
                             onClick={async () => {
-                              setItemToSettle({ type: itemType, quantity: data.total });
-                              setShowSettleItemModal(true);
+                              const confirmed = window.confirm(
+                                `Return all ${data.total} ${itemType}${data.total > 1 ? 's' : ''} for ${client.name}?`
+                              );
+                              if (confirmed) {
+                                try {
+                                  setIsProcessing(true);
+                                  await processItemReturn(itemType, data.total);
+                                  
+                                  // Force a re-render of the parent component to update scrolling tabs
+                                  window.dispatchEvent(new CustomEvent('creditDataChanged'));
+                                  
+                                  handleClose();
+                                  // Reset calculator after settling individual item
+                                  if (onResetCalculator) {
+                                    onResetCalculator();
+                                  }
+                                } catch (error) {
+                                  console.error('Error settling item type:', error);
+                                  alert(`Failed to settle ${itemType}`);
+                                } finally {
+                                  setIsProcessing(false);
+                                }
+                                
+                                // Force a re-render of the parent component to update scrolling tabs
+                                window.dispatchEvent(new CustomEvent('creditDataChanged'));
+                                
+                              }
                             }}
                             disabled={isProcessing}
                             className="p-1 text-red-500 hover:text-red-700 hover:bg-red-50 rounded transition-colors disabled:opacity-50"
@@ -562,111 +609,6 @@ const ClientActionModal: React.FC<ClientActionModalProps> = ({ client, onClose, 
           )}
         </div>
       </div>
-
-      {/* Settle Account Modal */}
-      <ConfirmationModal
-        isOpen={showSettleModal}
-        title="Settle Account"
-        message={`Settle the complete account for ${client.name}?`}
-        confirmText="Settle Account"
-        cancelText="Cancel"
-        type="success"
-        onConfirm={confirmSettle}
-        onCancel={() => setShowSettleModal(false)}
-        details={[
-          `Outstanding amount: Rs ${totalDebt.toLocaleString('en-IN', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`,
-          'This will mark the account as fully paid',
-          'All transactions will be cleared',
-          'This action cannot be undone'
-        ]}
-        isProcessing={isProcessing}
-      />
-
-      {/* Settle All Returnables Modal */}
-      <ConfirmationModal
-        isOpen={showSettleAllModal}
-        title="Return All Items"
-        message={`Return ALL available Chopine & Bouteille items for ${client.name}?`}
-        confirmText="Return All"
-        cancelText="Cancel"
-        type="warning"
-        onConfirm={async () => {
-          try {
-            setIsProcessing(true);
-            // Set all available items to be returned
-            const allReturns: {[key: string]: number} = {};
-            Object.entries(availableItems).forEach(([itemType, data]) => {
-              allReturns[itemType] = data.total;
-            });
-            
-            // Process all returns
-            for (const [itemType, quantity] of Object.entries(allReturns)) {
-              if (quantity > 0) {
-                await processItemReturn(itemType, quantity);
-              }
-            }
-            setShowSettleAllModal(false);
-            handleClose();
-            // Reset calculator after settling all returnables
-            if (onResetCalculator) {
-              onResetCalculator();
-            }
-          } catch (error) {
-            console.error('Error settling all returnables:', error);
-          } finally {
-            setIsProcessing(false);
-          }
-        }}
-        onCancel={() => setShowSettleAllModal(false)}
-        details={[
-          'This will mark all returnable containers as returned',
-          `${Object.keys(availableItems).length} item types will be processed`,
-          'This action cannot be undone'
-        ]}
-        isProcessing={isProcessing}
-      />
-
-      {/* Settle Individual Item Modal */}
-      <ConfirmationModal
-        isOpen={showSettleItemModal}
-        title="Return Items"
-        message={`Return all ${itemToSettle?.quantity} ${itemToSettle?.type}${(itemToSettle?.quantity || 0) > 1 ? 's' : ''} for ${client.name}?`}
-        confirmText="Return Items"
-        cancelText="Cancel"
-        type="warning"
-        onConfirm={async () => {
-          if (!itemToSettle) return;
-          
-          try {
-            setIsProcessing(true);
-            await processItemReturn(itemToSettle.type, itemToSettle.quantity);
-            
-            // Force a re-render of the parent component to update scrolling tabs
-            window.dispatchEvent(new CustomEvent('creditDataChanged'));
-            
-            setShowSettleItemModal(false);
-            setItemToSettle(null);
-            handleClose();
-            // Reset calculator after settling individual item
-            if (onResetCalculator) {
-              onResetCalculator();
-            }
-          } catch (error) {
-            console.error('Error settling item type:', error);
-          } finally {
-            setIsProcessing(false);
-          }
-        }}
-        onCancel={() => {
-          setShowSettleItemModal(false);
-          setItemToSettle(null);
-        }}
-        details={[
-          `${itemToSettle?.quantity} ${itemToSettle?.type}${(itemToSettle?.quantity || 0) > 1 ? 's' : ''} will be marked as returned`,
-          'This action cannot be undone'
-        ]}
-        isProcessing={isProcessing}
-      />
     </div>
   );
 

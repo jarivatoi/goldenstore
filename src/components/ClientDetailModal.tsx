@@ -3,7 +3,6 @@ import { createPortal } from 'react-dom';
 import { X, Calendar, Receipt, CreditCard, Plus, Edit2, Minus, Filter } from 'lucide-react';
 import { Client } from '../types';
 import { useCredit } from '../context/CreditContext';
-import ConfirmationModal from './ConfirmationModal';
 
 interface ClientDetailModalProps {
   client: Client;
@@ -23,10 +22,6 @@ const ClientDetailModal: React.FC<ClientDetailModalProps> = ({ client, onClose, 
   const [editedName, setEditedName] = React.useState(client.name);
   const [isSaving, setIsSaving] = React.useState(false);
   const [transactionFilter, setTransactionFilter] = React.useState<'all' | 'returnable' | 'taken' | 'returned'>('all');
-  
-  // Modal states
-  const [showClearReturnablesModal, setShowClearReturnablesModal] = React.useState(false);
-  const [isClearing, setIsClearing] = React.useState(false);
   
   const transactions = getClientTransactions(client.id);
   const payments = getClientPayments(client.id);
@@ -63,7 +58,7 @@ const ClientDetailModal: React.FC<ClientDetailModalProps> = ({ client, onClose, 
       await updateClient(updatedClient);
       setIsEditingName(false);
     } catch (error) {
-      console.error('Failed to update client name:', error);
+      alert('Failed to update client name');
       setEditedName(client.name);
     } finally {
       setIsSaving(false);
@@ -73,23 +68,6 @@ const ClientDetailModal: React.FC<ClientDetailModalProps> = ({ client, onClose, 
   const handleCancelEdit = () => {
     setIsEditingName(false);
     setEditedName(client.name);
-  };
-
-  const handleClearAllReturnables = async () => {
-    try {
-      setIsClearing(true);
-      // Process returns for all items
-      for (const [itemType, quantity] of Object.entries(returnableItems)) {
-        const returnDescription = `Returned: ${quantity} ${itemType}${quantity > 1 ? 's' : ''}`;
-        await addTransaction(client, returnDescription, 0);
-      }
-      setShowClearReturnablesModal(false);
-      handleAnyClose();
-    } catch (error) {
-      console.error('Failed to clear returnable items:', error);
-    } finally {
-      setIsClearing(false);
-    }
   };
 
   // Filter transactions based on selected filter
@@ -331,7 +309,24 @@ const ClientDetailModal: React.FC<ClientDetailModalProps> = ({ client, onClose, 
                 <div className="flex items-center justify-between mb-4">
                   <h3 className="text-lg font-semibold text-orange-800">Returnable Items</h3>
                   <button
-                    onClick={() => setShowClearReturnablesModal(true)}
+                    onClick={async () => {
+                      const confirmed = window.confirm(
+                        `Clear all returnable items for ${client.name}? This will mark all Chopine and Bouteille items as returned.`
+                      );
+                      if (confirmed) {
+                        try {
+                          // Process returns for all items
+                          for (const [itemType, quantity] of Object.entries(returnableItems)) {
+                            const returnDescription = `Returned: ${quantity} ${itemType}${quantity > 1 ? 's' : ''}`;
+                            await addTransaction(client, returnDescription, 0);
+                          }
+                          // Close modal after clearing
+                          handleAnyClose();
+                        } catch (error) {
+                          alert('Failed to clear returnable items');
+                        }
+                      }
+                    }}
                     className="px-3 py-1 text-sm bg-red-500 hover:bg-red-600 text-white rounded-md transition-colors"
                   >
                     Clear All
@@ -491,24 +486,6 @@ const ClientDetailModal: React.FC<ClientDetailModalProps> = ({ client, onClose, 
           </button>
         </div>
       </div>
-
-      {/* Clear All Returnables Modal */}
-      <ConfirmationModal
-        isOpen={showClearReturnablesModal}
-        title="Clear All Returnable Items"
-        message={`Clear all returnable items for ${client.name}?`}
-        confirmText="Clear All"
-        cancelText="Cancel"
-        type="warning"
-        onConfirm={handleClearAllReturnables}
-        onCancel={() => setShowClearReturnablesModal(false)}
-        details={[
-          'This will mark all Chopine and Bouteille items as returned',
-          `${Object.keys(returnableItems).length} item types will be cleared`,
-          'This action cannot be undone'
-        ]}
-        isProcessing={isClearing}
-      />
     </div>
   );
 
