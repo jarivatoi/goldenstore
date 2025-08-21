@@ -608,7 +608,7 @@ export const PriceListProvider: React.FC<{ children: React.ReactNode }> = ({ chi
         const { error: deleteError } = await supabase
           .from('price_items')
           .delete()
-          .not.is('id', null);
+          .match({});
         
         if (deleteError) throw deleteError;
         
