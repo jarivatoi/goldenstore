@@ -915,7 +915,7 @@ const ScrollingTabs: React.FC<ScrollingTabsProps> = ({
                       <div className={`text-xs font-semibold ${
                         totalDebt > 0 ? 'text-red-600' : 'text-green-600'
                       }`}>
-                        Rs {totalDebt.toFixed(2)}
+                        Rs {totalDebt.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
                       </div>
                     )}
                     <div className="text-xs text-gray-500 mt-1 text-center">
