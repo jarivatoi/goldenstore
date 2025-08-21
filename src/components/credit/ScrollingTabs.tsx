@@ -161,24 +161,39 @@ const ScrollingTabs: React.FC<ScrollingTabsProps> = ({
           setIsDragging(true);
         },
         onDragEnd: function() {
-          console.log('🎯 Drag ended - checking content size');
+          console.log('🎯 Drag ended - creating new timeline');
           setIsDragging(false);
           
+          // Calculate current progress based on position
+          const currentProgress = calculateTimelineProgress();
+          console.log('🎯 Calculated progress for new timeline:', currentProgress);
+          
+          // Create new timeline starting from calculated progress
           const container = containerRef.current;
           const content = contentRef.current;
           
           if (container && content) {
             const containerWidth = container.offsetWidth;
             const contentWidth = content.scrollWidth;
+            const totalDistance = contentWidth + containerWidth;
+            const duration = totalDistance / 60;
             
-            if (contentWidth > containerWidth) {
-              console.log('🎯 Big cards - no snap to center, staying at current position');
-              // For big cards, don't snap to center - stay where dragged
-              // Don't restart timeline either - let user control positioning
-            } else {
-              console.log('🎯 Small cards - no timeline needed');
-              // For small cards, also don't snap to center
-            }
+            // Create new timeline
+            timelineRef.current = gsap.timeline({ repeat: -1, ease: "none" });
+            timelineRef.current
+              .fromTo(content, 
+                { x: containerWidth }, // Enter from right
+                { 
+                  x: -contentWidth, // Exit to left
+                  duration: duration,
+                  ease: "none"
+                });
+            
+            // Set the timeline to the calculated progress and play
+            timelineRef.current.progress(currentProgress);
+            timelineRef.current.play();
+            
+            console.log('🎯 New timeline created and started at progress:', currentProgress);
           }
         },
       });
