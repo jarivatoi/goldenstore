@@ -592,6 +592,8 @@ const ScrollingTabs: React.FC<ScrollingTabsProps> = ({
                       ? 'animate-pulse-attention bg-yellow-200 border-yellow-400 shadow-lg scale-110 z-50' 
                       : persistentAnimationTabId === client.id
                       ? 'animate-pulse-persistent bg-yellow-100 border-yellow-300 shadow-md scale-105 z-40'
+                      : totalDebt > 0 && totalDebt < 105
+                      ? 'animate-small-debt-shake'
                       : ''
                   }`}
                   style={{
