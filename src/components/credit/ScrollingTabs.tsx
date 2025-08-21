@@ -19,6 +19,7 @@ interface ScrollingTabsProps {
   getClientTotalDebt: (clientId: string) => number;
   onResetCalculator?: () => void;
   sortOption: 'name' | 'date' | 'debt';
+  isBigCard?: boolean; // New prop to identify if it's the big card
 }
 
 const ScrollingTabs: React.FC<ScrollingTabsProps> = ({
@@ -30,7 +31,8 @@ const ScrollingTabs: React.FC<ScrollingTabsProps> = ({
   clientFilter,
   getClientTotalDebt,
   onResetCalculator,
-  sortOption
+  sortOption,
+  isBigCard = false // Default to false for backward compatibility
 }) => {
   const contentRef = useRef<HTMLDivElement>(null);
   const containerRef = useRef<HTMLDivElement>(null);
@@ -395,15 +397,29 @@ const ScrollingTabs: React.FC<ScrollingTabsProps> = ({
       <div className="p-3">
         <div 
           ref={containerRef}
-          className="overflow-hidden py-4 w-full h-30 flex items-center relative z-10"
+          className={`overflow-hidden py-4 w-full h-30 flex items-center relative z-10 ${
+            isBigCard ? 'overflow-x-auto' : ''
+          }`}
           style={{
-            height: '106px'
+            height: '106px',
+            // Remove snap behavior for big card
+            ...(isBigCard && {
+              scrollSnapType: 'none',
+              msOverflowStyle: 'none',
+              scrollbarWidth: 'none'
+            })
           }}
         >
           <div 
             ref={contentRef}
             className="flex gap-6 whitespace-nowrap relative z-10"
-            style={{ minWidth: 'max-content' }}
+            style={{ 
+              minWidth: 'max-content',
+              // Remove snap behavior for big card
+              ...(isBigCard && {
+                scrollSnapAlign: 'none'
+              })
+            }}
           >
             {sortedClients.map((client, index) => {
               const totalDebt = getClientTotalDebt(client.id);
@@ -436,7 +452,11 @@ const ScrollingTabs: React.FC<ScrollingTabsProps> = ({
                     msUserSelect: 'none',
                     WebkitTouchCallout: 'none',
                     WebkitTapHighlightColor: 'transparent',
-                    touchAction: 'pan-x'
+                    touchAction: 'pan-x',
+                    // Remove snap behavior for big card
+                    ...(isBigCard && {
+                      scrollSnapAlign: 'none'
+                    })
                   }}
                   onClick={() => handleTabClick(client)}
                   onDoubleClick={() => onQuickAdd(client)}
