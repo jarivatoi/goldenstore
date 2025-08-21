@@ -50,7 +50,23 @@ const OrderManagement: React.FC = () => {
   const [categoryToDelete, setCategoryToDelete] = useState<OrderCategory | null>(null);
   const [showDeleteOrderModal, setShowDeleteOrderModal] = useState(false);
   const [orderToDelete, setOrderToDelete] = useState<Order | null>(null);
+  const [showDuplicateOrderModal, setShowDuplicateOrderModal] = useState(false);
+  const [duplicateOrderInfo, setDuplicateOrderInfo] = useState<{categoryName: string, orderDate: string} | null>(null);
   const [showDeleteItemModal, setShowDeleteItemModal] = useState(false);
+  // Listen for duplicate order events from modals
+  React.useEffect(() => {
+    const handleDuplicateOrderEvent = (event: CustomEvent) => {
+      setDuplicateOrderInfo(event.detail);
+      setShowDuplicateOrderModal(true);
+    };
+
+    window.addEventListener('showDuplicateOrderModal', handleDuplicateOrderEvent as EventListener);
+    
+    return () => {
+      window.removeEventListener('showDuplicateOrderModal', handleDuplicateOrderEvent as EventListener);
+    };
+  }, []);
+
   const [itemToDelete, setItemToDelete] = useState<OrderItemTemplate | null>(null);
 
   // Get filtered categories
@@ -542,6 +558,24 @@ const OrderManagement: React.FC = () => {
         type="danger"
         onConfirm={confirmDeleteItem}
         onCancel={cancelDeleteItem}
+      />
+
+      {/* Duplicate Order Validation Modal */}
+      <ConfirmationModal
+        isOpen={showDuplicateOrderModal}
+        title="Duplicate Order Not Allowed"
+        message={duplicateOrderInfo ? `An order for "${duplicateOrderInfo.categoryName}" already exists for ${duplicateOrderInfo.orderDate}.\n\nDuplicate orders for the same date are not allowed. Please choose a different date or edit the existing order.` : ''}
+        confirmText="OK"
+        cancelText=""
+        type="warning"
+        onConfirm={() => {
+          setShowDuplicateOrderModal(false);
+          setDuplicateOrderInfo(null);
+        }}
+        onCancel={() => {
+          setShowDuplicateOrderModal(false);
+          setDuplicateOrderInfo(null);
+        }}
       />
 
     </div>
@@ -1184,6 +1218,7 @@ const CreateOrderModal: React.FC<CreateOrderModalProps> = ({ category, itemTempl
   const [orderDate, setOrderDate] = useState(new Date().toISOString().split('T')[0]);
   const [orderItems, setOrderItems] = useState<OrderItem[]>([]);
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const { getOrdersByCategory } = useOrder();
 
   // Initialize order items from templates
   React.useEffect(() => {
@@ -1244,7 +1279,28 @@ const CreateOrderModal: React.FC<CreateOrderModalProps> = ({ category, itemTempl
       await onAdd(category.id, new Date(orderDate), itemsWithQuantity);
       onClose();
     } catch (err) {
-      alert('Failed to create order');
+      // Check if it's a duplicate order error
+      if (err instanceof Error && err.message.includes('already exists for')) {
+        // Extract date from error message for display
+        const formattedDate = new Date(orderDate).toLocaleDateString('en-GB', {
+          day: '2-digit',
+          month: 'short',
+          year: 'numeric'
+        });
+        
+        // Show duplicate order modal instead of generic alert
+        const duplicateInfo = {
+          categoryName: category.name,
+          orderDate: formattedDate
+        };
+        
+        // Access parent component's modal state through a custom event
+        window.dispatchEvent(new CustomEvent('showDuplicateOrderModal', { 
+          detail: duplicateInfo 
+        }));
+      } else {
+        alert('Failed to create order');
+      }
     } finally {
       setIsSubmitting(false);
     }
