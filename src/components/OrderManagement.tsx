@@ -1,7 +1,6 @@
 import React, { useState } from 'react';
 import { Plus, Search, Calendar, Package, Edit2, Trash2, X, ChevronDown, ChevronUp, AlertTriangle } from 'lucide-react';
 import { useOrder } from '../context/OrderContext';
-import ConfirmationModal from './ConfirmationModal';
 import { OrderCategory, OrderItemTemplate, Order, OrderItem } from '../types';
 
 /**
@@ -122,16 +121,6 @@ const ConfirmationModal: React.FC<ConfirmationModalProps> = ({
           </div>
         </div>
       </div>
-      
-      {/* Confirmation Modal */}
-      <ConfirmationModal
-        isOpen={confirmationModal.isOpen}
-        title={confirmationModal.title}
-        message={confirmationModal.message}
-        type={confirmationModal.type}
-        onConfirm={confirmationModal.onConfirm}
-        onCancel={() => setConfirmationModal(prev => ({ ...prev, isOpen: false }))}
-      />
     </div>
   );
 };
@@ -261,13 +250,15 @@ const OrderManagement: React.FC = () => {
     
     let message = `Are you sure you want to delete "${category.name}"?`;
     if (templates.length > 0 || orders.length > 0) {
-    setConfirmationModal({
-      isOpen: true,
-      title: 'Delete Category',
-      message: `Are you sure you want to delete "${category.name}"?\n\nThis will also delete:\n• ${templatesCount} item template${templatesCount !== 1 ? 's' : ''}\n• ${ordersCount} order${ordersCount !== 1 ? 's' : ''}\n\nThis action cannot be undone.`,
-      type: 'danger',
-      onConfirm: async () => {
-        setConfirmationModal(prev => ({ ...prev, isOpen: false }));
+      message += `\n\nThis will also delete:\n• ${templates.length} item template(s)\n• ${orders.length} order(s)\n\nThis action cannot be undone.`;
+    } else {
+      message += '\n\nThis action cannot be undone.';
+    }
+
+    showConfirmation(
+      'Delete Category',
+      message,
+      async () => {
         try {
           await deleteCategory(category.id);
           if (selectedCategory?.id === category.id) {
@@ -324,20 +315,15 @@ const OrderManagement: React.FC = () => {
     } catch (err) {
       alert(err instanceof Error ? err.message : 'Failed to update item template');
     }
-    setConfirmationModal({
-      isOpen: true,
-      title: 'Delete Item Template',
-      message: `Are you sure you want to delete "${template.name}"?\n\n` + (ordersUsingTemplate > 0 ? `This item is used in ${ordersUsingTemplate} order${ordersUsingTemplate !== 1 ? 's' : ''} and will be removed from them.\n\n` : '') + `This action cannot be undone.`,
-      type: 'danger',
-      onConfirm: async () => {
-        setConfirmationModal(prev => ({ ...prev, isOpen: false }));
+  };
+
+  const handleDeleteTemplate = (template: OrderItemTemplate) => {
+    showConfirmation(
+      'Delete Item Template',
+      `Are you sure you want to delete "${template.name}"?\n\nThis will also remove this item from all existing orders.\n\nThis action cannot be undone.`,
+      async () => {
         try {
           await deleteItemTemplate(template.id);
-        } catch (err) {
-          alert('Failed to delete item template');
-        }
-      }
-    });
           hideConfirmation();
         } catch (err) {
           alert(err instanceof Error ? err.message : 'Failed to delete item template');
@@ -386,20 +372,14 @@ const OrderManagement: React.FC = () => {
       day: '2-digit',
       month: 'short',
       year: 'numeric'
-    setConfirmationModal({
-      isOpen: true,
-      title: 'Delete Order',
-      message: `Are you sure you want to delete the ${categoryName} order from ${orderDate}?\n\nThis action cannot be undone.`,
-      type: 'danger',
-      onConfirm: async () => {
-        setConfirmationModal(prev => ({ ...prev, isOpen: false }));
+    });
+
+    showConfirmation(
+      'Delete Order',
+      `Are you sure you want to delete the ${categoryName} order from ${orderDateStr}?\n\nThis action cannot be undone.`,
+      async () => {
         try {
           await deleteOrder(order.id);
-        } catch (err) {
-          alert('Failed to delete order');
-        }
-      }
-    });
           hideConfirmation();
         } catch (err) {
           alert(err instanceof Error ? err.message : 'Failed to delete order');
