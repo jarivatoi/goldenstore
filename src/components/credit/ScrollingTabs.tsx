@@ -604,7 +604,6 @@ const ScrollingTabs: React.FC<ScrollingTabsProps> = ({
                           });
                           return hasReturnableItems ? 'animate-small-debt-shake' : '';
                         })()
-                      : ''
                   }`}
                   style={{
                     userSelect: 'none',
