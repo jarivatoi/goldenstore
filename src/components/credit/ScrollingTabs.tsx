@@ -384,20 +384,6 @@ const ScrollingTabs: React.FC<ScrollingTabsProps> = ({
     }
   };
 
-  // Handle modal close - resume timeline
-  const handleModalClose = () => {
-    setSelectedClientForAction(null);
-    // Don't resume timeline immediately - let the animation detection handle it
-    // The timeline will resume once the persistent animation is cleared
-  };
-
-  // Handle detail modal close - resume timeline
-  const handleDetailModalClose = () => {
-    // Don't resume timeline immediately - let the animation detection handle it
-    // The timeline will resume once the persistent animation is cleared
-    setSelectedClientForDetails(null);
-  };
-
   // Also handle the moveClientToFront call from ClientDetailModal
   useEffect(() => {
     const handleClientMoved = () => {
@@ -448,10 +434,12 @@ const ScrollingTabs: React.FC<ScrollingTabsProps> = ({
         setPersistentAnimationTabId(null);
         
         // Resume timeline after clearing animation
-        if (timelineRef.current && timelineRef.current.paused() && sortedClients.length > 0) {
-          console.log('🎯 Resuming timeline after clearing persistent animation');
-          timelineRef.current.resume();
-        }
+        setTimeout(() => {
+          if (timelineRef.current && timelineRef.current.paused() && sortedClients.length > 0 && !selectedClientForDetails && !selectedClientForAction && !isDragging) {
+            console.log('🎯 Resuming timeline after clearing persistent animation');
+            timelineRef.current.resume();
+          }
+        }, 100); // Small delay to ensure all state is updated
       }, 3000);
       
       return () => {
@@ -459,10 +447,12 @@ const ScrollingTabs: React.FC<ScrollingTabsProps> = ({
       };
     } else {
       // No persistent animation - ensure timeline is running if it should be
-      if (timelineRef.current && timelineRef.current.paused() && sortedClients.length > 0 && !selectedClientForDetails && !selectedClientForAction && !isDragging) {
-        console.log('🎯 No persistent animation, resuming timeline');
-        timelineRef.current.resume();
-      }
+      setTimeout(() => {
+        if (timelineRef.current && timelineRef.current.paused() && sortedClients.length > 0 && !selectedClientForDetails && !selectedClientForAction && !isDragging) {
+          console.log('🎯 Resuming timeline after clearing persistent animation');
+          timelineRef.current.resume();
+        }
+      }, 50); // Quick check after state changes
     }
   }, [persistentAnimationTabId, sortedClients.length, selectedClientForDetails, selectedClientForAction, isDragging]);
 
