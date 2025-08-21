@@ -197,23 +197,24 @@ body {
 .animate-subtle-shake {
   animation: subtle-shake 3s ease-in-out infinite;
 }
-.touch-manipulation {
+
 /* Small debt shake animation for amounts under 105 */
 @keyframes small-debt-shake {
   0%, 100% { transform: translateX(0); }
-  10% { transform: translateX(-2px) rotate(-0.5deg); }
-  20% { transform: translateX(2px) rotate(0.5deg); }
-  30% { transform: translateX(-1px) rotate(-0.3deg); }
-  40% { transform: translateX(1px) rotate(0.3deg); }
-  50% { transform: translateX(-0.5px) rotate(-0.1deg); }
-  60% { transform: translateX(0.5px) rotate(0.1deg); }
-  70% { transform: translateX(0); }
+  10% { transform: translateX(-3px) rotate(-1deg); }
+  20% { transform: translateX(3px) rotate(1deg); }
+  30% { transform: translateX(-2px) rotate(-0.5deg); }
+  40% { transform: translateX(2px) rotate(0.5deg); }
+  50% { transform: translateX(-1px) rotate(-0.2deg); }
+  60% { transform: translateX(1px) rotate(0.2deg); }
+  70% { transform: translateX(0) rotate(0deg); }
 }
 
 .animate-small-debt-shake {
-  animation: small-debt-shake 2s ease-in-out infinite;
+  animation: small-debt-shake 1.5s ease-in-out infinite;
 }
 
+.touch-manipulation {
   touch-action: pan-y;
   -webkit-user-select: none;
   -moz-user-select: none;
