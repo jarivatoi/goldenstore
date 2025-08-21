@@ -37,6 +37,18 @@ const CreditModals: React.FC<CreditModalsProps> = ({
   onCancelDelete
 }) => {
   const { clients, getClientTotalDebt } = useCredit();
+  const [clientSortOption, setClientSortOption] = React.useState<'id' | 'name'>('id');
+
+  // Sort clients based on selected option
+  const sortedClients = React.useMemo(() => {
+    return [...clients].sort((a, b) => {
+      if (clientSortOption === 'id') {
+        return a.id.localeCompare(b.id);
+      } else {
+        return a.name.localeCompare(b.name);
+      }
+    });
+  }, [clients, clientSortOption]);
 
   return (
     <>
@@ -65,14 +77,26 @@ const CreditModals: React.FC<CreditModalsProps> = ({
                   Their ID will become available for new clients.
                 </p>
 
+                {/* Sort Filter */}
+                <div className="mb-4">
+                  <label className="block text-sm font-medium text-gray-700 mb-2">
+                    Sort by:
+                  </label>
+                  <select
+                    value={clientSortOption}
+                    onChange={(e) => setClientSortOption(e.target.value as 'id' | 'name')}
+                    className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                  >
+                    <option value="id">Client ID (G001, G002...)</option>
+                    <option value="name">Client Name (A-Z)</option>
+                  </select>
+                </div>
                 {/* All Clients List */}
                 <div className="max-h-64 overflow-y-auto border border-gray-200 rounded-lg">
                   {clients.length === 0 ? (
                     <div className="p-4 text-center text-gray-500">No clients found</div>
                   ) : (
-                    clients
-                      .sort((a, b) => a.id.localeCompare(b.id))
-                      .map((client) => (
+                    sortedClients.map((client) => (
                         <div key={client.id} className="flex items-center justify-between p-3 border-b border-gray-100 last:border-b-0">
                           <div className="flex-1">
                             <h4 className="font-medium text-gray-800">{client.name}</h4>
