@@ -565,6 +565,7 @@ const OrderManagement: React.FC = () => {
         isOpen={showDuplicateOrderModal}
         title="Duplicate Order Not Allowed"
         message={duplicateOrderInfo ? `An order for "${duplicateOrderInfo.categoryName}" already exists for ${duplicateOrderInfo.orderDate}.\n\nDuplicate orders for the same date are not allowed. Please choose a different date or edit the existing order.` : ''}
+        confirmText="OK"
         type="warning"
         onConfirm={() => {
           setShowDuplicateOrderModal(false);
