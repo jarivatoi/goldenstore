@@ -118,8 +118,8 @@ const ClientGrid: React.FC<ClientGridProps> = ({
           // Animate to the snap position
           gsap.to(content, {
             x: snapTo,
-            duration: 0.5,
-            ease: "power2.out",
+            duration: 0.8,
+            ease: "back.out(2.5)",
             force3D: true
           });
           
