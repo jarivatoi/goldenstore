@@ -395,21 +395,18 @@ const ScrollingTabs: React.FC<ScrollingTabsProps> = ({
   const handleDetailModalClose = () => {
     // Don't resume timeline immediately - let the animation detection handle it
     
-    // Clear persistent animation immediately when detail modal closes
-    setPersistentAnimationTabId(null);
-    
-    // Resume timeline immediately after modal closes
+    // Resume timeline when detail modal closes
     setTimeout(() => {
-      if (timelineRef.current && sortedClients.length > 0) {
+      if (timelineRef.current) {
         if (timelineRef.current.paused()) {
           console.log('🎯 Resuming timeline after detail modal close');
           timelineRef.current.resume();
-        } else if (!timelineRef.current.isActive()) {
-          console.log('🎯 Restarting timeline after detail modal close');
+        } else if (!timelineRef.current.isActive() && sortedClients.length > 0) {
+          console.log('🎯 Restarting timeline after detail modal close'); 
           timelineRef.current.play();
         }
       }
-    }, 100);
+    }, 200); // Slightly longer delay to ensure modal cleanup
   };
 
   // Also handle the moveClientToFront call from ClientDetailModal
