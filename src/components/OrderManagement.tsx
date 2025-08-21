@@ -50,6 +50,8 @@ const OrderManagement: React.FC = () => {
   const [categoryToDelete, setCategoryToDelete] = useState<OrderCategory | null>(null);
   const [showDeleteOrderModal, setShowDeleteOrderModal] = useState(false);
   const [orderToDelete, setOrderToDelete] = useState<Order | null>(null);
+  const [showDeleteItemModal, setShowDeleteItemModal] = useState(false);
+  const [itemToDelete, setItemToDelete] = useState<OrderItemTemplate | null>(null);
 
   // Get filtered categories
   const filteredCategories = searchCategories(searchQuery);
@@ -161,6 +163,7 @@ const OrderManagement: React.FC = () => {
     setCategoryToDelete(null);
   };
 
+  // Handle delete order
   const handleDeleteOrder = async (order: Order) => {
     setOrderToDelete(order);
     setShowDeleteOrderModal(true);
@@ -185,6 +188,30 @@ const OrderManagement: React.FC = () => {
   const cancelDeleteOrder = () => {
     setShowDeleteOrderModal(false);
     setOrderToDelete(null);
+  };
+
+  // Handle delete item template
+  const handleDeleteItem = async (item: OrderItemTemplate) => {
+    setItemToDelete(item);
+    setShowDeleteItemModal(true);
+  };
+
+  const confirmDeleteItem = async () => {
+    if (!itemToDelete) return;
+    
+    try {
+      await deleteItemTemplate(itemToDelete.id);
+      alert(`Item template "${itemToDelete.name}" has been deleted successfully.`);
+      setShowDeleteItemModal(false);
+      setItemToDelete(null);
+    } catch (error) {
+      alert('Failed to delete item template. Please try again.');
+    }
+  };
+
+  const cancelDeleteItem = () => {
+    setShowDeleteItemModal(false);
+    setItemToDelete(null);
   };
 
   if (isLoading) {
@@ -503,6 +530,18 @@ const OrderManagement: React.FC = () => {
         type="danger"
         onConfirm={confirmDeleteOrder}
         onCancel={cancelDeleteOrder}
+      />
+
+      {/* Item Template Delete Confirmation Modal */}
+      <ConfirmationModal
+        isOpen={showDeleteItemModal}
+        title="Delete Item Template"
+        message={itemToDelete ? `Are you sure you want to delete "${itemToDelete.name}"?\n\nThis will also remove this item from all existing orders in this category.\n\nThis action cannot be undone.` : ''}
+        confirmText="Delete Item"
+        cancelText="Cancel"
+        type="danger"
+        onConfirm={confirmDeleteItem}
+        onCancel={cancelDeleteItem}
       />
 
     </div>
@@ -1153,6 +1192,7 @@ const CreateOrderModal: React.FC<CreateOrderModalProps> = ({ category, itemTempl
       templateId: template.id,
       quantity: 0,
       unitPrice: template.unitPrice,
+      isVatNil: template.isVatNil,
       vatAmount: 0,
       totalPrice: 0,
       isAvailable: true
@@ -1168,7 +1208,7 @@ const CreateOrderModal: React.FC<CreateOrderModalProps> = ({ category, itemTempl
         // Recalculate totals when quantity or unit price changes
         if (field === 'quantity' || field === 'unitPrice') {
           const subtotal = updated.quantity * updated.unitPrice;
-          updated.vatAmount = subtotal * 0.15; // 15% VAT
+          updated.vatAmount = updated.isVatNil ? 0 : subtotal * 0.15; // 15% VAT
           updated.totalPrice = subtotal + updated.vatAmount;
         }
         
@@ -1210,7 +1250,9 @@ const CreateOrderModal: React.FC<CreateOrderModalProps> = ({ category, itemTempl
     }
   };
 
-  const totalCost = orderItems.reduce((sum, item) => sum + item.totalPrice, 0);
+  const totalCost = orderItems
+    .filter(item => item.isAvailable)
+    .reduce((sum, item) => sum + item.totalPrice, 0);
 
   const getItemTemplateName = (templateId: string) => {
     const template = itemTemplates.find(t => t.id === templateId);
@@ -1434,9 +1476,9 @@ const CreateOrderModal: React.FC<CreateOrderModalProps> = ({ category, itemTempl
               </button>
               <button
                 type="submit"
-                disabled={isSubmitting || itemTemplates.length === 0 || orderItems.filter(item => item.isAvailable).reduce((sum, item) => sum + item.totalPrice, 0) === 0}
+                disabled={isSubmitting || itemTemplates.length === 0 || totalCost === 0}
                 className={`flex-1 px-4 py-2 rounded-lg transition-colors select-none ${
-                  orderItems.filter(item => item.isAvailable).reduce((sum, item) => sum + item.totalPrice, 0) === 0
+                  totalCost === 0
                     ? 'bg-gray-300 text-gray-500 cursor-not-allowed'
                     : 'bg-green-500 text-white hover:bg-green-600'
                 }`}
@@ -1645,8 +1687,12 @@ const EditOrderModal: React.FC<EditOrderModalProps> = ({ order, itemTemplates, o
               </button>
               <button
                 type="submit"
-                disabled={isSubmitting || itemTemplates.length === 0}
-                className="flex-1 px-4 py-2 bg-green-500 text-white rounded-lg hover:bg-green-600 disabled:opacity-50 select-none"
+                disabled={isSubmitting || itemTemplates.length === 0 || totalCost === 0}
+                className={`flex-1 px-4 py-2 rounded-lg transition-colors select-none ${
+                  totalCost === 0
+                    ? 'bg-gray-300 text-gray-500 cursor-not-allowed'
+                    : 'bg-green-500 text-white hover:bg-green-600'
+                }`}
               >
                 {isSubmitting ? 'Updating...' : 'Update Order'}
               </button>
