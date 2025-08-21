@@ -172,17 +172,24 @@ const ScrollingTabs: React.FC<ScrollingTabsProps> = ({
           console.log('🎯 Drag ended - creating new timeline');
           setIsDragging(false);
           
-          // Calculate current progress based on position
-          const currentProgress = calculateTimelineProgress();
-          console.log('🎯 Calculated progress for new timeline:', currentProgress);
-          
-          // Create new timeline starting from calculated progress
+          // Check if content is smaller than container (few cards)
           const container = containerRef.current;
           const content = contentRef.current;
           
           if (container && content) {
             const containerWidth = container.offsetWidth;
             const contentWidth = content.scrollWidth;
+            
+            if (contentWidth <= containerWidth) {
+              // Small content: Don't restart timeline, let it stay where dragged
+              console.log('🎯 Small content detected, no timeline restart');
+              return;
+            }
+            
+            // Large content: Restart timeline from calculated progress
+            const currentProgress = calculateTimelineProgress();
+            console.log('🎯 Calculated progress for new timeline:', currentProgress);
+            
             const totalDistance = contentWidth + containerWidth;
             const duration = totalDistance / 60;
             
