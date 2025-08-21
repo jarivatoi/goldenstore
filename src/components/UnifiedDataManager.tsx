@@ -269,8 +269,6 @@ const UnifiedDataManager: React.FC<UnifiedDataManagerProps> = ({ isOpen, onClose
             onClose();
             alert(`Successfully imported complete Golden Store database!\n\nPlease refresh the page to see all imported data.`);
             
-            // Refresh the page to reload all data
-            window.location.reload();
           }
         } catch (error) {
           alert('Error importing database file. Please check the file format and try again.');
