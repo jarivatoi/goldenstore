@@ -79,9 +79,15 @@ const ClientGrid: React.FC<ClientGridProps> = ({
         minDuration: 0.1, // Lower minimum duration
         overshootTolerance: 500, // Allow even more overshooting
         force3D: true,
+        onDragStart: function() {
+          // Record the starting position to determine drag direction
+          this.startX = gsap.getProperty(content, "x") as number;
+        },
         onDragEnd: function() {
           // Smart snapping based on position
           const currentX = gsap.getProperty(content, "x") as number;
+          const startX = this.startX || 0;
+          const dragDirection = currentX - startX; // Positive = dragged right, Negative = dragged left
           const containerWidth = container.offsetWidth;
           const contentWidth = content.scrollWidth;
           
@@ -89,7 +95,8 @@ const ClientGrid: React.FC<ClientGridProps> = ({
           const leftSnapZone = -(containerWidth * 0.3);
           const rightSnapZone = containerWidth * 0.3;
           
-          if (currentX < leftSnapZone) {
+          // Only snap to left edge if dragged LEFT (negative direction) and in left snap zone
+          if (currentX < leftSnapZone && dragDirection < 0) {
             // Snap to left edge (show rightmost content)
             gsap.to(content, {
               x: -(contentWidth - containerWidth),
@@ -97,7 +104,8 @@ const ClientGrid: React.FC<ClientGridProps> = ({
               ease: "back.out(1.7)",
               force3D: true
             });
-          } else if (currentX > rightSnapZone) {
+          // Only snap to right edge if dragged RIGHT (positive direction) and in right snap zone
+          } else if (currentX > rightSnapZone && dragDirection > 0) {
             // Snap to right edge (show leftmost content)
             gsap.to(content, {
               x: 0,
@@ -106,7 +114,7 @@ const ClientGrid: React.FC<ClientGridProps> = ({
               force3D: true
             });
           }
-          // If in middle zone, don't snap - let it stay where it is
+          // If in middle zone OR dragging in opposite direction, don't snap - let it stay where it is
         }
       });
     }
