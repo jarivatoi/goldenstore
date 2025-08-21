@@ -335,8 +335,8 @@ const ScrollingTabs: React.FC<ScrollingTabsProps> = ({
   // Handle detail modal close - resume timeline
   const handleDetailModalClose = () => {
     setSelectedClientForDetails(null);
-    // Don't resume timeline immediately - let the animation detection handle it
-    // The timeline will resume once the persistent animation is cleared
+    // Trigger timeline restart by dispatching a custom event (same as action modal)
+    window.dispatchEvent(new CustomEvent('restartScrollingTimeline'));
   };
 
   // Handle tab click - pause timeline and show modal
