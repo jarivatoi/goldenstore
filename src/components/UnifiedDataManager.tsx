@@ -281,6 +281,7 @@ const UnifiedDataManager: React.FC<UnifiedDataManagerProps> = ({ isOpen, onClose
             
             // Refresh the page to reload all data
             window.location.reload();
+      }
     } catch (error) {
       console.error('Error importing database:', error);
     } finally {
