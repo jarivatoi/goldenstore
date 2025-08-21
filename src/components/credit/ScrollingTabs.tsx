@@ -522,6 +522,14 @@ const ScrollingTabs: React.FC<ScrollingTabsProps> = ({
               const totalDebt = getClientTotalDebt(client.id);
               const isLinked = linkedClient?.id === client.id;
               
+              // Determine card background color based on debt amount (same as big cards)
+              const getCardBackgroundColor = () => {
+                if (totalDebt <= 300) return 'bg-green-100 border-green-200';
+                if (totalDebt < 500) return 'bg-green-100 border-green-200';
+                if (totalDebt <= 1000) return 'bg-orange-100 border-orange-200';
+                return 'bg-red-100 border-red-200';
+              };
+              
               return (
                 <div
                   key={client.id}
@@ -533,8 +541,8 @@ const ScrollingTabs: React.FC<ScrollingTabsProps> = ({
                     isLinked 
                       ? 'bg-blue-50 border-blue-200 shadow-md'
                       : isDragging
-                        ? 'bg-gray-50 border-gray-200'
-                        : 'bg-gray-50 border-gray-200 hover:bg-gray-100'
+                        ? getCardBackgroundColor()
+                        : `${getCardBackgroundColor()} hover:shadow-md`
                   } ${
                     clickedTabId === client.id 
                       ? 'animate-pulse-attention bg-yellow-200 border-yellow-400 shadow-lg scale-110 z-50' 
