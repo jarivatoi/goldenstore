@@ -62,61 +62,54 @@ const ClientGrid: React.FC<ClientGridProps> = ({
     const contentWidth = content.scrollWidth;
     
     // Only enable dragging if content overflows container
-    // Always enable dragging for better UX, even with single cards
-    if (true) {
+    if (contentWidth > containerWidth) {
+      // Calculate bounds based on content and container width
+      const maxDrag = Math.max(0, contentWidth - containerWidth);
+      
       // Create draggable instance
       draggableRef.current = Draggable.create(content, {
         type: "x",
         bounds: {
-          minX: -(contentWidth + containerWidth), // Allow dragging past left edge
-          maxX: containerWidth + containerWidth // Allow dragging past right edge (symmetrical)
+          minX: -maxDrag,
+          maxX: 0
         },
-        edgeResistance: 0.02, // Low resistance at edges
+        edgeResistance: 0.5,
         inertia: true,
-        dragResistance: 0.005, // Much easier to drag and throw
-        throwResistance: 0.005, // Much longer throws
-        maxDuration: 12, // Longer inertia duration
-        minDuration: 0.02, // Snappier response
-        overshootTolerance: 1200, // Allow generous overshooting
+        dragResistance: 0.1,
+        throwResistance: 0.005,
+        maxDuration: 2,
+        minDuration: 0.02,
+        overshootTolerance: 0,
         force3D: true,
-        onDragStart: function() {
-          // Record the starting position to determine drag direction
-          this.startX = gsap.getProperty(content, "x") as number;
-        },
         onDragEnd: function() {
-          // Smart snapping based on position
+          // Smart snapping based on position and velocity
           const currentX = gsap.getProperty(content, "x") as number;
-          const startX = this.startX || 0;
-          const dragDirection = currentX - startX; // Positive = dragged right, Negative = dragged left
-          const containerWidth = container.offsetWidth;
-          const contentWidth = content.scrollWidth;
+          const velocity = this.getVelocity("x");
           
-          // Define snap zones (20% from each edge for easier snapping)
-          const leftSnapZone = -(containerWidth * 0.2);
-          const rightSnapZone = containerWidth * 0.2;
+          // Determine snap points
+          let snapTo = 0;
           
-          // Snap to left edge if in left snap zone AND dragged left (or thrown left)
-          if (currentX < leftSnapZone && dragDirection <= 0) {
-            // Snap to left edge (show rightmost content)
-            gsap.to(content, {
-              x: -(contentWidth - containerWidth),
-              duration: 0.8,
-              ease: "back.out(1.7)",
-              force3D: true
-            });
-          // Snap to right edge if in right snap zone AND dragged right (or thrown right)
-          } else if (currentX > rightSnapZone && dragDirection >= 0) {
-            // Snap to right edge (show leftmost content)
-            gsap.to(content, {
-              x: 0,
-              duration: 0.8,
-              ease: "back.out(1.7)",
-              force3D: true
-            });
+          // If moving quickly, snap in the direction of movement
+          if (Math.abs(velocity) > 500) {
+            snapTo = velocity > 0 ? 0 : -maxDrag;
+          } 
+          // If moving slowly, snap to whichever edge is closer
+          else {
+            snapTo = Math.abs(currentX) < maxDrag / 2 ? 0 : -maxDrag;
           }
-          // If in wrong direction or middle zone, don't snap - let natural physics handle it
+          
+          // Animate to the snap position
+          gsap.to(content, {
+            x: snapTo,
+            duration: 0.5,
+            ease: "power2.out",
+            force3D: true
+          });
         }
       });
+    } else {
+      // Reset position if content doesn't overflow
+      gsap.set(content, { x: 0 });
     }
 
     return () => {
@@ -129,16 +122,7 @@ const ClientGrid: React.FC<ClientGridProps> = ({
 
   // Calculate dynamic height based on card content
   const calculateCardHeight = () => {
-    // Base padding: p-3 (12px) on mobile = 24px total vertical padding
-    // Client header: ~40px (icon + name + ID)
-    // Debt amount: ~60px (label + amount + bottles)
-    // Quick add button: ~40px
-    // Returnable items: 48px (3rem min-height)
-    // Date and instruction text: ~60px (increased for two lines)
-    // Total estimated: ~272px
-    
-    // Add some buffer for different screen sizes and content variations
-    return 'min-h-[320px]'; // 320px should accommodate all content comfortably including two-line instructions
+    return 'min-h-[320px]';
   };
 
   return (
