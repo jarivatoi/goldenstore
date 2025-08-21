@@ -1282,7 +1282,7 @@ const CreateOrderModal: React.FC<CreateOrderModalProps> = ({ category, itemTempl
               type="date"
               value={orderDate}
               onChange={(e) => setOrderDate(e.target.value)}
-              className="px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-green-500 select-text"
+              className="px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-green-500 select-none"
             />
           </div>
 
@@ -1591,7 +1591,7 @@ const EditOrderModal: React.FC<EditOrderModalProps> = ({ order, itemTemplates, o
               type="date"
               value={orderDate}
               onChange={(e) => setOrderDate(e.target.value)}
-              className="px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-green-500 select-text"
+              className="px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-green-500 select-none"
             />
           </div>
 
