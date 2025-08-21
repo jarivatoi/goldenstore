@@ -1,4 +1,3 @@
-
 import React, { useEffect, useRef } from 'react';
 import { useCallback } from 'react';
 import { gsap } from 'gsap';
@@ -324,6 +323,20 @@ const ScrollingTabs: React.FC<ScrollingTabsProps> = ({
       case 'overlimit': return 'Over Limit';
       default: return 'Active Clients';
     }
+  };
+
+  // Handle modal close - resume timeline
+  const handleModalClose = () => {
+    setSelectedClientForAction(null);
+    // Don't resume timeline immediately - let the animation detection handle it
+    // The timeline will resume once the persistent animation is cleared
+  };
+
+  // Handle detail modal close - resume timeline
+  const handleDetailModalClose = () => {
+    setSelectedClientForDetails(null);
+    // Don't resume timeline immediately - let the animation detection handle it
+    // The timeline will resume once the persistent animation is cleared
   };
 
   // Handle tab click - pause timeline and show modal
