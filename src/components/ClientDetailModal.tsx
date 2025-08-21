@@ -35,10 +35,6 @@ const ClientDetailModal: React.FC<ClientDetailModalProps> = ({ client, onClose, 
   const handleAnyClose = () => {
     // Move client to end (rightmost, near calculator) when modal is closed
     moveClientToFront(client.id);
-    
-    // Dispatch event to notify that client was moved
-    window.dispatchEvent(new CustomEvent('clientMovedToFront'));
-    
     onClose();
   };
 

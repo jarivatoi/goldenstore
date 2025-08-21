@@ -394,33 +394,8 @@ const ScrollingTabs: React.FC<ScrollingTabsProps> = ({
   // Handle detail modal close - resume timeline
   const handleDetailModalClose = () => {
     // Don't resume timeline immediately - let the animation detection handle it
-    
-    // Clear persistent animation and resume timeline
-    setPersistentAnimationTabId(null);
-    
-    // Resume timeline immediately
-    setTimeout(() => {
-      if (timelineRef.current && sortedClients.length > 0) {
-        if (timelineRef.current.paused()) {
-          console.log('🎯 Resuming timeline after detail modal close');
-          timelineRef.current.resume();
-        } else if (!timelineRef.current.isActive()) {
-          console.log('🎯 Restarting timeline after detail modal close');
-          timelineRef.current.play();
-        }
-      }
-    }, 100);
-    setTimeout(() => {
-      if (timelineRef.current) {
-        if (timelineRef.current.paused()) {
-          console.log('🎯 Resuming timeline after detail modal close');
-          timelineRef.current.resume();
-        } else if (!timelineRef.current.isActive() && sortedClients.length > 0) {
-          console.log('🎯 Restarting timeline after detail modal close'); 
-          timelineRef.current.play();
-        }
-      }
-    }, 200); // Slightly longer delay to ensure modal cleanup
+    // The timeline will resume once the persistent animation is cleared
+    setSelectedClientForDetails(null);
   };
 
   // Also handle the moveClientToFront call from ClientDetailModal
@@ -429,9 +404,8 @@ const ScrollingTabs: React.FC<ScrollingTabsProps> = ({
       // When a client is moved to front, ensure timeline resumes
       setTimeout(() => {
         if (timelineRef.current && timelineRef.current.paused()) {
-            console.log('🎯 Restarting timeline after client moved to front');
+          console.log('🎯 Resuming timeline after client moved to front');
           timelineRef.current.resume();
-            console.log('🎯 Resuming timeline after client moved to front');
         }
       }, 200);
     };
