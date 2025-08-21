@@ -1,13 +1,14 @@
 import React from 'react';
 import { useEffect, useRef } from 'react';
 import { gsap } from 'gsap';
+import { InertiaPlugin } from 'gsap/InertiaPlugin';
 import { Draggable } from '../../lib/draggable.js';
 import { Search, X } from 'lucide-react';
 import { Client } from '../../types';
 import ClientCard from '../ClientCard';
 
 // Register GSAP plugins
-gsap.registerPlugin(Draggable);
+gsap.registerPlugin(Draggable, InertiaPlugin);
 
 interface ClientGridProps {
   clients: Client[];
@@ -105,7 +106,7 @@ const ClientGrid: React.FC<ClientGridProps> = ({
         onDragEnd: function(this: any) {
           const currentX = gsap.getProperty(content, "x") as number;
           const dragDirection = dragDirectionRef.current;
-          const velocity = this.getVelocity("x");
+          const velocity = InertiaPlugin ? InertiaPlugin.getVelocity(content, "x") : 0;
           
           // Intelligent snapping based on drag direction and position
           let shouldSnap = false;
