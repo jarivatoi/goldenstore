@@ -83,9 +83,6 @@ try {
           headers.set('Cache-Control', 'no-cache, no-store, must-revalidate');
           headers.set('Pragma', 'no-cache');
           headers.set('Expires', '0');
-          headers.set('Access-Control-Allow-Origin', '*');
-          headers.set('Access-Control-Allow-Methods', 'GET, POST, PUT, DELETE, OPTIONS');
-          headers.set('Access-Control-Allow-Headers', 'Content-Type, Authorization, apikey');
         } else {
           headers.set('Cache-Control', 'no-cache');
         }
