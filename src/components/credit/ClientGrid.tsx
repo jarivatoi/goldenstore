@@ -86,6 +86,7 @@ const ClientGrid: React.FC<ClientGridProps> = ({
             duration: 1.2,
             ease: "elastic.out(1, 0.5)",
             force3D: true
+          });
             // Smart snapping based on position
             const currentX = gsap.getProperty(content, "x") as number;
             const containerWidth = container.offsetWidth;
@@ -142,6 +143,12 @@ const ClientGrid: React.FC<ClientGridProps> = ({
               });
             }
             // If in middle zone, don't snap - let it stay where it is
+        }
+      });
+    }
+
+    return () => {
+      if (draggableRef.current) {
         draggableRef.current.forEach(d => d.kill());
         draggableRef.current = null;
       }
