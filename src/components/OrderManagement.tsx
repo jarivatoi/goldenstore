@@ -2,6 +2,7 @@ import React, { useState } from 'react';
 import { Plus, Calendar, Package, Trash2, Edit2, X, ShoppingCart, FileText, Eye, EyeOff, Minus, Search } from 'lucide-react';
 import { useOrder } from '../context/OrderContext';
 import { OrderCategory, OrderItemTemplate, Order, OrderItem } from '../types';
+import ConfirmationModal from './ConfirmationModal';
 
 /**
  * ORDER MANAGEMENT COMPONENT
@@ -45,6 +46,8 @@ const OrderManagement: React.FC = () => {
   const [editingItem, setEditingItem] = useState<OrderItemTemplate | null>(null);
   const [editingOrder, setEditingOrder] = useState<Order | null>(null);
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const [showDeleteCategoryModal, setShowDeleteCategoryModal] = useState(false);
+  const [categoryToDelete, setCategoryToDelete] = useState<OrderCategory | null>(null);
 
   // Get filtered categories
   const filteredCategories = searchCategories(searchQuery);
@@ -134,18 +137,26 @@ const OrderManagement: React.FC = () => {
 
   // Handle delete category
   const handleDeleteCategory = async (category: OrderCategory) => {
-    const confirmed = window.confirm(
-      `Are you sure you want to delete "${category.name}"? This will also delete all items and orders in this category.`
-    );
+    setCategoryToDelete(category);
+    setShowDeleteCategoryModal(true);
+  };
+
+  const confirmDeleteCategory = async () => {
+    if (!categoryToDelete) return;
     
-    if (confirmed) {
-      try {
-        await deleteCategory(category.id);
-        if (selectedCategory?.id === category.id) {
-          setSelectedCategory(null);
-        }
-      } catch (err) {
-        alert('Failed to delete category');
+    try {
+      await deleteCategory(categoryToDelete.id);
+      alert(`Category "${categoryToDelete.name}" has been deleted successfully.`);
+      setShowDeleteCategoryModal(false);
+      setCategoryToDelete(null);
+    } catch (error) {
+      alert('Failed to delete category. Please try again.');
+    }
+  };
+
+  const cancelDeleteCategory = () => {
+    setShowDeleteCategoryModal(false);
+    setCategoryToDelete(null);
       }
     }
   };
@@ -937,6 +948,18 @@ const OrderCard: React.FC<OrderCardProps> = ({ order, itemTemplates, onDelete, o
           </div>
         </div>
       )}
+
+      {/* Category Delete Confirmation Modal */}
+      <ConfirmationModal
+        isOpen={showDeleteCategoryModal}
+        title="Delete Category"
+        message={categoryToDelete ? `Are you sure you want to delete "${categoryToDelete.name}"?\n\nThis will also delete:\n• All item templates in this category\n• All orders in this category\n\nThis action cannot be undone.` : ''}
+        confirmText="Delete Category"
+        cancelText="Cancel"
+        type="danger"
+        onConfirm={confirmDeleteCategory}
+        onCancel={cancelDeleteCategory}
+      />
 
       <div className="border-t pt-3 flex justify-between items-center select-none">
         <span className="font-semibold text-gray-800 select-none">Total Amount:</span>
