@@ -102,7 +102,7 @@ const ClientGrid: React.FC<ClientGridProps> = ({
             }
           }
         },
-        onDragEnd: function() {
+        onDragEnd: function(this: any) {
           const currentX = gsap.getProperty(content, "x") as number;
           const dragDirection = dragDirectionRef.current;
           const velocity = this.getVelocity("x");
