@@ -191,134 +191,163 @@ const UnifiedDataManager: React.FC<UnifiedDataManagerProps> = ({ isOpen, onClose
               setModal({ type: null, title: '', message: '' });
               
               try {
-            // Import Price List data
-            if (data.priceList?.items) {
-              const priceListItems = data.priceList.items.map((item: any) => ({
-                ...item,
-                createdAt: new Date(item.createdAt),
-                lastEditedAt: item.lastEditedAt ? new Date(item.lastEditedAt) : undefined
-              }));
-              await importPriceItems(priceListItems);
-            }
-            
-            // Import Credit Management data
-            if (data.creditManagement) {
-              if (data.creditManagement.clients) {
-                const creditClients = data.creditManagement.clients.map((client: any) => ({
-                  ...client,
-                  createdAt: new Date(client.createdAt),
-                  lastTransactionAt: new Date(client.lastTransactionAt)
-                }));
-                localStorage.setItem('creditClients', JSON.stringify(creditClients.map(client => ({
-                  ...client,
-                  createdAt: client.createdAt.toISOString(),
-                  lastTransactionAt: client.lastTransactionAt.toISOString()
-                }))));
-              }
-              
-              if (data.creditManagement.transactions) {
-                const creditTransactions = data.creditManagement.transactions.map((transaction: any) => ({
-                  ...transaction,
-                  date: new Date(transaction.date)
-                }));
-                localStorage.setItem('creditTransactions', JSON.stringify(creditTransactions.map(transaction => ({
-                  ...transaction,
-                  date: transaction.date.toISOString()
-                }))));
-              }
-              
-              if (data.creditManagement.payments) {
-                const creditPayments = data.creditManagement.payments.map((payment: any) => ({
-                  ...payment,
-                  date: new Date(payment.date)
-                }));
-                localStorage.setItem('creditPayments', JSON.stringify(creditPayments.map(payment => ({
-                  ...payment,
-                  date: payment.date.toISOString()
-                }))));
-              }
-            }
-            
-            // Import Over Management data
-            if (data.overManagement?.items) {
-              const overItemsData = data.overManagement.items.map((item: any) => ({
-                ...item,
-                createdAt: new Date(item.createdAt),
-                completedAt: item.completedAt ? new Date(item.completedAt) : undefined
-              }));
-              localStorage.setItem('overItems', JSON.stringify(overItemsData.map(item => ({
-                ...item,
-                createdAt: item.createdAt.toISOString(),
-                completedAt: item.completedAt?.toISOString()
-              }))));
-            }
-            
-            // Import Order Management data
-            if (data.orderManagement) {
-              if (data.orderManagement.categories) {
-                const orderCategories = data.orderManagement.categories.map((category: any) => ({
-                  ...category,
-                  createdAt: new Date(category.createdAt)
-                }));
-                localStorage.setItem('orderCategories', JSON.stringify(orderCategories.map(category => ({
-                  ...category,
-                  createdAt: category.createdAt.toISOString()
-                }))));
-              }
-              
-              if (data.orderManagement.itemTemplates) {
-                const orderTemplates = data.orderManagement.itemTemplates.map((template: any) => ({
-                  ...template,
-                  createdAt: new Date(template.createdAt)
-                }));
-                localStorage.setItem('orderItemTemplates', JSON.stringify(orderTemplates.map(template => ({
-                  ...template,
-                  createdAt: template.createdAt.toISOString()
-                }))));
-              }
-              
-              if (data.orderManagement.orders) {
-                const orderData = data.orderManagement.orders.map((order: any) => ({
-                  ...order,
-                  orderDate: new Date(order.orderDate),
-                  createdAt: new Date(order.createdAt),
-                  lastEditedAt: order.lastEditedAt ? new Date(order.lastEditedAt) : undefined
-                }));
-                localStorage.setItem('orders', JSON.stringify(orderData.map(order => ({
-                  ...order,
-                  orderDate: order.orderDate.toISOString(),
-                  createdAt: order.createdAt.toISOString(),
-                  lastEditedAt: order.lastEditedAt?.toISOString()
-                }))));
-              }
-            }
+                // Import Price List data
+                if (data.priceList?.items) {
+                  try {
+                    const priceListItems = data.priceList.items.map((item: any) => ({
+                      ...item,
+                      createdAt: new Date(item.createdAt),
+                      lastEditedAt: item.lastEditedAt ? new Date(item.lastEditedAt) : undefined
+                    }));
+                    await importPriceItems(priceListItems);
+                    console.log('✅ Price list data imported successfully');
+                  } catch (priceError) {
+                    console.error('❌ Price list import failed:', priceError);
+                    throw new Error(`Price list import failed: ${priceError instanceof Error ? priceError.message : 'Unknown error'}`);
+                  }
+                }
+                
+                // Import Credit Management data
+                if (data.creditManagement) {
+                  try {
+                    if (data.creditManagement.clients) {
+                      const creditClients = data.creditManagement.clients.map((client: any) => ({
+                        ...client,
+                        createdAt: new Date(client.createdAt),
+                        lastTransactionAt: new Date(client.lastTransactionAt)
+                      }));
+                      localStorage.setItem('creditClients', JSON.stringify(creditClients.map(client => ({
+                        ...client,
+                        createdAt: client.createdAt.toISOString(),
+                        lastTransactionAt: client.lastTransactionAt.toISOString()
+                      }))));
+                      console.log('✅ Credit clients imported successfully');
+                    }
+                    
+                    if (data.creditManagement.transactions) {
+                      const creditTransactions = data.creditManagement.transactions.map((transaction: any) => ({
+                        ...transaction,
+                        date: new Date(transaction.date)
+                      }));
+                      localStorage.setItem('creditTransactions', JSON.stringify(creditTransactions.map(transaction => ({
+                        ...transaction,
+                        date: transaction.date.toISOString()
+                      }))));
+                      console.log('✅ Credit transactions imported successfully');
+                    }
+                    
+                    if (data.creditManagement.payments) {
+                      const creditPayments = data.creditManagement.payments.map((payment: any) => ({
+                        ...payment,
+                        date: new Date(payment.date)
+                      }));
+                      localStorage.setItem('creditPayments', JSON.stringify(creditPayments.map(payment => ({
+                        ...payment,
+                        date: payment.date.toISOString()
+                      }))));
+                      console.log('✅ Credit payments imported successfully');
+                    }
+                  } catch (creditError) {
+                    console.error('❌ Credit data import failed:', creditError);
+                    throw new Error(`Credit data import failed: ${creditError instanceof Error ? creditError.message : 'Unknown error'}`);
+                  }
+                }
+                
+                // Import Over Management data
+                if (data.overManagement?.items) {
+                  try {
+                    const overItemsData = data.overManagement.items.map((item: any) => ({
+                      ...item,
+                      createdAt: new Date(item.createdAt),
+                      completedAt: item.completedAt ? new Date(item.completedAt) : undefined
+                    }));
+                    localStorage.setItem('overItems', JSON.stringify(overItemsData.map(item => ({
+                      ...item,
+                      createdAt: item.createdAt.toISOString(),
+                      completedAt: item.completedAt?.toISOString()
+                    }))));
+                    console.log('✅ Over items imported successfully');
+                  } catch (overError) {
+                    console.error('❌ Over items import failed:', overError);
+                    throw new Error(`Over items import failed: ${overError instanceof Error ? overError.message : 'Unknown error'}`);
+                  }
+                }
+                
+                // Import Order Management data
+                if (data.orderManagement) {
+                  try {
+                    if (data.orderManagement.categories) {
+                      const orderCategories = data.orderManagement.categories.map((category: any) => ({
+                        ...category,
+                        createdAt: new Date(category.createdAt)
+                      }));
+                      localStorage.setItem('orderCategories', JSON.stringify(orderCategories.map(category => ({
+                        ...category,
+                        createdAt: category.createdAt.toISOString()
+                      }))));
+                      console.log('✅ Order categories imported successfully');
+                    }
+                    
+                    if (data.orderManagement.itemTemplates) {
+                      const orderTemplates = data.orderManagement.itemTemplates.map((template: any) => ({
+                        ...template,
+                        createdAt: new Date(template.createdAt)
+                      }));
+                      localStorage.setItem('orderItemTemplates', JSON.stringify(orderTemplates.map(template => ({
+                        ...template,
+                        createdAt: template.createdAt.toISOString()
+                      }))));
+                      console.log('✅ Order templates imported successfully');
+                    }
+                    
+                    if (data.orderManagement.orders) {
+                      const orderData = data.orderManagement.orders.map((order: any) => ({
+                        ...order,
+                        orderDate: new Date(order.orderDate),
+                        createdAt: new Date(order.createdAt),
+                        lastEditedAt: order.lastEditedAt ? new Date(order.lastEditedAt) : undefined
+                      }));
+                      localStorage.setItem('orders', JSON.stringify(orderData.map(order => ({
+                        ...order,
+                        orderDate: order.orderDate.toISOString(),
+                        createdAt: order.createdAt.toISOString(),
+                        lastEditedAt: order.lastEditedAt?.toISOString()
+                      }))));
+                      console.log('✅ Orders imported successfully');
+                    }
+                  } catch (orderError) {
+                    console.error('❌ Order data import failed:', orderError);
+                    throw new Error(`Order data import failed: ${orderError instanceof Error ? orderError.message : 'Unknown error'}`);
+                  }
+                }
             
                 setModal({
                   type: 'success',
                   title: 'Import Successful',
-                  message: 'Successfully imported complete Golden Store database!\n\nPlease refresh the page to see all imported data.',
+                  message: 'Successfully imported complete Golden Store database!\n\nAll data has been loaded into the application.',
                   onConfirm: () => {
                     setModal({ type: null, title: '', message: '' });
                     onClose();
-                    window.location.reload();
                   }
                 });
               } catch (importError) {
+                console.error('❌ Import operation failed:', importError);
                 setModal({
                   type: 'error',
                   title: 'Import Failed',
-                  message: 'Error importing database file. Please check the file format and try again.',
+                  message: `Error importing database file:\n\n${importError instanceof Error ? importError.message : 'Unknown error'}\n\nPlease check the file format and try again.`,
                   onConfirm: () => setModal({ type: null, title: '', message: '' })
                 });
               }
             },
             onCancel: () => setModal({ type: null, title: '', message: '' })
           });
-        } catch (error) {
+        } catch (importError) {
+          console.error('❌ File processing failed:', importError);
           setModal({
             type: 'error',
-            title: 'File Error',
-            message: 'Error reading database file. Please check the file format and try again.',
+            title: 'Import Failed',
+            message: `Error processing database file:\n\n${importError instanceof Error ? importError.message : 'Unknown error'}\n\nPlease check the file format and try again.`,
             onConfirm: () => setModal({ type: null, title: '', message: '' })
           });
         } finally {
