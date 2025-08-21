@@ -68,16 +68,16 @@ const ClientGrid: React.FC<ClientGridProps> = ({
       draggableRef.current = Draggable.create(content, {
         type: "x",
         bounds: {
-          minX: Math.min(-(contentWidth - containerWidth), -100), // Allow at least 100px drag
-          maxX: Math.max(0, 100) // Allow dragging in both directions
+          minX: -(contentWidth + containerWidth), // Allow full scroll plus extra
+          maxX: containerWidth // Allow dragging far to the right
         },
-        edgeResistance: 0.3, // Moderate resistance for better feel
+        edgeResistance: 0.1, // Lower resistance for smoother throws
         inertia: true,
-        dragResistance: 0.1, // Lower = easier to drag
-        throwResistance: 0.1, // Controls how much the throw slows down
-        maxDuration: 3, // Maximum duration for inertia
+        dragResistance: 0.05, // Even lower = easier to drag and throw
+        throwResistance: 0.05, // Lower resistance for longer throws
+        maxDuration: 4, // Longer maximum duration for inertia
         minDuration: 0.2, // Minimum duration for inertia
-        overshootTolerance: 150, // Allow more overshooting for single cards
+        overshootTolerance: 300, // Allow much more overshooting
         force3D: true,
         onDragEnd: function() {
           // For big cards (overflow), don't snap back - let them stay where dragged
