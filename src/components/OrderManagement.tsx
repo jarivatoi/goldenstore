@@ -1188,6 +1188,17 @@ const CreateOrderModal: React.FC<CreateOrderModalProps> = ({ category, itemTempl
       return;
     }
 
+    // Calculate total cost of available items
+    const totalCost = orderItems
+      .filter(item => item.isAvailable)
+      .reduce((sum, item) => sum + item.totalPrice, 0);
+    
+    // Prevent saving orders with 0.00 total cost
+    if (totalCost === 0) {
+      alert('Cannot create an order with Rs 0.00 total cost. Please add items or mark items as available.');
+      return;
+    }
+
     try {
       setIsSubmitting(true);
       await onAdd(category.id, new Date(orderDate), itemsWithQuantity);
