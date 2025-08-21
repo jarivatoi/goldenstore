@@ -592,8 +592,18 @@ const ScrollingTabs: React.FC<ScrollingTabsProps> = ({
                       ? 'animate-pulse-attention bg-yellow-200 border-yellow-400 shadow-lg scale-110 z-50' 
                       : persistentAnimationTabId === client.id
                       ? 'animate-pulse-persistent bg-yellow-100 border-yellow-300 shadow-md scale-105 z-40'
-                      : totalDebt > 0 && totalDebt < 105
-                      ? 'animate-small-debt-shake'
+                      : (() => {
+                          // Check if client has returnable items
+                          const clientTransactions = getClientTransactions(client.id);
+                          const hasReturnableItems = clientTransactions.some(transaction => {
+                            if (transaction.type === 'payment' || transaction.description.toLowerCase().includes('returned')) {
+                              return false;
+                            }
+                            const description = transaction.description.toLowerCase();
+                            return description.includes('chopine') || description.includes('bouteille');
+                          });
+                          return hasReturnableItems ? 'animate-small-debt-shake' : '';
+                        })()
                       : ''
                   }`}
                   style={{
