@@ -135,16 +135,22 @@ const ScrollingTabs: React.FC<ScrollingTabsProps> = ({
 
   // Add this helper function to restart the timeline from a specific position
   const restartTimelineFromPosition = useCallback((startPosition: number) => {
+    console.log('🚀 restartTimelineFromPosition called with:', startPosition);
     const container = containerRef.current;
     const content = contentRef.current;
     
-    if (!container || !content) return;
+    if (!container || !content) {
+      console.log('❌ Missing container or content refs');
+      return;
+    }
     
     const containerWidth = container.offsetWidth;
     const contentWidth = content.scrollWidth;
+    console.log('📏 Container width:', containerWidth, 'Content width:', contentWidth);
     
     // Kill any existing timeline
     if (timelineRef.current) {
+      console.log('🔪 Killing existing timeline');
       timelineRef.current.kill();
       timelineRef.current = null;
     }
@@ -152,19 +158,24 @@ const ScrollingTabs: React.FC<ScrollingTabsProps> = ({
     // Calculate total distance for full cycle
     const totalDistance = contentWidth + containerWidth;
     const fullCycleDuration = totalDistance / 60; // 60px per second
+    console.log('⏱️ Full cycle duration:', fullCycleDuration);
     
     // Create new infinite timeline that matches setupContinuousScroll
     timelineRef.current = gsap.timeline({ repeat: -1, ease: "none" });
+    console.log('✨ Created new timeline');
     
     // Set initial position
     gsap.set(content, { x: startPosition });
+    console.log('📍 Set initial position to:', startPosition);
     
     // Calculate remaining distance from current position to end
     const remainingDistance = Math.abs(startPosition - (-contentWidth));
     const remainingDuration = remainingDistance / 60; // 60px per second
+    console.log('📐 Remaining distance:', remainingDistance, 'Duration:', remainingDuration);
     
     // Continue from current position to end, then start infinite loop
     if (remainingDuration > 0) {
+      console.log('▶️ Starting animation from current position');
       timelineRef.current
         .to(content, { 
           x: -contentWidth,
@@ -179,6 +190,7 @@ const ScrollingTabs: React.FC<ScrollingTabsProps> = ({
           repeat: -1 // Infinite repeat of full cycle
         });
     } else {
+      console.log('🔄 Starting fresh cycle');
       // If already at or past the end, start fresh cycle
       timelineRef.current
         .set(content, { x: containerWidth }) // Jump to right edge instantly
@@ -190,6 +202,7 @@ const ScrollingTabs: React.FC<ScrollingTabsProps> = ({
         });
     }
     
+    console.log('✅ Timeline restart complete');
   }, []);
 
   // Seamless continuous scroll setup
@@ -268,9 +281,14 @@ const ScrollingTabs: React.FC<ScrollingTabsProps> = ({
           // Restart timeline from paused position after throw completes
           requestAnimationFrame(() => {
             requestAnimationFrame(() => {
-              if (pausedPosition !== null && contentRef.current && containerRef.current) {
+              console.log('🎯 Throw complete, attempting to restart timeline from position:', pausedPosition);
+              if (pausedPosition !== null) {
+                console.log('🔄 Restarting timeline from position:', pausedPosition);
                 restartTimelineFromPosition(pausedPosition);
                 setPausedPosition(null);
+              } else {
+                console.log('⚠️ No paused position found, setting up fresh animation');
+                setupContinuousScroll();
               }
             });
           });
