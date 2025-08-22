@@ -657,6 +657,45 @@ const ScrollingTabs: React.FC<ScrollingTabsProps> = ({
                   }
                 });
                 
+                return truncatedItems.join(', ');
+              };
+              
+              const returnableItemsText = getReturnableItemsForCard();
+              
+              // Helper function to get card background color
+              const getCardBackgroundColor = () => {
+                if (totalDebt === 0 && returnableItemsText) {
+                  return 'bg-orange-100 border-orange-200';
+                } else if (totalDebt > 0) {
+                  return 'bg-red-100 border-red-200';
+                } else {
+                  return 'bg-gray-100 border-gray-200';
+                }
+              };
+              
+              return (
+                <div
+                  key={client.id}
+                  onClick={() => handleTabClick(client)}
+                  onTouchStart={(e) => handleLongPressStart(client, e)}
+                  onTouchEnd={handleLongPressEnd}
+                  onMouseDown={(e) => handleLongPressStart(client, e)}
+                  onMouseUp={handleLongPressEnd}
+                  onMouseLeave={handleLongPressEnd}
+                  className={`flex-shrink-0 px-4 py-2 rounded-lg border cursor-pointer h-25 min-w-fit flex items-center ${
+                    isDragging 
+                      ? 'transition-none'
+                      : 'transition-all duration-200'
+                  } ${
+                    isLinked 
+                      ? 'bg-blue-50 border-blue-200 shadow-md'
+                      : isDragging
+                        ? getCardBackgroundColor()
+                        : `${getCardBackgroundColor()} hover:shadow-md ${hasOverdueItems ? 'animate-urgent-glow animate-subtle-shake' : ''}`
+                  } ${
+                    clickedTabId === client.id 
+                      ? 'animate-pulse-attention bg-yellow-200 border-yellow-400 shadow-lg scale-110 z-50' 
+                      : persistentAnimationTabId === client.id
                       ? 'animate-pulse-persistent bg-yellow-100 border-yellow-300 shadow-md scale-105 z-40'
                       : totalDebt > 1000
                       ? 'animate-high-debt-pulsate'
@@ -679,122 +718,13 @@ const ScrollingTabs: React.FC<ScrollingTabsProps> = ({
                     MozUserSelect: 'none',
                     msUserSelect: 'none',
                     WebkitTouchCallout: 'none',
-                      {/* Determine if we should show flip card or static content */}
-                      {returnableItemsText && totalDebt > 0 ? (
-                        <FlipCard
-                          frontContent={
-                            <div className={`flex-shrink-0 px-4 py-2 rounded-lg border cursor-pointer h-25 min-w-fit flex items-center ${
-                              isDragging 
-                                ? 'transition-none'
-                                : 'transition-all duration-200'
-                            } ${
-                              isLinked 
-                                ? 'bg-blue-50 border-blue-200 shadow-md'
-                                : isDragging
-                                  ? 'bg-red-100 border-red-200'
-                                  : `bg-red-100 border-red-200 hover:shadow-md ${hasOverdueItems ? 'animate-urgent-glow animate-subtle-shake' : ''}`
-                            } ${
-                              clickedTabId === client.id 
-                                ? 'animate-pulse-attention bg-yellow-200 border-yellow-400 shadow-lg scale-110 z-50' 
-                                : persistentAnimationTabId === client.id
-                                ? 'animate-pulse-persistent bg-yellow-100 border-yellow-300 shadow-md scale-105 z-40'
-                                : totalDebt > 1000
-                                ? 'animate-high-debt-pulsate'
-                                : (() => {
-                                    const clientTransactions = getClientTransactions(client.id);
-                                    const hasReturnableItems = clientTransactions.some(transaction => {
-                                      if (transaction.type === 'payment' || transaction.description.toLowerCase().includes('returned')) {
-                                        return false;
-                                      }
-                                      const description = transaction.description.toLowerCase();
-                                      return description.includes('chopine') || description.includes('bouteille');
-                                    });
-                                    return hasReturnableItems ? 'animate-small-debt-shake' : '';
-                                  })()
-                            }`}>
-                              <div className="text-center">
-                                <div className="text-sm font-medium text-gray-800 truncate select-none">
-                                  {client.name}
-                                </div>
-                                <div className="text-xs font-semibold text-red-600">
-                                  Rs {totalDebt.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
-                                </div>
-                                <div className="text-xs text-gray-500 mt-1 text-center">
-                                  {client.lastTransactionAt.toLocaleDateString('en-GB', {
-                                    day: '2-digit',
-                                    month: 'short',
-                                    year: '2-digit'
-                                  }).replace(/\s/g, '-')}
-                                </div>
-                                <div className="text-xs text-gray-500 text-center">
-                                  {client.lastTransactionAt.toLocaleTimeString('en-GB', {
-                                    hour: '2-digit',
-                                    minute: '2-digit'
-                                  })}
-                                </div>
-                              </div>
-                            </div>
-                          }
-                          backContent={
-                            <div className={`flex-shrink-0 px-4 py-2 rounded-lg border cursor-pointer h-25 min-w-fit flex items-center ${
-                              isDragging 
-                                ? 'transition-none'
-                                : 'transition-all duration-200'
-                            } ${
-                              isLinked 
-                                ? 'bg-blue-50 border-blue-200 shadow-md'
-                                : isDragging
-                                  ? 'bg-orange-100 border-orange-200'
-                                  : `bg-orange-100 border-orange-200 hover:shadow-md ${hasOverdueItems ? 'animate-urgent-glow animate-subtle-shake' : ''}`
-                            } ${
-                              clickedTabId === client.id 
-                                ? 'animate-pulse-attention bg-yellow-200 border-yellow-400 shadow-lg scale-110 z-50' 
-                                : persistentAnimationTabId === client.id
-                                ? 'animate-pulse-persistent bg-yellow-100 border-yellow-300 shadow-md scale-105 z-40'
-                                : totalDebt > 1000
-                                ? 'animate-high-debt-pulsate'
-                                : (() => {
-                                    const clientTransactions = getClientTransactions(client.id);
-                                    const hasReturnableItems = clientTransactions.some(transaction => {
-                                      if (transaction.type === 'payment' || transaction.description.toLowerCase().includes('returned')) {
-                                        return false;
-                                      }
-                                      const description = transaction.description.toLowerCase();
-                                      return description.includes('chopine') || description.includes('bouteille');
-                                    });
-                                    return hasReturnableItems ? 'animate-small-debt-shake' : '';
-                                  })()
-                            }`}>
-                              <div className="text-center">
-                                <div className="text-sm font-medium text-gray-800 truncate select-none">
-                                  {client.name}
-                                </div>
-                                <div className="text-xs font-semibold text-orange-600">
-                                  {returnableItemsText}
-                                </div>
-                                <div className="text-xs text-gray-500 mt-1 text-center">
-                                  {client.lastTransactionAt.toLocaleDateString('en-GB', {
-                                    day: '2-digit',
-                                    month: 'short',
-                                    year: '2-digit'
-                                  }).replace(/\s/g, '-')}
-                                </div>
-                                <div className="text-xs text-gray-500 text-center">
-                                  {client.lastTransactionAt.toLocaleTimeString('en-GB', {
-                                    hour: '2-digit',
-                                    minute: '2-digit'
-                                  })}
-                                </div>
-                              </div>
-                            </div>
-                          }
-                          shouldFlip={true}
-                          flipDuration={0.8}
-                          flipDelay={2}
-                          className="w-full"
-                        />
-                      ) : (
-                        <div className={`flex-shrink-0 px-4 py-2 rounded-lg border cursor-pointer h-25 min-w-fit flex items-center ${
+                  }}
+                >
+                  {/* Determine if we should show flip card or static content */}
+                  {returnableItemsText && totalDebt > 0 ? (
+                    <FlipCard
+                      frontContent={
+                        <div className={\`flex-shrink-0 px-4 py-2 rounded-lg border cursor-pointer h-25 min-w-fit flex items-center ${
                           isDragging 
                             ? 'transition-none'
                             : 'transition-all duration-200'
@@ -802,8 +732,8 @@ const ScrollingTabs: React.FC<ScrollingTabsProps> = ({
                           isLinked 
                             ? 'bg-blue-50 border-blue-200 shadow-md'
                             : isDragging
-                              ? getCardBackgroundColor()
-                              : `${getCardBackgroundColor()} hover:shadow-md ${hasOverdueItems ? 'animate-urgent-glow animate-subtle-shake' : ''}`
+                              ? 'bg-red-100 border-red-200'
+                              : `bg-red-100 border-red-200 hover:shadow-md ${hasOverdueItems ? 'animate-urgent-glow animate-subtle-shake' : ''}`
                         } ${
                           clickedTabId === client.id 
                             ? 'animate-pulse-attention bg-yellow-200 border-yellow-400 shadow-lg scale-110 z-50' 
@@ -827,15 +757,9 @@ const ScrollingTabs: React.FC<ScrollingTabsProps> = ({
                             <div className="text-sm font-medium text-gray-800 truncate select-none">
                               {client.name}
                             </div>
-                            {totalDebt === 0 ? (
-                              <div className="text-xs font-semibold text-orange-600">
-                                {returnableItemsText || 'No returnables'}
-                              </div>
-                            ) : (
-                              <div className="text-xs font-semibold text-red-600">
-                                Rs {totalDebt.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
-                              </div>
-                            )}
+                            <div className="text-xs font-semibold text-red-600">
+                              Rs {totalDebt.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
+                            </div>
                             <div className="text-xs text-gray-500 mt-1 text-center">
                               {client.lastTransactionAt.toLocaleDateString('en-GB', {
                                 day: '2-digit',
@@ -851,25 +775,126 @@ const ScrollingTabs: React.FC<ScrollingTabsProps> = ({
                             </div>
                           </div>
                         </div>
-                      )}
-                      )
-                    )}
-                    <div className="text-xs text-gray-500 mt-1 text-center">
-              {client.lastTransactionAt.toLocaleDateString('en-GB', {
-                        day: '2-digit',
-                month: 'short',
-                        year: '2-digit'
-              }).replace(/\s/g, '-')}
+                      }
+                      backContent={
+                        <div className={\`flex-shrink-0 px-4 py-2 rounded-lg border cursor-pointer h-25 min-w-fit flex items-center ${
+                          isDragging 
+                            ? 'transition-none'
+                            : 'transition-all duration-200'
+                        } ${
+                          isLinked 
+                            ? 'bg-blue-50 border-blue-200 shadow-md'
+                            : isDragging
+                              ? 'bg-orange-100 border-orange-200'
+                              : `bg-orange-100 border-orange-200 hover:shadow-md ${hasOverdueItems ? 'animate-urgent-glow animate-subtle-shake' : ''}`
+                        } ${
+                          clickedTabId === client.id 
+                            ? 'animate-pulse-attention bg-yellow-200 border-yellow-400 shadow-lg scale-110 z-50' 
+                            : persistentAnimationTabId === client.id
+                            ? 'animate-pulse-persistent bg-yellow-100 border-yellow-300 shadow-md scale-105 z-40'
+                            : totalDebt > 1000
+                            ? 'animate-high-debt-pulsate'
+                            : (() => {
+                                const clientTransactions = getClientTransactions(client.id);
+                                const hasReturnableItems = clientTransactions.some(transaction => {
+                                  if (transaction.type === 'payment' || transaction.description.toLowerCase().includes('returned')) {
+                                    return false;
+                                  }
+                                  const description = transaction.description.toLowerCase();
+                                  return description.includes('chopine') || description.includes('bouteille');
+                                });
+                                return hasReturnableItems ? 'animate-small-debt-shake' : '';
+                              })()
+                        }`}>
+                          <div className="text-center">
+                            <div className="text-sm font-medium text-gray-800 truncate select-none">
+                              {client.name}
+                            </div>
+                            <div className="text-xs font-semibold text-orange-600">
+                              {returnableItemsText}
+                            </div>
+                            <div className="text-xs text-gray-500 mt-1 text-center">
+                              {client.lastTransactionAt.toLocaleDateString('en-GB', {
+                                day: '2-digit',
+                                month: 'short',
+                                year: '2-digit'
+                              }).replace(/\s/g, '-')}
+                            </div>
+                            <div className="text-xs text-gray-500 text-center">
+                              {client.lastTransactionAt.toLocaleTimeString('en-GB', {
+                                hour: '2-digit',
+                                minute: '2-digit'
+                              })}
+                            </div>
+                          </div>
+                        </div>
+                      }
+                      shouldFlip={true}
+                      flipDuration={0.8}
+                      flipDelay={2}
+                      className="w-full"
+                    />
+                  ) : (
+                    <div className={\`flex-shrink-0 px-4 py-2 rounded-lg border cursor-pointer h-25 min-w-fit flex items-center ${
+                      isDragging 
+                        ? 'transition-none'
+                        : 'transition-all duration-200'
+                    } ${
+                      isLinked 
+                        ? 'bg-blue-50 border-blue-200 shadow-md'
+                        : isDragging
+                          ? getCardBackgroundColor()
+                          : `${getCardBackgroundColor()} hover:shadow-md ${hasOverdueItems ? 'animate-urgent-glow animate-subtle-shake' : ''}`
+                    } ${
+                      clickedTabId === client.id 
+                        ? 'animate-pulse-attention bg-yellow-200 border-yellow-400 shadow-lg scale-110 z-50' 
+                        : persistentAnimationTabId === client.id
+                        ? 'animate-pulse-persistent bg-yellow-100 border-yellow-300 shadow-md scale-105 z-40'
+                        : totalDebt > 1000
+                        ? 'animate-high-debt-pulsate'
+                        : (() => {
+                            const clientTransactions = getClientTransactions(client.id);
+                            const hasReturnableItems = clientTransactions.some(transaction => {
+                              if (transaction.type === 'payment' || transaction.description.toLowerCase().includes('returned')) {
+                                return false;
+                              }
+                              const description = transaction.description.toLowerCase();
+                              return description.includes('chopine') || description.includes('bouteille');
+                            });
+                            return hasReturnableItems ? 'animate-small-debt-shake' : '';
+                          })()
+                    }`}>
+                      <div className="text-center">
+                        <div className="text-sm font-medium text-gray-800 truncate select-none">
+                          {client.name}
+                        </div>
+                        {totalDebt === 0 ? (
+                          <div className="text-xs font-semibold text-orange-600">
+                            {returnableItemsText || 'No returnables'}
+                          </div>
+                        ) : (
+                          <div className="text-xs font-semibold text-red-600">
+                            Rs {totalDebt.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
+                          </div>
+                        )}
+                        <div className="text-xs text-gray-500 mt-1 text-center">
+                          {client.lastTransactionAt.toLocaleDateString('en-GB', {
+                            day: '2-digit',
+                            month: 'short',
+                            year: '2-digit'
+                          }).replace(/\s/g, '-')}
+                        </div>
+                        <div className="text-xs text-gray-500 text-center">
+                          {client.lastTransactionAt.toLocaleTimeString('en-GB', {
+                            hour: '2-digit',
+                            minute: '2-digit'
+                          })}
+                        </div>
+                      </div>
                     </div>
-                    <div className="text-xs text-gray-500 text-center">
-                      {client.lastTransactionAt.toLocaleTimeString('en-GB', {
-                        hour: '2-digit',
-                        minute: '2-digit'
-                      })}
-                    </div>
-                    </div>
-                  </div>
-                );
+                  )}
+                </div>
+              );
             })}
           </div>
         </div>
