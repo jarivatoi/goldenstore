@@ -230,6 +230,8 @@ const ScrollingTabs: React.FC<ScrollingTabsProps> = ({
       // Create draggable instance with updated bounds
       draggableRef.current = Draggable.create(content, {
         type: "x",
+        allowEventDefault: false, // Prevent interference with other events
+        allowNativeTouchScrolling: false, // Prevent scroll interference
         bounds: {
           minX: -contentWidth,
           maxX: containerWidth,
@@ -243,8 +245,6 @@ const ScrollingTabs: React.FC<ScrollingTabsProps> = ({
         overshootTolerance: 0, // No overshooting
         force3D: true,
         onDragStart: function() {
-          allowEventDefault: false, // Prevent interference with other events
-          allowNativeTouchScrolling: false, // Prevent scroll interference
           // Kill the timeline on drag start but don't store position yet
           if (timelineRef.current) {
             timelineRef.current.kill();
