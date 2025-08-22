@@ -76,17 +76,17 @@ const ScrollingTabs: React.FC<ScrollingTabsProps> = ({
   // Pause timeline when any modal opens, resume when closed
   useEffect(() => {
     if (isAnyModalOpen) {
-      // Pause the timeline instead of killing it
+      // Pause the timeline when modal opens
       if (timelineRef.current) {
         timelineRef.current.pause();
       }
     } else {
-      // Resume the timeline when all modals close
+      // Resume the timeline when modal closes
       if (timelineRef.current && timelineRef.current.paused()) {
         timelineRef.current.resume();
       }
     }
-  }, [isAnyModalOpen, clients, pausedPosition]);
+  }, [isAnyModalOpen]);
 
   // Helper function to check if client has overdue returnables (3+ weeks old)
   const hasOverdueReturnables = (client: Client): boolean => {
@@ -238,20 +238,24 @@ const ScrollingTabs: React.FC<ScrollingTabsProps> = ({
         overshootTolerance: 0, // No overshooting
         force3D: true,
         onDragStart: function() {
-          // Pause the timeline on drag start
+          // Kill the timeline on drag start (original behavior)
           if (timelineRef.current) {
-            timelineRef.current.pause();
+            const currentX = gsap.getProperty(content, "x") as number;
+            setPausedPosition(currentX);
+            timelineRef.current.kill();
+            timelineRef.current = null;
           }
           setIsDragging(true);
         },
         onDragEnd: function() {
           setIsDragging(false);
           
-          // Resume the timeline after drag ends
+          // Restart timeline from paused position after drag ends (original behavior)
           requestAnimationFrame(() => {
             requestAnimationFrame(() => {
-              if (timelineRef.current && timelineRef.current.paused()) {
-                timelineRef.current.resume();
+              if (pausedPosition !== null) {
+                restartTimelineFromPosition(pausedPosition);
+                setPausedPosition(null);
               }
             });
           });
