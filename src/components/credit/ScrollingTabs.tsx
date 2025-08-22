@@ -250,11 +250,13 @@ const ScrollingTabs: React.FC<ScrollingTabsProps> = ({
         onDragEnd: function() {
           setIsDragging(false);
           
-          // Restart timeline from current position after drag ends
+          // Restart timeline from paused position after drag ends (original behavior)
           requestAnimationFrame(() => {
             requestAnimationFrame(() => {
-              const currentX = gsap.getProperty(content, "x") as number;
-              restartTimelineFromPosition(currentX);
+              if (pausedPosition !== null) {
+                restartTimelineFromPosition(pausedPosition);
+                setPausedPosition(null);
+              }
             });
           });
         },
