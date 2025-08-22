@@ -304,16 +304,14 @@ const ScrollingTabs: React.FC<ScrollingTabsProps> = ({
         onThrowComplete: function() {
           console.log('🎯 THROW COMPLETE - RESTARTING TIMELINE from stored position:', pausedPositionRef.current, 'at:', new Date().toLocaleTimeString());
           
-          if (!dragHasExceededThreshold.current) {
-            console.log('🎯 CLICK DETECTED - Timeline should continue running');
-            return;
-          }
-         
-          // Resume timeline from stored position after throw animation completes
+          // Always resume timeline after throw completes, regardless of threshold
           if (pausedPositionRef.current !== null) {
             console.log('🚀 Resuming timeline from stored drag end position:', pausedPositionRef.current);
             restartTimelineFromPosition(pausedPositionRef.current);
             pausedPositionRef.current = null; // Clear stored position
+          } else {
+            console.log('🚀 No stored position, creating fresh timeline');
+            setupContinuousScroll();
           }
         }
       });
