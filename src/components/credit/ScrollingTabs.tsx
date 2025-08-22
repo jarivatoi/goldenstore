@@ -48,6 +48,9 @@ const ScrollingTabs: React.FC<ScrollingTabsProps> = ({
   const [longPressTimer, setLongPressTimer] = React.useState<NodeJS.Timeout | null>(null);
   const { getClientTransactions } = useCredit();
 
+  // Store the current position when timeline is killed
+  const [pausedPosition, setPausedPosition] = React.useState<number | null>(null);
+
   // Sort clients based on sort option
   const sortedClients = React.useMemo(() => {
     const clientsToSort = [...clients];
@@ -73,15 +76,25 @@ const ScrollingTabs: React.FC<ScrollingTabsProps> = ({
   // Kill timeline when any modal opens
   useEffect(() => {
     if (isAnyModalOpen) {
-      // Kill the timeline when modal opens
+      // Store current position before killing timeline
       if (timelineRef.current) {
+        const currentX = gsap.getProperty(contentRef.current, "x") as number;
+        setPausedPosition(currentX);
         timelineRef.current.kill();
         timelineRef.current = null;
       }
     } else {
       // Restart timeline when all modals close
-      if (sortedClients && sortedClients.length > 0 && !timelineRef.current) {
+      if (sortedClients && sortedClients.length > 0 && !timelineRef.current && pausedPosition !== null) {
         // Small delay to ensure modal is fully closed
+        setTimeout(() => {
+          setTimeout(() => {
+            restartTimelineFromPosition(pausedPosition);
+            setPausedPosition(null); // Clear stored position after use
+          }, 0);
+        }, 100);
+      } else if (sortedClients && sortedClients.length > 0 && !timelineRef.current && pausedPosition === null) {
+        // If no stored position, start from beginning
         setTimeout(() => {
           setTimeout(() => {
             setupContinuousScroll();
@@ -89,7 +102,7 @@ const ScrollingTabs: React.FC<ScrollingTabsProps> = ({
         }, 100);
       }
     }
-  }, [isAnyModalOpen, sortedClients]);
+  }, [isAnyModalOpen, sortedClients, pausedPosition]);
 
   // Helper function to check if client has overdue returnables (3+ weeks old)
   const hasOverdueReturnables = (client: Client): boolean => {
