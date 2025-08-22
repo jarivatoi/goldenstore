@@ -347,7 +347,7 @@ const OrderManagement: React.FC = () => {
                     : 'bg-gray-200 text-gray-700 hover:bg-gray-300'
                 }`}
               >
-                <Edit2 size={16} />
+                <Edit2 size={16} className="inline mr-1" />
                 <span className="select-none">Manage</span>
               </button>
               <button
