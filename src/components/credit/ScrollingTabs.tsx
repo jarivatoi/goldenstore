@@ -421,11 +421,14 @@ const ScrollingTabs: React.FC<ScrollingTabsProps> = ({
             ref={contentRef}
             className="flex gap-6 whitespace-nowrap relative z-10"
             style={{
-              // Remove snap behavior for big card
-              ...(isBigCard ? {
-                scrollSnapType: 'none',
-                msOverflowStyle: 'none',
-                scrollbarWidth: 'none'
-              } : {})
             }}
           >
+          </div>
+        </div>
+      </div>
+    </div>
+    </>
+  );
+};
+
+export default ScrollingTabs;
