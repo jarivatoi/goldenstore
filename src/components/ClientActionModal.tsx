@@ -36,12 +36,6 @@ const ClientActionModal: React.FC<ClientActionModalProps> = ({ client, onClose, 
   const bottlesOwed = getClientBottlesOwed(client.id);
   const clientTransactions = getClientTransactions(client.id);
 
-  // Enhanced close handler that restarts timeline
-  const handleClose = () => {
-    // Trigger timeline restart by dispatching a custom event
-    window.dispatchEvent(new CustomEvent('restartScrollingTimeline'));
-    onClose();
-  };
   const handlePartialPayment = async () => {
     const amount = parseFloat(paymentAmount);
     if (isNaN(amount) || amount <= 0 || amount > totalDebt) {
@@ -56,7 +50,7 @@ const ClientActionModal: React.FC<ClientActionModalProps> = ({ client, onClose, 
       if (onResetCalculator) {
         onResetCalculator();
       }
-      handleClose();
+      onClose();
     } catch (error) {
       console.error('Error processing partial payment:', error);
       alert('Failed to process payment');
@@ -69,7 +63,7 @@ const ClientActionModal: React.FC<ClientActionModalProps> = ({ client, onClose, 
     try {
       setIsProcessing(true);
       await settleClient(client.id);
-      handleClose();
+      onClose();
       if (onResetCalculator) {
         onResetCalculator();
       }
@@ -267,11 +261,7 @@ const ClientActionModal: React.FC<ClientActionModalProps> = ({ client, onClose, 
       // Force a re-render of the parent component to update scrolling tabs
       window.dispatchEvent(new CustomEvent('creditDataChanged'));
       
-      // Reset calculator after successful returns processing
-      if (onResetCalculator) {
-        onResetCalculator();
-      }
-      handleClose();
+      onClose();
     } catch (error) {
       console.error('Error processing returns:', error);
       alert('Failed to process returns');
@@ -357,7 +347,7 @@ const ClientActionModal: React.FC<ClientActionModalProps> = ({ client, onClose, 
             </div>
           </div>
           <button 
-            onClick={handleClose}
+            onClick={onClose}
             className="text-gray-500 hover:text-gray-700 transition-colors"
           >
             <X size={24} />
@@ -378,7 +368,7 @@ const ClientActionModal: React.FC<ClientActionModalProps> = ({ client, onClose, 
                   if (onQuickAdd) {
                     onQuickAdd(client);
                   }
-                  handleClose();
+                  onClose();
                 }}
                 disabled={isProcessing}
                 className="w-full flex items-center gap-4 p-4 bg-purple-50 hover:bg-purple-100 rounded-lg border border-purple-200 transition-colors disabled:opacity-50"
@@ -695,14 +685,7 @@ const ClientActionModal: React.FC<ClientActionModalProps> = ({ client, onClose, 
               // Force a re-render of the parent component to update scrolling tabs
               window.dispatchEvent(new CustomEvent('creditDataChanged'));
               
-              // Close modals and reset calculator
-              setShowSettleConfirm(false);
-              setSettleAction(null);
-              handleClose();
-              
-              if (onResetCalculator) {
-                onResetCalculator();
-              }
+              onClose();
             } catch (error) {
               console.error('Error settling items:', error);
               alert(`Failed to settle ${settleAction.type === 'all' ? 'all items' : settleAction.itemType}`);

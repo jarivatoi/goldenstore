@@ -27,17 +27,6 @@ const ClientDetailModal: React.FC<ClientDetailModalProps> = ({ client, onClose, 
   const payments = getClientPayments(client.id);
   const totalDebt = getClientTotalDebt(client.id);
 
-  const handleClose = () => {
-    onClose();
-  };
-
-  // Also move to front when using the X button or any other close method
-  const handleAnyClose = () => {
-    // Move client to end (rightmost, near calculator) when modal is closed
-    moveClientToFront(client.id);
-    onClose();
-  };
-
   const handleSaveName = async () => {
     if (!editedName.trim() || editedName.trim() === client.name) {
       setIsEditingName(false);
@@ -227,7 +216,7 @@ const ClientDetailModal: React.FC<ClientDetailModalProps> = ({ client, onClose, 
           <div className="flex items-center gap-2">
             {/* Close Button */}
             <button 
-              onClick={handleAnyClose}
+              onClick={onClose}
               className="text-gray-500 hover:text-gray-700 transition-colors select-none"
             >
               <X size={24} />
@@ -391,7 +380,7 @@ const ClientDetailModal: React.FC<ClientDetailModalProps> = ({ client, onClose, 
                             await addTransaction(client, returnDescription, 0);
                           }
                           // Close modal after clearing
-                          handleAnyClose();
+                          onClose();
                         } catch (error) {
                           alert('Failed to clear returnable items');
                         }
@@ -549,7 +538,7 @@ const ClientDetailModal: React.FC<ClientDetailModalProps> = ({ client, onClose, 
         {/* Footer */}
         <div className="p-6 border-t border-gray-200 flex justify-end">
           <button
-            onClick={handleAnyClose}
+            onClick={onClose}
             className="px-6 py-2 bg-blue-500 text-white rounded-lg hover:bg-blue-600 transition-colors"
           >
             Close
@@ -595,7 +584,10 @@ const ReturnableItemRow: React.FC<ReturnableItemRowProps> = ({ itemType, quantit
       // Force a re-render of the parent component to update scrolling tabs
       window.dispatchEvent(new CustomEvent('creditDataChanged'));
       
-      onUpdate();
+      // Close modal after processing return
+      setTimeout(() => {
+        window.location.reload(); // Force full refresh to update all components
+      }, 500);
     } catch (error) {
       alert('Failed to process return');
     } finally {
