@@ -159,31 +159,36 @@ const ScrollingTabs: React.FC<ScrollingTabsProps> = ({
     const containerWidth = container.offsetWidth;
     const contentWidth = content.scrollWidth;
     
-    // Calculate total distance including container width gap
-    const totalDistance = contentWidth + containerWidth;
-    const duration = totalDistance / 60; // 60px per second for faster speed
+    // Calculate remaining distance from current position to end
+    const remainingDistance = Math.abs(startPosition - (-contentWidth));
+    const remainingDuration = remainingDistance / 60; // 60px per second
     
-    // Create seamless infinite timeline (same as setupContinuousScroll)
+    // Create new timeline that matches the original golden animation
     timelineRef.current = gsap.timeline({ repeat: -1, ease: "none" });
     
+    // Set initial position
+    gsap.set(content, { x: startPosition });
+    
+    // Calculate total distance for full cycle
+    const totalDistance = contentWidth + containerWidth;
+    const fullCycleDuration = totalDistance / 60; // 60px per second
+    
+    // Create the same infinite animation as setupContinuousScroll
     timelineRef.current
       .fromTo(content, 
-        { x: startPosition }, // Start from paused position
+        { x: startPosition }, 
         { 
-          x: -contentWidth, // Exit to left
-          duration: duration * Math.abs((startPosition - (-contentWidth)) / totalDistance),
+          x: -contentWidth,
+          duration: remainingDuration,
           ease: "none"
-        })
+        }
+      )
+      .set(content, { x: containerWidth }) // Jump to right edge instantly
       .to(content, {
-        x: containerWidth, // Enter from right (seamless loop)
-        duration: 0,
-        ease: "none"
-      })
-      .to(content, {
-        x: -contentWidth, // Exit to left again
-        duration: duration,
+        x: -contentWidth,
+        duration: fullCycleDuration,
         ease: "none",
-        repeat: -1 // Infinite repeat
+        repeat: -1 // Infinite repeat of full cycle
       });
     
   }, []);
