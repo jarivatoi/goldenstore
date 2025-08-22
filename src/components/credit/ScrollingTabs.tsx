@@ -824,22 +824,9 @@ const ScrollingTabs: React.FC<ScrollingTabsProps> = ({
                       {client.name}
                     </div>
                     {clientFilter === 'returnables' ? (
-                      <FlipCard
-                        frontContent={
-                          <div className="text-xs font-semibold text-orange-600">
-                            {returnableItemsText || 'No returnables'}
-                          </div>
-                        }
-                        backContent={
-                          <div className="text-xs font-semibold text-blue-600">
-                            Returnables
-                          </div>
-                        }
-                        shouldFlip={!!returnableItemsText}
-                        flipDuration={0.8}
-                        flipDelay={3}
-                        className="w-full"
-                      />
+                      <div className="text-xs font-semibold text-orange-600">
+                        {returnableItemsText || 'No returnables'}
+                      </div>
                     ) : totalDebt === 0 ? (
                       <div className="text-xs font-semibold text-orange-600">
                         {(() => {
