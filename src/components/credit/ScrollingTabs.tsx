@@ -223,7 +223,7 @@ const ScrollingTabs: React.FC<ScrollingTabsProps> = ({
           // Always restart the timeline after drag ends
           // Add a small delay to ensure drag state is fully cleared
           setTimeout(() => {
-            if (!selectedClientForDetails && !selectedClientForAction && sortedClients.length > 0) {
+            if (!selectedClientForDetails && !selectedClientForAction && !linkedClient && sortedClients.length > 0) {
               const currentX = gsap.getProperty(content, "x") as number;
               restartTimelineFromPosition(currentX);
             }
@@ -431,7 +431,7 @@ const ScrollingTabs: React.FC<ScrollingTabsProps> = ({
   // Monitor timeline state for debugging
   useEffect(() => {
     const interval = setInterval(() => {
-      if (timelineRef.current && !selectedClientForDetails && !selectedClientForAction) {
+      if (timelineRef.current && !selectedClientForDetails && !selectedClientForAction && !linkedClient) {
         const isPaused = timelineRef.current.paused();
         const isActive = timelineRef.current.isActive();
         if (isPaused && !isDragging) {
@@ -441,7 +441,7 @@ const ScrollingTabs: React.FC<ScrollingTabsProps> = ({
     }, 2000); // Check every 2 seconds
 
     return () => clearInterval(interval);
-  }, [selectedClientForDetails, selectedClientForAction, isDragging]);
+  }, [selectedClientForDetails, selectedClientForAction, isDragging, linkedClient]);
 
   // Monitor timeline and persistent animation interaction
   React.useEffect(() => {
@@ -457,7 +457,7 @@ const ScrollingTabs: React.FC<ScrollingTabsProps> = ({
         
         // Resume timeline after clearing animation
         setTimeout(() => {
-          if (timelineRef.current && timelineRef.current.paused() && sortedClients.length > 0 && !selectedClientForDetails && !selectedClientForAction && !isDragging) {
+          if (timelineRef.current && timelineRef.current.paused() && sortedClients.length > 0 && !selectedClientForDetails && !selectedClientForAction && !isDragging && !linkedClient) {
             timelineRef.current.resume();
           }
         }, 100); // Small delay to ensure all state is updated
@@ -469,12 +469,12 @@ const ScrollingTabs: React.FC<ScrollingTabsProps> = ({
     } else {
       // No persistent animation - ensure timeline is running if it should be
       setTimeout(() => {
-        if (timelineRef.current && timelineRef.current.paused() && sortedClients.length > 0 && !selectedClientForDetails && !selectedClientForAction && !isDragging) {
+        if (timelineRef.current && timelineRef.current.paused() && sortedClients.length > 0 && !selectedClientForDetails && !selectedClientForAction && !isDragging && !linkedClient) {
           timelineRef.current.resume();
         }
       }, 50); // Quick check after state changes
     }
-  }, [persistentAnimationTabId, sortedClients.length, selectedClientForDetails, selectedClientForAction, isDragging]);
+  }, [persistentAnimationTabId, sortedClients.length, selectedClientForDetails, selectedClientForAction, isDragging, linkedClient]);
 
   return (
     <>
