@@ -527,11 +527,7 @@ const ClientActionModal: React.FC<ClientActionModalProps> = ({ client, onClose, 
                               .filter(transaction => 
                                 transaction.type === 'debt' && 
                                 transaction.description.toLowerCase().includes('returned') &&
-                         
-                         // Force a re-render of the parent component to update scrolling tabs
-                         window.dispatchEvent(new CustomEvent('creditDataChanged'));
-                         
-                            return returnedTransactions.map((transaction, index) => (
+                                transaction.description.toLowerCase().includes(itemType.toLowerCase())
                               )
                               .slice(-2); // Show last 2 returned transactions
                             
@@ -592,6 +588,10 @@ const ClientActionModal: React.FC<ClientActionModalProps> = ({ client, onClose, 
                 await processItemReturn(itemType, quantity);
               }
             }
+            
+            // Force a re-render of the parent component to update scrolling tabs
+            window.dispatchEvent(new CustomEvent('creditDataChanged'));
+            
             handleClose();
             // Reset calculator after settling all returnables
             if (onResetCalculator) {
