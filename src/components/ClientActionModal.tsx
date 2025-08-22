@@ -146,7 +146,7 @@ const ClientActionModal: React.FC<ClientActionModalProps> = ({ client, onClose, 
       
       while ((bouteilleMatch = bouteillePattern.exec(description)) !== null) {
         const quantity = parseInt(bouteilleMatch[1]);
-        const size = bouteilleMatch[2]?.trim() || '';
+        const size = bouteilleMatch[2]?.trim().toUpperCase() || '';
         const brand = bouteilleMatch[3]?.trim() || '';
         
         // Format the key based on what we found
@@ -182,17 +182,17 @@ const ClientActionModal: React.FC<ClientActionModalProps> = ({ client, onClose, 
       
       // Handle items without explicit numbers (assume quantity 1) - only if no pattern matched
       if (!hasMatched && description.includes('bouteille')) {
-        const sizeMatch = description.match(/(\d+(?:\.\d+)?L)/gi);
+        const sizeMatch = description.match(/(\d+(?:\.\d+)?L)/i);
         const brandMatch = description.match(/bouteilles?\s+([^,]*)/i);
         const brand = brandMatch?.[1]?.trim() || '';
         
         let key;
-        if (sizeMatch && brand) {
-          key = `${sizeMatch[0]} Bouteille ${brand}`;
+        if (sizeMatch && sizeMatch[0] && brand) {
+          key = `${sizeMatch[0].toUpperCase()} Bouteille ${brand}`;
         } else if (brand) {
           key = `Bouteille ${brand}`;
-        } else if (sizeMatch) {
-          key = `${sizeMatch[0]} Bouteille`;
+        } else if (sizeMatch && sizeMatch[0]) {
+          key = `${sizeMatch[0].toUpperCase()} Bouteille`;
         } else {
           key = 'Bouteille';
         }
