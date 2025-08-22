@@ -282,7 +282,7 @@ const ScrollingTabs: React.FC<ScrollingTabsProps> = ({
   // Setup animation when clients change
   useEffect(() => {
     // Don't setup animation if there are no clients
-    if (sortedClients.length === 0) {
+    if (clients.length === 0) {
       // Clean up any existing animations
       if (timelineRef.current) {
         timelineRef.current.kill();
@@ -299,7 +299,7 @@ const ScrollingTabs: React.FC<ScrollingTabsProps> = ({
     setTimeout(() => {
       setupContinuousScroll();
     }, 0);
-  }, [clients, sortOption, getClientTotalDebt]);
+  }, [clients.length]); // Only depend on client count, not sort order or individual client changes
 
   // Cleanup on unmount
   useEffect(() => {
