@@ -929,6 +929,7 @@ const ScrollingTabs: React.FC<ScrollingTabsProps> = ({
         <ClientActionModal
           client={selectedClientForAction}
           onClose={handleModalClose}
+          onQuickAdd={onQuickAdd}
           onResetCalculator={onResetCalculator}
         />
       )}

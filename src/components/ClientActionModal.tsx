@@ -1,12 +1,13 @@
 import React, { useState } from 'react';
 import { createPortal } from 'react-dom';
-import { X, CreditCard, CheckCircle, DollarSign, RotateCcw, Minus, Plus } from 'lucide-react';
+import { X, CreditCard, CheckCircle, DollarSign, RotateCcw, Minus, Plus, Calculator } from 'lucide-react';
 import { Client } from '../types';
 import { useCredit } from '../context/CreditContext';
 
 interface ClientActionModalProps {
   client: Client;
   onClose: () => void;
+  onQuickAdd?: (client: Client) => void;
   onResetCalculator?: () => void;
 }
 
@@ -16,7 +17,7 @@ interface ClientActionModalProps {
  * 
  * Shows partial payment and settle options when swiping up on client card
  */
-const ClientActionModal: React.FC<ClientActionModalProps> = ({ client, onClose, onResetCalculator }) => {
+const ClientActionModal: React.FC<ClientActionModalProps> = ({ client, onClose, onQuickAdd, onResetCalculator }) => {
   const { addPartialPayment, settleClient, getClientTotalDebt, returnBottles, getClientBottlesOwed, getClientTransactions, addTransaction } = useCredit();
   const [showPartialPayment, setShowPartialPayment] = useState(false);
   const [showReturnTab, setShowReturnTab] = useState(false);
@@ -323,6 +324,27 @@ const ClientActionModal: React.FC<ClientActionModalProps> = ({ client, onClose, 
             // Action Selection
             <div className="space-y-4 select-none">
               <h3 className="text-lg font-medium text-gray-800 mb-4 select-none">Choose Action</h3>
+              
+              {/* Link to Calculator Button */}
+              <button
+                onClick={() => {
+                  // Link client to calculator and close modal
+                  if (onQuickAdd) {
+                    onQuickAdd(client);
+                  }
+                  handleClose();
+                }}
+                disabled={isProcessing}
+                className="w-full flex items-center gap-4 p-4 bg-purple-50 hover:bg-purple-100 rounded-lg border border-purple-200 transition-colors disabled:opacity-50"
+              >
+                <div className="bg-purple-500 p-2 rounded-full">
+                  <Calculator size={20} className="text-white" />
+                </div>
+                <div className="text-left select-none">
+                  <h4 className="font-medium text-gray-800 select-none">Link to Calculator</h4>
+                  <p className="text-sm text-gray-600 select-none">Connect client to calculator for quick transactions</p>
+                </div>
+              </button>
               
               {/* Return Button - Only show if there are returnable items */}
               {Object.keys(availableItems).length > 0 && (
