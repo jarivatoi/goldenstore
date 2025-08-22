@@ -47,11 +47,6 @@ const ScrollingTabs: React.FC<ScrollingTabsProps> = ({
   const [selectedClientForDetails, setSelectedClientForDetails] = React.useState<Client | null>(null);
   const [longPressTimer, setLongPressTimer] = React.useState<NodeJS.Timeout | null>(null);
   const { getClientTransactions } = useCredit();
-
-  // Store the current position when timeline is killed - use ref to prevent state loss
-  const pausedPositionRef = React.useRef<number | null>(null);
-
-  // Sort clients based on sort option
   const sortedClients = React.useMemo(() => {
     const clientsToSort = [...clients];
     
@@ -69,40 +64,6 @@ const ScrollingTabs: React.FC<ScrollingTabsProps> = ({
         return clientsToSort;
     }
   }, [clients, sortOption, getClientTotalDebt]);
-
-  // Track if any modal is open
-  const isAnyModalOpen = selectedClientForAction !== null || selectedClientForDetails !== null;
-
-  // Pause timeline when any modal opens, resume when closed
-  useEffect(() => {
-    if (isAnyModalOpen) {
-      // Pause the timeline when modal opens
-      if (timelineRef.current) {
-        console.log('🛑 Pausing timeline for modal');
-        // Store current position before pausing
-        const currentX = gsap.getProperty(contentRef.current, "x") as number;
-        pausedPositionRef.current = currentX;
-        console.log('💾 Stored position before modal pause:', currentX);
-        timelineRef.current.pause();
-      }
-    } else {
-      // Resume the timeline when modal closes
-      console.log('▶️ Modal closed, checking timeline state');
-      
-      if (pausedPositionRef.current !== null) {
-        console.log('🔄 Modal closed, restarting from stored position:', pausedPositionRef.current);
-        setTimeout(() => {
-          restartTimelineFromPosition(pausedPositionRef.current!);
-          pausedPositionRef.current = null;
-        }, 100);
-      } else {
-        console.log('🔄 Modal closed, no stored position, starting fresh');
-        setTimeout(() => {
-          setupContinuousScroll();
-        }, 100);
-      }
-    }
-  }, [isAnyModalOpen]);
 
   // Helper function to check if client has overdue returnables (3+ weeks old)
   const hasOverdueReturnables = (client: Client): boolean => {
@@ -283,7 +244,6 @@ const ScrollingTabs: React.FC<ScrollingTabsProps> = ({
         force3D: true,
         onDragStart: function() {
           // Kill the timeline on drag start but don't store position yet
-          if (timelineRef.current) {
             timelineRef.current.kill();
             timelineRef.current = null;
           }
@@ -296,21 +256,11 @@ const ScrollingTabs: React.FC<ScrollingTabsProps> = ({
         onThrowComplete: function() {
           // Store position when throw/inertia completes (final resting position)
           const currentX = gsap.getProperty(content, "x") as number;
-          console.log('🎯 Storing paused position on throw complete:', currentX);
-          pausedPositionRef.current = currentX;
           
           // Restart timeline from paused position after throw completes
           requestAnimationFrame(() => {
             requestAnimationFrame(() => {
-              console.log('🎯 Throw complete, attempting to restart timeline from position:', pausedPositionRef.current);
-              if (pausedPositionRef.current !== null) {
-                console.log('🔄 Restarting timeline from position:', pausedPositionRef.current);
-                restartTimelineFromPosition(pausedPositionRef.current);
-                pausedPositionRef.current = null;
-              } else {
-                console.log('⚠️ No paused position found, setting up fresh animation');
-                setupContinuousScroll();
-              }
+              restartTimelineFromPosition(currentX);
             });
           });
         },
