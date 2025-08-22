@@ -302,20 +302,27 @@ const ScrollingTabs: React.FC<ScrollingTabsProps> = ({
   // Setup animation when clients change
   useEffect(() => {
     console.log('🔄 useEffect triggered - clients.length:', clients.length, 'sortedClients.length:', sortedClients.length, 'at:', new Date().toLocaleTimeString());
-    // Don't setup animation if there are no clients
-    if (clients.length === 0) {
+    // Don't cleanup animation if clients temporarily become 0 (component remount)
+    if (clients.length === 0 && sortedClients.length === 0) {
       console.log('❌ No clients, cleaning up animations');
-      // Clean up any existing animations
-      if (timelineRef.current) {
-        console.log('🔪 Killing timeline due to no clients');
-        timelineRef.current.kill();
-        timelineRef.current = null;
-      }
-      
-      if (draggableRef.current) {
-        draggableRef.current.forEach(d => d.kill());
-        draggableRef.current = null;
-      }
+      // Don't kill timeline immediately - wait to see if clients come back
+      setTimeout(() => {
+        // Only cleanup if clients are still empty after delay
+        if (clients.length === 0 && sortedClients.length === 0) {
+          console.log('🔪 Killing timeline due to no clients (after delay)');
+          if (timelineRef.current) {
+            timelineRef.current.kill();
+            timelineRef.current = null;
+          }
+          
+          if (draggableRef.current) {
+            draggableRef.current.forEach(d => d.kill());
+            draggableRef.current = null;
+          }
+        } else {
+          console.log('✅ Clients returned, keeping timeline alive');
+        }
+      }, 100); // 100ms delay to handle temporary unmount/remount
       return;
     }
     
