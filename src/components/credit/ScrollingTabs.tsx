@@ -44,7 +44,6 @@ const ScrollingTabs: React.FC<ScrollingTabsProps> = ({
   const [selectedClientForAction, setSelectedClientForAction] = React.useState<Client | null>(null);
   const [isDragging, setIsDragging] = React.useState(false);
   const [clickedTabId, setClickedTabId] = React.useState<string | null>(null);
-  const [persistentAnimationTabId, setPersistentAnimationTabId] = React.useState<string | null>(null);
   const [selectedClientForDetails, setSelectedClientForDetails] = React.useState<Client | null>(null);
   const [longPressTimer, setLongPressTimer] = React.useState<NodeJS.Timeout | null>(null);
   const { getClientTransactions } = useCredit();
@@ -255,45 +254,6 @@ const ScrollingTabs: React.FC<ScrollingTabsProps> = ({
     setupContinuousScroll();
   }, [setupContinuousScroll]);
 
-  // Listen for timeline restart events from modals
-  useEffect(() => {
-    const handleRestartTimeline = () => {
-      // Don't restart if there are no clients
-      if (sortedClients.length === 0) {
-        return;
-      }
-      
-      // Kill existing timeline
-      if (timelineRef.current) {
-        timelineRef.current.kill();
-        timelineRef.current = null;
-      }
-      
-      // Create new timeline starting from current position (no jumping)
-      const container = containerRef.current;
-      const content = contentRef.current;
-      
-      if (container && content) {
-        const containerWidth = container.offsetWidth;
-        const contentWidth = content.scrollWidth;
-        
-        // Get current position and continue from exactly where it was paused
-        const currentX = gsap.getProperty(content, "x") as number;
-        
-        // Use the restartTimelineFromPosition helper to resume from current position
-        restartTimelineFromPosition(currentX);
-        
-      }
-    };
-
-    window.addEventListener('restartScrollingTimeline', handleRestartTimeline);
-    
-    return () => {
-      window.removeEventListener('restartScrollingTimeline', handleRestartTimeline);
-    };
-  }, [calculateTimelineProgress, sortedClients.length]);
-  
-
   // Cleanup on unmount
   useEffect(() => {
     return () => {
@@ -315,20 +275,6 @@ const ScrollingTabs: React.FC<ScrollingTabsProps> = ({
     }
   };
 
-  // Handle modal close - resume timeline
-  const handleModalClose = () => {
-    setSelectedClientForAction(null);
-    // Don't clear persistent animation immediately - let the 3-second timer handle it
-    // This ensures consistent behavior with other modal interactions
-  };
-
-  // Handle detail modal close - resume timeline
-  const handleDetailModalClose = () => {
-    setSelectedClientForDetails(null);
-    // Trigger timeline restart by dispatching a custom event (same as action modal)
-    window.dispatchEvent(new CustomEvent('restartScrollingTimeline'));
-  };
-
   // Handle tab click - pause timeline and show modal
   const handleTabClick = (client: Client) => {
     // Clear any existing long press timer
@@ -339,17 +285,12 @@ const ScrollingTabs: React.FC<ScrollingTabsProps> = ({
     
     // Add click animation
     setClickedTabId(client.id);
-    setPersistentAnimationTabId(client.id);
     
     // Remove animation after it completes
     setTimeout(() => {
       setClickedTabId(null);
     }, 600);
     
-    // Pause the timeline
-    if (timelineRef.current) {
-      timelineRef.current.pause();
-    }
     setSelectedClientForAction(client);
   };
 
@@ -361,17 +302,12 @@ const ScrollingTabs: React.FC<ScrollingTabsProps> = ({
     const timer = setTimeout(() => {
       // Add click animation for long press
       setClickedTabId(client.id);
-      setPersistentAnimationTabId(client.id);
       
       // Remove click animation after it completes
       setTimeout(() => {
         setClickedTabId(null);
       }, 600);
       
-      // Pause timeline during long press
-      if (timelineRef.current) {
-        timelineRef.current.pause();
-      }
       setSelectedClientForDetails(client);
       setLongPressTimer(null);
     }, 1000); // 1 second long press
@@ -386,81 +322,6 @@ const ScrollingTabs: React.FC<ScrollingTabsProps> = ({
       setLongPressTimer(null);
     }
   };
-
-  // Also handle the moveClientToFront call from ClientDetailModal
-  useEffect(() => {
-    const handleClientMoved = () => {
-      // When a client is moved to front, ensure timeline resumes
-      setTimeout(() => {
-        if (timelineRef.current && timelineRef.current.paused()) {
-          console.log('🎯 Resuming timeline after client moved to front');
-          timelineRef.current.resume();
-        }
-      }, 200);
-    };
-
-    window.addEventListener('clientMovedToFront', handleClientMoved);
-    
-    return () => {
-      window.removeEventListener('clientMovedToFront', handleClientMoved);
-    };
-  }, []);
-
-  // Monitor timeline state for debugging
-  useEffect(() => {
-    const interval = setInterval(() => {
-      if (timelineRef.current && !selectedClientForDetails && !selectedClientForAction && !linkedClient) {
-        const isPaused = timelineRef.current.paused();
-        if (isPaused && !isDragging) {
-          // Don't use resume() - restart from current position to avoid jumping
-          const currentX = gsap.getProperty(contentRef.current, "x") as number;
-          restartTimelineFromPosition(currentX);
-        }
-      }
-    }, 2000); // Check every 2 seconds
-
-    return () => clearInterval(interval);
-  }, [selectedClientForDetails, selectedClientForAction, isDragging, linkedClient]);
-
-  // Monitor timeline and persistent animation interaction
-  React.useEffect(() => {
-    if (persistentAnimationTabId) {
-      // Pause timeline when persistent animation is active
-      if (timelineRef.current && !timelineRef.current.paused()) {
-        timelineRef.current.pause();
-      }
-      
-      // Only clear animation and resume timeline if no client is linked to calculator
-      if (!linkedClient) {
-        // Set up timer to clear animation and resume timeline after 3 seconds
-        const clearAnimationTimer = setTimeout(() => {
-          setPersistentAnimationTabId(null);
-          
-          // Resume timeline after clearing animation
-          setTimeout(() => {
-            if (timelineRef.current && timelineRef.current.paused() && sortedClients.length > 0 && !selectedClientForDetails && !selectedClientForAction && !isDragging && !linkedClient) {
-              // Don't use resume() - restart from current position to avoid jumping
-              const currentX = gsap.getProperty(contentRef.current, "x") as number;
-              restartTimelineFromPosition(currentX);
-            }
-          }, 100); // Small delay to ensure all state is updated
-        }, 3000);
-        
-        return () => {
-          clearTimeout(clearAnimationTimer);
-        };
-      }
-    } else {
-      // No persistent animation - ensure timeline is running if it should be
-      setTimeout(() => {
-        if (timelineRef.current && timelineRef.current.paused() && sortedClients.length > 0 && !selectedClientForDetails && !selectedClientForAction && !isDragging && !linkedClient) {
-          // Don't use resume() - restart from current position to avoid jumping
-          const currentX = gsap.getProperty(contentRef.current, "x") as number;
-          restartTimelineFromPosition(currentX);
-        }
-      }, 50); // Quick check after state changes
-    }
-  }, [persistentAnimationTabId, sortedClients.length, selectedClientForDetails, selectedClientForAction, isDragging, linkedClient]);
 
   return (
     <>
@@ -876,7 +737,7 @@ const ScrollingTabs: React.FC<ScrollingTabsProps> = ({
       {selectedClientForAction && (
         <ClientActionModal
           client={selectedClientForAction}
-          onClose={handleModalClose}
+          onClose={() => setSelectedClientForAction(null)}
           onQuickAdd={onQuickAdd}
           onResetCalculator={onResetCalculator}
         />
@@ -886,7 +747,7 @@ const ScrollingTabs: React.FC<ScrollingTabsProps> = ({
       {selectedClientForDetails && (
         <ClientDetailModal
           client={selectedClientForDetails}
-          onClose={handleDetailModalClose}
+          onClose={() => setSelectedClientForDetails(null)}
           onQuickAdd={onQuickAdd}
         />
       )}
