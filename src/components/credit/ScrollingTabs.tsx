@@ -253,7 +253,7 @@ const ScrollingTabs: React.FC<ScrollingTabsProps> = ({
           // Restart timeline from paused position after throw completes
           requestAnimationFrame(() => {
             requestAnimationFrame(() => {
-              if (pausedPosition !== null) {
+              if (pausedPosition !== null && contentRef.current && containerRef.current) {
                 restartTimelineFromPosition(pausedPosition);
                 setPausedPosition(null);
               }
