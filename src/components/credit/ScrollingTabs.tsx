@@ -181,12 +181,26 @@ const ScrollingTabs: React.FC<ScrollingTabsProps> = ({
         .set(content, { x: containerWidth }) // Jump to right edge instantly
         .to(content, {
           x: -contentWidth,
-          repeat: -1 // Infinite repeat of full cycle
-      console.log('🔄 Starting fresh cycle at:', new Date().toLocaleTimeString());
-        .set(content, { x: containerWidth }) // Jump to right edge instantly
           duration: fullCycleDuration,
+          ease: "none",
+          repeat: -1 // Infinite repeat of full cycle
         });
+    } else {
+      console.log('🔄 Starting fresh cycle at:', new Date().toLocaleTimeString());
+      timelineRef.current
+        .set(content, { x: containerWidth }) // Jump to right edge instantly
+        .to(content, {
+          x: -contentWidth,
+          duration: fullCycleDuration,
+          ease: "none",
+          repeat: -1
+        });
+    }
     console.log('✅ Timeline restart complete at:', new Date().toLocaleTimeString());
+  }, []);
+
+  // Seamless continuous scroll setup
+  const setupContinuousScroll = useCallback(() => {
     // Check if we already have an active timeline
     if (timelineRef.current && timelineRef.current.isActive()) {
       console.log('⚠️ Active timeline detected, preserving it at:', new Date().toLocaleTimeString());
@@ -200,38 +214,14 @@ const ScrollingTabs: React.FC<ScrollingTabsProps> = ({
       timelineRef.current = null;
     }
     
-    // If timeline exists but is not active, kill it and create new one
-    if (timelineRef.current && !timelineRef.current.isActive()) {
-      console.log('🔪 Killing inactive timeline and creating new one at:', new Date().toLocaleTimeString());
-      timelineRef.current.kill();
-      timelineRef.current = null;
+    const container = containerRef.current;
+    const content = contentRef.current;
+    
+    if (!container || !content) {
+      console.log('❌ Missing container or content refs at:', new Date().toLocaleTimeString());
+      return;
     }
     
-    // If timeline exists but is not active, kill it and create new one
-    if (timelineRef.current && !timelineRef.current.isActive()) {
-      console.log('🔪 Killing inactive timeline and creating new one at:', new Date().toLocaleTimeString());
-      timelineRef.current.kill();
-      timelineRef.current = null;
-    }
-    
-    // If timeline exists but is not active, kill it and create new one
-    if (timelineRef.current && !timelineRef.current.isActive()) {
-      console.log('🔪 Killing inactive timeline and creating new one at:', new Date().toLocaleTimeString());
-      timelineRef.current.kill();
-      timelineRef.current = null;
-    }
-    
-    // If timeline exists but is not active, kill it and create new one
-    if (timelineRef.current && !timelineRef.current.isActive()) {
-      console.log('🔪 Killing inactive timeline and creating new one at:', new Date().toLocaleTimeString());
-      timelineRef.current.kill();
-      timelineRef.current = null;
-    }
-    
-    // If timeline exists but is not active, kill it and create new one
-    if (timelineRef.current && !timelineRef.current.isActive()) {
-      console.log('🔪 Killing inactive timeline and creating new one at:', new Date().toLocaleTimeString());
-      timelineRef.current.kill();
     // Always reset position when creating new timeline
     console.log('🔄 Resetting position and creating new timeline at:', new Date().toLocaleTimeString());
     gsap.set(content, { x: 0 });
@@ -243,22 +233,6 @@ const ScrollingTabs: React.FC<ScrollingTabsProps> = ({
       // Calculate total distance including container width gap
       const totalDistance = contentWidth + containerWidth;
       const duration = totalDistance / 60; // 60px per second for faster speed
-      
-      console.log('📏 Creating timeline with - containerWidth:', containerWidth, 'contentWidth:', contentWidth, 'duration:', duration);
-      
-      console.log('📏 Creating timeline with - containerWidth:', containerWidth, 'contentWidth:', contentWidth, 'duration:', duration);
-      
-      console.log('📏 Creating timeline with - containerWidth:', containerWidth, 'contentWidth:', contentWidth, 'duration:', duration);
-      
-      console.log('📏 Creating timeline with - containerWidth:', containerWidth, 'contentWidth:', contentWidth, 'duration:', duration);
-      
-      console.log('📏 Creating timeline with - containerWidth:', containerWidth, 'contentWidth:', contentWidth, 'duration:', duration);
-      
-      console.log('📏 Creating timeline with - containerWidth:', containerWidth, 'contentWidth:', contentWidth, 'duration:', duration);
-      
-      console.log('📏 Creating timeline with - containerWidth:', containerWidth, 'contentWidth:', contentWidth, 'duration:', duration);
-      
-      console.log('📏 Creating timeline with - containerWidth:', containerWidth, 'contentWidth:', contentWidth, 'duration:', duration);
       
       console.log('📏 Creating timeline with - containerWidth:', containerWidth, 'contentWidth:', contentWidth, 'duration:', duration);
       
