@@ -47,6 +47,7 @@ const ScrollingTabs: React.FC<ScrollingTabsProps> = ({
   const [selectedClientForDetails, setSelectedClientForDetails] = React.useState<Client | null>(null);
   const [longPressTimer, setLongPressTimer] = React.useState<NodeJS.Timeout | null>(null);
   const { getClientTransactions } = useCredit();
+  const dragHasExceededThreshold = useRef(false);
   
   // Debug: Track what causes component to remount
   React.useEffect(() => {
@@ -288,7 +289,7 @@ const ScrollingTabs: React.FC<ScrollingTabsProps> = ({
             console.log('🎯 DRAG STARTED - KILLING TIMELINE at:', new Date().toLocaleTimeString());
             console.log('🎯 Timeline was active:', timelineRef.current.isActive());
             timelineRef.current.kill();
-          console.log('🎯 POINTER DOWN - Storing initial position:', this.pointerX, this.pointerY, 'at:', new Date().toLocaleTimeString());
+            console.log('🎯 POINTER DOWN - Storing initial position:', this.pointerX, this.pointerY, 'at:', new Date().toLocaleTimeString());
           }
           setIsDragging(true);
         },
@@ -310,9 +311,7 @@ const ScrollingTabs: React.FC<ScrollingTabsProps> = ({
             console.log('🎯 CLICK DETECTED - Timeline should continue running');
             return;
           }
-            });
-          });
-        },
+        }
       });
     });
   }, [sortedClients.length]); // Remove function dependencies to prevent recreation
