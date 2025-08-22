@@ -296,272 +296,273 @@ const ClientActionModal: React.FC<ClientActionModalProps> = ({ client, onClose, 
   });
 
   const modalContent = (
-    <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-[9999] overflow-hidden p-4 select-none" style={{ height: '100vh' }}>
-      <div className="bg-white rounded-2xl w-full max-w-md max-h-[90vh] overflow-y-auto select-none">
-        {/* Header */}
-        <div className="flex items-center justify-between p-6 border-b border-gray-200 select-none">
-          <div>
-            <h2 className="text-xl font-semibold text-gray-900 select-none">{client.name}</h2>
-            <div className="text-gray-600 select-none">
-              <p className="select-none">Outstanding: Rs {totalDebt.toLocaleString('en-IN', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</p>
-              {Object.values(bottlesOwed).some(count => count > 0) && (
-                <p className="text-sm select-none">
-                  Bottles owed: {Object.entries(bottlesOwed)
-                    .filter(([type, count]) => count > 0)
-                    .map(([type, count]) => `${count} ${type.charAt(0).toUpperCase() + type.slice(1)}${count > 1 ? 's' : ''}`)
-                    .join(', ')}
-                </p>
-              )}
+    <>
+      <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-[9999] overflow-hidden p-4 select-none" style={{ height: '100vh' }}>
+        <div className="bg-white rounded-2xl w-full max-w-md max-h-[90vh] overflow-y-auto select-none">
+          {/* Header */}
+          <div className="flex items-center justify-between p-6 border-b border-gray-200 select-none">
+            <div>
+              <h2 className="text-xl font-semibold text-gray-900 select-none">{client.name}</h2>
+              <div className="text-gray-600 select-none">
+                <p className="select-none">Outstanding: Rs {totalDebt.toLocaleString('en-IN', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</p>
+                {Object.values(bottlesOwed).some(count => count > 0) && (
+                  <p className="text-sm select-none">
+                    Bottles owed: {Object.entries(bottlesOwed)
+                      .filter(([type, count]) => count > 0)
+                      .map(([type, count]) => `${count} ${type.charAt(0).toUpperCase() + type.slice(1)}${count > 1 ? 's' : ''}`)
+                      .join(', ')}
+                  </p>
+                )}
+              </div>
             </div>
+            <button 
+              onClick={handleClose}
+              className="text-gray-500 hover:text-gray-700 transition-colors"
+            >
+              <X size={24} />
+            </button>
           </div>
-          <button 
-            onClick={handleClose}
-            className="text-gray-500 hover:text-gray-700 transition-colors"
-          >
-            <X size={24} />
-          </button>
-        </div>
 
-        {/* Content */}
-        <div className="p-6 select-none">
-          {!showPartialPayment && !showReturnTab ? (
-            // Action Selection
-            <div className="space-y-4 select-none">
-              <h3 className="text-lg font-medium text-gray-800 mb-4 select-none">Choose Action</h3>
-              
-              {/* Return Button - Only show if there are returnable items */}
-              {Object.keys(availableItems).length > 0 && (
+          {/* Content */}
+          <div className="p-6 select-none">
+            {!showPartialPayment && !showReturnTab ? (
+              // Action Selection
+              <div className="space-y-4 select-none">
+                <h3 className="text-lg font-medium text-gray-800 mb-4 select-none">Choose Action</h3>
+                
+                {/* Return Button - Only show if there are returnable items */}
+                {Object.keys(availableItems).length > 0 && (
+                  <button
+                    onClick={() => setShowReturnTab(true)}
+                    disabled={isProcessing}
+                    className="w-full flex items-center gap-4 p-4 bg-orange-50 hover:bg-orange-100 rounded-lg border border-orange-200 transition-colors disabled:opacity-50"
+                  >
+                    <div className="bg-orange-500 p-2 rounded-full">
+                      <RotateCcw size={20} className="text-white" />
+                    </div>
+                    <div className="text-left select-none">
+                      <h4 className="font-medium text-gray-800 select-none">Return</h4>
+                      <p className="text-sm text-gray-600 select-none">Return items or make adjustments</p>
+                    </div>
+                  </button>
+                )}
+                
+                {/* Partial Payment Button */}
+               {totalDebt > 0 && (
                 <button
-                  onClick={() => setShowReturnTab(true)}
+                  onClick={() => setShowPartialPayment(true)}
                   disabled={isProcessing}
-                  className="w-full flex items-center gap-4 p-4 bg-orange-50 hover:bg-orange-100 rounded-lg border border-orange-200 transition-colors disabled:opacity-50"
+                  className="w-full flex items-center gap-4 p-4 bg-blue-50 hover:bg-blue-100 rounded-lg border border-blue-200 transition-colors disabled:opacity-50"
                 >
-                  <div className="bg-orange-500 p-2 rounded-full">
-                    <RotateCcw size={20} className="text-white" />
+                  <div className="bg-blue-500 p-2 rounded-full">
+                    <CreditCard size={20} className="text-white" />
                   </div>
                   <div className="text-left select-none">
-                    <h4 className="font-medium text-gray-800 select-none">Return</h4>
-                    <p className="text-sm text-gray-600 select-none">Return items or make adjustments</p>
+                    <h4 className="font-medium text-gray-800 select-none">Partial Payment</h4>
+                    <p className="text-sm text-gray-600 select-none">Record a partial payment amount</p>
                   </div>
                 </button>
-              )}
-              
-              {/* Partial Payment Button */}
-             {totalDebt > 0 && (
-              <button
-                onClick={() => setShowPartialPayment(true)}
-                disabled={isProcessing}
-                className="w-full flex items-center gap-4 p-4 bg-blue-50 hover:bg-blue-100 rounded-lg border border-blue-200 transition-colors disabled:opacity-50"
-              >
-                <div className="bg-blue-500 p-2 rounded-full">
-                  <CreditCard size={20} className="text-white" />
-                </div>
-                <div className="text-left select-none">
-                  <h4 className="font-medium text-gray-800 select-none">Partial Payment</h4>
-                  <p className="text-sm text-gray-600 select-none">Record a partial payment amount</p>
-                </div>
-              </button>
-             )}
+               )}
 
-              {/* Settle Button */}
-              <button
-                onClick={handleSettle}
-                disabled={isProcessing}
-                className="w-full flex items-center gap-4 p-4 bg-green-50 hover:bg-green-100 rounded-lg border border-green-200 transition-colors disabled:opacity-50"
-              >
-                <div className="bg-green-500 p-2 rounded-full">
-                  <CheckCircle size={20} className="text-white" />
-                </div>
-                <div className="text-left select-none">
-                  <h4 className="font-medium text-gray-800 select-none">Settle Account</h4>
-                  <p className="text-sm text-gray-600 select-none">Mark as fully paid and remove</p>
-                </div>
-              </button>
-            </div>
-          ) : showPartialPayment ? (
-            // Partial Payment Form
-            <div className="select-none">
-              <h3 className="text-lg font-medium text-gray-800 mb-4 select-none">Partial Payment</h3>
-              
-              <div className="mb-4">
-                <label className="block text-sm font-medium text-gray-700 mb-2 select-none">
-                  Payment Amount (Rs)
-                </label>
-                <div className="relative">
-                  <input
-                    type="number"
-                    value={paymentAmount}
-                    onChange={(e) => setPaymentAmount(e.target.value)}
-                    max={totalDebt}
-                    min="0.01"
-                    step="0.01"
-                    placeholder="0.00"
-                    className="block w-full px-4 py-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
-                  />
-                </div>
-                <p className="text-xs text-gray-500 mt-1 select-none">
-                  Maximum: Rs {totalDebt.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
-                </p>
-              </div>
-
-              <div className="flex gap-3">
+                {/* Settle Button */}
                 <button
-                  onClick={() => setShowPartialPayment(false)}
+                  onClick={handleSettle}
                   disabled={isProcessing}
-                  className="flex-1 px-4 py-2 border border-gray-300 rounded-lg text-gray-700 hover:bg-gray-50 transition-colors disabled:opacity-50"
+                  className="w-full flex items-center gap-4 p-4 bg-green-50 hover:bg-green-100 rounded-lg border border-green-200 transition-colors disabled:opacity-50"
                 >
-                  Back
-                </button>
-                <button
-                  onClick={handlePartialPayment}
-                  disabled={isProcessing || !paymentAmount}
-                  className="flex-1 px-4 py-2 bg-blue-500 text-white rounded-lg hover:bg-blue-600 transition-colors disabled:opacity-50"
-                >
-                  {isProcessing ? 'Processing...' : 'Record Payment'}
-                </button>
-              </div>
-            </div>
-          ) : (
-            // Return Tab
-            <div className="select-none">
-              <div className="flex items-center gap-2 mb-4">
-                <button
-                  onClick={() => setShowReturnTab(false)}
-                  className="text-gray-500 hover:text-gray-700"
-                >
-                  <X size={20} />
-                </button>
-                <h3 className="text-lg font-medium text-gray-800 select-none">Return Chopine & Bouteille</h3>
-                <div className="flex-1"></div>
-                <button
-                  onClick={async () => {
-                    setShowSettleAllConfirm(true);
-                  }}
-                  disabled={isProcessing || Object.keys(availableItems).length === 0}
-                  className="bg-red-500 hover:bg-red-600 text-white p-2 rounded-lg transition-colors disabled:opacity-50 flex items-center gap-1"
-                  title="Settle all returnable items"
-                >
-                  <X size={16} />
-                  <span className="text-sm">Settle All</span>
+                  <div className="bg-green-500 p-2 rounded-full">
+                    <CheckCircle size={20} className="text-white" />
+                  </div>
+                  <div className="text-left select-none">
+                    <h4 className="font-medium text-gray-800 select-none">Settle Account</h4>
+                    <p className="text-sm text-gray-600 select-none">Mark as fully paid and remove</p>
+                  </div>
                 </button>
               </div>
-              
-              {Object.keys(availableItems).length === 0 ? (
-                <div className="text-center py-8 text-gray-500 select-none">
-                  <p className="select-none">No Chopine or Bouteille items found in transaction history</p>
+            ) : showPartialPayment ? (
+              // Partial Payment Form
+              <div className="select-none">
+                <h3 className="text-lg font-medium text-gray-800 mb-4 select-none">Partial Payment</h3>
+                
+                <div className="mb-4">
+                  <label className="block text-sm font-medium text-gray-700 mb-2 select-none">
+                    Payment Amount (Rs)
+                  </label>
+                  <div className="relative">
+                    <input
+                      type="number"
+                      value={paymentAmount}
+                      onChange={(e) => setPaymentAmount(e.target.value)}
+                      max={totalDebt}
+                      min="0.01"
+                      step="0.01"
+                      placeholder="0.00"
+                      className="block w-full px-4 py-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                    />
+                  </div>
+                  <p className="text-xs text-gray-500 mt-1 select-none">
+                    Maximum: Rs {totalDebt.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
+                  </p>
                 </div>
-              ) : (
-                <div className="space-y-4 mb-6">
-                  {sortedItemTypes.map((itemType) => {
-                    const data = availableItems[itemType];
-                    return (
-                    <div key={itemType} className="bg-gray-50 rounded-lg p-4 border border-gray-200">
-                      <div className="flex items-center justify-between mb-3">
-                        <div className="select-none">
-                          <h4 className="font-medium text-gray-800 select-none">{itemType}</h4>
-                          <p className="text-sm text-gray-600 select-none">Available to return: {data.total}</p>
-                        </div>
-                        <div className="flex items-center gap-2">
-                          {/* Individual Settle Button */}
-                          <button
-                            type="button"
-                            onClick={async () => {
-                              setSettleItemType(itemType);
-                              setSettleItemQuantity(data.total);
-                              setShowSettleItemConfirm(true);
-                            }}
-                            disabled={isProcessing}
-                            className="p-1 text-red-500 hover:text-red-700 hover:bg-red-50 rounded transition-colors disabled:opacity-50"
-                            title={`Settle all ${itemType}`}
-                          >
-                            <X size={16} />
-                          </button>
-                          
-                          {/* Quantity Controls */}
-                          <button
-                            type="button"
-                            onClick={() => handleReturnQuantityChange(itemType, -1)}
-                            className="w-8 h-8 bg-gray-200 hover:bg-gray-300 rounded-full flex items-center justify-center"
-                            disabled={!returnItems[itemType] || returnItems[itemType] === 0}
-                          >
-                            <Minus size={16} />
-                          </button>
-                          <span className="w-12 text-center font-medium text-lg">
-                            {returnItems[itemType] || 0}
-                          </span>
-                          <button
-                            type="button"
-                            onClick={() => handleReturnQuantityChange(itemType, 1)}
-                            className="w-8 h-8 bg-orange-500 hover:bg-orange-600 text-white rounded-full flex items-center justify-center"
-                            disabled={returnItems[itemType] >= data.total}
-                          >
-                            <Plus size={16} />
-                          </button>
-                        </div>
-                      </div>
-                      
-                      {/* Show recent transactions for this item type */}
-                      <div className="text-xs text-gray-500">
-                        <p className="font-medium mb-1">Recent transactions:</p>
-                        {data.transactions.slice(-2).map((transaction, index) => {
-                          const transactionDate = new Date(transaction.date || Date.now());
-                          return (
-                            <p key={index} className="truncate">
-                              • {transaction.description} ({transaction.quantity} {itemType}) - {transactionDate.toLocaleDateString('en-GB', {
-                                day: '2-digit',
-                                month: '2-digit',
-                                year: 'numeric'
-                              })} {transactionDate.toLocaleTimeString('en-GB', {
-                                hour: '2-digit',
-                                minute: '2-digit',
-                                hour12: false
-                              })}
-                            </p>
-                          );
-                        })}
-                        
-                        {/* Show returned items for this type */}
-                        {(() => {
-                          const returnedTransactions = clientTransactions
-                            .filter(transaction => 
-                              transaction.type === 'debt' && 
-                              transaction.description.toLowerCase().includes('returned') &&
-                              transaction.description.toLowerCase().includes(itemType.toLowerCase())
-                            )
-                            .slice(-2); // Show last 2 returned transactions
-                          
-                          return returnedTransactions.map((transaction, index) => (
-                            <p key={`returned-${index}`} className="truncate text-green-600">
-                              • {transaction.description} - {transaction.date.toLocaleDateString('en-GB', {
-                                day: '2-digit',
-                                month: '2-digit',
-                                year: 'numeric'
-                              })} {transaction.date.toLocaleTimeString('en-GB', {
-                                hour: '2-digit',
-                                minute: '2-digit',
-                                hour12: false
-                              })}
-                            </p>
-                          ));
-                        })()}
-                      </div>
-                    </div>
-                  );})}
-                  
+
+                <div className="flex gap-3">
                   <button
-                    className="w-full px-4 py-2 bg-orange-500 text-white rounded-lg hover:bg-orange-600 transition-colors disabled:opacity-50"
-                    onClick={handleProcessReturns}
-                    disabled={isProcessing || Object.values(returnItems).every(qty => qty === 0)}
+                    onClick={() => setShowPartialPayment(false)}
+                    disabled={isProcessing}
+                    className="flex-1 px-4 py-2 border border-gray-300 rounded-lg text-gray-700 hover:bg-gray-50 transition-colors disabled:opacity-50"
                   >
-                    {isProcessing ? 'Processing...' : 'Process Returns'}
+                    Back
+                  </button>
+                  <button
+                    onClick={handlePartialPayment}
+                    disabled={isProcessing || !paymentAmount}
+                    className="flex-1 px-4 py-2 bg-blue-500 text-white rounded-lg hover:bg-blue-600 transition-colors disabled:opacity-50"
+                  >
+                    {isProcessing ? 'Processing...' : 'Record Payment'}
                   </button>
                 </div>
-              )}
-            </div>
-          )}
+              </div>
+            ) : (
+              // Return Tab
+              <div className="select-none">
+                <div className="flex items-center gap-2 mb-4">
+                  <button
+                    onClick={() => setShowReturnTab(false)}
+                    className="text-gray-500 hover:text-gray-700"
+                  >
+                    <X size={20} />
+                  </button>
+                  <h3 className="text-lg font-medium text-gray-800 select-none">Return Chopine & Bouteille</h3>
+                  <div className="flex-1"></div>
+                  <button
+                    onClick={async () => {
+                      setShowSettleAllConfirm(true);
+                    }}
+                    disabled={isProcessing || Object.keys(availableItems).length === 0}
+                    className="bg-red-500 hover:bg-red-600 text-white p-2 rounded-lg transition-colors disabled:opacity-50 flex items-center gap-1"
+                    title="Settle all returnable items"
+                  >
+                    <X size={16} />
+                    <span className="text-sm">Settle All</span>
+                  </button>
+                </div>
+                
+                {Object.keys(availableItems).length === 0 ? (
+                  <div className="text-center py-8 text-gray-500 select-none">
+                    <p className="select-none">No Chopine or Bouteille items found in transaction history</p>
+                  </div>
+                ) : (
+                  <div className="space-y-4 mb-6">
+                    {sortedItemTypes.map((itemType) => {
+                      const data = availableItems[itemType];
+                      return (
+                      <div key={itemType} className="bg-gray-50 rounded-lg p-4 border border-gray-200">
+                        <div className="flex items-center justify-between mb-3">
+                          <div className="select-none">
+                            <h4 className="font-medium text-gray-800 select-none">{itemType}</h4>
+                            <p className="text-sm text-gray-600 select-none">Available to return: {data.total}</p>
+                          </div>
+                          <div className="flex items-center gap-2">
+                            {/* Individual Settle Button */}
+                            <button
+                              type="button"
+                              onClick={async () => {
+                                setSettleItemType(itemType);
+                                setSettleItemQuantity(data.total);
+                                setShowSettleItemConfirm(true);
+                              }}
+                              disabled={isProcessing}
+                              className="p-1 text-red-500 hover:text-red-700 hover:bg-red-50 rounded transition-colors disabled:opacity-50"
+                              title={`Settle all ${itemType}`}
+                            >
+                              <X size={16} />
+                            </button>
+                            
+                            {/* Quantity Controls */}
+                            <button
+                              type="button"
+                              onClick={() => handleReturnQuantityChange(itemType, -1)}
+                              className="w-8 h-8 bg-gray-200 hover:bg-gray-300 rounded-full flex items-center justify-center"
+                              disabled={!returnItems[itemType] || returnItems[itemType] === 0}
+                            >
+                              <Minus size={16} />
+                            </button>
+                            <span className="w-12 text-center font-medium text-lg">
+                              {returnItems[itemType] || 0}
+                            </span>
+                            <button
+                              type="button"
+                              onClick={() => handleReturnQuantityChange(itemType, 1)}
+                              className="w-8 h-8 bg-orange-500 hover:bg-orange-600 text-white rounded-full flex items-center justify-center"
+                              disabled={returnItems[itemType] >= data.total}
+                            >
+                              <Plus size={16} />
+                            </button>
+                          </div>
+                        </div>
+                        
+                        {/* Show recent transactions for this item type */}
+                        <div className="text-xs text-gray-500">
+                          <p className="font-medium mb-1">Recent transactions:</p>
+                          {data.transactions.slice(-2).map((transaction, index) => {
+                            const transactionDate = new Date(transaction.date || Date.now());
+                            return (
+                              <p key={index} className="truncate">
+                                • {transaction.description} ({transaction.quantity} {itemType}) - {transactionDate.toLocaleDateString('en-GB', {
+                                  day: '2-digit',
+                                  month: '2-digit',
+                                  year: 'numeric'
+                                })} {transactionDate.toLocaleTimeString('en-GB', {
+                                  hour: '2-digit',
+                                  minute: '2-digit',
+                                  hour12: false
+                                })}
+                              </p>
+                            );
+                          })}
+                          
+                          {/* Show returned items for this type */}
+                          {(() => {
+                            const returnedTransactions = clientTransactions
+                              .filter(transaction => 
+                                transaction.type === 'debt' && 
+                                transaction.description.toLowerCase().includes('returned') &&
+                                transaction.description.toLowerCase().includes(itemType.toLowerCase())
+                              )
+                              .slice(-2); // Show last 2 returned transactions
+                            
+                            return returnedTransactions.map((transaction, index) => (
+                              <p key={`returned-${index}`} className="truncate text-green-600">
+                                • {transaction.description} - {transaction.date.toLocaleDateString('en-GB', {
+                                  day: '2-digit',
+                                  month: '2-digit',
+                                  year: 'numeric'
+                                })} {transaction.date.toLocaleTimeString('en-GB', {
+                                  hour: '2-digit',
+                                  minute: '2-digit',
+                                  hour12: false
+                                })}
+                              </p>
+                            ));
+                          })()}
+                        </div>
+                      </div>
+                    );})}
+                    
+                    <button
+                      className="w-full px-4 py-2 bg-orange-500 text-white rounded-lg hover:bg-orange-600 transition-colors disabled:opacity-50"
+                      onClick={handleProcessReturns}
+                      disabled={isProcessing || Object.values(returnItems).every(qty => qty === 0)}
+                    >
+                      {isProcessing ? 'Processing...' : 'Process Returns'}
+                    </button>
+                  </div>
+                )}
+              </div>
+            )}
+          </div>
         </div>
       </div>
-    </div>
 
       {/* Settle All Confirmation Modal */}
       <ConfirmationModal
@@ -637,6 +638,7 @@ const ClientActionModal: React.FC<ClientActionModalProps> = ({ client, onClose, 
           setSettleItemQuantity(0);
         }}
       />
+    </>
   );
 
   return createPortal(modalContent, document.body);
