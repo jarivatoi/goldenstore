@@ -43,7 +43,6 @@ const ScrollingTabs: React.FC<ScrollingTabsProps> = ({
   const draggableRef = useRef<Draggable[] | null>(null);
   const [selectedClientForAction, setSelectedClientForAction] = React.useState<Client | null>(null);
   const [isDragging, setIsDragging] = React.useState(false);
-  const lastDragPositionRef = useRef(0);
   const [clickedTabId, setClickedTabId] = React.useState<string | null>(null);
   const [selectedClientForDetails, setSelectedClientForDetails] = React.useState<Client | null>(null);
   const [longPressTimer, setLongPressTimer] = React.useState<NodeJS.Timeout | null>(null);
@@ -81,12 +80,11 @@ const ScrollingTabs: React.FC<ScrollingTabsProps> = ({
       }
     } else {
       // Restart timeline when all modals close
-      if (sortedClients && sortedClients.length > 0 && !timelineRef.current && !isDragging) {
+      if (sortedClients && sortedClients.length > 0 && !timelineRef.current) {
         // Small delay to ensure modal is fully closed
         setTimeout(() => {
           setTimeout(() => {
-            // Resume from last drag position if available
-            restartTimelineFromPosition(lastDragPositionRef.current);
+            setupContinuousScroll();
           }, 0);
         }, 100);
       }
@@ -243,10 +241,6 @@ const ScrollingTabs: React.FC<ScrollingTabsProps> = ({
           setIsDragging(true);
         },
         onDragEnd: function() {
-          // Store the final position for modal resume
-          const finalX = gsap.getProperty(content, "x") as number;
-          lastDragPositionRef.current = finalX;
-          
           setIsDragging(false);
           
           // Always restart the timeline after drag ends
