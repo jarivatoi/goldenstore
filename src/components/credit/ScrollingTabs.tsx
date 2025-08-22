@@ -281,9 +281,6 @@ const ScrollingTabs: React.FC<ScrollingTabsProps> = ({
         minimumMovement: 3, // Require minimum movement to start drag
         onDragStart: function() {
           // Kill the timeline on drag start but don't store position yet
-          if (timelineRef.current) {
-            console.log('🎯 DRAG STARTED - KILLING TIMELINE at:', new Date().toLocaleTimeString());
-            console.log('🎯 Timeline was active:', timelineRef.current.isActive());
             timelineRef.current.kill();
             timelineRef.current = null;
           }
