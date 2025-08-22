@@ -531,7 +531,18 @@ const ClientActionModal: React.FC<ClientActionModalProps> = ({ client, onClose, 
                       {/* Show recent transactions for this item type */}
                       <div className="text-xs text-gray-500">
                         <p className="font-medium mb-1">Recent transactions:</p>
-                        {data.transactions.slice(-2).map((transaction, index) => {
+                        {(() => {
+                          // Filter out transactions that have been returned
+                          const returnedQuantity = getReturnedQuantity(itemType);
+                          const totalOriginal = data.total + returnedQuantity;
+                          
+                          // Get transactions for this item type, excluding those that are effectively "returned"
+                          const relevantTransactions = data.transactions.filter(transaction => {
+                            // Only show transactions if there are still unreturned items
+                            return availableItems[itemType] && availableItems[itemType].total > 0;
+                          }).slice(-2); // Show last 2 relevant transactions
+                          
+                          return relevantTransactions.map((transaction, index) => {
                           const transactionDate = new Date(transaction.date || Date.now());
                           return (
                             <p key={index} className="truncate">
@@ -546,7 +557,8 @@ const ClientActionModal: React.FC<ClientActionModalProps> = ({ client, onClose, 
                               })}
                             </p>
                           );
-                        })}
+                          });
+                        })()}
                         
                         {/* Show returned items for this type */}
                         {(() => {
