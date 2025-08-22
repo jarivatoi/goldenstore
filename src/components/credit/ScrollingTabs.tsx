@@ -298,6 +298,7 @@ const ScrollingTabs: React.FC<ScrollingTabsProps> = ({
         setupContinuousScroll();
       }, 0);
     }
+  }, [sortedClients.length]); // Only depend on sorted client count, not modal state or other changes
 
   // Cleanup on unmount
   useEffect(() => {
