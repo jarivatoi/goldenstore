@@ -292,13 +292,12 @@ const ScrollingTabs: React.FC<ScrollingTabsProps> = ({
       return;
     }
     
-    // Only setup once when clients are first loaded, not on every change
-    if (!timelineRef.current && !draggableRef.current) {
+    // Only setup once when clients are first loaded, and prevent re-setup during modal interactions
+    if (!timelineRef.current && !draggableRef.current && sortedClients.length > 0) {
       setTimeout(() => {
         setupContinuousScroll();
       }, 0);
     }
-  }, [clients.length]); // Only depend on client count, not sort order or individual client changes
 
   // Cleanup on unmount
   useEffect(() => {
