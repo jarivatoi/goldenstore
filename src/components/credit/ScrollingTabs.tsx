@@ -332,7 +332,9 @@ const ScrollingTabs: React.FC<ScrollingTabsProps> = ({
   // Cleanup on unmount
   useEffect(() => {
     console.log('🧹 Cleanup effect registered');
+    console.log('🧹 Cleanup effect registered');
     return () => {
+      console.log('🧹 Component unmounting, cleaning up timeline');
       console.log('🧹 Component unmounting, cleaning up timeline');
       if (timelineRef.current) {
         timelineRef.current.kill();
@@ -345,6 +347,7 @@ const ScrollingTabs: React.FC<ScrollingTabsProps> = ({
 
   // Prevent timeline interference from linkedClient changes
   useEffect(() => {
+    console.log('🔗 linkedClient effect triggered, linkedClient:', linkedClient?.name || 'none', 'at:', new Date().toLocaleTimeString());
     console.log('🔗 linkedClient effect triggered, linkedClient:', linkedClient?.name || 'none', 'at:', new Date().toLocaleTimeString());
     // Don't let linkedClient changes affect the timeline
     // The timeline should run independently of calculator state
