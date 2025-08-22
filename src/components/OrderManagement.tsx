@@ -571,6 +571,10 @@ const OrderManagement: React.FC = () => {
           setShowDuplicateOrderModal(false);
           setDuplicateOrderInfo(null);
         }}
+        onCancel={() => {
+          setShowDuplicateOrderModal(false);
+          setDuplicateOrderInfo(null);
+        }}
       />
 
     </div>
@@ -663,8 +667,8 @@ const CategoryCard: React.FC<CategoryCardProps> = ({
   }
 
   return (
-    <div className="bg-white rounded-lg shadow-md p-4 border border-gray-200 hover:shadow-lg transition-shadow select-none">
-      <div className="flex justify-between items-start mb-3 select-none">
+    <div className="bg-white rounded-lg shadow-md border border-gray-200 hover:shadow-lg transition-shadow select-none flex flex-col h-64">
+      <div className="flex justify-between items-start mb-3 p-4 pb-0 select-none">
         <h4 className="font-semibold text-gray-800 text-lg select-none">{category.name}</h4>
         <div className="flex gap-1 select-none">
           <button
@@ -682,47 +686,56 @@ const CategoryCard: React.FC<CategoryCardProps> = ({
         </div>
       </div>
       
-      {/* Latest Order Info */}
-      {latestOrder && (
-        <div className="mb-3 p-3 bg-green-50 rounded-lg border border-green-200 select-none">
-          <div className="flex items-center justify-between select-none">
-            <span className="text-sm font-medium text-green-800 select-none">
-              Rs {latestOrder.totalCost.toLocaleString('en-IN', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
-            </span>
-            <span className="text-xs text-green-600 select-none">
-              {latestOrder.orderDate.toLocaleDateString('en-GB', {
-                day: '2-digit',
-                month: 'short',
-                year: 'numeric'
-              }).replace(/\s/g, '-')}
-            </span>
-          </div>
-          <p className="text-xs text-green-600 mt-1 select-none">Latest Order</p>
+      {/* Content area with fixed height */}
+      <div className="flex-1 px-4 select-none">
+        {/* Latest Order Info - Fixed height container */}
+        <div className="h-20 mb-3 select-none">
+          {latestOrder ? (
+            <div className="p-3 bg-green-50 rounded-lg border border-green-200 h-full flex flex-col justify-center select-none">
+              <div className="flex items-center justify-between select-none">
+                <span className="text-sm font-medium text-green-800 select-none">
+                  Rs {latestOrder.totalCost.toLocaleString('en-IN', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
+                </span>
+                <span className="text-xs text-green-600 select-none">
+                  {latestOrder.orderDate.toLocaleDateString('en-GB', {
+                    day: '2-digit',
+                    month: 'short',
+                    year: 'numeric'
+                  }).replace(/\s/g, '-')}
+                </span>
+              </div>
+              <p className="text-xs text-green-600 mt-1 select-none">Latest Order</p>
+            </div>
+          ) : (
+            <div className="h-full flex items-center justify-center select-none">
+              <p className="text-gray-400 text-sm select-none">No orders yet</p>
+            </div>
+          )}
         </div>
-      )}
-      
-      {/* Spacer to ensure consistent button positioning */}
-      <div className="flex-1 min-h-[2rem]"></div>
-      
-      <div className="text-sm text-gray-600 mb-4 select-none">
-        <p className="select-none">{itemsCount} items • {ordersCount} orders • VAT {vatPercentage}%</p>
+        
+        <div className="text-sm text-gray-600 mb-4 select-none">
+          <p className="select-none">{itemsCount} items • {ordersCount} orders • VAT {vatPercentage}%</p>
+        </div>
       </div>
       
-      <div className="flex gap-2 select-none">
-        <button
-          onClick={onManage}
-          className="flex-1 bg-blue-500 hover:bg-blue-600 text-white py-2 px-4 rounded-md transition-colors flex items-center justify-center gap-1 select-none"
-        >
-          <Edit2 size={16} />
-          <span className="select-none">Manage</span>
-        </button>
-        <button
-          onClick={onOrder}
-          className="flex-1 bg-green-500 hover:bg-green-600 text-white py-2 px-4 rounded-md transition-colors flex items-center justify-center gap-1 select-none"
-        >
-          <Plus size={16} />
-          <span className="select-none">Order</span>
-        </button>
+      {/* Buttons at bottom - Fixed position */}
+      <div className="p-4 pt-0 select-none">
+        <div className="flex gap-2 select-none">
+          <button
+            onClick={onManage}
+            className="flex-1 bg-blue-500 hover:bg-blue-600 text-white py-2 px-4 rounded-md transition-colors flex items-center justify-center gap-1 select-none"
+          >
+            <Edit2 size={16} />
+            <span className="select-none">Manage</span>
+          </button>
+          <button
+            onClick={onOrder}
+            className="flex-1 bg-green-500 hover:bg-green-600 text-white py-2 px-4 rounded-md transition-colors flex items-center justify-center gap-1 select-none"
+          >
+            <Plus size={16} />
+            <span className="select-none">Order</span>
+          </button>
+        </div>
       </div>
     </div>
   );
