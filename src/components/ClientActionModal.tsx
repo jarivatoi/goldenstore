@@ -527,6 +527,10 @@ const ClientActionModal: React.FC<ClientActionModalProps> = ({ client, onClose, 
                               .filter(transaction => 
                                 transaction.type === 'debt' && 
                                 transaction.description.toLowerCase().includes('returned') &&
+                         
+                         // Force a re-render of the parent component to update scrolling tabs
+                         window.dispatchEvent(new CustomEvent('creditDataChanged'));
+                         
                                 transaction.description.toLowerCase().includes(itemType.toLowerCase())
                               )
                               .slice(-2); // Show last 2 returned transactions
