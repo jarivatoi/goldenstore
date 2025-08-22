@@ -108,6 +108,7 @@ const ClientActionModal: React.FC<ClientActionModalProps> = ({ client, onClose, 
       
       // Track which patterns have matched to prevent duplicates
       let hasMatched = false;
+     const transactionItemTypes = new Set<string>(); // Track item types for this transaction
       
       // Look for Chopine items with improved parsing
       // Pattern: number + space + chopine (with optional brand after)
@@ -119,6 +120,11 @@ const ClientActionModal: React.FC<ClientActionModalProps> = ({ client, onClose, 
         const brand = chopineMatch[2]?.trim() || '';
         const key = brand ? `Chopine ${brand}` : 'Chopine';
         
+       // Skip if we've already processed this item type for this transaction
+       if (transactionItemTypes.has(key)) {
+         continue;
+       }
+       transactionItemTypes.add(key);
         
         if (!returnableItems[key]) {
           returnableItems[key] = { total: 0, transactions: [] };
@@ -131,7 +137,6 @@ const ClientActionModal: React.FC<ClientActionModalProps> = ({ client, onClose, 
           quantity: quantity
         });
         hasMatched = true;
-        processedTransactions.add(transaction.id);
       }
       
       // Look for Bouteille items with improved parsing
@@ -156,6 +161,11 @@ const ClientActionModal: React.FC<ClientActionModalProps> = ({ client, onClose, 
           key = 'Bouteille';
         }
         
+       // Skip if we've already processed this item type for this transaction
+       if (transactionItemTypes.has(key)) {
+         continue;
+       }
+       transactionItemTypes.add(key);
         
         if (!returnableItems[key]) {
           returnableItems[key] = { total: 0, transactions: [] };
@@ -168,7 +178,6 @@ const ClientActionModal: React.FC<ClientActionModalProps> = ({ client, onClose, 
           quantity: quantity
         });
         hasMatched = true;
-        processedTransactions.add(transaction.id);
       }
       
       // Handle items without explicit numbers (assume quantity 1) - only if no pattern matched
@@ -188,6 +197,11 @@ const ClientActionModal: React.FC<ClientActionModalProps> = ({ client, onClose, 
           key = 'Bouteille';
         }
         
+       // Skip if we've already processed this item type for this transaction
+       if (transactionItemTypes.has(key)) {
+         return; // Skip this transaction entirely
+       }
+       transactionItemTypes.add(key);
         
         if (!returnableItems[key]) {
           returnableItems[key] = { total: 0, transactions: [] };
@@ -200,7 +214,6 @@ const ClientActionModal: React.FC<ClientActionModalProps> = ({ client, onClose, 
           quantity: 1
         });
         hasMatched = true;
-        processedTransactions.add(transaction.id);
       }
       
       if (!hasMatched && description.includes('chopine')) {
@@ -208,6 +221,11 @@ const ClientActionModal: React.FC<ClientActionModalProps> = ({ client, onClose, 
         const brand = brandMatch?.[1]?.trim() || '';
         const key = brand ? `Chopine ${brand}` : 'Chopine';
         
+       // Skip if we've already processed this item type for this transaction
+       if (transactionItemTypes.has(key)) {
+         return; // Skip this transaction entirely
+       }
+       transactionItemTypes.add(key);
         
         if (!returnableItems[key]) {
           returnableItems[key] = { total: 0, transactions: [] };
@@ -219,8 +237,12 @@ const ClientActionModal: React.FC<ClientActionModalProps> = ({ client, onClose, 
           amount: transaction.amount,
           quantity: 1
         });
-        processedTransactions.add(transaction.id);
       }
+     
+     // Mark transaction as processed only after all patterns have been checked
+     if (hasMatched) {
+       processedTransactions.add(transaction.id);
+     }
     });
     
     return returnableItems;
