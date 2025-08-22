@@ -180,7 +180,7 @@ const ScrollingTabs: React.FC<ScrollingTabsProps> = ({
     }
     
     console.log('✅ Timeline restart complete');
-  }, []);
+  }, []); // Remove all dependencies to prevent recreation
 
   // Seamless continuous scroll setup
   const setupContinuousScroll = useCallback(() => {
@@ -276,7 +276,7 @@ const ScrollingTabs: React.FC<ScrollingTabsProps> = ({
         },
       });
     });
-  }, [sortedClients.length, calculateTimelineProgress, restartTimelineFromPosition]);
+  }, [sortedClients.length]); // Remove function dependencies to prevent recreation
 
   // Setup animation when clients change
   useEffect(() => {
@@ -296,12 +296,12 @@ const ScrollingTabs: React.FC<ScrollingTabsProps> = ({
     }
     
     // Only setup once when clients are first loaded, and prevent re-setup during modal interactions
-    if (!timelineRef.current && !draggableRef.current && sortedClients.length > 0) {
+    if (!timelineRef.current && sortedClients.length > 0) {
       setTimeout(() => {
         setupContinuousScroll();
       }, 0);
     }
-  }, [clients.length, sortedClients.length, setupContinuousScroll]);
+  }, [sortedClients.length]); // Remove setupContinuousScroll dependency to prevent re-triggering
 
   // Cleanup on unmount
   useEffect(() => {
