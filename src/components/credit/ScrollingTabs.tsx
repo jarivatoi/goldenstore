@@ -7,6 +7,7 @@ import ClientActionModal from '../ClientActionModal';
 import ClientDetailModal from '../ClientDetailModal';
 import { useCredit } from '../../context/CreditContext';
 import AlternatingText from '../AlternatingText';
+import FlipCard from './FlipCard';
 
 // Register GSAP plugins
 gsap.registerPlugin(Draggable);
@@ -559,6 +560,146 @@ const ScrollingTabs: React.FC<ScrollingTabsProps> = ({
               const isLinked = linkedClient?.id === client.id;
               const hasOverdueItems = hasOverdueReturnables(client);
               
+              // Get returnable items for this client
+              const getReturnableItemsForCard = () => {
+                const clientTransactions = getClientTransactions(client.id);
+                const returnableItems: {[key: string]: number} = {};
+                
+                clientTransactions.forEach(transaction => {
+                  if (transaction.type === 'payment' || transaction.description.toLowerCase().includes('returned')) {
+                    return;
+                  }
+                  
+                  const description = transaction.description.toLowerCase();
+                  
+                  if (!description.includes('chopine') && !description.includes('bouteille')) {
+                    return;
+                  }
+                  
+                  const chopinePattern = /(\d+)\s+chopines?(?:\s+([^,]*))?/gi;
+                  let chopineMatch;
+                  
+                  while ((chopineMatch = chopinePattern.exec(description)) !== null) {
+                    const quantity = parseInt(chopineMatch[1]);
+                    const brand = chopineMatch[2]?.trim() || '';
+                    const key = brand ? `Chopine ${brand}` : 'Chopine';
+                    
+                    if (!returnableItems[key]) {
+                      returnableItems[key] = 0;
+                    }
+                    returnableItems[key] += quantity;
+                  }
+                  
+                  const bouteillePattern = /(\d+)\s+(?:(\d+(?:\.\d+)?L)\s+)?bouteilles?(?:\s+([^,]*))?/gi;
+                  let bouteilleMatch;
+                  
+                  while ((bouteilleMatch = bouteillePattern.exec(description)) !== null) {
+                    const quantity = parseInt(bouteilleMatch[1]);
+                    const size = bouteilleMatch[2]?.trim() || '';
+                    const brand = bouteilleMatch[3]?.trim() || '';
+                    
+                    let key;
+                    if (size && brand) {
+                      key = `${size} ${brand}`;
+                    } else if (brand) {
+                      key = `Bouteille ${brand}`;
+                    } else if (size) {
+                      key = `${size} Bouteille`;
+                    } else {
+                      key = 'Bouteille';
+                    }
+                    
+                    if (!returnableItems[key]) {
+                      returnableItems[key] = 0;
+                    }
+                    returnableItems[key] += quantity;
+                  }
+                  
+                  if (description.includes('bouteille') && !bouteillePattern.test(description)) {
+                    const sizeMatch = description.match(/(\d+(?:\.\d+)?L)/i);
+                    const brandMatch = description.match(/bouteilles?\s+([^,]*)/i);
+                    const brand = brandMatch?.[1]?.trim() || '';
+                    
+                    let key;
+                    if (sizeMatch && brand) {
+                      key = `${sizeMatch[1]} ${brand}`;
+                    } else if (brand) {
+                      key = `Bouteille ${brand}`;
+                    } else if (sizeMatch) {
+                      key = `${sizeMatch[1]} Bouteille`;
+                    } else {
+                      key = 'Bouteille';
+                    }
+                    
+                    if (!returnableItems[key]) {
+                      returnableItems[key] = 0;
+                    }
+                    returnableItems[key] += 1;
+                  }
+                  
+                  if (description.includes('chopine') && !chopinePattern.test(description)) {
+                    const brandMatch = description.match(/chopines?\s+([^,]*)/i);
+                    const brand = brandMatch?.[1]?.trim() || '';
+                    const key = brand ? `Chopine ${brand}` : 'Chopine';
+                    
+                    if (!returnableItems[key]) {
+                      returnableItems[key] = 0;
+                    }
+                    returnableItems[key] += 1;
+                  }
+                });
+                
+                const returnedQuantities: {[key: string]: number} = {};
+                clientTransactions
+                  .filter(transaction => transaction.type === 'debt' && transaction.description.toLowerCase().includes('returned'))
+                  .forEach(transaction => {
+                    const description = transaction.description.toLowerCase();
+                    Object.keys(returnableItems).forEach(itemType => {
+                      if (description.includes(itemType.toLowerCase())) {
+                        const match = description.match(/returned:\s*(\d+)\s+/);
+                        if (match) {
+                          if (!returnedQuantities[itemType]) {
+                            returnedQuantities[itemType] = 0;
+                          }
+                          returnedQuantities[itemType] += parseInt(match[1]);
+                        }
+                      }
+                    });
+                  });
+                
+                const truncatedItems: string[] = [];
+                Object.entries(returnableItems).forEach(([itemType, total]) => {
+                  const returned = returnedQuantities[itemType] || 0;
+                  const remaining = Math.max(0, total - returned);
+                  if (remaining > 0) {
+                    let truncated = '';
+                    if (itemType.includes('Chopine')) {
+                      truncated = `${remaining} Ch`;
+                    } else if (itemType.includes('Bouteille')) {
+                      if (itemType.includes('1.5L')) {
+                        truncated = `${remaining} 1.5L`;
+                      } else if (itemType.includes('1L')) {
+                        truncated = `${remaining} Lt`;
+                      } else if (itemType.includes('2L')) {
+                        truncated = `${remaining} 2L`;
+                      } else if (itemType.includes('0.5L')) {
+                        truncated = `${remaining} 0.5L`;
+                      } else {
+                        truncated = `${remaining} Bt`;
+                      }
+                    } else {
+                      const shortName = itemType.substring(0, 3);
+                      truncated = `${remaining} ${shortName}`;
+                    }
+                    truncatedItems.push(truncated);
+                  }
+                });
+                
+                return truncatedItems.join(', ');
+              };
+              
+              const returnableItemsText = getReturnableItemsForCard();
+              
               // Determine card background color based on debt amount (same as big cards)
               const getCardBackgroundColor = () => {
                 if (totalDebt <= 300) return 'bg-green-100 border-green-200';
@@ -627,144 +768,22 @@ const ScrollingTabs: React.FC<ScrollingTabsProps> = ({
                       {client.name}
                     </div>
                     {clientFilter === 'returnables' ? (
-                      <div className="text-xs font-semibold text-orange-600">
-                        {(() => {
-                          const clientTransactions = getClientTransactions(client.id);
-                          const returnableItems: {[key: string]: number} = {};
-                          
-                          clientTransactions.forEach(transaction => {
-                            if (transaction.type === 'payment' || transaction.description.toLowerCase().includes('returned')) {
-                              return;
-                            }
-                            
-                            const description = transaction.description.toLowerCase();
-                            
-                            if (!description.includes('chopine') && !description.includes('bouteille')) {
-                              return;
-                            }
-                            
-                            const chopinePattern = /(\d+)\s+chopines?(?:\s+([^,]*))?/gi;
-                            let chopineMatch;
-                            
-                            while ((chopineMatch = chopinePattern.exec(description)) !== null) {
-                              const quantity = parseInt(chopineMatch[1]);
-                              const brand = chopineMatch[2]?.trim() || '';
-                              const key = brand ? `Chopine ${brand}` : 'Chopine';
-                              
-                              if (!returnableItems[key]) {
-                                returnableItems[key] = 0;
-                              }
-                              returnableItems[key] += quantity;
-                            }
-                            
-                            const bouteillePattern = /(\d+)\s+(?:(\d+(?:\.\d+)?L)\s+)?bouteilles?(?:\s+([^,]*))?/gi;
-                            let bouteilleMatch;
-                            
-                            while ((bouteilleMatch = bouteillePattern.exec(description)) !== null) {
-                              const quantity = parseInt(bouteilleMatch[1]);
-                              const size = bouteilleMatch[2]?.trim() || '';
-                              const brand = bouteilleMatch[3]?.trim() || '';
-                              
-                              let key;
-                              if (size && brand) {
-                                key = `${size} ${brand}`;
-                              } else if (brand) {
-                                key = `Bouteille ${brand}`;
-                              } else if (size) {
-                                key = `${size} Bouteille`;
-                              } else {
-                                key = 'Bouteille';
-                              }
-                              
-                              if (!returnableItems[key]) {
-                                returnableItems[key] = 0;
-                              }
-                              returnableItems[key] += quantity;
-                            }
-                            
-                            if (description.includes('bouteille') && !bouteillePattern.test(description)) {
-                              const sizeMatch = description.match(/(\d+(?:\.\d+)?L)/i);
-                              const brandMatch = description.match(/bouteilles?\s+([^,]*)/i);
-                              const brand = brandMatch?.[1]?.trim() || '';
-                              
-                              let key;
-                              if (sizeMatch && brand) {
-                                key = `${sizeMatch[1]} ${brand}`;
-                              } else if (brand) {
-                                key = `Bouteille ${brand}`;
-                              } else if (sizeMatch) {
-                                key = `${sizeMatch[1]} Bouteille`;
-                              } else {
-                                key = 'Bouteille';
-                              }
-                              
-                              if (!returnableItems[key]) {
-                                returnableItems[key] = 0;
-                              }
-                              returnableItems[key] += 1;
-                            }
-                            
-                            if (description.includes('chopine') && !chopinePattern.test(description)) {
-                              const brandMatch = description.match(/chopines?\s+([^,]*)/i);
-                              const brand = brandMatch?.[1]?.trim() || '';
-                              const key = brand ? `Chopine ${brand}` : 'Chopine';
-                              
-                              if (!returnableItems[key]) {
-                                returnableItems[key] = 0;
-                              }
-                              returnableItems[key] += 1;
-                            }
-                          });
-                          
-                          const returnedQuantities: {[key: string]: number} = {};
-                          clientTransactions
-                            .filter(transaction => transaction.type === 'debt' && transaction.description.toLowerCase().includes('returned'))
-                            .forEach(transaction => {
-                              const description = transaction.description.toLowerCase();
-                              Object.keys(returnableItems).forEach(itemType => {
-                                if (description.includes(itemType.toLowerCase())) {
-                                  const match = description.match(/returned:\s*(\d+)\s+/);
-                                  if (match) {
-                                    if (!returnedQuantities[itemType]) {
-                                      returnedQuantities[itemType] = 0;
-                                    }
-                                    returnedQuantities[itemType] += parseInt(match[1]);
-                                  }
-                                }
-                              });
-                            });
-                          
-                          const truncatedItems: string[] = [];
-                          Object.entries(returnableItems).forEach(([itemType, total]) => {
-                            const returned = returnedQuantities[itemType] || 0;
-                            const remaining = Math.max(0, total - returned);
-                            if (remaining > 0) {
-                              let truncated = '';
-                              if (itemType.includes('Chopine')) {
-                                truncated = `${remaining} Ch`;
-                              } else if (itemType.includes('Bouteille')) {
-                                if (itemType.includes('1.5L')) {
-                                  truncated = `${remaining} 1.5L`;
-                                } else if (itemType.includes('1L')) {
-                                  truncated = `${remaining} Lt`;
-                                } else if (itemType.includes('2L')) {
-                                  truncated = `${remaining} 2L`;
-                                } else if (itemType.includes('0.5L')) {
-                                  truncated = `${remaining} 0.5L`;
-                                } else {
-                                  truncated = `${remaining} Bt`;
-                                }
-                              } else {
-                                const shortName = itemType.substring(0, 3);
-                                truncated = `${remaining} ${shortName}`;
-                              }
-                              truncatedItems.push(truncated);
-                            }
-                          });
-                          
-                          return truncatedItems.join(', ');
-                        })()}
-                      </div>
+                      <FlipCard
+                        frontContent={
+                          <div className="text-xs font-semibold text-orange-600">
+                            {returnableItemsText || 'No returnables'}
+                          </div>
+                        }
+                        backContent={
+                          <div className="text-xs font-semibold text-blue-600">
+                            Returnables
+                          </div>
+                        }
+                        shouldFlip={!!returnableItemsText}
+                        flipDuration={0.8}
+                        flipDelay={3}
+                        className="w-full"
+                      />
                     ) : totalDebt === 0 ? (
                       <div className="text-xs font-semibold text-orange-600">
                         {(() => {
@@ -905,150 +924,41 @@ const ScrollingTabs: React.FC<ScrollingTabsProps> = ({
                         })()}
                       </div>
                     ) : (
-                      <div className={`text-xs font-semibold ${
-                        totalDebt > 0 ? 'text-red-600' : 'text-green-600'
-                      }`}>
-                        <AlternatingText 
-                          amount={`Rs ${totalDebt.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`}
-                          returnableItems={(() => {
-                            const clientTransactions = getClientTransactions(client.id);
-                            const returnableItems: {[key: string]: number} = {};
-                            
-                            clientTransactions.forEach(transaction => {
-                              if (transaction.type === 'payment' || transaction.description.toLowerCase().includes('returned')) {
-                                return;
-                              }
-                              
-                              const description = transaction.description.toLowerCase();
-                              
-                              if (!description.includes('chopine') && !description.includes('bouteille')) {
-                                return;
-                              }
-                              
-                              const chopinePattern = /(\d+)\s+chopines?(?:\s+([^,]*))?/gi;
-                              let chopineMatch;
-                              
-                              while ((chopineMatch = chopinePattern.exec(description)) !== null) {
-                                const quantity = parseInt(chopineMatch[1]);
-                                const brand = chopineMatch[2]?.trim() || '';
-                                const key = brand ? `Chopine ${brand}` : 'Chopine';
-                                
-                                if (!returnableItems[key]) {
-                                  returnableItems[key] = 0;
-                                }
-                                returnableItems[key] += quantity;
-                              }
-                              
-                              const bouteillePattern = /(\d+)\s+(?:(\d+(?:\.\d+)?L)\s+)?bouteilles?(?:\s+([^,]*))?/gi;
-                              let bouteilleMatch;
-                              
-                              while ((bouteilleMatch = bouteillePattern.exec(description)) !== null) {
-                                const quantity = parseInt(bouteilleMatch[1]);
-                                const size = bouteilleMatch[2]?.trim() || '';
-                                const brand = bouteilleMatch[3]?.trim() || '';
-                                
-                                let key;
-                                if (size && brand) {
-                                  key = `${size} ${brand}`;
-                                } else if (brand) {
-                                  key = `Bouteille ${brand}`;
-                                } else if (size) {
-                                  key = `${size} Bouteille`;
-                                } else {
-                                  key = 'Bouteille';
-                                }
-                                
-                                if (!returnableItems[key]) {
-                                  returnableItems[key] = 0;
-                                }
-                                returnableItems[key] += quantity;
-                              }
-                              
-                              if (description.includes('bouteille') && !bouteillePattern.test(description)) {
-                                const sizeMatch = description.match(/(\d+(?:\.\d+)?L)/i);
-                                const brandMatch = description.match(/bouteilles?\s+([^,]*)/i);
-                                const brand = brandMatch?.[1]?.trim() || '';
-                                
-                                let key;
-                                if (sizeMatch && brand) {
-                                  key = `${sizeMatch[1]} ${brand}`;
-                                } else if (brand) {
-                                  key = `Bouteille ${brand}`;
-                                } else if (sizeMatch) {
-                                  key = `${sizeMatch[1]} Bouteille`;
-                                } else {
-                                  key = 'Bouteille';
-                                }
-                                
-                                if (!returnableItems[key]) {
-                                  returnableItems[key] = 0;
-                                }
-                                returnableItems[key] += 1;
-                              }
-                              
-                              if (description.includes('chopine') && !chopinePattern.test(description)) {
-                                const brandMatch = description.match(/chopines?\s+([^,]*)/i);
-                                const brand = brandMatch?.[1]?.trim() || '';
-                                const key = brand ? `Chopine ${brand}` : 'Chopine';
-                                
-                                if (!returnableItems[key]) {
-                                  returnableItems[key] = 0;
-                                }
-                                returnableItems[key] += 1;
-                              }
-                            });
-                            
-                            const returnedQuantities: {[key: string]: number} = {};
-                            clientTransactions
-                              .filter(transaction => transaction.type === 'debt' && transaction.description.toLowerCase().includes('returned'))
-                              .forEach(transaction => {
-                                const description = transaction.description.toLowerCase();
-                                Object.keys(returnableItems).forEach(itemType => {
-                                  if (description.includes(itemType.toLowerCase())) {
-                                    const match = description.match(/returned:\s*(\d+)\s+/);
-                                    if (match) {
-                                      if (!returnedQuantities[itemType]) {
-                                        returnedQuantities[itemType] = 0;
-                                      }
-                                      returnedQuantities[itemType] += parseInt(match[1]);
-                                    }
-                                  }
-                                });
-                              });
-                            
-                            const truncatedItems: string[] = [];
-                            Object.entries(returnableItems).forEach(([itemType, total]) => {
-                              const returned = returnedQuantities[itemType] || 0;
-                              const remaining = Math.max(0, total - returned);
-                              if (remaining > 0) {
-                                let truncated = '';
-                                if (itemType.includes('Chopine')) {
-                                  truncated = `${remaining} Ch`;
-                                } else if (itemType.includes('Bouteille')) {
-                                  if (itemType.includes('1.5L')) {
-                                    truncated = `${remaining} 1.5L`;
-                                  } else if (itemType.includes('1L')) {
-                                    truncated = `${remaining} Lt`;
-                                  } else if (itemType.includes('2L')) {
-                                    truncated = `${remaining} 2L`;
-                                  } else if (itemType.includes('0.5L')) {
-                                    truncated = `${remaining} 0.5L`;
-                                  } else {
-                                    truncated = `${remaining} Bt`;
-                                  }
-                                } else {
-                                  const shortName = itemType.substring(0, 3);
-                                  truncated = `${remaining} ${shortName}`;
-                                }
-                                truncatedItems.push(truncated);
-                              }
-                            });
-                            
-                            return truncatedItems.join(', ') || '';
-                          })()} 
-                          className="text-xs font-semibold"
+                      <FlipCard
+                        frontContent={
+                          <div className="text-xs font-semibold text-orange-600">
+                            {returnableItemsText || 'No returnables'}
+                          </div>
+                        }
+                        backContent={
+                          <div className="text-xs font-semibold text-blue-600">
+                            Returnables
+                          </div>
+                        }
+                        shouldFlip={!!returnableItemsText}
+                        flipDuration={0.8}
+                        flipDelay={3}
+                        className="w-full"
+                      />
+                    ) : (
+                      <FlipCard
+                        frontContent={
+                          <div className={`text-xs font-semibold ${
+                            totalDebt > 0 ? 'text-red-600' : 'text-green-600'
+                          }`}>
+                            Rs {totalDebt.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
+                          </div>
+                        }
+                        backContent={
+                          <div className="text-xs font-semibold text-orange-600">
+                            {returnableItemsText || 'No returnables'}
+                          </div>
+                        }
+                        shouldFlip={!!returnableItemsText}
+                        flipDuration={0.8}
+                        flipDelay={2.5}
+                        className="w-full"
                         />
-                      </div>
                     )}
                     <div className="text-xs text-gray-500 mt-1 text-center">
               {client.lastTransactionAt.toLocaleDateString('en-GB', {
