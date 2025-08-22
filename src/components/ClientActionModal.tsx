@@ -3,6 +3,7 @@ import { createPortal } from 'react-dom';
 import { X, CreditCard, CheckCircle, DollarSign, RotateCcw, Minus, Plus, Calculator } from 'lucide-react';
 import { Client } from '../types';
 import { useCredit } from '../context/CreditContext';
+import SettleConfirmationModal from './SettleConfirmationModal';
 
 interface ClientActionModalProps {
   client: Client;
@@ -24,6 +25,12 @@ const ClientActionModal: React.FC<ClientActionModalProps> = ({ client, onClose, 
   const [paymentAmount, setPaymentAmount] = useState('');
   const [returnItems, setReturnItems] = useState<{[key: string]: number}>({});
   const [isProcessing, setIsProcessing] = useState(false);
+  const [showSettleConfirm, setShowSettleConfirm] = useState(false);
+  const [settleAction, setSettleAction] = useState<{
+    type: 'all' | 'individual';
+    itemType?: string;
+    quantity?: number;
+  } | null>(null);
 
   const totalDebt = getClientTotalDebt(client.id);
   const bottlesOwed = getClientBottlesOwed(client.id);
@@ -452,36 +459,8 @@ const ClientActionModal: React.FC<ClientActionModalProps> = ({ client, onClose, 
                 <div className="flex-1"></div>
                 <button
                   onClick={async () => {
-                    const confirmed = window.confirm(
-                      `Return ALL available Chopine & Bouteille items for ${client.name}? This will mark all returnable containers as returned.`
-                    );
-                    if (confirmed) {
-                      try {
-                        setIsProcessing(true);
-                        // Set all available items to be returned
-                        const allReturns: {[key: string]: number} = {};
-                        Object.entries(availableItems).forEach(([itemType, data]) => {
-                          allReturns[itemType] = data.total;
-                        });
-                        
-                        // Process all returns
-                        for (const [itemType, quantity] of Object.entries(allReturns)) {
-                          if (quantity > 0) {
-                            await processItemReturn(itemType, quantity);
-                          }
-                        }
-                        onClose();
-                        // Reset calculator after settling all returnables
-                        if (onResetCalculator) {
-                          onResetCalculator();
-                        }
-                      } catch (error) {
-                        console.error('Error settling all returnables:', error);
-                        alert('Failed to settle all returnables');
-                      } finally {
-                        setIsProcessing(false);
-                      }
-                    }
+                    setSettleAction({ type: 'all' });
+                    setShowSettleConfirm(true);
                   }}
                   disabled={isProcessing || Object.keys(availableItems).length === 0}
                   className="bg-red-500 hover:bg-red-600 text-white p-2 rounded-lg transition-colors disabled:opacity-50 flex items-center gap-1"
@@ -512,33 +491,12 @@ const ClientActionModal: React.FC<ClientActionModalProps> = ({ client, onClose, 
                           <button
                             type="button"
                             onClick={async () => {
-                              const confirmed = window.confirm(
-                                `Return all ${data.total} ${itemType}${data.total > 1 ? 's' : ''} for ${client.name}?`
-                              );
-                              if (confirmed) {
-                                try {
-                                  setIsProcessing(true);
-                                  await processItemReturn(itemType, data.total);
-                                  
-                                  // Force a re-render of the parent component to update scrolling tabs
-                                  window.dispatchEvent(new CustomEvent('creditDataChanged'));
-                                  
-                                  handleClose();
-                                  // Reset calculator after settling individual item
-                                  if (onResetCalculator) {
-                                    onResetCalculator();
-                                  }
-                                } catch (error) {
-                                  console.error('Error settling item type:', error);
-                                  alert(`Failed to settle ${itemType}`);
-                                } finally {
-                                  setIsProcessing(false);
-                                }
-                                
-                                // Force a re-render of the parent component to update scrolling tabs
-                                window.dispatchEvent(new CustomEvent('creditDataChanged'));
-                                
-                              }
+                              setSettleAction({ 
+                                type: 'individual', 
+                                itemType: itemType, 
+                                quantity: data.total 
+                              });
+                              setShowSettleConfirm(true);
                             }}
                             disabled={isProcessing}
                             className="p-1 text-red-500 hover:text-red-700 hover:bg-red-50 rounded transition-colors disabled:opacity-50"
@@ -631,6 +589,69 @@ const ClientActionModal: React.FC<ClientActionModalProps> = ({ client, onClose, 
           )}
         </div>
       </div>
+
+      {/* Settle Confirmation Modal */}
+      {showSettleConfirm && settleAction && (
+        <SettleConfirmationModal
+          isOpen={showSettleConfirm}
+          title={settleAction.type === 'all' ? 'Settle All Returns' : 'Settle Item Returns'}
+          message={
+            settleAction.type === 'all'
+              ? `Return ALL available Chopine & Bouteille items for ${client.name}?`
+              : `Return all ${settleAction.quantity} ${settleAction.itemType}${(settleAction.quantity || 0) > 1 ? 's' : ''} for ${client.name}?`
+          }
+          itemDetails={
+            settleAction.type === 'all'
+              ? `This will mark all returnable containers as returned.`
+              : `This will mark ${settleAction.quantity} ${settleAction.itemType}${(settleAction.quantity || 0) > 1 ? 's' : ''} as returned.`
+          }
+          onConfirm={async () => {
+            try {
+              setIsProcessing(true);
+              
+              if (settleAction.type === 'all') {
+                // Set all available items to be returned
+                const allReturns: {[key: string]: number} = {};
+                Object.entries(availableItems).forEach(([itemType, data]) => {
+                  allReturns[itemType] = data.total;
+                });
+                
+                // Process all returns
+                for (const [itemType, quantity] of Object.entries(allReturns)) {
+                  if (quantity > 0) {
+                    await processItemReturn(itemType, quantity);
+                  }
+                }
+              } else if (settleAction.itemType && settleAction.quantity) {
+                // Process individual item return
+                await processItemReturn(settleAction.itemType, settleAction.quantity);
+              }
+              
+              // Force a re-render of the parent component to update scrolling tabs
+              window.dispatchEvent(new CustomEvent('creditDataChanged'));
+              
+              // Close modals and reset calculator
+              setShowSettleConfirm(false);
+              setSettleAction(null);
+              handleClose();
+              
+              if (onResetCalculator) {
+                onResetCalculator();
+              }
+            } catch (error) {
+              console.error('Error settling items:', error);
+              alert(`Failed to settle ${settleAction.type === 'all' ? 'all items' : settleAction.itemType}`);
+            } finally {
+              setIsProcessing(false);
+            }
+          }}
+          onCancel={() => {
+            setShowSettleConfirm(false);
+            setSettleAction(null);
+          }}
+          isProcessing={isProcessing}
+        />
+      )}
     </div>
   );
 
