@@ -592,11 +592,11 @@ const ClientActionModal: React.FC<ClientActionModalProps> = ({ client, onClose, 
             // Force a re-render of the parent component to update scrolling tabs
             window.dispatchEvent(new CustomEvent('creditDataChanged'));
             
-            handleClose();
             // Reset calculator after settling all returnables
             if (onResetCalculator) {
               onResetCalculator();
             }
+            handleClose();
           } catch (error) {
             console.error('Error settling all returnables:', error);
             alert('Failed to settle all returnables');
@@ -624,11 +624,11 @@ const ClientActionModal: React.FC<ClientActionModalProps> = ({ client, onClose, 
             // Force a re-render of the parent component to update scrolling tabs
             window.dispatchEvent(new CustomEvent('creditDataChanged'));
             
-            handleClose();
             // Reset calculator after settling individual item
             if (onResetCalculator) {
               onResetCalculator();
             }
+            handleClose();
           } catch (error) {
             console.error('Error settling item type:', error);
             alert(`Failed to settle ${settleItemType}`);
