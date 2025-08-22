@@ -48,6 +48,28 @@ const ScrollingTabs: React.FC<ScrollingTabsProps> = ({
   const [longPressTimer, setLongPressTimer] = React.useState<NodeJS.Timeout | null>(null);
   const { getClientTransactions } = useCredit();
 
+  // Track if any modal is open
+  const isAnyModalOpen = selectedClientForAction !== null || selectedClientForDetails !== null;
+
+  // Kill timeline when any modal opens
+  useEffect(() => {
+    if (isAnyModalOpen) {
+      // Kill the timeline when modal opens
+      if (timelineRef.current) {
+        timelineRef.current.kill();
+        timelineRef.current = null;
+      }
+    } else {
+      // Restart timeline when all modals close
+      if (sortedClients.length > 0 && !timelineRef.current) {
+        // Small delay to ensure modal is fully closed
+        setTimeout(() => {
+          setupContinuousScroll();
+        }, 100);
+      }
+    }
+  }, [isAnyModalOpen, sortedClients.length, setupContinuousScroll]);
+
   // Sort clients based on sort option
   const sortedClients = React.useMemo(() => {
     const clientsToSort = [...clients];
