@@ -677,14 +677,124 @@ const ScrollingTabs: React.FC<ScrollingTabsProps> = ({
                       : (() => {
                           // Check if client has returnable items
                           const clientTransactions = getClientTransactions(client.id);
-                          const hasReturnableItems = clientTransactions.some(transaction => {
+                          
+                          // Calculate actual unreturned items
+                          const returnableItems: {[key: string]: number} = {};
+                          
+                          clientTransactions.forEach(transaction => {
                             if (transaction.type === 'payment' || transaction.description.toLowerCase().includes('returned')) {
-                              return false;
+                              return;
                             }
+                            
                             const description = transaction.description.toLowerCase();
-                            return description.includes('chopine') || description.includes('bouteille');
+                            
+                            if (!description.includes('chopine') && !description.includes('bouteille')) {
+                              return;
+                            }
+                            
+                            // Parse chopine items
+                            const chopinePattern = /(\d+)\s+chopines?(?:\s+([^,]*))?/gi;
+                            let chopineMatch;
+                            
+                            while ((chopineMatch = chopinePattern.exec(description)) !== null) {
+                              const quantity = parseInt(chopineMatch[1]);
+                              const brand = chopineMatch[2]?.trim() || '';
+                              const key = brand ? `Chopine ${brand}` : 'Chopine';
+                              
+                              if (!returnableItems[key]) {
+                                returnableItems[key] = 0;
+                              }
+                              returnableItems[key] += quantity;
+                            }
+                            
+                            // Parse bouteille items
+                            const bouteillePattern = /(\d+)\s+(?:(\d+(?:\.\d+)?L)\s+)?bouteilles?(?:\s+([^,]*))?/gi;
+                            let bouteilleMatch;
+                            
+                            while ((bouteilleMatch = bouteillePattern.exec(description)) !== null) {
+                              const quantity = parseInt(bouteilleMatch[1]);
+                              const size = bouteilleMatch[2]?.trim() || '';
+                              const brand = bouteilleMatch[3]?.trim() || '';
+                              
+                              let key;
+                              if (size && brand) {
+                                key = `${size} ${brand}`;
+                              } else if (brand) {
+                                key = `Bouteille ${brand}`;
+                              } else if (size) {
+                                key = `${size} Bouteille`;
+                              } else {
+                                key = 'Bouteille';
+                              }
+                              
+                              if (!returnableItems[key]) {
+                                returnableItems[key] = 0;
+                              }
+                              returnableItems[key] += quantity;
+                            }
+                            
+                            // Handle items without explicit numbers
+                            if (description.includes('bouteille') && !bouteillePattern.test(description)) {
+                              const sizeMatch = description.match(/(\d+(?:\.\d+)?L)/i);
+                              const brandMatch = description.match(/bouteilles?\s+([^,]*)/i);
+                              const brand = brandMatch?.[1]?.trim() || '';
+                              
+                              let key;
+                              if (sizeMatch && brand) {
+                                key = `${sizeMatch[1]} ${brand}`;
+                              } else if (brand) {
+                                key = `Bouteille ${brand}`;
+                              } else if (sizeMatch) {
+                                key = `${sizeMatch[1]} Bouteille`;
+                              } else {
+                                key = 'Bouteille';
+                              }
+                              
+                              if (!returnableItems[key]) {
+                                returnableItems[key] = 0;
+                              }
+                              returnableItems[key] += 1;
+                            }
+                            
+                            if (description.includes('chopine') && !chopinePattern.test(description)) {
+                              const brandMatch = description.match(/chopines?\s+([^,]*)/i);
+                              const brand = brandMatch?.[1]?.trim() || '';
+                              const key = brand ? `Chopine ${brand}` : 'Chopine';
+                              
+                              if (!returnableItems[key]) {
+                                returnableItems[key] = 0;
+                              }
+                              returnableItems[key] += 1;
+                            }
                           });
-                          return hasReturnableItems ? 'animate-small-debt-shake' : '';
+                          
+                          // Calculate returned quantities
+                          const returnedQuantities: {[key: string]: number} = {};
+                          clientTransactions
+                            .filter(transaction => transaction.type === 'debt' && transaction.description.toLowerCase().includes('returned'))
+                            .forEach(transaction => {
+                              const description = transaction.description.toLowerCase();
+                              Object.keys(returnableItems).forEach(itemType => {
+                                if (description.includes(itemType.toLowerCase())) {
+                                  const match = description.match(/returned:\s*(\d+)\s+/);
+                                  if (match) {
+                                    if (!returnedQuantities[itemType]) {
+                                      returnedQuantities[itemType] = 0;
+                                    }
+                                    returnedQuantities[itemType] += parseInt(match[1]);
+                                  }
+                                }
+                              });
+                            });
+                          
+                          // Check if there are any unreturned items
+                          const hasUnreturnedItems = Object.entries(returnableItems).some(([itemType, total]) => {
+                            const returned = returnedQuantities[itemType] || 0;
+                            const remaining = Math.max(0, total - returned);
+                            return remaining > 0;
+                          });
+                          
+                          return hasUnreturnedItems ? 'animate-small-debt-shake' : '';
                         })()
                   }`}
                   style={{
