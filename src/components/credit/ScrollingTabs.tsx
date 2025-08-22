@@ -261,49 +261,25 @@ const ScrollingTabs: React.FC<ScrollingTabsProps> = ({
         return;
       }
       
-      // Calculate current progress based on position
-      const currentProgress = calculateTimelineProgress();
-      
       // Kill existing timeline
       if (timelineRef.current) {
         timelineRef.current.kill();
         timelineRef.current = null;
       }
       
-      // Create new timeline starting from calculated progress
+      // Create new timeline starting from current position (no jumping)
       const container = containerRef.current;
       const content = contentRef.current;
       
       if (container && content) {
         const containerWidth = container.offsetWidth;
         const contentWidth = content.scrollWidth;
-        const totalDistance = contentWidth + containerWidth;
-        const duration = totalDistance / 60;
         
-        // Get current position to continue from where user left it
+        // Get current position and continue from exactly where it was paused
         const currentX = gsap.getProperty(content, "x") as number;
         
-        // Create new timeline
-        timelineRef.current = gsap.timeline({ repeat: -1, ease: "none" });
-        timelineRef.current
-          .to(content, {
-            x: -contentWidth, // Continue to left exit point
-            duration: duration * (1 - currentProgress), // Adjust duration for remaining distance
-            ease: "none"
-          })
-          .to(content, {
-            x: containerWidth, // Reset to right entry point
-            duration: 0,
-            ease: "none"
-          })
-          .to(content, {
-            x: -contentWidth, // Full cycle
-            duration: duration,
-            ease: "none",
-            repeat: -1
-          });
-        
-        timelineRef.current.play();
+        // Use the restartTimelineFromPosition helper to resume from current position
+        restartTimelineFromPosition(currentX);
         
       }
     };
@@ -433,9 +409,10 @@ const ScrollingTabs: React.FC<ScrollingTabsProps> = ({
     const interval = setInterval(() => {
       if (timelineRef.current && !selectedClientForDetails && !selectedClientForAction && !linkedClient) {
         const isPaused = timelineRef.current.paused();
-        const isActive = timelineRef.current.isActive();
         if (isPaused && !isDragging) {
-          timelineRef.current.resume();
+          // Don't use resume() - restart from current position to avoid jumping
+          const currentX = gsap.getProperty(contentRef.current, "x") as number;
+          restartTimelineFromPosition(currentX);
         }
       }
     }, 2000); // Check every 2 seconds
@@ -460,7 +437,9 @@ const ScrollingTabs: React.FC<ScrollingTabsProps> = ({
           // Resume timeline after clearing animation
           setTimeout(() => {
             if (timelineRef.current && timelineRef.current.paused() && sortedClients.length > 0 && !selectedClientForDetails && !selectedClientForAction && !isDragging && !linkedClient) {
-              timelineRef.current.resume();
+              // Don't use resume() - restart from current position to avoid jumping
+              const currentX = gsap.getProperty(contentRef.current, "x") as number;
+              restartTimelineFromPosition(currentX);
             }
           }, 100); // Small delay to ensure all state is updated
         }, 3000);
@@ -473,7 +452,9 @@ const ScrollingTabs: React.FC<ScrollingTabsProps> = ({
       // No persistent animation - ensure timeline is running if it should be
       setTimeout(() => {
         if (timelineRef.current && timelineRef.current.paused() && sortedClients.length > 0 && !selectedClientForDetails && !selectedClientForAction && !isDragging && !linkedClient) {
-          timelineRef.current.resume();
+          // Don't use resume() - restart from current position to avoid jumping
+          const currentX = gsap.getProperty(contentRef.current, "x") as number;
+          restartTimelineFromPosition(currentX);
         }
       }, 50); // Quick check after state changes
     }
