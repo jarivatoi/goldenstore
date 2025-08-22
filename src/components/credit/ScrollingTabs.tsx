@@ -95,11 +95,7 @@ const ScrollingTabs: React.FC<ScrollingTabsProps> = ({
         }, 100);
       } else if (sortedClients && sortedClients.length > 0 && !timelineRef.current && pausedPosition === null) {
         // If no stored position, start from beginning
-        setTimeout(() => {
-          setTimeout(() => {
-            setupContinuousScroll();
-          }, 0);
-        }, 100);
+        setupContinuousScroll();
       }
     }
   }, [isAnyModalOpen, sortedClients, pausedPosition]);
