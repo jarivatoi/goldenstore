@@ -199,13 +199,6 @@ const ScrollingTabs: React.FC<ScrollingTabsProps> = ({
   const setupContinuousScroll = useCallback(() => {
     console.log('🎬 setupContinuousScroll called at:', new Date().toLocaleTimeString(), 'clients:', sortedClients.length);
     console.log('🎬 Called from stack:', new Error().stack?.split('\n').slice(1, 4).join('\n'));
-    console.log('🎬 setupContinuousScroll called at:', new Date().toLocaleTimeString(), 'clients:', sortedClients.length);
-    // Don't setup animation if there are no clients
-    if (sortedClients.length === 0) {
-      console.log('❌ No clients, skipping setup');
-      console.log('❌ No clients, skipping setup');
-      return;
-    }
     
     if (!contentRef.current || !containerRef.current || sortedClients.length === 0) return;
 
@@ -214,15 +207,13 @@ const ScrollingTabs: React.FC<ScrollingTabsProps> = ({
     
     // Only clean up if we're explicitly re-initializing
     if (timelineRef.current && timelineRef.current.isActive()) {
-      console.log('⚠️ Active timeline detected, should NOT kill it at:', new Date().toLocaleTimeString());
-      console.log('⚠️ Active timeline detected, should NOT kill it');
+      console.log('⚠️ Active timeline detected, preserving it at:', new Date().toLocaleTimeString());
       return;
     }
 
     // Only reset position if timeline is not active
     if (!timelineRef.current || !timelineRef.current.isActive()) {
-      console.log('🔄 Resetting position because timeline is not active at:', new Date().toLocaleTimeString());
-      console.log('🔄 Resetting position because timeline is not active');
+      console.log('🔄 Resetting position and creating new timeline at:', new Date().toLocaleTimeString());
       gsap.set(content, { x: 0 });
     }
     
@@ -302,37 +293,32 @@ const ScrollingTabs: React.FC<ScrollingTabsProps> = ({
   // Setup animation when clients change
   useEffect(() => {
     console.log('🔄 useEffect triggered - clients.length:', clients.length, 'sortedClients.length:', sortedClients.length, 'at:', new Date().toLocaleTimeString());
-    // Don't cleanup animation if clients temporarily become 0 (component remount)
-    if (clients.length === 0 && sortedClients.length === 0) {
-      console.log('❌ No clients, cleaning up animations');
-      // Don't kill timeline immediately - wait to see if clients come back
-      setTimeout(() => {
-        // Only cleanup if clients are still empty after delay
-        if (clients.length === 0 && sortedClients.length === 0) {
-          console.log('🔪 Killing timeline due to no clients (after delay)');
-          if (timelineRef.current) {
-            timelineRef.current.kill();
-            timelineRef.current = null;
-          }
-          
-          if (draggableRef.current) {
-            draggableRef.current.forEach(d => d.kill());
-            draggableRef.current = null;
-          }
-        } else {
-          console.log('✅ Clients returned, keeping timeline alive');
-        }
-      }, 100); // 100ms delay to handle temporary unmount/remount
-      return;
-    }
-    
-    // Only setup once when clients are first loaded, and prevent re-setup during modal interactions
+    // Only setup once when clients are first loaded
     if (!timelineRef.current && sortedClients.length > 0) {
       console.log('✨ Setting up timeline for first time at:', new Date().toLocaleTimeString());
       setTimeout(() => {
         console.log('⏰ Timeout executed, calling setupContinuousScroll at:', new Date().toLocaleTimeString());
         setupContinuousScroll();
       }, 0);
+    }
+    
+    // Clean up only if clients are truly gone (not temporary)
+    if (sortedClients.length === 0 && timelineRef.current) {
+      console.log('❌ No clients, scheduling cleanup check');
+      setTimeout(() => {
+        if (sortedClients.length === 0) {
+          console.log('🔪 Killing timeline due to no clients');
+          if (timelineRef.current) {
+            timelineRef.current.kill();
+            timelineRef.current = null;
+          }
+          if (draggableRef.current) {
+            draggableRef.current.forEach(d => d.kill());
+            draggableRef.current = null;
+          }
+        }
+      }, 500);
+      return;
     }
   }, [sortedClients.length]); // Remove setupContinuousScroll dependency to prevent re-triggering
 
