@@ -47,11 +47,14 @@ const ClientGrid: React.FC<ClientGridProps> = ({
   useEffect(() => {
     if (!contentRef.current || !containerRef.current || clients.length === 0) return;
 
+    console.log('🎯 ClientGrid Draggable setup triggered - clients:', clients.length, 'at:', new Date().toLocaleTimeString());
+    
     const container = containerRef.current;
     const content = contentRef.current;
     
     // Kill any existing draggable
     if (draggableRef.current) {
+      console.log('🔪 ClientGrid killing existing draggable at:', new Date().toLocaleTimeString());
       draggableRef.current.forEach(d => d.kill());
       draggableRef.current = null;
     }
@@ -70,6 +73,7 @@ const ClientGrid: React.FC<ClientGridProps> = ({
       const maxDrag = Math.max(0, contentWidth - containerWidth);
       
       // Create draggable instance
+      console.log('✨ ClientGrid creating new draggable at:', new Date().toLocaleTimeString());
       draggableRef.current = Draggable.create(content, {
         type: "x",
         bounds: {
@@ -159,6 +163,7 @@ const ClientGrid: React.FC<ClientGridProps> = ({
 
     return () => {
       if (draggableRef.current) {
+        console.log('🧹 ClientGrid cleanup - killing draggable at:', new Date().toLocaleTimeString());
         draggableRef.current.forEach(d => d.kill());
         draggableRef.current = null;
       }

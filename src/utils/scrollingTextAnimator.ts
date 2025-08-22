@@ -29,6 +29,7 @@ export class ScrollingTextAnimator {
   private isAnimating = false;
 
   constructor(config: ScrollingTextConfig) {
+    console.log('📜 ScrollingTextAnimator created for text:', config.text.substring(0, 20) + '...', 'at:', new Date().toLocaleTimeString());
     this.container = config.container;
     this.textElement = config.textElement;
     this.text = config.text;
@@ -165,6 +166,7 @@ export class ScrollingTextAnimator {
   }
 
   public stop(): void {
+    console.log('🛑 ScrollingTextAnimator stopped at:', new Date().toLocaleTimeString());
     this.isAnimating = false;
     
     if (this.animationId) {

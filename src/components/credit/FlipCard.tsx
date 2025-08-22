@@ -33,6 +33,8 @@ const FlipCard: React.FC<FlipCardProps> = ({
   useEffect(() => {
     if (!cardRef.current || !frontRef.current || !backRef.current) return;
 
+    console.log('🎴 FlipCard effect triggered - shouldFlip:', shouldFlip, 'at:', new Date().toLocaleTimeString());
+    
     const card = cardRef.current;
     const front = frontRef.current;
     const back = backRef.current;
@@ -63,9 +65,11 @@ const FlipCard: React.FC<FlipCardProps> = ({
     // Create flip animation timeline
     const createFlipTimeline = () => {
       if (timelineRef.current) {
+        console.log('🔪 FlipCard killing existing timeline at:', new Date().toLocaleTimeString());
         timelineRef.current.kill();
       }
 
+      console.log('✨ FlipCard creating new timeline - shouldFlip:', shouldFlip, 'at:', new Date().toLocaleTimeString());
       timelineRef.current = gsap.timeline({ 
         repeat: shouldFlip ? -1 : 0,
         delay: flipDelay,
@@ -95,6 +99,7 @@ const FlipCard: React.FC<FlipCardProps> = ({
 
     return () => {
       if (timelineRef.current) {
+        console.log('🧹 FlipCard cleanup - killing timeline at:', new Date().toLocaleTimeString());
         timelineRef.current.kill();
       }
     };
