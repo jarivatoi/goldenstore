@@ -78,12 +78,25 @@ const ScrollingTabs: React.FC<ScrollingTabsProps> = ({
     if (isAnyModalOpen) {
       // Pause the timeline when modal opens
       if (timelineRef.current) {
+        console.log('🛑 Pausing timeline for modal');
         timelineRef.current.pause();
       }
     } else {
       // Resume the timeline when modal closes
-      if (timelineRef.current && timelineRef.current.paused()) {
-        timelineRef.current.resume();
+      console.log('▶️ Modal closed, checking timeline state');
+      if (timelineRef.current) {
+        if (timelineRef.current.paused()) {
+          console.log('▶️ Resuming paused timeline');
+          timelineRef.current.resume();
+        } else {
+          console.log('⚠️ Timeline not paused, restarting fresh animation');
+          // Timeline might be in weird state, restart it
+          setupContinuousScroll();
+        }
+      } else {
+        console.log('⚠️ No timeline found, setting up fresh animation');
+        // No timeline exists, create fresh one
+        setupContinuousScroll();
       }
     }
   }, [isAnyModalOpen]);
