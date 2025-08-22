@@ -47,6 +47,7 @@ const ScrollingTabs: React.FC<ScrollingTabsProps> = ({
   const [persistentAnimationTabId, setPersistentAnimationTabId] = React.useState<string | null>(null);
   const [selectedClientForDetails, setSelectedClientForDetails] = React.useState<Client | null>(null);
   const [longPressTimer, setLongPressTimer] = React.useState<NodeJS.Timeout | null>(null);
+  const [timelineCount, setTimelineCount] = React.useState(0);
   const { getClientTransactions } = useCredit();
 
   // Sort clients based on sort option
@@ -176,6 +177,8 @@ const ScrollingTabs: React.FC<ScrollingTabsProps> = ({
     if (timelineRef.current) {
       timelineRef.current.kill();
       timelineRef.current = null;
+      setTimelineCount(prev => prev - 1);
+      console.log('🎯 Timeline killed, count decreased to:', timelineCount - 1);
     }
     
     if (draggableRef.current) {
@@ -197,6 +200,9 @@ const ScrollingTabs: React.FC<ScrollingTabsProps> = ({
       
       // Create seamless infinite timeline
       timelineRef.current = gsap.timeline({ repeat: -1, ease: "none" });
+      
+      setTimelineCount(prev => prev + 1);
+      console.log('🎯 New timeline created, count increased to:', timelineCount + 1);
       
       timelineRef.current
         .fromTo(content, 
@@ -228,6 +234,8 @@ const ScrollingTabs: React.FC<ScrollingTabsProps> = ({
             console.log('🎯 Drag started - killing timeline. Progress before kill:', timelineRef.current.progress());
             timelineRef.current.kill();
             timelineRef.current = null;
+            setTimelineCount(prev => prev - 1);
+            console.log('🎯 Timeline killed on drag start, count decreased to:', timelineCount - 1);
           }
           setIsDragging(true);
         },
@@ -288,6 +296,8 @@ const ScrollingTabs: React.FC<ScrollingTabsProps> = ({
       if (timelineRef.current) {
         timelineRef.current.kill();
         timelineRef.current = null;
+        setTimelineCount(prev => prev - 1);
+        console.log('🎯 Timeline killed for restart, count decreased to:', timelineCount - 1);
       }
       
       // Create new timeline starting from calculated progress
@@ -305,6 +315,8 @@ const ScrollingTabs: React.FC<ScrollingTabsProps> = ({
         
         // Create new timeline
         timelineRef.current = gsap.timeline({ repeat: -1, ease: "none" });
+        setTimelineCount(prev => prev + 1);
+        console.log('🎯 Timeline restarted, count increased to:', timelineCount + 1);
         timelineRef.current
           .to(content, {
             x: -contentWidth, // Continue to left exit point
@@ -354,6 +366,8 @@ const ScrollingTabs: React.FC<ScrollingTabsProps> = ({
     return () => {
       if (timelineRef.current) {
         timelineRef.current.kill();
+        setTimelineCount(prev => prev - 1);
+        console.log('🎯 Timeline killed on unmount, count decreased to:', timelineCount - 1);
       }
       if (draggableRef.current) {
         draggableRef.current.forEach(d => d.kill());
@@ -525,6 +539,9 @@ const ScrollingTabs: React.FC<ScrollingTabsProps> = ({
           </h3>
           <span className="text-xs text-gray-500 bg-gray-100 px-2 py-1 rounded-full">
             {sortedClients.length} client{sortedClients.length !== 1 ? 's' : ''}
+          </span>
+          <span className="text-xs text-blue-600 bg-blue-100 px-2 py-1 rounded-full ml-2">
+            Timelines: {timelineCount}
           </span>
         </div>
       </div>
