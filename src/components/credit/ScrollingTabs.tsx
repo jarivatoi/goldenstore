@@ -488,9 +488,6 @@ const ScrollingTabs: React.FC<ScrollingTabsProps> = ({
           <span className="text-xs text-gray-500 bg-gray-100 px-2 py-1 rounded-full">
             {sortedClients.length} client{sortedClients.length !== 1 ? 's' : ''}
           </span>
-          <span className="text-xs text-blue-600 bg-blue-100 px-2 py-1 rounded-full ml-2">
-            Timelines: {timelineCount}
-          </span>
         </div>
       </div>
       <div className="p-3">
@@ -921,6 +918,9 @@ const ScrollingTabs: React.FC<ScrollingTabsProps> = ({
                     </div>
                     </div>
                   </div>
+                );
+            })}
+          </div>
         </div>
       </div>
 
