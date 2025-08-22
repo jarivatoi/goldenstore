@@ -300,10 +300,7 @@ const ScrollingTabs: React.FC<ScrollingTabsProps> = ({
           console.log('🎯 DRAG ENDED at:', new Date().toLocaleTimeString());
         },
         onThrowComplete: function() {
-          // Get the final throw position (where inertia animation ended)
-          const throwEndPosition = gsap.getProperty(content, "x") as number;
           console.log('🎯 THROW COMPLETE - RESUMING TIMELINE at:', new Date().toLocaleTimeString());
-          console.log('🎯 Final throw position:', throwEndPosition);
           console.log('🎯 Timeline paused state:', timelinePausedRef.current);
           
           // Resume timeline if it was paused
@@ -312,8 +309,8 @@ const ScrollingTabs: React.FC<ScrollingTabsProps> = ({
             timelineRef.current.resume();
             timelinePausedRef.current = false;
           } else if (!timelineRef.current) {
-            console.log('🎯 No timeline exists, restarting from throw end position:', throwEndPosition);
-            restartTimelineFromPosition(throwEndPosition);
+            console.log('🎯 No timeline exists, creating fresh one');
+            setupContinuousScroll();
           }
         },
       });
@@ -321,7 +318,7 @@ const ScrollingTabs: React.FC<ScrollingTabsProps> = ({
   }, [sortedClients.length]); // Remove function dependencies to prevent recreation
 
   // Add this helper function to restart the timeline from a specific position
-  const restartTimelineFromPosition = useCallback((startPosition: number) => {
+  const restartTimelineFromPosition2 = useCallback((startPosition: number) => {
     console.log('🚀 restartTimelineFromPosition called with:', startPosition, 'at time:', new Date().toLocaleTimeString());
     console.log('🚀 Called from stack:', new Error().stack?.split('\n').slice(1, 4).join('\n'));
     const container = containerRef.current;
@@ -398,7 +395,127 @@ const ScrollingTabs: React.FC<ScrollingTabsProps> = ({
     console.log('✅ Timeline restart complete at:', new Date().toLocaleTimeString());
   }, [sortedClients.length]); // Remove function dependencies to prevent recreation
 
-  const timelinePausedRef = useRef(false);
+  const setupContinuousScroll2 = useCallback(() => {
+    const content = contentRef.current;
+    const container = containerRef.current;
+    
+    if (!container || !content) {
+      console.log('❌ Missing container or content refs at:', new Date().toLocaleTimeString());
+      return;
+    }
+    
+    // Check if we already have an active timeline
+    if (timelineRef.current && timelineRef.current.isActive()) {
+      console.log('⚠️ Active timeline detected, preserving it at:', new Date().toLocaleTimeString());
+      return;
+    }
+    
+    // If timeline exists but is not active, kill it and create new one
+    if (timelineRef.current && !timelineRef.current.isActive()) {
+      console.log('🔪 Killing inactive timeline and creating new one at:', new Date().toLocaleTimeString());
+      timelineRef.current.kill();
+      timelineRef.current = null;
+    }
+    
+    // Always reset position when creating new timeline
+    console.log('🔄 Resetting position and creating new timeline at:', new Date().toLocaleTimeString());
+    gsap.set(content, { x: 0 });
+    
+    requestAnimationFrame(() => {
+      const containerWidth = container.offsetWidth;
+      const contentWidth = content.scrollWidth;
+      
+      // Calculate total distance including container width gap
+      const totalDistance = contentWidth + containerWidth;
+      const duration = totalDistance / 60; // 60px per second for faster speed
+      
+      console.log('📏 Creating timeline with - containerWidth:', containerWidth, 'contentWidth:', contentWidth, 'duration:', duration);
+      
+      // Create seamless infinite timeline with protection against external interference
+      timelineRef.current = gsap.timeline({ 
+        repeat: -1, 
+        ease: "none",
+        paused: false,
+        immediateRender: true,
+        overwrite: false // Don't let other animations overwrite this
+      });
+      
+      console.log('✨ Created new timeline in setupContinuousScroll at:', new Date().toLocaleTimeString());
+      console.log('📏 Animation params - containerWidth:', containerWidth, 'contentWidth:', contentWidth, 'duration:', duration);
+      timelineRef.current
+        .fromTo(content, 
+          { x: containerWidth }, // Enter from right
+          { 
+            x: -contentWidth, // Exit to left
+            duration: duration,
+            ease: "none",
+            overwrite: false // Prevent external interference
+          });
+      
+      console.log('▶️ Timeline animation started at:', new Date().toLocaleTimeString());
+      // Create draggable instance with updated bounds
+      draggableRef.current = Draggable.create(content, {
+        type: "x",
+        allowEventDefault: false, // Prevent interference with other events
+        allowNativeTouchScrolling: false, // Prevent scroll interference
+        bounds: {
+          minX: -contentWidth,
+          maxX: containerWidth,
+        },
+        edgeResistance: 0.8, // Increased resistance for better control
+        inertia: true,
+        dragResistance: 0.5, // Normal resistance for dragging
+        throwResistance: 1000, // Lower value = more throw, higher = less throw
+        maxDuration: 2, // Shorter inertia duration
+        minDuration: 0.1,
+        overshootTolerance: 0, // No overshooting
+        force3D: true,
+        lockAxis: true, // Lock to horizontal axis only
+        minimumMovement: 3, // Require minimum movement to start drag
+        onDragStart: function() {
+          const dragThreshold = 5;
+          const dx = Math.abs(this.deltaX);
+          const dy = Math.abs(this.deltaY);
+          
+          if ((dx > dragThreshold || dy > dragThreshold) && timelineRef.current && !timelinePausedRef.current) {
+            console.log('🎯 DRAG THRESHOLD EXCEEDED - PAUSING TIMELINE at:', new Date().toLocaleTimeString());
+            console.log('🎯 Timeline was active:', timelineRef.current.isActive());
+            timelineRef.current.pause();
+            timelinePausedRef.current = true;
+          }
+          setIsDragging(true);
+        },
+        onDragEnd: function() {
+          console.log('🎯 DRAG ENDED at:', new Date().toLocaleTimeString());
+          setIsDragging(false);
+          
+          // Get current position after drag
+          const currentX = gsap.getProperty(content, "x") as number;
+          
+          // Restart timeline from current position after a brief delay
+          requestAnimationFrame(() => {
+            requestAnimationFrame(() => {
+              restartTimelineFromPosition(currentX);
+            });
+          });
+        },
+        onThrowComplete: function() {
+          console.log('🎯 THROW COMPLETE - RESUMING TIMELINE at:', new Date().toLocaleTimeString());
+          console.log('🎯 Timeline paused state:', timelinePausedRef.current);
+          
+          // Resume timeline if it was paused
+          if (timelineRef.current && timelinePausedRef.current) {
+            console.log('🎯 Resuming paused timeline');
+            timelineRef.current.resume();
+            timelinePausedRef.current = false;
+          } else if (!timelineRef.current) {
+            console.log('🎯 No timeline exists, creating fresh one');
+            setupContinuousScroll();
+          }
+        },
+      });
+    });
+  }, [sortedClients.length]); // Remove function dependencies to prevent recreation
 
   // Setup animation when clients change
   useEffect(() => {
