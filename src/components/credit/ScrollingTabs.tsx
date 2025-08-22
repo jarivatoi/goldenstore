@@ -274,13 +274,15 @@ const ScrollingTabs: React.FC<ScrollingTabsProps> = ({
           setIsDragging(true);
         },
         onDragEnd: function() {
-          // Store position when drag ends (before throw begins)
-          const currentX = gsap.getProperty(content, "x") as number;
-          console.log('🎯 Storing paused position on drag end:', currentX);
-          pausedPositionRef.current = currentX;
+          // Just set dragging to false, don't store position yet
           setIsDragging(false);
         },
         onThrowComplete: function() {
+          // Store position when throw/inertia completes (final resting position)
+          const currentX = gsap.getProperty(content, "x") as number;
+          console.log('🎯 Storing paused position on throw complete:', currentX);
+          pausedPositionRef.current = currentX;
+          
           // Restart timeline from paused position after throw completes
           requestAnimationFrame(() => {
             requestAnimationFrame(() => {
