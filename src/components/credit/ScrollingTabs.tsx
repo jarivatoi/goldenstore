@@ -46,13 +46,13 @@ const ScrollingTabs: React.FC<ScrollingTabsProps> = ({
   const [clickedTabId, setClickedTabId] = React.useState<string | null>(null);
   const [selectedClientForDetails, setSelectedClientForDetails] = React.useState<Client | null>(null);
   const [longPressTimer, setLongPressTimer] = React.useState<NodeJS.Timeout | null>(null);
+  const { getClientTransactions } = useCredit();
   
   // Debug: Track what causes component to remount
   React.useEffect(() => {
     console.log('🔍 ScrollingTabs MOUNTED with clients:', sortedClients.length, 'at:', new Date().toLocaleTimeString());
     return () => {
       console.log('💀 ScrollingTabs UNMOUNTING with clients:', sortedClients.length, 'at:', new Date().toLocaleTimeString());
-      const timelinePausedRef = useRef(false);
       console.log('💀 Unmount stack trace:', new Error().stack?.split('\n').slice(1, 6).join('\n'));
     };
   }, []); // Empty dependency array - only runs on mount/unmount
@@ -283,235 +283,31 @@ const ScrollingTabs: React.FC<ScrollingTabsProps> = ({
         lockAxis: true, // Lock to horizontal axis only
         minimumMovement: 3, // Require minimum movement to start drag
         onDragStart: function() {
-          const dragThreshold = 5;
-          const dx = Math.abs(this.deltaX);
-          const dy = Math.abs(this.deltaY);
-          
-          if ((dx > dragThreshold || dy > dragThreshold) && timelineRef.current && !timelinePausedRef.current) {
-            console.log('🎯 DRAG THRESHOLD EXCEEDED - PAUSING TIMELINE at:', new Date().toLocaleTimeString());
+          // Kill the timeline on drag start but don't store position yet
+          if (timelineRef.current) {
+            console.log('🎯 DRAG STARTED - KILLING TIMELINE at:', new Date().toLocaleTimeString());
             console.log('🎯 Timeline was active:', timelineRef.current.isActive());
-            timelineRef.current.pause();
-            timelinePausedRef.current = true;
+            timelineRef.current.kill();
+            timelineRef.current = null;
           }
           setIsDragging(true);
         },
         onDragEnd: function() {
-          console.log('🎯 DRAG ENDED at:', new Date().toLocaleTimeString());
+          // Just set dragging to false, don't store position yet
+          setIsDragging(false);
           console.log('🎯 DRAG ENDED at:', new Date().toLocaleTimeString());
         },
         onThrowComplete: function() {
-          console.log('🎯 THROW COMPLETE - RESUMING TIMELINE at:', new Date().toLocaleTimeString());
-          console.log('🎯 Timeline paused state:', timelinePausedRef.current);
-          
-          // Resume timeline if it was paused
-          if (timelineRef.current && timelinePausedRef.current) {
-            console.log('🎯 Resuming paused timeline');
-            timelineRef.current.resume();
-            timelinePausedRef.current = false;
-          } else if (!timelineRef.current) {
-            console.log('🎯 No timeline exists, creating fresh one');
-            setupContinuousScroll();
-          }
-        },
-      });
-    });
-  }, [sortedClients.length]); // Remove function dependencies to prevent recreation
-
-  // Add this helper function to restart the timeline from a specific position
-  const restartTimelineFromPosition2 = useCallback((startPosition: number) => {
-    console.log('🚀 restartTimelineFromPosition called with:', startPosition, 'at time:', new Date().toLocaleTimeString());
-    console.log('🚀 Called from stack:', new Error().stack?.split('\n').slice(1, 4).join('\n'));
-    const container = containerRef.current;
-    const content = contentRef.current;
-    
-    if (!container || !content) {
-      console.log('❌ Missing container or content refs at:', new Date().toLocaleTimeString());
-      return;
-    }
-    
-    const containerWidth = container.offsetWidth;
-    const contentWidth = content.scrollWidth;
-    console.log('📏 Container width:', containerWidth, 'Content width:', contentWidth);
-    
-    // FIX: If position is off-screen, reset to visible position
-    let adjustedPosition = startPosition;
-    if (startPosition > containerWidth || startPosition < -contentWidth) {
-      console.log('🔧 Position off-screen, resetting to container width:', containerWidth);
-      adjustedPosition = containerWidth; // Start from right edge (visible)
-    }
-    
-    // Kill any existing timeline
-    if (timelineRef.current) {
-      console.log('🔪 Killing existing timeline at:', new Date().toLocaleTimeString());
-      timelineRef.current.kill();
-      timelineRef.current = null;
-    }
-    
-    // Calculate total distance for full cycle
-    const totalDistance = contentWidth + containerWidth;
-    const fullCycleDuration = totalDistance / 60; // 60px per second
-    console.log('⏱️ Full cycle duration:', fullCycleDuration);
-    
-    // Create new infinite timeline that matches setupContinuousScroll
-    timelineRef.current = gsap.timeline({ repeat: -1, ease: "none" });
-    console.log('✨ Created new timeline at:', new Date().toLocaleTimeString());
-    
-    // Set initial position
-    gsap.set(content, { x: adjustedPosition });
-    console.log('📍 Set initial position to:', adjustedPosition, '(original was:', startPosition, ')');
-    
-    // Calculate remaining distance from current position to end
-    const remainingDistance = Math.abs(adjustedPosition - (-contentWidth));
-    const remainingDuration = remainingDistance / 60; // 60px per second
-    console.log('📐 Remaining distance:', remainingDistance, 'Duration:', remainingDuration);
-    
-    // Continue from current position to end, then start infinite loop
-    if (remainingDuration > 0) {
-      console.log('▶️ Starting animation from current position at:', new Date().toLocaleTimeString());
-      timelineRef.current
-        .to(content, { 
-          x: -contentWidth,
-          duration: remainingDuration,
-          ease: "none"
-        })
-        .set(content, { x: containerWidth }) // Jump to right edge instantly
-        .to(content, {
-          x: -contentWidth,
-          repeat: -1, // Infinite repeat of full cycle
-          duration: fullCycleDuration,
-          ease: "none"
-        });
-    } else {
-      console.log('🔄 Starting fresh cycle at:', new Date().toLocaleTimeString());
-      timelineRef.current
-        .set(content, { x: containerWidth }) // Jump to right edge instantly
-        .to(content, {
-          x: -contentWidth,
-          repeat: -1, // Infinite repeat of full cycle
-          duration: fullCycleDuration,
-          ease: "none"
-        });
-    }
-    console.log('✅ Timeline restart complete at:', new Date().toLocaleTimeString());
-  }, [sortedClients.length]); // Remove function dependencies to prevent recreation
-
-  const setupContinuousScroll2 = useCallback(() => {
-    const content = contentRef.current;
-    const container = containerRef.current;
-    
-    if (!container || !content) {
-      console.log('❌ Missing container or content refs at:', new Date().toLocaleTimeString());
-      return;
-    }
-    
-    // Check if we already have an active timeline
-    if (timelineRef.current && timelineRef.current.isActive()) {
-      console.log('⚠️ Active timeline detected, preserving it at:', new Date().toLocaleTimeString());
-      return;
-    }
-    
-    // If timeline exists but is not active, kill it and create new one
-    if (timelineRef.current && !timelineRef.current.isActive()) {
-      console.log('🔪 Killing inactive timeline and creating new one at:', new Date().toLocaleTimeString());
-      timelineRef.current.kill();
-      timelineRef.current = null;
-    }
-    
-    // Always reset position when creating new timeline
-    console.log('🔄 Resetting position and creating new timeline at:', new Date().toLocaleTimeString());
-    gsap.set(content, { x: 0 });
-    
-    requestAnimationFrame(() => {
-      const containerWidth = container.offsetWidth;
-      const contentWidth = content.scrollWidth;
-      
-      // Calculate total distance including container width gap
-      const totalDistance = contentWidth + containerWidth;
-      const duration = totalDistance / 60; // 60px per second for faster speed
-      
-      console.log('📏 Creating timeline with - containerWidth:', containerWidth, 'contentWidth:', contentWidth, 'duration:', duration);
-      
-      // Create seamless infinite timeline with protection against external interference
-      timelineRef.current = gsap.timeline({ 
-        repeat: -1, 
-        ease: "none",
-        paused: false,
-        immediateRender: true,
-        overwrite: false // Don't let other animations overwrite this
-      });
-      
-      console.log('✨ Created new timeline in setupContinuousScroll at:', new Date().toLocaleTimeString());
-      console.log('📏 Animation params - containerWidth:', containerWidth, 'contentWidth:', contentWidth, 'duration:', duration);
-      timelineRef.current
-        .fromTo(content, 
-          { x: containerWidth }, // Enter from right
-          { 
-            x: -contentWidth, // Exit to left
-            duration: duration,
-            ease: "none",
-            overwrite: false // Prevent external interference
-          });
-      
-      console.log('▶️ Timeline animation started at:', new Date().toLocaleTimeString());
-      // Create draggable instance with updated bounds
-      draggableRef.current = Draggable.create(content, {
-        type: "x",
-        allowEventDefault: false, // Prevent interference with other events
-        allowNativeTouchScrolling: false, // Prevent scroll interference
-        bounds: {
-          minX: -contentWidth,
-          maxX: containerWidth,
-        },
-        edgeResistance: 0.8, // Increased resistance for better control
-        inertia: true,
-        dragResistance: 0.5, // Normal resistance for dragging
-        throwResistance: 1000, // Lower value = more throw, higher = less throw
-        maxDuration: 2, // Shorter inertia duration
-        minDuration: 0.1,
-        overshootTolerance: 0, // No overshooting
-        force3D: true,
-        lockAxis: true, // Lock to horizontal axis only
-        minimumMovement: 3, // Require minimum movement to start drag
-        onDragStart: function() {
-          const dragThreshold = 5;
-          const dx = Math.abs(this.deltaX);
-          const dy = Math.abs(this.deltaY);
-          
-          if ((dx > dragThreshold || dy > dragThreshold) && timelineRef.current && !timelinePausedRef.current) {
-            console.log('🎯 DRAG THRESHOLD EXCEEDED - PAUSING TIMELINE at:', new Date().toLocaleTimeString());
-            console.log('🎯 Timeline was active:', timelineRef.current.isActive());
-            timelineRef.current.pause();
-            timelinePausedRef.current = true;
-          }
-          setIsDragging(true);
-        },
-        onDragEnd: function() {
-          console.log('🎯 DRAG ENDED at:', new Date().toLocaleTimeString());
-          setIsDragging(false);
-          
-          // Get current position after drag
+          // Store position when throw/inertia completes (final resting position)
           const currentX = gsap.getProperty(content, "x") as number;
+          console.log('🎯 THROW COMPLETE - RESTARTING TIMELINE from position:', currentX, 'at:', new Date().toLocaleTimeString());
           
-          // Restart timeline from current position after a brief delay
+          // Restart timeline from paused position after throw completes
           requestAnimationFrame(() => {
             requestAnimationFrame(() => {
               restartTimelineFromPosition(currentX);
             });
           });
-        },
-        onThrowComplete: function() {
-          console.log('🎯 THROW COMPLETE - RESUMING TIMELINE at:', new Date().toLocaleTimeString());
-          console.log('🎯 Timeline paused state:', timelinePausedRef.current);
-          
-          // Resume timeline if it was paused
-          if (timelineRef.current && timelinePausedRef.current) {
-            console.log('🎯 Resuming paused timeline');
-            timelineRef.current.resume();
-            timelinePausedRef.current = false;
-          } else if (!timelineRef.current) {
-            console.log('🎯 No timeline exists, creating fresh one');
-            setupContinuousScroll();
-          }
         },
       });
     });
