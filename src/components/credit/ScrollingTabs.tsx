@@ -115,15 +115,10 @@ const ScrollingTabs: React.FC<ScrollingTabsProps> = ({
   const restartTimelineFromPosition = useCallback((startPosition: number) => {
     console.log('🚀 restartTimelineFromPosition called with:', startPosition, 'at time:', new Date().toLocaleTimeString());
     console.log('🚀 Called from stack:', new Error().stack?.split('\n').slice(1, 4).join('\n'));
-    console.log('🚀 restartTimelineFromPosition called with:', startPosition, 'at time:', new Date().toLocaleTimeString());
-    console.log('🚀 Called from stack:', new Error().stack?.split('\n').slice(1, 4).join('\n'));
-    console.log('🚀 restartTimelineFromPosition called with:', startPosition, 'at time:', new Date().toLocaleTimeString());
     const container = containerRef.current;
     const content = contentRef.current;
     
     if (!container || !content) {
-      console.log('❌ Missing container or content refs at:', new Date().toLocaleTimeString());
-      console.log('❌ Missing container or content refs at:', new Date().toLocaleTimeString());
       console.log('❌ Missing container or content refs at:', new Date().toLocaleTimeString());
       return;
     }
@@ -131,14 +126,17 @@ const ScrollingTabs: React.FC<ScrollingTabsProps> = ({
     const containerWidth = container.offsetWidth;
     const contentWidth = content.scrollWidth;
     console.log('📏 Container width:', containerWidth, 'Content width:', contentWidth);
-    console.log('📏 Container width:', containerWidth, 'Content width:', contentWidth);
-    console.log('📏 Container width:', containerWidth, 'Content width:', contentWidth);
+    
+    // FIX: If position is off-screen, reset to visible position
+    let adjustedPosition = startPosition;
+    if (startPosition > containerWidth || startPosition < -contentWidth) {
+      console.log('🔧 Position off-screen, resetting to container width:', containerWidth);
+      adjustedPosition = containerWidth; // Start from right edge (visible)
+    }
     
     // Kill any existing timeline
     if (timelineRef.current) {
       console.log('🔪 Killing existing timeline at:', new Date().toLocaleTimeString());
-      console.log('🔪 Killing existing timeline at:', new Date().toLocaleTimeString());
-      console.log('🔪 Killing existing timeline');
       timelineRef.current.kill();
       timelineRef.current = null;
     }
@@ -147,33 +145,23 @@ const ScrollingTabs: React.FC<ScrollingTabsProps> = ({
     const totalDistance = contentWidth + containerWidth;
     const fullCycleDuration = totalDistance / 60; // 60px per second
     console.log('⏱️ Full cycle duration:', fullCycleDuration);
-    console.log('⏱️ Full cycle duration:', fullCycleDuration);
-    console.log('⏱️ Full cycle duration:', fullCycleDuration);
     
     // Create new infinite timeline that matches setupContinuousScroll
     timelineRef.current = gsap.timeline({ repeat: -1, ease: "none" });
     console.log('✨ Created new timeline at:', new Date().toLocaleTimeString());
-    console.log('✨ Created new timeline at:', new Date().toLocaleTimeString());
-    console.log('✨ Created new timeline');
     
     // Set initial position
-    gsap.set(content, { x: startPosition });
-    console.log('📍 Set initial position to:', startPosition);
-    console.log('📍 Set initial position to:', startPosition);
-    console.log('📍 Set initial position to:', startPosition);
+    gsap.set(content, { x: adjustedPosition });
+    console.log('📍 Set initial position to:', adjustedPosition, '(original was:', startPosition, ')');
     
     // Calculate remaining distance from current position to end
-    const remainingDistance = Math.abs(startPosition - (-contentWidth));
+    const remainingDistance = Math.abs(adjustedPosition - (-contentWidth));
     const remainingDuration = remainingDistance / 60; // 60px per second
-    console.log('📐 Remaining distance:', remainingDistance, 'Duration:', remainingDuration);
-    console.log('📐 Remaining distance:', remainingDistance, 'Duration:', remainingDuration);
     console.log('📐 Remaining distance:', remainingDistance, 'Duration:', remainingDuration);
     
     // Continue from current position to end, then start infinite loop
     if (remainingDuration > 0) {
       console.log('▶️ Starting animation from current position at:', new Date().toLocaleTimeString());
-      console.log('▶️ Starting animation from current position at:', new Date().toLocaleTimeString());
-      console.log('▶️ Starting animation from current position');
       timelineRef.current
         .to(content, { 
           x: -contentWidth,
@@ -189,8 +177,6 @@ const ScrollingTabs: React.FC<ScrollingTabsProps> = ({
         });
     } else {
       console.log('🔄 Starting fresh cycle at:', new Date().toLocaleTimeString());
-      console.log('🔄 Starting fresh cycle at:', new Date().toLocaleTimeString());
-      console.log('🔄 Starting fresh cycle');
       // If already at or past the end, start fresh cycle
       timelineRef.current
         .set(content, { x: containerWidth }) // Jump to right edge instantly
@@ -203,8 +189,6 @@ const ScrollingTabs: React.FC<ScrollingTabsProps> = ({
     }
     
     console.log('✅ Timeline restart complete at:', new Date().toLocaleTimeString());
-    console.log('✅ Timeline restart complete at:', new Date().toLocaleTimeString());
-    console.log('✅ Timeline restart complete');
   }, []); // Remove all dependencies to prevent recreation
 
   // Seamless continuous scroll setup
@@ -318,29 +302,16 @@ const ScrollingTabs: React.FC<ScrollingTabsProps> = ({
     // Only setup once when clients are first loaded
     if (!timelineRef.current && sortedClients.length > 0) {
       console.log('✨ Setting up timeline for first time at:', new Date().toLocaleTimeString());
-      setTimeout(() => {
-        console.log('⏰ Timeout executed, calling setupContinuousScroll at:', new Date().toLocaleTimeString());
-        setupContinuousScroll();
-      }, 0);
+      // Remove timeout to prevent timing issues
+      console.log('⏰ Calling setupContinuousScroll immediately');
+      setupContinuousScroll();
     }
     
-    // Clean up only if clients are truly gone (not temporary)
-    if (sortedClients.length === 0 && timelineRef.current) {
-      console.log('❌ No clients, scheduling cleanup check');
-      setTimeout(() => {
-        if (sortedClients.length === 0) {
-          console.log('🔪 Killing timeline due to no clients');
-          if (timelineRef.current) {
-            timelineRef.current.kill();
-            timelineRef.current = null;
-          }
-          if (draggableRef.current) {
-            draggableRef.current.forEach(d => d.kill());
-            draggableRef.current = null;
-          }
-        }
-      }, 500);
-      return;
+    // Only clean up if clients are truly gone for a longer period
+    if (sortedClients.length === 0) {
+      console.log('❌ No clients detected, but timeline should continue running');
+      // Don't kill timeline immediately - let it continue running
+      // Only kill if clients are gone for a very long time
     }
   }, [sortedClients.length]); // Remove setupContinuousScroll dependency to prevent re-triggering
 
