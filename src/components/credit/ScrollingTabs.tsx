@@ -385,7 +385,7 @@ const ScrollingTabs: React.FC<ScrollingTabsProps> = ({
   };
 
   // Handle tab click - pause timeline and show modal
-  const handleTabDoubleClick = (client: Client) => {
+  const handleTabClick = (client: Client) => {
     // Clear any existing long press timer
     if (longPressTimer) {
       clearTimeout(longPressTimer);
@@ -754,7 +754,7 @@ const ScrollingTabs: React.FC<ScrollingTabsProps> = ({
                       scrollSnapAlign: 'none'
                     })
                   }}
-                  onDoubleClick={() => handleTabDoubleClick(client)}
+                  onClick={() => handleTabClick(client)}
                   onDoubleClick={() => onQuickAdd(client)}
                   onTouchStart={(e) => handleLongPressStart(client, e)}
                   onTouchEnd={handleLongPressEnd}
