@@ -48,8 +48,8 @@ const ScrollingTabs: React.FC<ScrollingTabsProps> = ({
   const [longPressTimer, setLongPressTimer] = React.useState<NodeJS.Timeout | null>(null);
   const { getClientTransactions } = useCredit();
 
-  // Store the current position when timeline is killed
-  const [pausedPosition, setPausedPosition] = React.useState<number | null>(null);
+  // Store the current position when timeline is killed - use ref to prevent state loss
+  const pausedPositionRef = React.useRef<number | null>(null);
 
   // Sort clients based on sort option
   const sortedClients = React.useMemo(() => {
@@ -270,7 +270,7 @@ const ScrollingTabs: React.FC<ScrollingTabsProps> = ({
           if (timelineRef.current) {
             const currentX = gsap.getProperty(content, "x") as number;
            console.log('🎯 Storing paused position on drag start:', currentX);
-            setPausedPosition(currentX);
+            pausedPositionRef.current = currentX;
             timelineRef.current.kill();
             timelineRef.current = null;
           }
@@ -282,11 +282,11 @@ const ScrollingTabs: React.FC<ScrollingTabsProps> = ({
           // Restart timeline from paused position after throw completes
           requestAnimationFrame(() => {
             requestAnimationFrame(() => {
-              console.log('🎯 Throw complete, attempting to restart timeline from position:', pausedPosition);
-              if (pausedPosition !== null) {
-                console.log('🔄 Restarting timeline from position:', pausedPosition);
-                restartTimelineFromPosition(pausedPosition);
-                setPausedPosition(null);
+              console.log('🎯 Throw complete, attempting to restart timeline from position:', pausedPositionRef.current);
+              if (pausedPositionRef.current !== null) {
+                console.log('🔄 Restarting timeline from position:', pausedPositionRef.current);
+                restartTimelineFromPosition(pausedPositionRef.current);
+                pausedPositionRef.current = null;
               } else {
                 console.log('⚠️ No paused position found, setting up fresh animation');
                 setupContinuousScroll();
