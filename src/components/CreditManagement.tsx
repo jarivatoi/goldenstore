@@ -229,15 +229,126 @@ const CreditManagement: React.FC = () => {
           
           // Check if client has returnable items
           const clientTransactions = getClientTransactions(client.id);
-          const hasReturnableItems = clientTransactions.some(transaction => {
+          
+          // Calculate actual unreturned returnable items
+          const returnableItems: {[key: string]: number} = {};
+          
+          clientTransactions.forEach(transaction => {
+            // Only process debt transactions (not payments) AND exclude return transactions
             if (transaction.type === 'payment' || transaction.description.toLowerCase().includes('returned')) {
-              return false;
+              return;
             }
+            
             const description = transaction.description.toLowerCase();
-            return description.includes('chopine') || description.includes('bouteille');
+            
+            // Only process items that contain "chopine" or "bouteille"
+            if (!description.includes('chopine') && !description.includes('bouteille')) {
+              return;
+            }
+            
+            // Look for Chopine items
+            const chopinePattern = /(\d+)\s+chopines?(?:\s+([^,]*))?/gi;
+            let chopineMatch;
+            
+            while ((chopineMatch = chopinePattern.exec(description)) !== null) {
+              const quantity = parseInt(chopineMatch[1]);
+              const brand = chopineMatch[2]?.trim() || '';
+              const key = brand ? `Chopine ${brand}` : 'Chopine';
+              
+              if (!returnableItems[key]) {
+                returnableItems[key] = 0;
+              }
+              returnableItems[key] += quantity;
+            }
+            
+            // Look for Bouteille items
+            const bouteillePattern = /(\d+)\s+(?:(\d+(?:\.\d+)?L)\s+)?bouteilles?(?:\s+([^,]*))?/gi;
+            let bouteilleMatch;
+            
+            while ((bouteilleMatch = bouteillePattern.exec(description)) !== null) {
+              const quantity = parseInt(bouteilleMatch[1]);
+              const size = bouteilleMatch[2]?.trim().toUpperCase() || '';
+              const brand = bouteilleMatch[3]?.trim() || '';
+              
+              let key;
+              if (size && brand) {
+                key = `${size} Bouteille ${brand}`;
+              } else if (brand) {
+                key = `Bouteille ${brand}`;
+              } else if (size) {
+                key = `${size} Bouteille`;
+              } else {
+                key = 'Bouteille';
+              }
+              
+              if (!returnableItems[key]) {
+                returnableItems[key] = 0;
+              }
+              returnableItems[key] += quantity;
+            }
+            
+            // Handle items without explicit numbers (assume quantity 1)
+            if (description.includes('bouteille') && !bouteillePattern.test(description)) {
+              const sizeMatch = description.match(/(\d+(?:\.\d+)?L)/i);
+              const brandMatch = description.match(/bouteilles?\s+([^,]*)/i);
+              const brand = brandMatch?.[1]?.trim() || '';
+              
+              let key;
+              if (sizeMatch && brand) {
+                key = `${sizeMatch[0].toUpperCase()} Bouteille ${brand}`;
+              } else if (brand) {
+                key = `Bouteille ${brand}`;
+              } else if (sizeMatch) {
+                key = `${sizeMatch[0].toUpperCase()} Bouteille`;
+              } else {
+                key = 'Bouteille';
+              }
+              
+              if (!returnableItems[key]) {
+                returnableItems[key] = 0;
+              }
+              returnableItems[key] += 1;
+            }
+            
+            if (description.includes('chopine') && !chopinePattern.test(description)) {
+              const brandMatch = description.match(/chopines?\s+([^,]*)/i);
+              const brand = brandMatch?.[1]?.trim() || '';
+              const key = brand ? `Chopine ${brand}` : 'Chopine';
+              
+              if (!returnableItems[key]) {
+                returnableItems[key] = 0;
+              }
+              returnableItems[key] += 1;
+            }
           });
           
-          return totalDebt > 0 || hasReturnableItems;
+          // Calculate returned quantities
+          const returnedQuantities: {[key: string]: number} = {};
+          clientTransactions
+            .filter(transaction => transaction.type === 'debt' && transaction.description.toLowerCase().includes('returned'))
+            .forEach(transaction => {
+              const description = transaction.description.toLowerCase();
+              Object.keys(returnableItems).forEach(itemType => {
+                if (description.includes(itemType.toLowerCase())) {
+                  const match = description.match(/returned:\s*(\d+)\s+/);
+                  if (match) {
+                    if (!returnedQuantities[itemType]) {
+                      returnedQuantities[itemType] = 0;
+                    }
+                    returnedQuantities[itemType] += parseInt(match[1]);
+                  }
+                }
+              });
+            });
+          
+          // Check if there are any actual unreturned items
+          const hasActualReturnableItems = Object.entries(returnableItems).some(([itemType, total]) => {
+            const returned = returnedQuantities[itemType] || 0;
+            const remaining = Math.max(0, total - returned);
+            return remaining > 0;
+          });
+          
+          return totalDebt > 0 || hasActualReturnableItems;
         });
     }
   };
