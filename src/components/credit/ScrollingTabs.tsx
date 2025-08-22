@@ -288,24 +288,28 @@ const ScrollingTabs: React.FC<ScrollingTabsProps> = ({
             console.log('🎯 DRAG STARTED - KILLING TIMELINE at:', new Date().toLocaleTimeString());
             console.log('🎯 Timeline was active:', timelineRef.current.isActive());
             timelineRef.current.kill();
-            timelineRef.current = null;
+          console.log('🎯 POINTER DOWN - Storing initial position:', this.pointerX, this.pointerY, 'at:', new Date().toLocaleTimeString());
           }
           setIsDragging(true);
         },
         onDragEnd: function() {
           // Just set dragging to false, don't store position yet
           setIsDragging(false);
-          console.log('🎯 DRAG ENDED at:', new Date().toLocaleTimeString());
+          console.log('🎯 POINTER UP at:', new Date().toLocaleTimeString(), 'Exceeded threshold:', dragHasExceededThreshold.current);
         },
         onThrowComplete: function() {
           // Store position when throw/inertia completes (final resting position)
           const currentX = gsap.getProperty(content, "x") as number;
           console.log('🎯 THROW COMPLETE - RESTARTING TIMELINE from position:', currentX, 'at:', new Date().toLocaleTimeString());
           
-          // Restart timeline from paused position after throw completes
-          requestAnimationFrame(() => {
-            requestAnimationFrame(() => {
-              restartTimelineFromPosition(currentX);
+          // Always reset dragging state
+          setIsDragging(false);
+          
+          // If no actual drag occurred (just a click), don't interfere with timeline
+          if (!dragHasExceededThreshold.current) {
+            console.log('🎯 CLICK DETECTED - Timeline should continue running');
+            return;
+          }
             });
           });
         },
