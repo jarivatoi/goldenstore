@@ -202,30 +202,32 @@ const ScrollingTabs: React.FC<ScrollingTabsProps> = ({
   }, []); // Remove all dependencies to prevent recreation
 
   // Seamless continuous scroll setup
-  const setupContinuousScroll = useCallback(() => {
-    console.log('🎬 setupContinuousScroll called at:', new Date().toLocaleTimeString(), 'clients:', sortedClients.length);
-    console.log('🎬 Called from stack:', new Error().stack?.split('\n').slice(1, 4).join('\n'));
-    console.log('🎬 setupContinuousScroll called at:', new Date().toLocaleTimeString(), 'clients:', sortedClients.length);
     console.log('🎬 Called from stack:', new Error().stack?.split('\n').slice(1, 4).join('\n'));
     
     if (!contentRef.current || !containerRef.current || sortedClients.length === 0) return;
 
     const container = containerRef.current;
     const content = contentRef.current;
-    
-    // Only clean up if we're explicitly re-initializing
+    // Check if we already have an active timeline
     if (timelineRef.current && timelineRef.current.isActive()) {
-      console.log('⚠️ Active timeline detected, preserving it at:', new Date().toLocaleTimeString());
       console.log('⚠️ Active timeline detected, preserving it at:', new Date().toLocaleTimeString());
       return;
     }
-
-    // Only reset position if timeline is not active
-    if (!timelineRef.current || !timelineRef.current.isActive()) {
-      console.log('🔄 Resetting position and creating new timeline at:', new Date().toLocaleTimeString());
-      console.log('🔄 Resetting position and creating new timeline at:', new Date().toLocaleTimeString());
-      gsap.set(content, { x: 0 });
+    
+    // If timeline exists but is not active, kill it and create new one
+    if (timelineRef.current && !timelineRef.current.isActive()) {
+      console.log('🔪 Killing inactive timeline and creating new one at:', new Date().toLocaleTimeString());
+      timelineRef.current.kill();
+      timelineRef.current = null;
     }
+    
+    // If timeline exists but is not active, kill it and create new one
+    if (timelineRef.current && !timelineRef.current.isActive()) {
+      console.log('🔪 Killing inactive timeline and creating new one at:', new Date().toLocaleTimeString());
+      timelineRef.current.kill();
+    // Always reset position when creating new timeline
+    console.log('🔄 Resetting position and creating new timeline at:', new Date().toLocaleTimeString());
+    gsap.set(content, { x: 0 });
     
     requestAnimationFrame(() => {
       const containerWidth = container.offsetWidth;
@@ -234,6 +236,10 @@ const ScrollingTabs: React.FC<ScrollingTabsProps> = ({
       // Calculate total distance including container width gap
       const totalDistance = contentWidth + containerWidth;
       const duration = totalDistance / 60; // 60px per second for faster speed
+      
+      console.log('📏 Creating timeline with - containerWidth:', containerWidth, 'contentWidth:', contentWidth, 'duration:', duration);
+      
+      console.log('📏 Creating timeline with - containerWidth:', containerWidth, 'contentWidth:', contentWidth, 'duration:', duration);
       
       // Create seamless infinite timeline with protection against external interference
       timelineRef.current = gsap.timeline({ 
