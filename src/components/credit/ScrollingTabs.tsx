@@ -296,24 +296,29 @@ const ScrollingTabs: React.FC<ScrollingTabsProps> = ({
         },
         onDragEnd: function() {
           // Just set dragging to false, don't store position yet
-          setIsDragging(false);
-          console.log('🎯 POINTER UP at:', new Date().toLocaleTimeString(), 'Exceeded threshold:', dragHasExceededThreshold.current);
-        },
+         // Resume timeline from stored drag end position after throw completes
+         console.log('🎯 THROW COMPLETE - RESTARTING TIMELINE from stored position:', pausedPositionRef.current, 'at:', new Date().toLocaleTimeString());
         onThrowComplete: function() {
           // Store position when throw/inertia completes (final resting position)
           const currentX = gsap.getProperty(content, "x") as number;
           console.log('🎯 THROW COMPLETE - RESTARTING TIMELINE from position:', currentX, 'at:', new Date().toLocaleTimeString());
           
-          // Always reset dragging state
-          setIsDragging(false);
-          
-          // If no actual drag occurred (just a click), don't interfere with timeline
           if (!dragHasExceededThreshold.current) {
             console.log('🎯 CLICK DETECTED - Timeline should continue running');
             return;
           }
+         
+         // Resume timeline from stored position after throw animation completes
+         if (pausedPositionRef.current !== null) {
+           console.log('🚀 Resuming timeline from stored drag end position:', pausedPositionRef.current);
+           restartTimelineFromPosition(pausedPositionRef.current);
+           pausedPositionRef.current = null; // Clear stored position
+         }
         }
-      });
+         // Store position when drag ends (where user lifted finger/mouse)
+         const currentX = gsap.getProperty(contentRef.current, "x") as number;
+         pausedPositionRef.current = currentX;
+         console.log('🎯 DRAG END - Storing position:', currentX, 'at:', new Date().toLocaleTimeString());
     });
   }, [sortedClients.length]); // Remove function dependencies to prevent recreation
 
