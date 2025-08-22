@@ -73,33 +73,17 @@ const ScrollingTabs: React.FC<ScrollingTabsProps> = ({
   // Track if any modal is open
   const isAnyModalOpen = selectedClientForAction !== null || selectedClientForDetails !== null;
 
-  // Kill timeline when any modal opens
+  // Pause timeline when any modal opens, resume when closed
   useEffect(() => {
     if (isAnyModalOpen) {
-      // Store current position before killing timeline
+      // Pause the timeline instead of killing it
       if (timelineRef.current) {
-        const currentX = gsap.getProperty(contentRef.current, "x") as number;
-        setPausedPosition(currentX);
-        timelineRef.current.kill();
-        timelineRef.current = null;
+        timelineRef.current.pause();
       }
     } else {
-      // Restart timeline when all modals close
-      if (clients && clients.length > 0 && !timelineRef.current && pausedPosition !== null) {
-        // Small delay to ensure modal is fully closed
-        setTimeout(() => {
-          setTimeout(() => {
-            restartTimelineFromPosition(pausedPosition);
-            setPausedPosition(null); // Clear stored position after use
-          }, 0);
-        }, 100);
-      } else if (clients && clients.length > 0 && !timelineRef.current && pausedPosition === null) {
-        // If no stored position, start from beginning
-        setTimeout(() => {
-          setTimeout(() => {
-            setupContinuousScroll();
-          }, 0);
-        }, 100);
+      // Resume the timeline when all modals close
+      if (timelineRef.current && timelineRef.current.paused()) {
+        timelineRef.current.resume();
       }
     }
   }, [isAnyModalOpen, clients, pausedPosition]);
@@ -254,23 +238,20 @@ const ScrollingTabs: React.FC<ScrollingTabsProps> = ({
         overshootTolerance: 0, // No overshooting
         force3D: true,
         onDragStart: function() {
-          // Kill the timeline completely on drag start
+          // Pause the timeline on drag start
           if (timelineRef.current) {
-            timelineRef.current.kill();
-            timelineRef.current = null;
+            timelineRef.current.pause();
           }
           setIsDragging(true);
         },
         onDragEnd: function() {
           setIsDragging(false);
           
-          // Always restart the timeline after drag ends
-          // Use requestAnimationFrame to ensure drag state is fully cleared
+          // Resume the timeline after drag ends
           requestAnimationFrame(() => {
             requestAnimationFrame(() => {
-              if (sortedClients.length > 0) {
-                const currentX = gsap.getProperty(content, "x") as number;
-                restartTimelineFromPosition(currentX);
+              if (timelineRef.current && timelineRef.current.paused()) {
+                timelineRef.current.resume();
               }
             });
           });
