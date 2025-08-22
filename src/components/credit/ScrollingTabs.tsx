@@ -269,6 +269,7 @@ const ScrollingTabs: React.FC<ScrollingTabsProps> = ({
           // Kill the timeline on drag start (original behavior)
           if (timelineRef.current) {
             const currentX = gsap.getProperty(content, "x") as number;
+           console.log('🎯 Storing paused position on drag start:', currentX);
             setPausedPosition(currentX);
             timelineRef.current.kill();
             timelineRef.current = null;
