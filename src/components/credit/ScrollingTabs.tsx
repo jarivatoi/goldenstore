@@ -320,14 +320,6 @@ const ScrollingTabs: React.FC<ScrollingTabsProps> = ({
       setLongPressTimer(null);
     }
     
-    // Add click animation
-    setClickedTabId(client.id);
-    
-    // Remove animation after it completes
-    setTimeout(() => {
-      setClickedTabId(null);
-    }, 600);
-    
     setSelectedClientForAction(client);
   };
 
