@@ -61,14 +61,14 @@ const ScrollingTabs: React.FC<ScrollingTabsProps> = ({
       }
     } else {
       // Restart timeline when all modals close
-      if (sortedClients.length > 0 && !timelineRef.current) {
+      if (sortedClients && sortedClients.length > 0 && !timelineRef.current) {
         // Small delay to ensure modal is fully closed
         setTimeout(() => {
           setupContinuousScroll();
         }, 100);
       }
     }
-  }, [isAnyModalOpen, sortedClients.length, setupContinuousScroll]);
+  }, [isAnyModalOpen, sortedClients, setupContinuousScroll]);
 
   // Sort clients based on sort option
   const sortedClients = React.useMemo(() => {
@@ -173,11 +173,11 @@ const ScrollingTabs: React.FC<ScrollingTabsProps> = ({
   // Seamless continuous scroll setup
   const setupContinuousScroll = useCallback(() => {
     // Don't setup animation if there are no clients
-    if (sortedClients.length === 0) {
+    if (!sortedClients || sortedClients.length === 0) {
       return;
     }
     
-    if (!contentRef.current || !containerRef.current || sortedClients.length === 0) return;
+    if (!contentRef.current || !containerRef.current || !sortedClients || sortedClients.length === 0) return;
 
     const container = containerRef.current;
     const content = contentRef.current;
@@ -259,7 +259,7 @@ const ScrollingTabs: React.FC<ScrollingTabsProps> = ({
   // Setup animation when clients change
   useEffect(() => {
     // Don't setup animation if there are no clients
-    if (sortedClients.length === 0) {
+    if (!sortedClients || sortedClients.length === 0) {
       // Clean up any existing animations
       if (timelineRef.current) {
         timelineRef.current.kill();
