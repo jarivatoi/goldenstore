@@ -517,8 +517,9 @@ const ReturnableItemRow: React.FC<ReturnableItemRowProps> = ({ itemType, quantit
     
     try {
       setIsProcessing(true);
-      const returnDescription = `Returned: ${pendingQuantity} ${itemType}${pendingQuantity > 1 ? 's' : ''}`;
-      await addTransaction(client, returnDescription, 0);
+      // Create unique return transaction with timestamp to prevent ID conflicts
+      const uniqueReturnDescription = `Returned: ${pendingQuantity} ${itemType}${pendingQuantity > 1 ? 's' : ''} - ${new Date().toLocaleDateString('en-GB')} ${new Date().toLocaleTimeString('en-GB', { hour: '2-digit', minute: '2-digit' })}`;
+      await addTransaction(client, uniqueReturnDescription, 0);
       setPendingQuantity(0);
       
       // Force a re-render of the parent component to update scrolling tabs
