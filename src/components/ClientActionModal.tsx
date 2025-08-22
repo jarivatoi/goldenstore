@@ -531,7 +531,7 @@ const ClientActionModal: React.FC<ClientActionModalProps> = ({ client, onClose, 
                          // Force a re-render of the parent component to update scrolling tabs
                          window.dispatchEvent(new CustomEvent('creditDataChanged'));
                          
-                                transaction.description.toLowerCase().includes(itemType.toLowerCase())
+                            return returnedTransactions.map((transaction, index) => (
                               )
                               .slice(-2); // Show last 2 returned transactions
                             
