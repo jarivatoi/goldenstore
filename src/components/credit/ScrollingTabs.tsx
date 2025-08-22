@@ -340,13 +340,8 @@ const ScrollingTabs: React.FC<ScrollingTabsProps> = ({
   // Handle modal close - resume timeline
   const handleModalClose = () => {
     setSelectedClientForAction(null);
-    // Clear persistent animation only if no client is linked to calculator
-    if (!linkedClient) {
-      // Clear the persistent animation when modal closes (if not linked to calculator)
-      setTimeout(() => {
-        setPersistentAnimationTabId(null);
-      }, 100);
-    }
+    // Don't clear persistent animation immediately - let the 3-second timer handle it
+    // This ensures consistent behavior with other modal interactions
   };
 
   // Handle detail modal close - resume timeline
