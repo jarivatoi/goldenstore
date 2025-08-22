@@ -158,29 +158,32 @@ const ScrollingTabs: React.FC<ScrollingTabsProps> = ({
     
     const containerWidth = container.offsetWidth;
     const contentWidth = content.scrollWidth;
-    const totalDistance = contentWidth + containerWidth;
-    const duration = totalDistance / 60;
     
-    // Create new timeline
+    // Calculate total distance including container width gap
+    const totalDistance = contentWidth + containerWidth;
+    const duration = totalDistance / 60; // 60px per second for faster speed
+    
+    // Create seamless infinite timeline (same as setupContinuousScroll)
     timelineRef.current = gsap.timeline({ repeat: -1, ease: "none" });
+    
     timelineRef.current
       .fromTo(content, 
-        { x: startPosition },
+        { x: startPosition }, // Start from paused position
         { 
-          x: -contentWidth,
+          x: -contentWidth, // Exit to left
           duration: duration * Math.abs((startPosition - (-contentWidth)) / totalDistance),
           ease: "none"
         })
       .to(content, {
-        x: containerWidth,
+        x: containerWidth, // Enter from right (seamless loop)
         duration: 0,
         ease: "none"
       })
       .to(content, {
-        x: -contentWidth,
+        x: -contentWidth, // Exit to left again
         duration: duration,
         ease: "none",
-        repeat: -1
+        repeat: -1 // Infinite repeat
       });
     
   }, []);
