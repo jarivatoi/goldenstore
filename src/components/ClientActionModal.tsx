@@ -99,6 +99,9 @@ const ClientActionModal: React.FC<ClientActionModalProps> = ({ client, onClose, 
         return;
       }
       
+      // Track which patterns have matched to prevent duplicates
+      let hasMatched = false;
+      
       // Look for Chopine items with improved parsing
       // Pattern: number + space + chopine (with optional brand after)
       const chopinePattern = /(\d+)\s+chopines?(?:\s+([^,]*))?/gi;
@@ -120,6 +123,7 @@ const ClientActionModal: React.FC<ClientActionModalProps> = ({ client, onClose, 
           amount: transaction.amount,
           quantity: quantity
         });
+        hasMatched = true;
       }
       
       // Look for Bouteille items with improved parsing
@@ -155,10 +159,11 @@ const ClientActionModal: React.FC<ClientActionModalProps> = ({ client, onClose, 
           amount: transaction.amount,
           quantity: quantity
         });
+        hasMatched = true;
       }
       
-      // Handle items without explicit numbers (assume quantity 1)
-      if (description.includes('bouteille') && !bouteillePattern.test(description)) {
+      // Handle items without explicit numbers (assume quantity 1) - only if no pattern matched
+      if (!hasMatched && description.includes('bouteille')) {
         const sizeMatch = description.match(/(\d+(?:\.\d+)?L)/gi);
         const brandMatch = description.match(/bouteilles?\s+([^,]*)/i);
         const brand = brandMatch?.[1]?.trim() || '';
@@ -185,9 +190,10 @@ const ClientActionModal: React.FC<ClientActionModalProps> = ({ client, onClose, 
           amount: transaction.amount,
           quantity: 1
         });
+        hasMatched = true;
       }
       
-      if (description.includes('chopine') && !chopinePattern.test(description)) {
+      if (!hasMatched && description.includes('chopine')) {
         const brandMatch = description.match(/chopines?\s+([^,]*)/i);
         const brand = brandMatch?.[1]?.trim() || '';
         const key = brand ? `Chopine ${brand}` : 'Chopine';
