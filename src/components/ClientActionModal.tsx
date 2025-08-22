@@ -3,6 +3,7 @@ import { createPortal } from 'react-dom';
 import { X, CreditCard, CheckCircle, DollarSign, RotateCcw, Minus, Plus } from 'lucide-react';
 import { Client } from '../types';
 import { useCredit } from '../context/CreditContext';
+import ConfirmationModal from './ConfirmationModal';
 
 interface ClientActionModalProps {
   client: Client;
@@ -23,6 +24,10 @@ const ClientActionModal: React.FC<ClientActionModalProps> = ({ client, onClose, 
   const [paymentAmount, setPaymentAmount] = useState('');
   const [returnItems, setReturnItems] = useState<{[key: string]: number}>({});
   const [isProcessing, setIsProcessing] = useState(false);
+  const [showSettleAllConfirm, setShowSettleAllConfirm] = useState(false);
+  const [showSettleItemConfirm, setShowSettleItemConfirm] = useState(false);
+  const [settleItemType, setSettleItemType] = useState<string>('');
+  const [settleItemQuantity, setSettleItemQuantity] = useState<number>(0);
 
   const totalDebt = getClientTotalDebt(client.id);
   const bottlesOwed = getClientBottlesOwed(client.id);
@@ -430,36 +435,7 @@ const ClientActionModal: React.FC<ClientActionModalProps> = ({ client, onClose, 
                 <div className="flex-1"></div>
                 <button
                   onClick={async () => {
-                    const confirmed = window.confirm(
-                      `Return ALL available Chopine & Bouteille items for ${client.name}? This will mark all returnable containers as returned.`
-                    );
-                    if (confirmed) {
-                      try {
-                        setIsProcessing(true);
-                        // Set all available items to be returned
-                        const allReturns: {[key: string]: number} = {};
-                        Object.entries(availableItems).forEach(([itemType, data]) => {
-                          allReturns[itemType] = data.total;
-                        });
-                        
-                        // Process all returns
-                        for (const [itemType, quantity] of Object.entries(allReturns)) {
-                          if (quantity > 0) {
-                            await processItemReturn(itemType, quantity);
-                          }
-                        }
-                        onClose();
-                        // Reset calculator after settling all returnables
-                        if (onResetCalculator) {
-                          onResetCalculator();
-                        }
-                      } catch (error) {
-                        console.error('Error settling all returnables:', error);
-                        alert('Failed to settle all returnables');
-                      } finally {
-                        setIsProcessing(false);
-                      }
-                    }
+                    setShowSettleAllConfirm(true);
                   }}
                   disabled={isProcessing || Object.keys(availableItems).length === 0}
                   className="bg-red-500 hover:bg-red-600 text-white p-2 rounded-lg transition-colors disabled:opacity-50 flex items-center gap-1"
@@ -490,33 +466,9 @@ const ClientActionModal: React.FC<ClientActionModalProps> = ({ client, onClose, 
                           <button
                             type="button"
                             onClick={async () => {
-                              const confirmed = window.confirm(
-                                `Return all ${data.total} ${itemType}${data.total > 1 ? 's' : ''} for ${client.name}?`
-                              );
-                              if (confirmed) {
-                                try {
-                                  setIsProcessing(true);
-                                  await processItemReturn(itemType, data.total);
-                                  
-                                  // Force a re-render of the parent component to update scrolling tabs
-                                  window.dispatchEvent(new CustomEvent('creditDataChanged'));
-                                  
-                                  handleClose();
-                                  // Reset calculator after settling individual item
-                                  if (onResetCalculator) {
-                                    onResetCalculator();
-                                  }
-                                } catch (error) {
-                                  console.error('Error settling item type:', error);
-                                  alert(`Failed to settle ${itemType}`);
-                                } finally {
-                                  setIsProcessing(false);
-                                }
-                                
-                                // Force a re-render of the parent component to update scrolling tabs
-                                window.dispatchEvent(new CustomEvent('creditDataChanged'));
-                                
-                              }
+                              setSettleItemType(itemType);
+                              setSettleItemQuantity(data.total);
+                              setShowSettleItemConfirm(true);
                             }}
                             disabled={isProcessing}
                             className="p-1 text-red-500 hover:text-red-700 hover:bg-red-50 rounded transition-colors disabled:opacity-50"
@@ -610,6 +562,81 @@ const ClientActionModal: React.FC<ClientActionModalProps> = ({ client, onClose, 
         </div>
       </div>
     </div>
+
+      {/* Settle All Confirmation Modal */}
+      <ConfirmationModal
+        isOpen={showSettleAllConfirm}
+        title="Settle All Returnables"
+        message={`Return ALL available Chopine & Bouteille items for ${client.name}? This will mark all returnable containers as returned.`}
+        confirmText="Settle All"
+        cancelText="Cancel"
+        type="warning"
+        onConfirm={async () => {
+          setShowSettleAllConfirm(false);
+          try {
+            setIsProcessing(true);
+            // Set all available items to be returned
+            const allReturns: {[key: string]: number} = {};
+            Object.entries(availableItems).forEach(([itemType, data]) => {
+              allReturns[itemType] = data.total;
+            });
+            
+            // Process all returns
+            for (const [itemType, quantity] of Object.entries(allReturns)) {
+              if (quantity > 0) {
+                await processItemReturn(itemType, quantity);
+              }
+            }
+            handleClose();
+            // Reset calculator after settling all returnables
+            if (onResetCalculator) {
+              onResetCalculator();
+            }
+          } catch (error) {
+            console.error('Error settling all returnables:', error);
+            alert('Failed to settle all returnables');
+          } finally {
+            setIsProcessing(false);
+          }
+        }}
+        onCancel={() => setShowSettleAllConfirm(false)}
+      />
+
+      {/* Settle Individual Item Confirmation Modal */}
+      <ConfirmationModal
+        isOpen={showSettleItemConfirm}
+        title="Settle Returnable Item"
+        message={`Return all ${settleItemQuantity} ${settleItemType}${settleItemQuantity > 1 ? 's' : ''} for ${client.name}?`}
+        confirmText="Settle"
+        cancelText="Cancel"
+        type="warning"
+        onConfirm={async () => {
+          setShowSettleItemConfirm(false);
+          try {
+            setIsProcessing(true);
+            await processItemReturn(settleItemType, settleItemQuantity);
+            
+            // Force a re-render of the parent component to update scrolling tabs
+            window.dispatchEvent(new CustomEvent('creditDataChanged'));
+            
+            handleClose();
+            // Reset calculator after settling individual item
+            if (onResetCalculator) {
+              onResetCalculator();
+            }
+          } catch (error) {
+            console.error('Error settling item type:', error);
+            alert(`Failed to settle ${settleItemType}`);
+          } finally {
+            setIsProcessing(false);
+          }
+        }}
+        onCancel={() => {
+          setShowSettleItemConfirm(false);
+          setSettleItemType('');
+          setSettleItemQuantity(0);
+        }}
+      />
   );
 
   return createPortal(modalContent, document.body);
