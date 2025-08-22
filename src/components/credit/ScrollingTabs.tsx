@@ -52,7 +52,7 @@ const ScrollingTabs: React.FC<ScrollingTabsProps> = ({
     console.log('🔍 ScrollingTabs MOUNTED with clients:', sortedClients.length, 'at:', new Date().toLocaleTimeString());
     return () => {
       console.log('💀 ScrollingTabs UNMOUNTING with clients:', sortedClients.length, 'at:', new Date().toLocaleTimeString());
-  const timelinePausedRef = useRef(false);
+      const timelinePausedRef = useRef(false);
       console.log('💀 Unmount stack trace:', new Error().stack?.split('\n').slice(1, 6).join('\n'));
     };
   }, []); // Empty dependency array - only runs on mount/unmount
@@ -282,6 +282,11 @@ const ScrollingTabs: React.FC<ScrollingTabsProps> = ({
         force3D: true,
         lockAxis: true, // Lock to horizontal axis only
         minimumMovement: 3, // Require minimum movement to start drag
+        onDragStart: function() {
+          const dragThreshold = 5;
+          const dx = Math.abs(this.deltaX);
+          const dy = Math.abs(this.deltaY);
+          
           if ((dx > dragThreshold || dy > dragThreshold) && timelineRef.current && !timelinePausedRef.current) {
             console.log('🎯 DRAG THRESHOLD EXCEEDED - PAUSING TIMELINE at:', new Date().toLocaleTimeString());
             console.log('🎯 Timeline was active:', timelineRef.current.isActive());
@@ -294,6 +299,7 @@ const ScrollingTabs: React.FC<ScrollingTabsProps> = ({
           console.log('🎯 DRAG ENDED at:', new Date().toLocaleTimeString());
           console.log('🎯 DRAG ENDED at:', new Date().toLocaleTimeString());
         },
+        onThrowComplete: function() {
           // Get the final throw position (where inertia animation ended)
           const throwEndPosition = gsap.getProperty(content, "x") as number;
           console.log('🎯 THROW COMPLETE - RESUMING TIMELINE at:', new Date().toLocaleTimeString());
@@ -391,15 +397,8 @@ const ScrollingTabs: React.FC<ScrollingTabsProps> = ({
     }
     console.log('✅ Timeline restart complete at:', new Date().toLocaleTimeString());
   }, [sortedClients.length]); // Remove function dependencies to prevent recreation
-          requestAnimationFrame(() => {
-            requestAnimationFrame(() => {
-              restartTimelineFromPosition(currentX);
-            });
-          });
-        },
-      });
-    });
-  }, [sortedClients.length]); // Remove function dependencies to prevent recreation
+
+  const timelinePausedRef = useRef(false);
 
   // Setup animation when clients change
   useEffect(() => {
