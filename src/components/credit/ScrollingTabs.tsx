@@ -187,7 +187,6 @@ const ScrollingTabs: React.FC<ScrollingTabsProps> = ({
         });
     } else {
       console.log('🔄 Starting fresh cycle at:', new Date().toLocaleTimeString());
-      // If already at or past the end, start fresh cycle
       timelineRef.current
         .set(content, { x: containerWidth }) // Jump to right edge instantly
         .to(content, {
@@ -203,7 +202,6 @@ const ScrollingTabs: React.FC<ScrollingTabsProps> = ({
   // Seamless continuous scroll setup
   const setupContinuousScroll = useCallback(() => {
     console.log('🎬 Called from stack:', new Error().stack?.split('\n').slice(1, 4).join('\n'));
-    
     // Check if we already have an active timeline
     if (timelineRef.current && timelineRef.current.isActive()) {
       console.log('⚠️ Active timeline detected, preserving it at:', new Date().toLocaleTimeString());
