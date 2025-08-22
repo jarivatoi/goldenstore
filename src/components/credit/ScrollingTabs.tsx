@@ -322,9 +322,6 @@ const ScrollingTabs: React.FC<ScrollingTabsProps> = ({
       setLongPressTimer(null);
     }
     
-    // Prevent event from interfering with timeline
-    event?.stopPropagation?.();
-    
     setSelectedClientForAction(client);
   };
 
