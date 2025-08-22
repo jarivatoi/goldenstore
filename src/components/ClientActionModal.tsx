@@ -283,10 +283,10 @@ const ClientActionModal: React.FC<ClientActionModalProps> = ({ client, onClose, 
   const processItemReturn = async (itemType: string, returnQuantity: number) => {
     
     // Create a return transaction (negative transaction)
-    const returnDescription = `Returned: ${returnQuantity} ${itemType}${returnQuantity > 1 ? 's' : ''}`;
+    const returnDescription = `Returned: ${returnQuantity} ${itemType}${returnQuantity > 1 ? 's' : ''} - ${new Date().toLocaleDateString('en-GB')}`;
     
     try {
-      // Add a return transaction with negative amount or zero amount
+      // Add a return transaction with zero amount and unique description
       await addTransaction(client, returnDescription, 0);
       
     } catch (error) {
