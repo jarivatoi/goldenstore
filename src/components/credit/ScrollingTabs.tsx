@@ -850,7 +850,13 @@ const ScrollingTabs: React.FC<ScrollingTabsProps> = ({
               pausedPositionRef.current = null; // Clear stored position
             } else {
               console.log('🚀 No stored position, setting up fresh timeline');
-              setupContinuousScroll();
+              // Don't create fresh timeline, let the existing one continue or restart naturally
+              setTimeout(() => {
+                if (!timelineRef.current || !timelineRef.current.isActive()) {
+                  console.log('🚀 Creating fresh timeline after modal close');
+                  setupContinuousScroll();
+                }
+              }, 100);
             }
           }}
           onQuickAdd={onQuickAdd}
@@ -873,7 +879,13 @@ const ScrollingTabs: React.FC<ScrollingTabsProps> = ({
               pausedPositionRef.current = null; // Clear stored position
             } else {
               console.log('🚀 No stored position, setting up fresh timeline');
-              setupContinuousScroll();
+              // Don't create fresh timeline, let the existing one continue or restart naturally
+              setTimeout(() => {
+                if (!timelineRef.current || !timelineRef.current.isActive()) {
+                  console.log('🚀 Creating fresh timeline after modal close');
+                  setupContinuousScroll();
+                }
+              }, 100);
             }
           }}
           onQuickAdd={onQuickAdd}
