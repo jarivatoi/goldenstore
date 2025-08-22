@@ -379,9 +379,19 @@ const ScrollingTabs: React.FC<ScrollingTabsProps> = ({
       setLongPressTimer(null);
     }
     
+    // Store current position before opening modal (if timeline is active)
+    if (timelineRef.current && timelineRef.current.isActive()) {
+      const currentX = gsap.getProperty(contentRef.current, "x") as number;
+      pausedPositionRef.current = currentX;
+      console.log('🎬 Storing position before modal open:', currentX);
+      
+      // Kill timeline when opening modal
+      timelineRef.current.kill();
+      timelineRef.current = null;
+      console.log('🎬 Timeline killed for modal');
+    }
+    
     console.log('🎭 Opening modal for client:', client.name);
-    // Don't let modal opening affect the timeline
-    // Timeline should continue running independently
     setSelectedClientForAction(client);
     
     console.log('🎬 Timeline status after click - isActive:', timelineRef.current?.isActive(), 'exists:', !!timelineRef.current);
@@ -829,7 +839,20 @@ const ScrollingTabs: React.FC<ScrollingTabsProps> = ({
       {selectedClientForAction && (
         <ClientActionModal
           client={selectedClientForAction}
-          onClose={() => setSelectedClientForAction(null)}
+          onClose={() => {
+            console.log('🎭 Modal closing, resuming timeline from stored position:', pausedPositionRef.current);
+            setSelectedClientForAction(null);
+            
+            // Resume timeline from stored position after modal closes
+            if (pausedPositionRef.current !== null) {
+              console.log('🚀 Resuming timeline from stored position:', pausedPositionRef.current);
+              restartTimelineFromPosition(pausedPositionRef.current);
+              pausedPositionRef.current = null; // Clear stored position
+            } else {
+              console.log('🚀 No stored position, setting up fresh timeline');
+              setupContinuousScroll();
+            }
+          }}
           onQuickAdd={onQuickAdd}
           onResetCalculator={onResetCalculator}
         />
@@ -839,7 +862,20 @@ const ScrollingTabs: React.FC<ScrollingTabsProps> = ({
       {selectedClientForDetails && (
         <ClientDetailModal
           client={selectedClientForDetails}
-          onClose={() => setSelectedClientForDetails(null)}
+          onClose={() => {
+            console.log('🎭 Detail modal closing, resuming timeline from stored position:', pausedPositionRef.current);
+            setSelectedClientForDetails(null);
+            
+            // Resume timeline from stored position after modal closes
+            if (pausedPositionRef.current !== null) {
+              console.log('🚀 Resuming timeline from stored position:', pausedPositionRef.current);
+              restartTimelineFromPosition(pausedPositionRef.current);
+              pausedPositionRef.current = null; // Clear stored position
+            } else {
+              console.log('🚀 No stored position, setting up fresh timeline');
+              setupContinuousScroll();
+            }
+          }}
           onQuickAdd={onQuickAdd}
         />
       )}
