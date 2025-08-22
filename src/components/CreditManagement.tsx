@@ -47,10 +47,22 @@ const CreditManagement: React.FC = () => {
 
   // Separate search query for main grid (bottom search bar)
   const [mainGridSearchQuery, setMainGridSearchQuery] = useState('');
+  
+  // Debug: Track what causes CreditManagement to re-render
+  React.useEffect(() => {
+    console.log('🏠 CreditManagement re-rendered at:', new Date().toLocaleTimeString());
+    console.log('🏠 State that might cause re-render:', {
+      selectedClient: !!selectedClient,
+      showClientSearch: showClientSearch,
+      linkedClient: linkedClient?.name || 'none',
+      clientFilter: clientFilter
+    });
+  });
 
   // Listen for credit data changes to force re-render
   useEffect(() => {
     const handleCreditDataChanged = () => {
+      console.log('🔄 creditDataChanged event fired at:', new Date().toLocaleTimeString());
       // Force state updates to trigger re-calculation
       setClientFilter(prev => {
         // Trigger filter recalculation by setting to same value
@@ -78,6 +90,8 @@ const CreditManagement: React.FC = () => {
 
   // Get filtered clients for tabs based on selected filter
   const getFilteredClientsForTabs = () => {
+    console.log('🎯 getFilteredClientsForTabs called at:', new Date().toLocaleTimeString());
+    console.log('🎯 Called from stack:', new Error().stack?.split('\n').slice(1, 4).join('\n'));
     let baseClients = searchClients(''); // Don't apply search to scrolling tabs
     
     switch (clientFilter) {

@@ -47,6 +47,16 @@ const ScrollingTabs: React.FC<ScrollingTabsProps> = ({
   const [selectedClientForDetails, setSelectedClientForDetails] = React.useState<Client | null>(null);
   const [longPressTimer, setLongPressTimer] = React.useState<NodeJS.Timeout | null>(null);
   const { getClientTransactions } = useCredit();
+  
+  // Debug: Track what causes component to remount
+  React.useEffect(() => {
+    console.log('🔍 ScrollingTabs MOUNTED with clients:', sortedClients.length, 'at:', new Date().toLocaleTimeString());
+    return () => {
+      console.log('💀 ScrollingTabs UNMOUNTING with clients:', sortedClients.length, 'at:', new Date().toLocaleTimeString());
+      console.log('💀 Unmount stack trace:', new Error().stack?.split('\n').slice(1, 6).join('\n'));
+    };
+  }, []); // Empty dependency array - only runs on mount/unmount
+  
   const sortedClients = React.useMemo(() => {
     const clientsToSort = [...clients];
     
