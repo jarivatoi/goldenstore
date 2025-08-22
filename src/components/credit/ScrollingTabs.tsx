@@ -77,14 +77,19 @@ const ScrollingTabs: React.FC<ScrollingTabsProps> = ({
   useEffect(() => {
     if (isAnyModalOpen) {
       // Store current position before killing timeline
-          restartTimelineFromPosition(pausedPosition);
-          setPausedPosition(null); // Clear stored position after use
+      if (timelineRef.current) {
+        const currentProgress = calculateTimelineProgress();
+        setPausedPosition(currentProgress);
+        timelineRef.current.kill();
+        timelineRef.current = null;
+      }
     } else {
       // Restart timeline when all modals close
-            restartTimelineFromPosition(pausedPosition);
-            setPausedPosition(null); // Clear stored position after use
-          }, 0);
-        }, 100);
+      if (pausedPosition !== null) {
+        setTimeout(() => {
+          restartTimelineFromPosition(pausedPosition);
+          setPausedPosition(null); // Clear stored position after use
+        }, 0);
       } else if (sortedClients && sortedClients.length > 0 && !timelineRef.current && pausedPosition === null) {
         // If no stored position, start from beginning
         setTimeout(() => {
@@ -750,11 +755,11 @@ const ScrollingTabs: React.FC<ScrollingTabsProps> = ({
                       />
                     )}
                     <div className="text-xs text-gray-500 mt-1 text-center">
-              {client.lastTransactionAt.toLocaleDateString('en-GB', {
+                      {client.lastTransactionAt.toLocaleDateString('en-GB', {
                         day: '2-digit',
-                month: 'short',
+                        month: 'short',
                         year: '2-digit'
-              }).replace(/\s/g, '-')}
+                      }).replace(/\s/g, '-')}
                     </div>
                     <div className="text-xs text-gray-500 text-center">
                       {client.lastTransactionAt.toLocaleTimeString('en-GB', {
@@ -762,9 +767,9 @@ const ScrollingTabs: React.FC<ScrollingTabsProps> = ({
                         minute: '2-digit'
                       })}
                     </div>
-                    </div>
                   </div>
-                );
+                </div>
+              );
             })}
           </div>
         </div>
