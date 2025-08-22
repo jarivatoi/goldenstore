@@ -85,7 +85,7 @@ const ScrollingTabs: React.FC<ScrollingTabsProps> = ({
       }
     } else {
       // Restart timeline when all modals close
-      if (sortedClients && sortedClients.length > 0 && !timelineRef.current && pausedPosition !== null) {
+      if (clients && clients.length > 0 && !timelineRef.current && pausedPosition !== null) {
         // Small delay to ensure modal is fully closed
         setTimeout(() => {
           setTimeout(() => {
@@ -93,7 +93,7 @@ const ScrollingTabs: React.FC<ScrollingTabsProps> = ({
             setPausedPosition(null); // Clear stored position after use
           }, 0);
         }, 100);
-      } else if (sortedClients && sortedClients.length > 0 && !timelineRef.current && pausedPosition === null) {
+      } else if (clients && clients.length > 0 && !timelineRef.current && pausedPosition === null) {
         // If no stored position, start from beginning
         setTimeout(() => {
           setTimeout(() => {
@@ -102,7 +102,7 @@ const ScrollingTabs: React.FC<ScrollingTabsProps> = ({
         }, 100);
       }
     }
-  }, [isAnyModalOpen, sortedClients, pausedPosition]);
+  }, [isAnyModalOpen, clients, pausedPosition]);
 
   // Helper function to check if client has overdue returnables (3+ weeks old)
   const hasOverdueReturnables = (client: Client): boolean => {
