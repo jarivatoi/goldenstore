@@ -194,15 +194,10 @@ const ScrollingTabs: React.FC<ScrollingTabsProps> = ({
     const container = containerRef.current;
     const content = contentRef.current;
     
-    // Clean up existing animations
-    if (timelineRef.current) {
-      timelineRef.current.kill();
-      timelineRef.current = null;
-    }
-    
-    if (draggableRef.current) {
-      draggableRef.current.forEach(d => d.kill());
-      draggableRef.current = null;
+    // Only clean up if we're explicitly re-initializing
+    if (timelineRef.current && timelineRef.current.isActive()) {
+      // Don't kill active timeline unless necessary
+      return;
     }
 
     // Reset position and wait for layout
@@ -215,8 +210,14 @@ const ScrollingTabs: React.FC<ScrollingTabsProps> = ({
       const totalDistance = contentWidth + containerWidth;
       const duration = totalDistance / 60; // 60px per second for faster speed
       
-      // Create seamless infinite timeline
-      timelineRef.current = gsap.timeline({ repeat: -1, ease: "none" });
+      // Create seamless infinite timeline with protection against external interference
+      timelineRef.current = gsap.timeline({ 
+        repeat: -1, 
+        ease: "none",
+        paused: false,
+        immediateRender: true,
+        overwrite: false // Don't let other animations overwrite this
+      });
       
       timelineRef.current
         .fromTo(content, 
@@ -224,7 +225,8 @@ const ScrollingTabs: React.FC<ScrollingTabsProps> = ({
           { 
             x: -contentWidth, // Exit to left
             duration: duration,
-            ease: "none"
+            ease: "none",
+            overwrite: false // Prevent external interference
           });
       
       // Create draggable instance with updated bounds
@@ -244,6 +246,8 @@ const ScrollingTabs: React.FC<ScrollingTabsProps> = ({
         minDuration: 0.1,
         overshootTolerance: 0, // No overshooting
         force3D: true,
+        lockAxis: true, // Lock to horizontal axis only
+        minimumMovement: 3, // Require minimum movement to start drag
         onDragStart: function() {
           // Kill the timeline on drag start but don't store position yet
           if (timelineRef.current) {
@@ -269,7 +273,7 @@ const ScrollingTabs: React.FC<ScrollingTabsProps> = ({
         },
       });
     });
-  }, [clients, sortOption, getClientTotalDebt, calculateTimelineProgress, restartTimelineFromPosition]);
+  }, [sortedClients.length, calculateTimelineProgress, restartTimelineFromPosition]);
 
   // Setup animation when clients change
   useEffect(() => {
@@ -288,9 +292,12 @@ const ScrollingTabs: React.FC<ScrollingTabsProps> = ({
       return;
     }
     
-    setTimeout(() => {
-      setupContinuousScroll();
-    }, 0);
+    // Only setup once when clients are first loaded, not on every change
+    if (!timelineRef.current && !draggableRef.current) {
+      setTimeout(() => {
+        setupContinuousScroll();
+      }, 0);
+    }
   }, [clients.length]); // Only depend on client count, not sort order or individual client changes
 
   // Cleanup on unmount
