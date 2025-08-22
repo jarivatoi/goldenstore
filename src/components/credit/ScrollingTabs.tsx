@@ -83,11 +83,13 @@ const ScrollingTabs: React.FC<ScrollingTabsProps> = ({
       if (sortedClients && sortedClients.length > 0 && !timelineRef.current) {
         // Small delay to ensure modal is fully closed
         setTimeout(() => {
-          setupContinuousScroll();
+          setTimeout(() => {
+            setupContinuousScroll();
+          }, 0);
         }, 100);
       }
     }
-  }, [isAnyModalOpen, sortedClients, setupContinuousScroll]);
+  }, [isAnyModalOpen, sortedClients]);
 
   // Helper function to check if client has overdue returnables (3+ weeks old)
   const hasOverdueReturnables = (client: Client): boolean => {
@@ -273,8 +275,10 @@ const ScrollingTabs: React.FC<ScrollingTabsProps> = ({
       return;
     }
     
-    setupContinuousScroll();
-  }, [setupContinuousScroll, clients, sortOption, getClientTotalDebt]);
+    setTimeout(() => {
+      setupContinuousScroll();
+    }, 0);
+  }, [clients, sortOption, getClientTotalDebt]);
 
   // Cleanup on unmount
   useEffect(() => {
