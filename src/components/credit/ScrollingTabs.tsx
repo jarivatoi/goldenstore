@@ -73,21 +73,6 @@ const ScrollingTabs: React.FC<ScrollingTabsProps> = ({
   // Track if any modal is open
   const isAnyModalOpen = selectedClientForAction !== null || selectedClientForDetails !== null;
 
-  // Pause timeline when any modal opens, resume when closed
-  useEffect(() => {
-    if (isAnyModalOpen) {
-      // Pause the timeline when modal opens
-      if (timelineRef.current) {
-        timelineRef.current.pause();
-      }
-    } else {
-      // Resume the timeline when modal closes
-      if (timelineRef.current && timelineRef.current.paused()) {
-        timelineRef.current.resume();
-      }
-    }
-  }, [isAnyModalOpen]);
-
   // Helper function to check if client has overdue returnables (3+ weeks old)
   const hasOverdueReturnables = (client: Client): boolean => {
     const clientTransactions = getClientTransactions(client.id);
