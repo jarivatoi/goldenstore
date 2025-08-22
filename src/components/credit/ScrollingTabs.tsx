@@ -221,13 +221,15 @@ const ScrollingTabs: React.FC<ScrollingTabsProps> = ({
           setIsDragging(false);
           
           // Always restart the timeline after drag ends
-          // Add a small delay to ensure drag state is fully cleared
-          setTimeout(() => {
-            if (!selectedClientForDetails && !selectedClientForAction && !linkedClient && sortedClients.length > 0) {
-              const currentX = gsap.getProperty(content, "x") as number;
-              restartTimelineFromPosition(currentX);
-            }
-          }, 100);
+          // Use requestAnimationFrame to ensure drag state is fully cleared
+          requestAnimationFrame(() => {
+            requestAnimationFrame(() => {
+              if (sortedClients.length > 0) {
+                const currentX = gsap.getProperty(content, "x") as number;
+                restartTimelineFromPosition(currentX);
+              }
+            });
+          });
         },
       });
     });
