@@ -78,10 +78,80 @@ const ClientDetailModal: React.FC<ClientDetailModalProps> = ({ client, onClose, 
 
     switch (transactionFilter) {
       case 'returnable':
+        // Show only returnable items that haven't been fully returned
         return allTransactions.filter(transaction => {
           if (transaction.description.toLowerCase().includes('returned')) return false;
           const description = transaction.description.toLowerCase();
-          return description.includes('chopine') || description.includes('bouteille');
+          if (!description.includes('chopine') && !description.includes('bouteille')) return false;
+          
+          // Check if this transaction's items have been fully returned
+          const returnableItems = getReturnableItems();
+          
+          // Parse this transaction's returnable items
+          const transactionReturnables: {[key: string]: number} = {};
+          
+          // Parse chopine items from this transaction
+          const chopinePattern = /(\d+)\s+chopines?(?:\s+([^,]*))?/gi;
+          let chopineMatch;
+          while ((chopineMatch = chopinePattern.exec(description)) !== null) {
+            const quantity = parseInt(chopineMatch[1]);
+            const brand = chopineMatch[2]?.trim() || '';
+            const key = brand ? `Chopine ${brand}` : 'Chopine';
+            transactionReturnables[key] = (transactionReturnables[key] || 0) + quantity;
+          }
+          
+          // Parse bouteille items from this transaction
+          const bouteillePattern = /(\d+)\s+(?:(\d+(?:\.\d+)?L)\s+)?bouteilles?(?:\s+([^,]*))?/gi;
+          let bouteilleMatch;
+          while ((bouteilleMatch = bouteillePattern.exec(description)) !== null) {
+            const quantity = parseInt(bouteilleMatch[1]);
+            const size = bouteilleMatch[2]?.trim() || '';
+            const brand = bouteilleMatch[3]?.trim() || '';
+            
+            let key;
+            if (size && brand) {
+              key = `${size} ${brand}`;
+            } else if (brand) {
+              key = `Bouteille ${brand}`;
+            } else if (size) {
+              key = `${size} Bouteille`;
+            } else {
+              key = 'Bouteille';
+            }
+            transactionReturnables[key] = (transactionReturnables[key] || 0) + quantity;
+          }
+          
+          // Handle items without explicit numbers
+          if (description.includes('bouteille') && !bouteillePattern.test(description)) {
+            const sizeMatch = description.match(/(\d+(?:\.\d+)?L)/i);
+            const brandMatch = description.match(/bouteilles?\s+([^,]*)/i);
+            const brand = brandMatch?.[1]?.trim() || '';
+            
+            let key;
+            if (sizeMatch && brand) {
+              key = `${sizeMatch[1]} ${brand}`;
+            } else if (brand) {
+              key = `Bouteille ${brand}`;
+            } else if (sizeMatch) {
+              key = `${sizeMatch[1]} Bouteille`;
+            } else {
+              key = 'Bouteille';
+            }
+            transactionReturnables[key] = (transactionReturnables[key] || 0) + 1;
+          }
+          
+          if (description.includes('chopine') && !chopinePattern.test(description)) {
+            const brandMatch = description.match(/chopines?\s+([^,]*)/i);
+            const brand = brandMatch?.[1]?.trim() || '';
+            const key = brand ? `Chopine ${brand}` : 'Chopine';
+            transactionReturnables[key] = (transactionReturnables[key] || 0) + 1;
+          }
+          
+          // Check if any items from this transaction are still unreturned
+          return Object.keys(transactionReturnables).some(itemType => {
+            const netReturnable = returnableItems[itemType];
+            return netReturnable && netReturnable > 0;
+          });
         });
       
       case 'taken':
