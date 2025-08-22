@@ -239,7 +239,6 @@ const ClientActionModal: React.FC<ClientActionModalProps> = ({ client, onClose, 
   };
 
   const processItemReturn = async (itemType: string, returnQuantity: number) => {
-    console.log(`Processing return: ${returnQuantity} ${itemType} for client ${client.name}`);
     
     // Create a return transaction (negative transaction)
     const returnDescription = `Returned: ${returnQuantity} ${itemType}${returnQuantity > 1 ? 's' : ''}`;
@@ -247,9 +246,8 @@ const ClientActionModal: React.FC<ClientActionModalProps> = ({ client, onClose, 
     try {
       // Add a return transaction with negative amount or zero amount
       await addTransaction(client, returnDescription, 0);
-      console.log(`Successfully processed return: ${returnDescription}`);
+      
     } catch (error) {
-      console.error(`Failed to process return: ${returnDescription}`, error);
       throw error;
     }
   };

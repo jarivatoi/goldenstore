@@ -476,18 +476,9 @@ const ScrollingTabs: React.FC<ScrollingTabsProps> = ({
       if (timelineRef.current && !selectedClientForDetails && !selectedClientForAction) {
         const isPaused = timelineRef.current.paused();
         const isActive = timelineRef.current.isActive();
-        const progress = timelineRef.current.progress();
-        
-        // If timeline is paused or inactive (stuck), restart it
-        if ((isPaused || !isActive) && !isDragging && sortedClients.length > 0) {
+        if (isPaused && !isDragging) {
           console.log('🎯 Timeline is paused but should be running, resuming...');
-          
-          // Kill the stuck timeline and create a new one
-          timelineRef.current.kill();
-          timelineRef.current = null;
-          
-          // Restart from beginning
-          setupContinuousScroll();
+          timelineRef.current.resume();
         }
       }
     }, 2000); // Check every 2 seconds
@@ -511,17 +502,9 @@ const ScrollingTabs: React.FC<ScrollingTabsProps> = ({
         
         // Resume timeline after clearing animation
         setTimeout(() => {
-          if (sortedClients.length > 0 && !selectedClientForDetails && !selectedClientForAction && !isDragging) {
+          if (timelineRef.current && timelineRef.current.paused() && sortedClients.length > 0 && !selectedClientForDetails && !selectedClientForAction && !isDragging) {
             console.log('🎯 Resuming timeline after clearing persistent animation');
-            
-            // Kill any existing timeline and restart fresh
-            if (timelineRef.current) {
-              timelineRef.current.kill();
-              timelineRef.current = null;
-            }
-            
-            // Restart timeline from beginning
-            setupContinuousScroll();
+            timelineRef.current.resume();
           }
         }, 100); // Small delay to ensure all state is updated
       }, 3000);
@@ -532,17 +515,9 @@ const ScrollingTabs: React.FC<ScrollingTabsProps> = ({
     } else {
       // No persistent animation - ensure timeline is running if it should be
       setTimeout(() => {
-        if (sortedClients.length > 0 && !selectedClientForDetails && !selectedClientForAction && !isDragging) {
+        if (timelineRef.current && timelineRef.current.paused() && sortedClients.length > 0 && !selectedClientForDetails && !selectedClientForAction && !isDragging) {
           console.log('🎯 Resuming timeline after clearing persistent animation');
-          
-          // Kill any existing timeline and restart fresh
-          if (timelineRef.current) {
-            timelineRef.current.kill();
-            timelineRef.current = null;
-          }
-          
-          // Restart timeline from beginning
-          setupContinuousScroll();
+          timelineRef.current.resume();
         }
       }, 50); // Quick check after state changes
     }
