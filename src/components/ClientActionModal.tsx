@@ -124,7 +124,7 @@ const ClientActionModal: React.FC<ClientActionModalProps> = ({ client, onClose, 
       
       // Look for Bouteille items with improved parsing
       // Pattern: number + space + optional size + bouteille + optional brand
-      const bouteillePattern = /(\d+)\s+(?:(\d+(?:\.\d+)?L)\s+)?bouteilles?(?:\s+([^,]*))?/gi;
+      const bouteillePattern = /(\d+)\s+(?:(\d+(?:\.\d+)?L)\s+)?bouteilles?(?:\s+([^,\(\)]*))?/gi;
       let bouteilleMatch;
       
       while ((bouteilleMatch = bouteillePattern.exec(description)) !== null) {
@@ -135,7 +135,7 @@ const ClientActionModal: React.FC<ClientActionModalProps> = ({ client, onClose, 
         // Format the key based on what we found
         let key;
         if (size && brand) {
-          key = `${size} ${brand}`;
+          key = `${size} Bouteille ${brand}`;
         } else if (brand) {
           key = `Bouteille ${brand}`;
         } else if (size) {
@@ -159,17 +159,17 @@ const ClientActionModal: React.FC<ClientActionModalProps> = ({ client, onClose, 
       
       // Handle items without explicit numbers (assume quantity 1)
       if (description.includes('bouteille') && !bouteillePattern.test(description)) {
-        const sizeMatch = description.match(/(\d+(?:\.\d+)?L)/i);
+        const sizeMatch = description.match(/(\d+(?:\.\d+)?L)/gi);
         const brandMatch = description.match(/bouteilles?\s+([^,]*)/i);
         const brand = brandMatch?.[1]?.trim() || '';
         
         let key;
         if (sizeMatch && brand) {
-          key = `${sizeMatch[1]} ${brand}`;
+          key = `${sizeMatch[0]} Bouteille ${brand}`;
         } else if (brand) {
           key = `Bouteille ${brand}`;
         } else if (sizeMatch) {
-          key = `${sizeMatch[1]} Bouteille`;
+          key = `${sizeMatch[0]} Bouteille`;
         } else {
           key = 'Bouteille';
         }
