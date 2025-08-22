@@ -85,8 +85,15 @@ const ClientActionModal: React.FC<ClientActionModalProps> = ({ client, onClose, 
   const getReturnableItems = () => {
     const returnableItems: {[key: string]: {total: number, transactions: Array<{id: string, description: string, amount: number, quantity: number}>}} = {};
     
+    // Track processed transactions to prevent duplicates
+    const processedTransactions = new Set<string>();
     
     clientTransactions.forEach(transaction => {
+      // Skip if already processed
+      if (processedTransactions.has(transaction.id)) {
+        return;
+      }
+      
       // Only process debt transactions (not payments) AND exclude return transactions
       if (transaction.type === 'payment' || transaction.description.toLowerCase().includes('returned')) {
         return;
@@ -124,6 +131,7 @@ const ClientActionModal: React.FC<ClientActionModalProps> = ({ client, onClose, 
           quantity: quantity
         });
         hasMatched = true;
+        processedTransactions.add(transaction.id);
       }
       
       // Look for Bouteille items with improved parsing
@@ -160,6 +168,7 @@ const ClientActionModal: React.FC<ClientActionModalProps> = ({ client, onClose, 
           quantity: quantity
         });
         hasMatched = true;
+        processedTransactions.add(transaction.id);
       }
       
       // Handle items without explicit numbers (assume quantity 1) - only if no pattern matched
@@ -191,6 +200,7 @@ const ClientActionModal: React.FC<ClientActionModalProps> = ({ client, onClose, 
           quantity: 1
         });
         hasMatched = true;
+        processedTransactions.add(transaction.id);
       }
       
       if (!hasMatched && description.includes('chopine')) {
@@ -209,6 +219,7 @@ const ClientActionModal: React.FC<ClientActionModalProps> = ({ client, onClose, 
           amount: transaction.amount,
           quantity: 1
         });
+        processedTransactions.add(transaction.id);
       }
     });
     
