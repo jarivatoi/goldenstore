@@ -114,10 +114,13 @@ const ScrollingTabs: React.FC<ScrollingTabsProps> = ({
   // Add this helper function to restart the timeline from a specific position
   const restartTimelineFromPosition = useCallback((startPosition: number) => {
     console.log('🚀 restartTimelineFromPosition called with:', startPosition, 'at time:', new Date().toLocaleTimeString());
+    console.log('🚀 Called from stack:', new Error().stack?.split('\n').slice(1, 4).join('\n'));
+    console.log('🚀 restartTimelineFromPosition called with:', startPosition, 'at time:', new Date().toLocaleTimeString());
     const container = containerRef.current;
     const content = contentRef.current;
     
     if (!container || !content) {
+      console.log('❌ Missing container or content refs at:', new Date().toLocaleTimeString());
       console.log('❌ Missing container or content refs at:', new Date().toLocaleTimeString());
       return;
     }
@@ -125,9 +128,11 @@ const ScrollingTabs: React.FC<ScrollingTabsProps> = ({
     const containerWidth = container.offsetWidth;
     const contentWidth = content.scrollWidth;
     console.log('📏 Container width:', containerWidth, 'Content width:', contentWidth);
+    console.log('📏 Container width:', containerWidth, 'Content width:', contentWidth);
     
     // Kill any existing timeline
     if (timelineRef.current) {
+      console.log('🔪 Killing existing timeline at:', new Date().toLocaleTimeString());
       console.log('🔪 Killing existing timeline');
       timelineRef.current.kill();
       timelineRef.current = null;
@@ -137,22 +142,27 @@ const ScrollingTabs: React.FC<ScrollingTabsProps> = ({
     const totalDistance = contentWidth + containerWidth;
     const fullCycleDuration = totalDistance / 60; // 60px per second
     console.log('⏱️ Full cycle duration:', fullCycleDuration);
+    console.log('⏱️ Full cycle duration:', fullCycleDuration);
     
     // Create new infinite timeline that matches setupContinuousScroll
     timelineRef.current = gsap.timeline({ repeat: -1, ease: "none" });
+    console.log('✨ Created new timeline at:', new Date().toLocaleTimeString());
     console.log('✨ Created new timeline');
     
     // Set initial position
     gsap.set(content, { x: startPosition });
+    console.log('📍 Set initial position to:', startPosition);
     console.log('📍 Set initial position to:', startPosition);
     
     // Calculate remaining distance from current position to end
     const remainingDistance = Math.abs(startPosition - (-contentWidth));
     const remainingDuration = remainingDistance / 60; // 60px per second
     console.log('📐 Remaining distance:', remainingDistance, 'Duration:', remainingDuration);
+    console.log('📐 Remaining distance:', remainingDistance, 'Duration:', remainingDuration);
     
     // Continue from current position to end, then start infinite loop
     if (remainingDuration > 0) {
+      console.log('▶️ Starting animation from current position at:', new Date().toLocaleTimeString());
       console.log('▶️ Starting animation from current position');
       timelineRef.current
         .to(content, { 
@@ -168,6 +178,7 @@ const ScrollingTabs: React.FC<ScrollingTabsProps> = ({
           repeat: -1 // Infinite repeat of full cycle
         });
     } else {
+      console.log('🔄 Starting fresh cycle at:', new Date().toLocaleTimeString());
       console.log('🔄 Starting fresh cycle');
       // If already at or past the end, start fresh cycle
       timelineRef.current
@@ -180,14 +191,18 @@ const ScrollingTabs: React.FC<ScrollingTabsProps> = ({
         });
     }
     
+    console.log('✅ Timeline restart complete at:', new Date().toLocaleTimeString());
     console.log('✅ Timeline restart complete');
   }, []); // Remove all dependencies to prevent recreation
 
   // Seamless continuous scroll setup
   const setupContinuousScroll = useCallback(() => {
     console.log('🎬 setupContinuousScroll called at:', new Date().toLocaleTimeString(), 'clients:', sortedClients.length);
+    console.log('🎬 Called from stack:', new Error().stack?.split('\n').slice(1, 4).join('\n'));
+    console.log('🎬 setupContinuousScroll called at:', new Date().toLocaleTimeString(), 'clients:', sortedClients.length);
     // Don't setup animation if there are no clients
     if (sortedClients.length === 0) {
+      console.log('❌ No clients, skipping setup');
       console.log('❌ No clients, skipping setup');
       return;
     }
@@ -199,12 +214,14 @@ const ScrollingTabs: React.FC<ScrollingTabsProps> = ({
     
     // Only clean up if we're explicitly re-initializing
     if (timelineRef.current && timelineRef.current.isActive()) {
+      console.log('⚠️ Active timeline detected, should NOT kill it at:', new Date().toLocaleTimeString());
       console.log('⚠️ Active timeline detected, should NOT kill it');
       return;
     }
 
     // Only reset position if timeline is not active
     if (!timelineRef.current || !timelineRef.current.isActive()) {
+      console.log('🔄 Resetting position because timeline is not active at:', new Date().toLocaleTimeString());
       console.log('🔄 Resetting position because timeline is not active');
       gsap.set(content, { x: 0 });
     }
