@@ -274,7 +274,7 @@ const ScrollingTabs: React.FC<ScrollingTabsProps> = ({
     }
     
     setupContinuousScroll();
-  }, [setupContinuousScroll]);
+  }, [setupContinuousScroll, sortedClients]);
 
   // Cleanup on unmount
   useEffect(() => {
