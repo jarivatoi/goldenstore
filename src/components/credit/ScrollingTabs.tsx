@@ -298,6 +298,7 @@ const ScrollingTabs: React.FC<ScrollingTabsProps> = ({
           // Just set dragging to false, don't store position yet
          // Resume timeline from stored drag end position after throw completes
          console.log('🎯 THROW COMPLETE - RESTARTING TIMELINE from stored position:', pausedPositionRef.current, 'at:', new Date().toLocaleTimeString());
+        },
         onThrowComplete: function() {
           // Store position when throw/inertia completes (final resting position)
           const currentX = gsap.getProperty(content, "x") as number;
@@ -319,6 +320,7 @@ const ScrollingTabs: React.FC<ScrollingTabsProps> = ({
          const currentX = gsap.getProperty(contentRef.current, "x") as number;
          pausedPositionRef.current = currentX;
          console.log('🎯 DRAG END - Storing position:', currentX, 'at:', new Date().toLocaleTimeString());
+      });
     });
   }, [sortedClients.length]); // Remove function dependencies to prevent recreation
 
