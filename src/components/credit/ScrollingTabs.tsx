@@ -234,23 +234,15 @@ const ScrollingTabs: React.FC<ScrollingTabsProps> = ({
           console.log('🎯 Drag ended');
           setIsDragging(false);
           
-          // Don't restart the timeline automatically
-          // Let the user continue dragging or let the position stay where it is
-          
-          // Only restart if the content is near the edges
-          const currentX = gsap.getProperty(content, "x") as number;
-          const containerWidth = container.offsetWidth;
-          const contentWidth = content.scrollWidth;
-          
-          // If near the right edge (start position)
-          if (currentX > containerWidth * 0.8) {
-            restartTimelineFromPosition(containerWidth);
-          } 
-          // If near the left edge (end position)
-          else if (currentX < -contentWidth * 0.9) {
-            restartTimelineFromPosition(-contentWidth);
-          }
-          // Otherwise, just let it stay where it is
+          // Always restart the timeline after drag ends
+          // Add a small delay to ensure drag state is fully cleared
+          setTimeout(() => {
+            if (!selectedClientForDetails && !selectedClientForAction && sortedClients.length > 0) {
+              const currentX = gsap.getProperty(content, "x") as number;
+              restartTimelineFromPosition(currentX);
+              console.log('🎯 Timeline restarted from current position after drag');
+            }
+          }, 100);
         },
       });
     });
