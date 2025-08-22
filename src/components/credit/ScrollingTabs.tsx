@@ -897,7 +897,7 @@ const ScrollingTabs: React.FC<ScrollingTabsProps> = ({
                             {returnableItemsText || 'No returnables'}
                           </div>
                         }
-                        shouldFlip={!!returnableItemsText}
+                        shouldFlip={!!returnableItemsText && totalDebt > 0}
                         flipDuration={0.8}
                         flipDelay={2}
                         className="w-full"
