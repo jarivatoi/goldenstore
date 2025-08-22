@@ -340,8 +340,13 @@ const ScrollingTabs: React.FC<ScrollingTabsProps> = ({
   // Handle modal close - resume timeline
   const handleModalClose = () => {
     setSelectedClientForAction(null);
-    // Don't resume timeline immediately - let the animation detection handle it
-    // The timeline will resume once the persistent animation is cleared
+    // Clear persistent animation only if no client is linked to calculator
+    if (!linkedClient) {
+      // Clear the persistent animation when modal closes (if not linked to calculator)
+      setTimeout(() => {
+        setPersistentAnimationTabId(null);
+      }, 100);
+    }
   };
 
   // Handle detail modal close - resume timeline
@@ -451,21 +456,24 @@ const ScrollingTabs: React.FC<ScrollingTabsProps> = ({
         timelineRef.current.pause();
       }
       
-      // Set up timer to clear animation and resume timeline after 3 seconds
-      const clearAnimationTimer = setTimeout(() => {
-        setPersistentAnimationTabId(null);
+      // Only clear animation and resume timeline if no client is linked to calculator
+      if (!linkedClient) {
+        // Set up timer to clear animation and resume timeline after 3 seconds
+        const clearAnimationTimer = setTimeout(() => {
+          setPersistentAnimationTabId(null);
+          
+          // Resume timeline after clearing animation
+          setTimeout(() => {
+            if (timelineRef.current && timelineRef.current.paused() && sortedClients.length > 0 && !selectedClientForDetails && !selectedClientForAction && !isDragging && !linkedClient) {
+              timelineRef.current.resume();
+            }
+          }, 100); // Small delay to ensure all state is updated
+        }, 3000);
         
-        // Resume timeline after clearing animation
-        setTimeout(() => {
-          if (timelineRef.current && timelineRef.current.paused() && sortedClients.length > 0 && !selectedClientForDetails && !selectedClientForAction && !isDragging && !linkedClient) {
-            timelineRef.current.resume();
-          }
-        }, 100); // Small delay to ensure all state is updated
-      }, 3000);
-      
-      return () => {
-        clearTimeout(clearAnimationTimer);
-      };
+        return () => {
+          clearTimeout(clearAnimationTimer);
+        };
+      }
     } else {
       // No persistent animation - ensure timeline is running if it should be
       setTimeout(() => {
