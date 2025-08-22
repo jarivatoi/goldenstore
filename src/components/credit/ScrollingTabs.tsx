@@ -181,9 +181,9 @@ const ScrollingTabs: React.FC<ScrollingTabsProps> = ({
         .set(content, { x: containerWidth }) // Jump to right edge instantly
         .to(content, {
           x: -contentWidth,
+          repeat: -1, // Infinite repeat of full cycle
           duration: fullCycleDuration,
-          ease: "none",
-          repeat: -1 // Infinite repeat of full cycle
+          ease: "none"
         });
     } else {
       console.log('🔄 Starting fresh cycle at:', new Date().toLocaleTimeString());
@@ -191,16 +191,25 @@ const ScrollingTabs: React.FC<ScrollingTabsProps> = ({
         .set(content, { x: containerWidth }) // Jump to right edge instantly
         .to(content, {
           x: -contentWidth,
+          repeat: -1, // Infinite repeat of full cycle
           duration: fullCycleDuration,
-          ease: "none",
-          repeat: -1
+          ease: "none"
         });
     }
     console.log('✅ Timeline restart complete at:', new Date().toLocaleTimeString());
-  }, []);
+  }, [sortedClients.length]); // Remove function dependencies to prevent recreation
 
-  // Seamless continuous scroll setup
   const setupContinuousScroll = useCallback(() => {
+    console.log('🚀 setupContinuousScroll called at:', new Date().toLocaleTimeString());
+    console.log('🚀 Called from stack:', new Error().stack?.split('\n').slice(1, 4).join('\n'));
+    const container = containerRef.current;
+    const content = contentRef.current;
+    
+    if (!container || !content) {
+      console.log('❌ Missing container or content refs at:', new Date().toLocaleTimeString());
+      return;
+    }
+    
     // Check if we already have an active timeline
     if (timelineRef.current && timelineRef.current.isActive()) {
       console.log('⚠️ Active timeline detected, preserving it at:', new Date().toLocaleTimeString());
@@ -212,14 +221,6 @@ const ScrollingTabs: React.FC<ScrollingTabsProps> = ({
       console.log('🔪 Killing inactive timeline and creating new one at:', new Date().toLocaleTimeString());
       timelineRef.current.kill();
       timelineRef.current = null;
-    }
-    
-    const container = containerRef.current;
-    const content = contentRef.current;
-    
-    if (!container || !content) {
-      console.log('❌ Missing container or content refs at:', new Date().toLocaleTimeString());
-      return;
     }
     
     // Always reset position when creating new timeline
