@@ -296,8 +296,11 @@ const ScrollingTabs: React.FC<ScrollingTabsProps> = ({
 
   // Handle long press start
   const handleLongPressStart = (client: Client, e: React.TouchEvent | React.MouseEvent) => {
-    e.preventDefault();
-    e.stopPropagation();
+    // Only prevent default for touch events, not mouse events
+    if (e.type.startsWith('touch')) {
+      e.preventDefault();
+      e.stopPropagation();
+    }
     
     const timer = setTimeout(() => {
       // Add click animation for long press
@@ -676,9 +679,7 @@ const ScrollingTabs: React.FC<ScrollingTabsProps> = ({
                   onTouchStart={(e) => handleLongPressStart(client, e)}
                   onTouchEnd={handleLongPressEnd}
                   onTouchCancel={handleLongPressEnd}
-                  onMouseDown={(e) => handleLongPressStart(client, e)}
-                  onMouseUp={handleLongPressEnd}
-                  onMouseLeave={handleLongPressEnd}
+                  // Remove mouse handlers to avoid conflict with GSAP Draggable
                 >
                   <div className="text-center">
                     <div className="text-sm font-medium text-gray-800 truncate select-none">
