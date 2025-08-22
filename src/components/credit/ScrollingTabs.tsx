@@ -202,6 +202,7 @@ const ScrollingTabs: React.FC<ScrollingTabsProps> = ({
   const setupContinuousScroll = useCallback(() => {
     console.log('🚀 setupContinuousScroll called at:', new Date().toLocaleTimeString());
     const content = contentRef.current;
+    const container = containerRef.current;
     
     if (!container || !content) {
       console.log('❌ Missing container or content refs at:', new Date().toLocaleTimeString());
@@ -220,10 +221,6 @@ const ScrollingTabs: React.FC<ScrollingTabsProps> = ({
       timelineRef.current = null;
     }
     
-    // If timeline exists but is not active, kill it and create new one
-    if (timelineRef.current && !timelineRef.current.isActive()) {
-      console.log('🔪 Killing inactive timeline and creating new one at:', new Date().toLocaleTimeString());
-      timelineRef.current.kill();
     // Always reset position when creating new timeline
     console.log('🔄 Resetting position and creating new timeline at:', new Date().toLocaleTimeString());
     gsap.set(content, { x: 0 });
@@ -235,8 +232,6 @@ const ScrollingTabs: React.FC<ScrollingTabsProps> = ({
       // Calculate total distance including container width gap
       const totalDistance = contentWidth + containerWidth;
       const duration = totalDistance / 60; // 60px per second for faster speed
-      
-      console.log('📏 Creating timeline with - containerWidth:', containerWidth, 'contentWidth:', contentWidth, 'duration:', duration);
       
       console.log('📏 Creating timeline with - containerWidth:', containerWidth, 'contentWidth:', contentWidth, 'duration:', duration);
       
