@@ -48,6 +48,25 @@ const ScrollingTabs: React.FC<ScrollingTabsProps> = ({
   const [longPressTimer, setLongPressTimer] = React.useState<NodeJS.Timeout | null>(null);
   const { getClientTransactions } = useCredit();
 
+  // Sort clients based on sort option
+  const sortedClients = React.useMemo(() => {
+    const clientsToSort = [...clients];
+    
+    switch (sortOption) {
+      case 'name':
+        return clientsToSort.sort((a, b) => a.name.localeCompare(b.name));
+      
+      case 'date':
+        return clientsToSort.sort((a, b) => b.lastTransactionAt.getTime() - a.lastTransactionAt.getTime());
+      
+      case 'debt':
+        return clientsToSort.sort((a, b) => getClientTotalDebt(b.id) - getClientTotalDebt(a.id));
+      
+      default:
+        return clientsToSort;
+    }
+  }, [clients, sortOption, getClientTotalDebt]);
+
   // Track if any modal is open
   const isAnyModalOpen = selectedClientForAction !== null || selectedClientForDetails !== null;
 
@@ -69,25 +88,6 @@ const ScrollingTabs: React.FC<ScrollingTabsProps> = ({
       }
     }
   }, [isAnyModalOpen, sortedClients, setupContinuousScroll]);
-
-  // Sort clients based on sort option
-  const sortedClients = React.useMemo(() => {
-    const clientsToSort = [...clients];
-    
-    switch (sortOption) {
-      case 'name':
-        return clientsToSort.sort((a, b) => a.name.localeCompare(b.name));
-      
-      case 'date':
-        return clientsToSort.sort((a, b) => b.lastTransactionAt.getTime() - a.lastTransactionAt.getTime());
-      
-      case 'debt':
-        return clientsToSort.sort((a, b) => getClientTotalDebt(b.id) - getClientTotalDebt(a.id));
-      
-      default:
-        return clientsToSort;
-    }
-  }, [clients, sortOption, getClientTotalDebt]);
 
   // Helper function to check if client has overdue returnables (3+ weeks old)
   const hasOverdueReturnables = (client: Client): boolean => {
