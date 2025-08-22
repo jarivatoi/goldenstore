@@ -532,15 +532,29 @@ const ClientActionModal: React.FC<ClientActionModalProps> = ({ client, onClose, 
                       <div className="text-xs text-gray-500">
                         <p className="font-medium mb-1">Recent transactions:</p>
                         {(() => {
-                          // Filter out transactions that have been returned
+                          // Get unique transactions for this item type (prevent duplicates)
                           const returnedQuantity = getReturnedQuantity(itemType);
                           const totalOriginal = data.total + returnedQuantity;
                           
-                          // Get transactions for this item type, excluding those that are effectively "returned"
-                          const relevantTransactions = data.transactions.filter(transaction => {
-                            // Only show transactions if there are still unreturned items
-                            return availableItems[itemType] && availableItems[itemType].total > 0;
-                          }).slice(-2); // Show last 2 relevant transactions
+                          // Get unique transactions for this item type
+                          const uniqueTransactions = data.transactions.reduce((unique: any[], transaction) => {
+                            // Check if this transaction is already in the unique array
+                            const exists = unique.find(t => 
+                              t.id === transaction.id || 
+                              (t.description === transaction.description && 
+                               Math.abs(t.date - transaction.date) < 1000) // Same description within 1 second
+                            );
+                            
+                            if (!exists) {
+                              unique.push(transaction);
+                            }
+                            return unique;
+                          }, []);
+                          
+                          // Only show transactions if there are still unreturned items
+                          const relevantTransactions = availableItems[itemType] && availableItems[itemType].total > 0 
+                            ? uniqueTransactions.slice(-2) // Show last 2 unique transactions
+                            : [];
                           
                           return relevantTransactions.map((transaction, index) => {
                           const transactionDate = new Date(transaction.date || Date.now());
