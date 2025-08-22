@@ -926,18 +926,18 @@ const ScrollingTabs: React.FC<ScrollingTabsProps> = ({
                     ) : (
                       <FlipCard
                         frontContent={
+                          <div className="text-xs font-semibold text-red-600">
+                            Rs {totalDebt.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
+                          </div>
+                        }
+                        backContent={
                           <div className="text-xs font-semibold text-orange-600">
                             {returnableItemsText || 'No returnables'}
                           </div>
                         }
-                        backContent={
-                          <div className="text-xs font-semibold text-blue-600">
-                            Returnables
-                          </div>
-                        }
                         shouldFlip={!!returnableItemsText}
                         flipDuration={0.8}
-                        flipDelay={3}
+                        flipDelay={2}
                         className="w-full"
                       />
                     )}
