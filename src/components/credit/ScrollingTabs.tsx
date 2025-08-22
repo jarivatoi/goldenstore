@@ -724,7 +724,7 @@ const ScrollingTabs: React.FC<ScrollingTabsProps> = ({
                   {returnableItemsText && totalDebt > 0 ? (
                     <FlipCard
                       frontContent={
-                        <div className={\`flex-shrink-0 px-4 py-2 rounded-lg border cursor-pointer h-25 min-w-fit flex items-center ${
+                        <div className={`flex-shrink-0 px-4 py-2 rounded-lg border cursor-pointer h-25 min-w-fit flex items-center ${
                           isDragging 
                             ? 'transition-none'
                             : 'transition-all duration-200'
@@ -777,7 +777,7 @@ const ScrollingTabs: React.FC<ScrollingTabsProps> = ({
                         </div>
                       }
                       backContent={
-                        <div className={\`flex-shrink-0 px-4 py-2 rounded-lg border cursor-pointer h-25 min-w-fit flex items-center ${
+                        <div className={`flex-shrink-0 px-4 py-2 rounded-lg border cursor-pointer h-25 min-w-fit flex items-center ${
                           isDragging 
                             ? 'transition-none'
                             : 'transition-all duration-200'
@@ -835,7 +835,7 @@ const ScrollingTabs: React.FC<ScrollingTabsProps> = ({
                       className="w-full"
                     />
                   ) : (
-                    <div className={\`flex-shrink-0 px-4 py-2 rounded-lg border cursor-pointer h-25 min-w-fit flex items-center ${
+                    <div className={`flex-shrink-0 px-4 py-2 rounded-lg border cursor-pointer h-25 min-w-fit flex items-center ${
                       isDragging 
                         ? 'transition-none'
                         : 'transition-all duration-200'
