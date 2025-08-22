@@ -244,6 +244,7 @@ const ScrollingTabs: React.FC<ScrollingTabsProps> = ({
         force3D: true,
         onDragStart: function() {
           // Kill the timeline on drag start but don't store position yet
+          if (timelineRef.current) {
             timelineRef.current.kill();
             timelineRef.current = null;
           }
@@ -747,11 +748,11 @@ const ScrollingTabs: React.FC<ScrollingTabsProps> = ({
                       />
                     )}
                     <div className="text-xs text-gray-500 mt-1 text-center">
-              {client.lastTransactionAt.toLocaleDateString('en-GB', {
+                      {client.lastTransactionAt.toLocaleDateString('en-GB', {
                         day: '2-digit',
-                month: 'short',
+                        month: 'short',
                         year: '2-digit'
-              }).replace(/\s/g, '-')}
+                      }).replace(/\s/g, '-')}
                     </div>
                     <div className="text-xs text-gray-500 text-center">
                       {client.lastTransactionAt.toLocaleTimeString('en-GB', {
@@ -759,9 +760,9 @@ const ScrollingTabs: React.FC<ScrollingTabsProps> = ({
                         minute: '2-digit'
                       })}
                     </div>
-                    </div>
                   </div>
-                );
+                </div>
+              );
             })}
           </div>
         </div>
