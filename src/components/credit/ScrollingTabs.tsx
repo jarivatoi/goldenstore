@@ -290,16 +290,6 @@ const ScrollingTabs: React.FC<ScrollingTabsProps> = ({
             console.log('🎯 DRAG STARTED - KILLING TIMELINE at:', new Date().toLocaleTimeString());
             console.log('🎯 Timeline was active:', timelineRef.current.isActive());
             timelineRef.current.kill();
-            console.log('🎯 POINTER DOWN - Storing initial position:', this.pointerX, this.pointerY, 'at:', new Date().toLocaleTimeString());
-          }
-          setIsDragging(true);
-        },
-        onDragEnd: function() {
-          // Store position when drag ends (where user lifted finger/mouse)
-          const currentX = gsap.getProperty(content, "x") as number;
-          pausedPositionRef.current = currentX;
-          console.log('🎯 DRAG END - Storing position:', currentX, 'at:', new Date().toLocaleTimeString());
-          setIsDragging(false);
         },
         onThrowComplete: function() {
           console.log('🎯 THROW COMPLETE - RESTARTING TIMELINE from stored position:', pausedPositionRef.current, 'at:', new Date().toLocaleTimeString());
