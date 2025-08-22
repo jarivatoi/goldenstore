@@ -196,14 +196,14 @@ const CreditManagement: React.FC = () => {
               });
             });
           
-          // Calculate net returnable quantities
-          const hasReturnableItems = Object.entries(returnableItems).some(([itemType, total]) => {
+          // Calculate net returnable quantities - must have actual unreturned items
+          const hasActualReturnableItems = Object.entries(returnableItems).some(([itemType, total]) => {
             const returned = returnedQuantities[itemType] || 0;
             const remaining = Math.max(0, total - returned);
             return remaining > 0;
           });
           
-          return hasReturnableItems;
+          return hasActualReturnableItems;
         });
         return returnableClients;
       
