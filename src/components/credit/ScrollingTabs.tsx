@@ -533,8 +533,6 @@ const ScrollingTabs: React.FC<ScrollingTabsProps> = ({
                   } ${
                     clickedTabId === client.id 
                       ? 'animate-pulse-attention bg-yellow-200 border-yellow-400 shadow-lg scale-110 z-50' 
-                      : persistentAnimationTabId === client.id
-                      ? 'animate-pulse-persistent bg-yellow-100 border-yellow-300 shadow-md scale-105 z-40'
                       : totalDebt > 1000
                       ? 'animate-high-debt-pulsate'
                       : (() => {
