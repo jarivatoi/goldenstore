@@ -223,7 +223,7 @@ const ScrollingTabs: React.FC<ScrollingTabsProps> = ({
           // Always restart the timeline after drag ends
           // Add a small delay to ensure drag state is fully cleared
           setTimeout(() => {
-            if (!timelineRef.current && !selectedClientForDetails && !selectedClientForAction && !linkedClient && sortedClients.length > 0) {
+            if (!selectedClientForDetails && !selectedClientForAction && !linkedClient && sortedClients.length > 0) {
               const currentX = gsap.getProperty(content, "x") as number;
               restartTimelineFromPosition(currentX);
             }
@@ -261,20 +261,50 @@ const ScrollingTabs: React.FC<ScrollingTabsProps> = ({
         return;
       }
       
+      // Calculate current progress based on position
+      const currentProgress = calculateTimelineProgress();
+      
       // Kill existing timeline
       if (timelineRef.current) {
         timelineRef.current.kill();
         timelineRef.current = null;
       }
       
-      // Create new timeline from current position
+      // Create new timeline starting from calculated progress
       const container = containerRef.current;
       const content = contentRef.current;
       
       if (container && content) {
+        const containerWidth = container.offsetWidth;
+        const contentWidth = content.scrollWidth;
+        const totalDistance = contentWidth + containerWidth;
+        const duration = totalDistance / 60;
+        
         // Get current position to continue from where user left it
         const currentX = gsap.getProperty(content, "x") as number;
-        restartTimelineFromPosition(currentX);
+        
+        // Create new timeline
+        timelineRef.current = gsap.timeline({ repeat: -1, ease: "none" });
+        timelineRef.current
+          .to(content, {
+            x: -contentWidth, // Continue to left exit point
+            duration: duration * (1 - currentProgress), // Adjust duration for remaining distance
+            ease: "none"
+          })
+          .to(content, {
+            x: containerWidth, // Reset to right entry point
+            duration: 0,
+            ease: "none"
+          })
+          .to(content, {
+            x: -contentWidth, // Full cycle
+            duration: duration,
+            ease: "none",
+            repeat: -1
+          });
+        
+        timelineRef.current.play();
+        
       }
     };
 
@@ -283,7 +313,7 @@ const ScrollingTabs: React.FC<ScrollingTabsProps> = ({
     return () => {
       window.removeEventListener('restartScrollingTimeline', handleRestartTimeline);
     };
-  }, [sortedClients.length, restartTimelineFromPosition]);
+  }, [calculateTimelineProgress, sortedClients.length]);
   
 
   // Cleanup on unmount
@@ -338,10 +368,9 @@ const ScrollingTabs: React.FC<ScrollingTabsProps> = ({
       setClickedTabId(null);
     }, 600);
     
-    // Kill the timeline
+    // Pause the timeline
     if (timelineRef.current) {
-      timelineRef.current.kill();
-      timelineRef.current = null;
+      timelineRef.current.pause();
     }
     setSelectedClientForAction(client);
   };
@@ -361,10 +390,9 @@ const ScrollingTabs: React.FC<ScrollingTabsProps> = ({
         setClickedTabId(null);
       }, 600);
       
-      // Kill timeline during long press
+      // Pause timeline during long press
       if (timelineRef.current) {
-        timelineRef.current.kill();
-        timelineRef.current = null;
+        timelineRef.current.pause();
       }
       setSelectedClientForDetails(client);
       setLongPressTimer(null);
@@ -403,22 +431,24 @@ const ScrollingTabs: React.FC<ScrollingTabsProps> = ({
   // Monitor timeline state for debugging
   useEffect(() => {
     const interval = setInterval(() => {
-      if (!timelineRef.current && !selectedClientForDetails && !selectedClientForAction && !linkedClient && !isDragging && sortedClients.length > 0) {
-        // Recreate timeline if it doesn't exist and should be running
-        setupContinuousScroll();
+      if (timelineRef.current && !selectedClientForDetails && !selectedClientForAction && !linkedClient) {
+        const isPaused = timelineRef.current.paused();
+        const isActive = timelineRef.current.isActive();
+        if (isPaused && !isDragging) {
+          timelineRef.current.resume();
         }
+      }
     }, 2000); // Check every 2 seconds
 
     return () => clearInterval(interval);
-  }, [selectedClientForDetails, selectedClientForAction, isDragging, linkedClient, sortedClients.length, setupContinuousScroll]);
+  }, [selectedClientForDetails, selectedClientForAction, isDragging, linkedClient]);
 
   // Monitor timeline and persistent animation interaction
   React.useEffect(() => {
     if (persistentAnimationTabId) {
-      // Kill timeline when persistent animation is active
-      if (timelineRef.current) {
-        timelineRef.current.kill();
-        timelineRef.current = null;
+      // Pause timeline when persistent animation is active
+      if (timelineRef.current && !timelineRef.current.paused()) {
+        timelineRef.current.pause();
       }
       
       // Only clear animation and resume timeline if no client is linked to calculator
@@ -427,10 +457,10 @@ const ScrollingTabs: React.FC<ScrollingTabsProps> = ({
         const clearAnimationTimer = setTimeout(() => {
           setPersistentAnimationTabId(null);
           
-          // Recreate timeline after clearing animation
+          // Resume timeline after clearing animation
           setTimeout(() => {
-            if (!timelineRef.current && sortedClients.length > 0 && !selectedClientForDetails && !selectedClientForAction && !isDragging && !linkedClient) {
-              setupContinuousScroll();
+            if (timelineRef.current && timelineRef.current.paused() && sortedClients.length > 0 && !selectedClientForDetails && !selectedClientForAction && !isDragging && !linkedClient) {
+              timelineRef.current.resume();
             }
           }, 100); // Small delay to ensure all state is updated
         }, 3000);
@@ -440,10 +470,10 @@ const ScrollingTabs: React.FC<ScrollingTabsProps> = ({
         };
       }
     } else {
-      // No persistent animation - ensure timeline exists if it should be
+      // No persistent animation - ensure timeline is running if it should be
       setTimeout(() => {
-        if (!timelineRef.current && sortedClients.length > 0 && !selectedClientForDetails && !selectedClientForAction && !isDragging && !linkedClient) {
-          setupContinuousScroll();
+        if (timelineRef.current && timelineRef.current.paused() && sortedClients.length > 0 && !selectedClientForDetails && !selectedClientForAction && !isDragging && !linkedClient) {
+          timelineRef.current.resume();
         }
       }, 50); // Quick check after state changes
     }
