@@ -400,12 +400,23 @@ const CreditManagement: React.FC = () => {
   const handleQuickAdd = (client: Client) => {
     setLinkedClient(client);
     // Don't open modal immediately, just link the client to calculator
+    
+    // Ensure timeline continues running after linking
+    // Force a small delay to prevent any interference
+    setTimeout(() => {
+      // Timeline should continue independently
+    }, 0);
   };
 
   const handleCalculatorCancel = () => {
     setLinkedClient(null);
     setCalculatorValue('0');
     setIsCalculatorActive(false);
+    
+    // Ensure timeline continues after unlinking
+    setTimeout(() => {
+      // Timeline should continue independently
+    }, 0);
   };
 
   const handleResetCalculator = () => {

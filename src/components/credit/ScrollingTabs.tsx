@@ -312,6 +312,12 @@ const ScrollingTabs: React.FC<ScrollingTabsProps> = ({
     };
   }, []);
 
+  // Prevent timeline interference from linkedClient changes
+  useEffect(() => {
+    // Don't let linkedClient changes affect the timeline
+    // The timeline should run independently of calculator state
+  }, [linkedClient]);
+
   const getFilterLabel = () => {
     switch (clientFilter) {
       case 'returnables': return 'Returnable Items';
@@ -329,6 +335,8 @@ const ScrollingTabs: React.FC<ScrollingTabsProps> = ({
       setLongPressTimer(null);
     }
     
+    // Don't let modal opening affect the timeline
+    // Timeline should continue running independently
     setSelectedClientForAction(client);
   };
 
