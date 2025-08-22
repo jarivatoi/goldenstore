@@ -630,9 +630,7 @@ const ClientActionModal: React.FC<ClientActionModalProps> = ({ client, onClose, 
                                 month: '2-digit',
                                 year: 'numeric'
                               })} {transaction.date.toLocaleTimeString('en-GB', {
-                                hour: '2-digit',
-                                minute: '2-digit',
-                                hour12: false
+                      t.id === transaction.id
                               })}
                             </p>
                           ));
