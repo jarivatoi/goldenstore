@@ -173,11 +173,11 @@ const ScrollingTabs: React.FC<ScrollingTabsProps> = ({
   // Seamless continuous scroll setup
   const setupContinuousScroll = useCallback(() => {
     // Don't setup animation if there are no clients
-    if (!sortedClients || sortedClients.length === 0) {
+    if (sortedClients.length === 0) {
       return;
     }
     
-    if (!contentRef.current || !containerRef.current || !sortedClients || sortedClients.length === 0) return;
+    if (!contentRef.current || !containerRef.current || sortedClients.length === 0) return;
 
     const container = containerRef.current;
     const content = contentRef.current;
@@ -254,12 +254,12 @@ const ScrollingTabs: React.FC<ScrollingTabsProps> = ({
         },
       });
     });
-  }, [sortedClients.length, calculateTimelineProgress, restartTimelineFromPosition]);
+  }, [clients, sortOption, getClientTotalDebt, calculateTimelineProgress, restartTimelineFromPosition]);
 
   // Setup animation when clients change
   useEffect(() => {
     // Don't setup animation if there are no clients
-    if (!sortedClients || sortedClients.length === 0) {
+    if (sortedClients.length === 0) {
       // Clean up any existing animations
       if (timelineRef.current) {
         timelineRef.current.kill();
@@ -274,7 +274,7 @@ const ScrollingTabs: React.FC<ScrollingTabsProps> = ({
     }
     
     setupContinuousScroll();
-  }, [setupContinuousScroll, sortedClients]);
+  }, [setupContinuousScroll, clients, sortOption, getClientTotalDebt]);
 
   // Cleanup on unmount
   useEffect(() => {
