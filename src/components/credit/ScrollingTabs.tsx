@@ -124,13 +124,6 @@ const ScrollingTabs: React.FC<ScrollingTabsProps> = ({
 
   // Add this helper function to restart the timeline from a specific position
   const restartTimelineFromPosition = useCallback((startPosition: number) => {
-    // CRITICAL: Kill existing timeline first
-    if (timelineRef.current) {
-      console.log('🔄 Killing existing timeline before restart');
-      timelineRef.current.kill();
-      timelineRef.current = null;
-    }
-    
     const container = containerRef.current;
     const content = contentRef.current;
     
@@ -168,13 +161,6 @@ const ScrollingTabs: React.FC<ScrollingTabsProps> = ({
 
   // Seamless continuous scroll setup
   const setupContinuousScroll = useCallback(() => {
-    // CRITICAL: Kill ALL existing timelines first to ensure only one timeline exists
-    if (timelineRef.current) {
-      console.log('🔄 Killing existing timeline before creating new one');
-      timelineRef.current.kill();
-      timelineRef.current = null;
-    }
-    
     // Don't setup animation if there are no clients
     if (sortedClients.length === 0) {
       console.log('🎯 No clients to animate, skipping continuous scroll setup');
@@ -185,6 +171,12 @@ const ScrollingTabs: React.FC<ScrollingTabsProps> = ({
 
     const container = containerRef.current;
     const content = contentRef.current;
+    
+    // Clean up existing animations
+    if (timelineRef.current) {
+      timelineRef.current.kill();
+      timelineRef.current = null;
+    }
     
     if (draggableRef.current) {
       draggableRef.current.forEach(d => d.kill());
@@ -233,7 +225,7 @@ const ScrollingTabs: React.FC<ScrollingTabsProps> = ({
         onDragStart: function() {
           // Kill the timeline completely on drag start
           if (timelineRef.current) {
-            console.log('🔄 Drag started - killing timeline to ensure single timeline');
+            console.log('🎯 Drag started - killing timeline. Progress before kill:', timelineRef.current.progress());
             timelineRef.current.kill();
             timelineRef.current = null;
           }
@@ -288,16 +280,15 @@ const ScrollingTabs: React.FC<ScrollingTabsProps> = ({
       
       console.log('🎯 Restart timeline event received');
       
-      // CRITICAL: Kill existing timeline first
-      if (timelineRef.current) {
-        console.log('🔄 Killing existing timeline before event restart');
-        timelineRef.current.kill();
-        timelineRef.current = null;
-      }
-      
       // Calculate current progress based on position
       const currentProgress = calculateTimelineProgress();
       console.log('🎯 Calculated progress for restart:', currentProgress);
+      
+      // Kill existing timeline
+      if (timelineRef.current) {
+        timelineRef.current.kill();
+        timelineRef.current = null;
+      }
       
       // Create new timeline starting from calculated progress
       const container = containerRef.current;
