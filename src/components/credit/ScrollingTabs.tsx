@@ -86,6 +86,7 @@ const ScrollingTabs: React.FC<ScrollingTabsProps> = ({
   
   // Helper function to calculate timeline progress from current position
   const calculateTimelineProgress = useCallback(() => {
+    console.log('🔍 calculateTimelineProgress called');
     if (!contentRef.current || !containerRef.current) return 0;
     
     const container = containerRef.current;
@@ -112,12 +113,12 @@ const ScrollingTabs: React.FC<ScrollingTabsProps> = ({
 
   // Add this helper function to restart the timeline from a specific position
   const restartTimelineFromPosition = useCallback((startPosition: number) => {
-    console.log('🚀 restartTimelineFromPosition called with:', startPosition);
+    console.log('🚀 restartTimelineFromPosition called with:', startPosition, 'at time:', new Date().toLocaleTimeString());
     const container = containerRef.current;
     const content = contentRef.current;
     
     if (!container || !content) {
-      console.log('❌ Missing container or content refs');
+      console.log('❌ Missing container or content refs at:', new Date().toLocaleTimeString());
       return;
     }
     
@@ -184,8 +185,10 @@ const ScrollingTabs: React.FC<ScrollingTabsProps> = ({
 
   // Seamless continuous scroll setup
   const setupContinuousScroll = useCallback(() => {
+    console.log('🎬 setupContinuousScroll called at:', new Date().toLocaleTimeString(), 'clients:', sortedClients.length);
     // Don't setup animation if there are no clients
     if (sortedClients.length === 0) {
+      console.log('❌ No clients, skipping setup');
       return;
     }
     
@@ -196,12 +199,13 @@ const ScrollingTabs: React.FC<ScrollingTabsProps> = ({
     
     // Only clean up if we're explicitly re-initializing
     if (timelineRef.current && timelineRef.current.isActive()) {
-      // Don't kill active timeline unless necessary
+      console.log('⚠️ Active timeline detected, should NOT kill it');
       return;
     }
 
     // Only reset position if timeline is not active
     if (!timelineRef.current || !timelineRef.current.isActive()) {
+      console.log('🔄 Resetting position because timeline is not active');
       gsap.set(content, { x: 0 });
     }
     
@@ -280,10 +284,13 @@ const ScrollingTabs: React.FC<ScrollingTabsProps> = ({
 
   // Setup animation when clients change
   useEffect(() => {
+    console.log('🔄 useEffect triggered - clients.length:', clients.length, 'sortedClients.length:', sortedClients.length, 'at:', new Date().toLocaleTimeString());
     // Don't setup animation if there are no clients
     if (clients.length === 0) {
+      console.log('❌ No clients, cleaning up animations');
       // Clean up any existing animations
       if (timelineRef.current) {
+        console.log('🔪 Killing timeline due to no clients');
         timelineRef.current.kill();
         timelineRef.current = null;
       }
@@ -297,7 +304,9 @@ const ScrollingTabs: React.FC<ScrollingTabsProps> = ({
     
     // Only setup once when clients are first loaded, and prevent re-setup during modal interactions
     if (!timelineRef.current && sortedClients.length > 0) {
+      console.log('✨ Setting up timeline for first time at:', new Date().toLocaleTimeString());
       setTimeout(() => {
+        console.log('⏰ Timeout executed, calling setupContinuousScroll at:', new Date().toLocaleTimeString());
         setupContinuousScroll();
       }, 0);
     }
@@ -305,7 +314,9 @@ const ScrollingTabs: React.FC<ScrollingTabsProps> = ({
 
   // Cleanup on unmount
   useEffect(() => {
+    console.log('🧹 Cleanup effect registered');
     return () => {
+      console.log('🧹 Component unmounting, cleaning up timeline');
       if (timelineRef.current) {
         timelineRef.current.kill();
       }
@@ -317,6 +328,7 @@ const ScrollingTabs: React.FC<ScrollingTabsProps> = ({
 
   // Prevent timeline interference from linkedClient changes
   useEffect(() => {
+    console.log('🔗 linkedClient effect triggered, linkedClient:', linkedClient?.name || 'none', 'at:', new Date().toLocaleTimeString());
     // Don't let linkedClient changes affect the timeline
     // The timeline should run independently of calculator state
   }, [linkedClient]);
@@ -332,15 +344,21 @@ const ScrollingTabs: React.FC<ScrollingTabsProps> = ({
 
   // Handle tab click - pause timeline and show modal
   const handleTabClick = (client: Client) => {
+    console.log('👆 handleTabClick called for client:', client.name, 'at:', new Date().toLocaleTimeString());
+    console.log('🎬 Timeline status before click - isActive:', timelineRef.current?.isActive(), 'exists:', !!timelineRef.current);
+    
     // Clear any existing long press timer
     if (longPressTimer) {
       clearTimeout(longPressTimer);
       setLongPressTimer(null);
     }
     
+    console.log('🎭 Opening modal for client:', client.name);
     // Don't let modal opening affect the timeline
     // Timeline should continue running independently
     setSelectedClientForAction(client);
+    
+    console.log('🎬 Timeline status after click - isActive:', timelineRef.current?.isActive(), 'exists:', !!timelineRef.current);
   };
 
   // Handle long press start
