@@ -279,7 +279,8 @@ const ScrollingTabs: React.FC<ScrollingTabsProps> = ({
         onDragStart: function() {
           // Kill the timeline on drag start but don't store position yet
           if (timelineRef.current) {
-            console.log('🎯 Drag started, killing timeline at:', new Date().toLocaleTimeString());
+            console.log('🎯 DRAG STARTED - KILLING TIMELINE at:', new Date().toLocaleTimeString());
+            console.log('🎯 Timeline was active:', timelineRef.current.isActive());
             timelineRef.current.kill();
             timelineRef.current = null;
           }
@@ -288,12 +289,12 @@ const ScrollingTabs: React.FC<ScrollingTabsProps> = ({
         onDragEnd: function() {
           // Just set dragging to false, don't store position yet
           setIsDragging(false);
-          console.log('🎯 Drag ended at:', new Date().toLocaleTimeString());
+          console.log('🎯 DRAG ENDED at:', new Date().toLocaleTimeString());
         },
         onThrowComplete: function() {
           // Store position when throw/inertia completes (final resting position)
           const currentX = gsap.getProperty(content, "x") as number;
-          console.log('🎯 Throw complete, restarting timeline from position:', currentX, 'at:', new Date().toLocaleTimeString());
+          console.log('🎯 THROW COMPLETE - RESTARTING TIMELINE from position:', currentX, 'at:', new Date().toLocaleTimeString());
           
           // Restart timeline from paused position after throw completes
           requestAnimationFrame(() => {
@@ -308,18 +309,19 @@ const ScrollingTabs: React.FC<ScrollingTabsProps> = ({
 
   // Setup animation when clients change
   useEffect(() => {
-    console.log('🔄 useEffect triggered - clients.length:', clients.length, 'sortedClients.length:', sortedClients.length, 'at:', new Date().toLocaleTimeString());
+    console.log('🔄 CLIENTS USEEFFECT - clients.length:', clients.length, 'sortedClients.length:', sortedClients.length, 'at:', new Date().toLocaleTimeString());
+    console.log('🔄 CLIENTS USEEFFECT - Current timeline active:', timelineRef.current?.isActive() || false);
     // Only setup once when clients are first loaded
     if (!timelineRef.current && sortedClients.length > 0) {
-      console.log('✨ Setting up timeline for first time at:', new Date().toLocaleTimeString());
+      console.log('✨ FIRST TIME TIMELINE SETUP at:', new Date().toLocaleTimeString());
       // Remove timeout to prevent timing issues
-      console.log('⏰ Calling setupContinuousScroll immediately');
+      console.log('⏰ CALLING setupContinuousScroll IMMEDIATELY');
       setupContinuousScroll();
     }
     
     // Only clean up if clients are truly gone for a longer period
     if (sortedClients.length === 0) {
-      console.log('❌ No clients detected, but timeline should continue running');
+      console.log('❌ NO CLIENTS - Timeline should continue running, current active:', timelineRef.current?.isActive() || false);
       // Don't kill timeline immediately - let it continue running
       // Only kill if clients are gone for a very long time
     }
@@ -327,11 +329,11 @@ const ScrollingTabs: React.FC<ScrollingTabsProps> = ({
 
   // Cleanup on unmount
   useEffect(() => {
-    console.log('🧹 Cleanup effect registered');
-    console.log('🧹 Cleanup effect registered');
+    console.log('🧹 CLEANUP EFFECT REGISTERED');
     return () => {
-      console.log('🧹 Component unmounting, cleaning up timeline');
-      console.log('🧹 Component unmounting, cleaning up timeline');
+      console.log('🧹 COMPONENT UNMOUNTING - KILLING TIMELINE');
+      console.log('🧹 Timeline was active before kill:', timelineRef.current?.isActive() || false);
+      console.log('🧹 Unmount stack trace:', new Error().stack?.split('\n').slice(1, 6).join('\n'));
       if (timelineRef.current) {
         timelineRef.current.kill();
       }
@@ -343,8 +345,7 @@ const ScrollingTabs: React.FC<ScrollingTabsProps> = ({
 
   // Prevent timeline interference from linkedClient changes
   useEffect(() => {
-    console.log('🔗 linkedClient effect triggered, linkedClient:', linkedClient?.name || 'none', 'at:', new Date().toLocaleTimeString());
-    console.log('🔗 linkedClient effect triggered, linkedClient:', linkedClient?.name || 'none', 'at:', new Date().toLocaleTimeString());
+    console.log('🔗 LINKEDCLIENT EFFECT - linkedClient:', linkedClient?.name || 'none', 'timeline active:', timelineRef.current?.isActive() || false, 'at:', new Date().toLocaleTimeString());
     // Don't let linkedClient changes affect the timeline
     // The timeline should run independently of calculator state
   }, [linkedClient]);
