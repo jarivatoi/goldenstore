@@ -266,19 +266,21 @@ const ScrollingTabs: React.FC<ScrollingTabsProps> = ({
         overshootTolerance: 0, // No overshooting
         force3D: true,
         onDragStart: function() {
-          // Kill the timeline on drag start (original behavior)
+          // Kill the timeline on drag start but don't store position yet
           if (timelineRef.current) {
-            const currentX = gsap.getProperty(content, "x") as number;
-           console.log('🎯 Storing paused position on drag start:', currentX);
-            pausedPositionRef.current = currentX;
             timelineRef.current.kill();
             timelineRef.current = null;
           }
           setIsDragging(true);
         },
-        onThrowComplete: function() {
+        onDragEnd: function() {
+          // Store position when drag ends (before throw begins)
+          const currentX = gsap.getProperty(content, "x") as number;
+          console.log('🎯 Storing paused position on drag end:', currentX);
+          pausedPositionRef.current = currentX;
           setIsDragging(false);
-          
+        },
+        onThrowComplete: function() {
           // Restart timeline from paused position after throw completes
           requestAnimationFrame(() => {
             requestAnimationFrame(() => {
