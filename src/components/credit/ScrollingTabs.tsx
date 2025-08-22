@@ -200,8 +200,11 @@ const ScrollingTabs: React.FC<ScrollingTabsProps> = ({
       return;
     }
 
-    // Reset position and wait for layout
-    gsap.set(content, { x: 0 });
+    // Only reset position if timeline is not active
+    if (!timelineRef.current || !timelineRef.current.isActive()) {
+      gsap.set(content, { x: 0 });
+    }
+    
     requestAnimationFrame(() => {
       const containerWidth = container.offsetWidth;
       const contentWidth = content.scrollWidth;
