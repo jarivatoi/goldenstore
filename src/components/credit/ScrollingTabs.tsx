@@ -214,10 +214,10 @@ const ScrollingTabs: React.FC<ScrollingTabsProps> = ({
           maxX: containerWidth,
         },
         edgeResistance: 0.8, // Increased resistance for better control
-        inertia: true,
-        dragResistance: 0.5, // Normal resistance for dragging
-        throwResistance: 1000, // Lower value = more throw, higher = less throw
-        maxDuration: 2, // Shorter inertia duration
+        snap: false,
+        dragResistance: 0.05, // Lower = easier to drag
+        throwResistance: 0.001, // Much lower = maximum throw distance
+        maxDuration: 4, // Longer inertia duration
         minDuration: 0.1,
         overshootTolerance: 0, // No overshooting
         force3D: true,
