@@ -143,37 +143,52 @@ const ScrollingTabs: React.FC<ScrollingTabsProps> = ({
     const containerWidth = container.offsetWidth;
     const contentWidth = content.scrollWidth;
     
-    // Calculate remaining distance from current position to end
-    const remainingDistance = Math.abs(startPosition - (-contentWidth));
-    const remainingDuration = remainingDistance / 60; // 60px per second
-    
-    // Create new timeline that matches the original golden animation
-    timelineRef.current = gsap.timeline({ repeat: -1, ease: "none" });
-    
-    // Set initial position
-    gsap.set(content, { x: startPosition });
+    // Kill any existing timeline
+    if (timelineRef.current) {
+      timelineRef.current.kill();
+      timelineRef.current = null;
+    }
     
     // Calculate total distance for full cycle
     const totalDistance = contentWidth + containerWidth;
     const fullCycleDuration = totalDistance / 60; // 60px per second
     
-    // Create the same infinite animation as setupContinuousScroll
-    timelineRef.current
-      .fromTo(content, 
-        { x: startPosition }, 
-        { 
+    // Create new infinite timeline that matches setupContinuousScroll
+    timelineRef.current = gsap.timeline({ repeat: -1, ease: "none" });
+    
+    // Set initial position
+    gsap.set(content, { x: startPosition });
+    
+    // Calculate remaining distance from current position to end
+    const remainingDistance = Math.abs(startPosition - (-contentWidth));
+    const remainingDuration = remainingDistance / 60; // 60px per second
+    
+    // Continue from current position to end, then start infinite loop
+    if (remainingDuration > 0) {
+      timelineRef.current
+        .to(content, { 
           x: -contentWidth,
           duration: remainingDuration,
           ease: "none"
-        }
-      )
-      .set(content, { x: containerWidth }) // Jump to right edge instantly
-      .to(content, {
-        x: -contentWidth,
-        duration: fullCycleDuration,
-        ease: "none",
-        repeat: -1 // Infinite repeat of full cycle
-      });
+        })
+        .set(content, { x: containerWidth }) // Jump to right edge instantly
+        .to(content, {
+          x: -contentWidth,
+          duration: fullCycleDuration,
+          ease: "none",
+          repeat: -1 // Infinite repeat of full cycle
+        });
+    } else {
+      // If already at or past the end, start fresh cycle
+      timelineRef.current
+        .set(content, { x: containerWidth }) // Jump to right edge instantly
+        .to(content, {
+          x: -contentWidth,
+          duration: fullCycleDuration,
+          ease: "none",
+          repeat: -1 // Infinite repeat of full cycle
+        });
+    }
     
   }, []);
 
