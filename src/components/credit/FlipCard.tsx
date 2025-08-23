@@ -47,6 +47,10 @@ const FlipCard: React.FC<FlipCardProps> = ({
       rotationY: 0,
       backfaceVisibility: "hidden",
       transformStyle: "preserve-3d"
+      display: "flex",
+      alignItems: "center",
+      justifyContent: "center",
+      textAlign: "center"
     });
 
     gsap.set(back, {
@@ -57,7 +61,11 @@ const FlipCard: React.FC<FlipCardProps> = ({
       top: 0,
       left: 0,
       width: "100%",
-      height: "100%"
+      height: "100%",
+      display: "flex",
+      alignItems: "center",
+      justifyContent: "center",
+      textAlign: "center"
     });
 
     // Create flip animation timeline
