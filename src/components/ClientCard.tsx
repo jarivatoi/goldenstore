@@ -89,8 +89,10 @@ const ClientCard: React.FC<ClientCardProps> = ({ client, onLongPress, onQuickAdd
           key = `${size} ${brand}`;
         } else if (brand) {
           key = `Bouteille ${brand}`;
-        } else if (size) {
-          key = `${size} Bouteille`;
+          const brand = chopineMatch[2]?.trim().split(' ').map(word => 
+            word.charAt(0).toUpperCase() + word.slice(1).toLowerCase()
+          ).join(' ') || '';
+          const key = brand ? `Chopine ${brand}` : 'Chopine';
         } else {
           key = 'Bouteille';
         }
@@ -104,8 +106,10 @@ const ClientCard: React.FC<ClientCardProps> = ({ client, onLongPress, onQuickAdd
       // Handle items without explicit numbers (assume quantity 1)
       if (description.includes('bouteille') && !bouteillePattern.test(description)) {
         const sizeMatch = description.match(/(\d+(?:\.\d+)?[Ll])/i);
-        const brandMatch = description.match(/bouteilles?\s+([^,]*)/i);
-        const brand = brandMatch?.[1]?.trim().split(' ').map(word => 
+          const size = bouteilleMatch[2]?.trim().toUpperCase() || '';
+          const brand = bouteilleMatch[3]?.trim().split(' ').map(word => 
+            word.charAt(0).toUpperCase() + word.slice(1).toLowerCase()
+          ).join(' ') || '';
           word.charAt(0).toUpperCase() + word.slice(1).toLowerCase()
         ).join(' ') || '';
         
@@ -128,15 +132,17 @@ const ClientCard: React.FC<ClientCardProps> = ({ client, onLongPress, onQuickAdd
       
       if (description.includes('chopine') && !chopinePattern.test(description)) {
         const brandMatch = description.match(/chopines?\s+([^,]*)/i);
-        const brand = brandMatch?.[1]?.trim().split(' ').map(word => 
+          const brand = brandMatch?.[1]?.trim().split(' ').map(word => 
+            word.charAt(0).toUpperCase() + word.slice(1).toLowerCase()
+          ).join(' ') || '';
           word.charAt(0).toUpperCase() + word.slice(1).toLowerCase()
         ).join(' ') || '';
-        const key = brand ? `Chopine ${brand}` : 'Chopine';
-        
+          if (sizeMatch && sizeMatch[1] && brand) {
+            key = `${sizeMatch[1].toUpperCase()} Bouteille ${brand}`;
         if (!returnableItems[key]) {
           returnableItems[key] = 0;
-        }
-        returnableItems[key] += 1;
+          } else if (sizeMatch && sizeMatch[1]) {
+            key = `${sizeMatch[1].toUpperCase()} Bouteille`;
       }
     });
     
@@ -149,7 +155,9 @@ const ClientCard: React.FC<ClientCardProps> = ({ client, onLongPress, onQuickAdd
         Object.keys(returnableItems).forEach(itemType => {
           if (description.includes(itemType.toLowerCase())) {
             const match = description.match(/returned:\s*(\d+)\s+/);
-            if (match) {
+          const brand = brandMatch?.[1]?.trim().split(' ').map(word => 
+            word.charAt(0).toUpperCase() + word.slice(1).toLowerCase()
+          ).join(' ') || '';
               if (!returnedQuantities[itemType]) {
                 returnedQuantities[itemType] = 0;
               }
@@ -186,21 +194,21 @@ const ClientCard: React.FC<ClientCardProps> = ({ client, onLongPress, onQuickAdd
           // For Chopine items: "8 Chopines beer" or "1 Chopine beer"
           const brand = itemType.replace('Chopine', '').trim();
           if (brand) {
-            displayText = `${remaining} Chopine${remaining > 1 ? 's' : ''} ${brand}`;
+            displayText = `${remaining} (Chopine${remaining > 1 ? 's' : ''} ${brand})`;
           } else {
-            displayText = `${remaining} Chopine${remaining > 1 ? 's' : ''}`;
+            displayText = `${remaining} (Chopine${remaining > 1 ? 's' : ''})`;
           }
         } else if (itemType.includes('Bouteille')) {
           // For Bouteille items: only pluralize "Bouteille", not the whole string
           if (itemType === 'Bouteille') {
-            displayText = `${remaining} Bouteille${remaining > 1 ? 's' : ''}`;
+            displayText = `${remaining} (Bouteille${remaining > 1 ? 's' : ''})`;
           } else {
             // For items like "1.5L Bouteille Green", only pluralize "Bouteille"
-            displayText = `${remaining} ${itemType.replace('Bouteille', `Bouteille${remaining > 1 ? 's' : ''}`)}`;
+            displayText = `${remaining} (${itemType.replace('Bouteille', `Bouteille${remaining > 1 ? 's' : ''}`)})`;
           }
         } else {
           // For other items: don't add pluralization
-          displayText = `${remaining} ${itemType}`;
+          displayText = `${remaining} (${itemType})`;
         }
         
         netReturnableItems.push(`${displayText} (${dateStr})`);
