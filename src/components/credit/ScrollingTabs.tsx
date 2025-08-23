@@ -381,6 +381,9 @@ const ScrollingTabs: React.FC<ScrollingTabsProps> = ({
       setLongPressTimer(null);
     }
     
+    // Add click animation immediately
+    setClickedTabId(client.id);
+    
     // Store current position before opening modal (if timeline is active)
     if (timelineRef.current && timelineRef.current.isActive()) {
       const currentX = gsap.getProperty(contentRef.current, "x") as number;
@@ -843,7 +846,9 @@ const ScrollingTabs: React.FC<ScrollingTabsProps> = ({
           client={selectedClientForAction}
           onClose={() => {
             console.log('🎭 Modal closing, resuming timeline from stored position:', pausedPositionRef.current);
-            setSelectedClientForAction(null);
+            
+            // Keep the golden effect visible for a moment during timeline resume
+            // Don't clear selectedClientForAction immediately
             
             // Resume timeline from stored position after modal closes
             if (pausedPositionRef.current !== null) {
@@ -860,6 +865,12 @@ const ScrollingTabs: React.FC<ScrollingTabsProps> = ({
                 }
               }, 100);
             }
+            
+            // Clear the modal and golden effect after timeline resumes
+            setTimeout(() => {
+              setSelectedClientForAction(null);
+              setClickedTabId(null);
+            }, 500); // Keep golden effect visible for 500ms
           }}
           onQuickAdd={onQuickAdd}
           onResetCalculator={onResetCalculator}
@@ -872,7 +883,8 @@ const ScrollingTabs: React.FC<ScrollingTabsProps> = ({
           client={selectedClientForDetails}
           onClose={() => {
             console.log('🎭 Detail modal closing, resuming timeline from stored position:', pausedPositionRef.current);
-            setSelectedClientForDetails(null);
+            
+            // Keep any visual effects during timeline resume
             
             // Resume timeline from stored position after modal closes
             if (pausedPositionRef.current !== null) {
@@ -889,6 +901,11 @@ const ScrollingTabs: React.FC<ScrollingTabsProps> = ({
                 }
               }, 100);
             }
+            
+            // Clear the modal after timeline resumes
+            setTimeout(() => {
+              setSelectedClientForDetails(null);
+            }, 300);
           }}
           onQuickAdd={onQuickAdd}
         />
