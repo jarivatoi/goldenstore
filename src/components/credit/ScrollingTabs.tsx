@@ -307,6 +307,12 @@ const ScrollingTabs: React.FC<ScrollingTabsProps> = ({
           console.log('🎯 DRAG END - RESTARTING TIMELINE at:', new Date().toLocaleTimeString());
           setIsDragging(false);
           
+          // Don't restart timeline here - wait for throw to complete
+          console.log('🎯 DRAG END - Waiting for throw to complete before restarting timeline');
+        },
+        onThrowComplete: function() {
+          console.log('🎯 THROW COMPLETE - RESTARTING TIMELINE from stored position:', pausedPositionRef.current, 'at:', new Date().toLocaleTimeString());
+          
           // ALWAYS resume from the stored position (which was captured at click time)
           const resumePosition = pausedPositionRef.current;
           console.log('🚀 Resuming timeline from stored position:', resumePosition);
@@ -315,19 +321,11 @@ const ScrollingTabs: React.FC<ScrollingTabsProps> = ({
             restartTimelineFromPosition(resumePosition);
             pausedPositionRef.current = null; // Clear stored position
           } else {
-            console.log('🚀 No stored position, creating fresh timeline from container width');
-            // Fallback: start fresh from right edge
-            const containerWidth = containerRef.current?.offsetWidth || 0;
-            restartTimelineFromPosition(containerWidth);
+            console.log('🚀 No stored position, creating fresh timeline from current position after throw');
+            // Fallback: start fresh from current position
+            const currentX = gsap.getProperty(contentRef.current, "x") as number;
+            restartTimelineFromPosition(currentX);
           }
-        },
-        onThrowComplete: function() {
-          console.log('🎯 THROW COMPLETE - RESTARTING TIMELINE from stored position:', pausedPositionRef.current, 'at:', new Date().toLocaleTimeString());
-          
-          // Always resume timeline after throw completes
-          const currentX = gsap.getProperty(contentRef.current, "x") as number;
-          console.log('🚀 Resuming timeline from current position after throw:', currentX);
-          restartTimelineFromPosition(currentX);
         }
       });
     });
