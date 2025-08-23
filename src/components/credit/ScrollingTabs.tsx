@@ -171,7 +171,7 @@ const ScrollingTabs: React.FC<ScrollingTabsProps> = ({
     
     // Calculate remaining distance from current position to end
     const remainingDistance = Math.abs(adjustedPosition - (-contentWidth));
-    const remainingDuration = remainingDistance / 60; // 60px per second
+    const remainingDuration = (remainingDistance / (contentWidth + containerWidth)) * fullCycleDuration; // Proportional to full cycle
     console.log('📐 Remaining distance:', remainingDistance, 'Duration:', remainingDuration);
     
     // Continue from current position to end, then start infinite loop
@@ -189,7 +189,7 @@ const ScrollingTabs: React.FC<ScrollingTabsProps> = ({
           repeat: -1, // Infinite repeat of full cycle
           duration: fullCycleDuration,
           ease: "none"
-        }, 0)
+        })
         .call(() => {
           // Clear saved position when starting fresh infinite loop
           pausedPositionRef.current = null;
