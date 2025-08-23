@@ -299,6 +299,7 @@ const ScrollingTabs: React.FC<ScrollingTabsProps> = ({
             console.log('🎯 DRAG STARTED - KILLING TIMELINE at:', new Date().toLocaleTimeString());
             console.log('🎯 Timeline was active:', timelineRef.current.isActive());
             timelineRef.current.kill();
+            timelineRef.current = null; // Set to null after killing
           }
         },
         onThrowComplete: function() {
