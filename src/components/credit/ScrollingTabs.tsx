@@ -139,11 +139,14 @@ const ScrollingTabs: React.FC<ScrollingTabsProps> = ({
     const contentWidth = content.scrollWidth;
     console.log('📏 Container width:', containerWidth, 'Content width:', contentWidth);
     
-    // FIX: If position is off-screen, reset to visible position
+    // Only reset position if it's completely off-screen (beyond content boundaries)
     let adjustedPosition = startPosition;
-    if (startPosition > containerWidth || startPosition < -contentWidth) {
-      console.log('🔧 Position off-screen, resetting to container width:', containerWidth);
-      adjustedPosition = containerWidth; // Start from right edge (visible)
+    if (startPosition > containerWidth + 100) {
+      console.log('🔧 Position too far right, resetting to container width:', containerWidth);
+      adjustedPosition = containerWidth; // Start from right edge
+    } else if (startPosition < -contentWidth - 100) {
+      console.log('🔧 Position too far left, resetting to left boundary:', -contentWidth);
+      adjustedPosition = -contentWidth; // Start from left boundary
     }
     
     // Kill any existing timeline
