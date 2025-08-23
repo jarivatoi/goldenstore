@@ -5,6 +5,7 @@ import { useCredit } from '../context/CreditContext';
 import ClientDetailModal from './ClientDetailModal';
 import ClientActionModal from './ClientActionModal';
 import { ScrollingText } from './ScrollingText';
+import FlipCard from './credit/FlipCard';
 
 interface ClientCardProps {
   client: Client;
@@ -378,19 +379,32 @@ const ClientCard: React.FC<ClientCardProps> = ({ client, onLongPress, onQuickAdd
           ) : (
             <div className="mb-2 h-5"></div>
           )}
-          <div className="flex items-center gap-2">
-            <Calendar size={12} className="sm:w-3.5 sm:h-3.5" />
-            <span>
-              {client.lastTransactionAt.toLocaleDateString('en-GB', {
-                day: '2-digit',
-                month: 'short',
-                year: 'numeric'
-              }).replace(/\s/g, '-')} {client.lastTransactionAt.toLocaleTimeString('en-GB', {
-                hour: '2-digit',
-                minute: '2-digit',
-                hour12: false
-              })}
-            </span>
+          <div className="flex items-center gap-2 h-4">
+            <Calendar size={12} className="sm:w-3.5 sm:h-3.5 flex-shrink-0" />
+            <FlipCard
+              frontContent={
+                <span className="text-xs sm:text-sm text-gray-500">
+                  {client.lastTransactionAt.toLocaleDateString('en-GB', {
+                    day: '2-digit',
+                    month: 'short',
+                    year: 'numeric'
+                  }).replace(/\s/g, '-')}
+                </span>
+              }
+              backContent={
+                <span className="text-xs sm:text-sm text-gray-500">
+                  {client.lastTransactionAt.toLocaleTimeString('en-GB', {
+                    hour: '2-digit',
+                    minute: '2-digit',
+                    hour12: false
+                  })}
+                </span>
+              }
+              shouldFlip={!!returnableItemsText}
+              flipDuration={0.6}
+              flipDelay={3}
+              className="flex-1"
+            />
           </div>
         </div>
 
