@@ -201,11 +201,23 @@ const ClientCard: React.FC<ClientCardProps> = ({ client, onLongPress, onQuickAdd
             displayText = `${remaining} Chopine${remaining > 1 ? 's' : ''}`;
           }
         } else if (itemType.includes('Bouteille')) {
-          // For Bouteille items: keep original format
-          displayText = `${remaining} ${itemType}${remaining > 1 ? 's' : ''}`;
+          // For Bouteille items: check if it has a size (like "1.5L Green")
+          const sizeMatch = itemType.match(/(\d+(?:\.\d+)?L)/i);
+          if (sizeMatch) {
+            // For sized bottles like "1.5L Green" -> "3 (1.5L Green)"
+            displayText = `${remaining} (${itemType})`;
+          } else {
+            // For regular bottles like "Bouteille Green" -> "3 Bouteilles Green"
+            const brand = itemType.replace('Bouteille', '').trim();
+            if (brand) {
+              displayText = `${remaining} Bouteille${remaining > 1 ? 's' : ''} ${brand}`;
+            } else {
+              displayText = `${remaining} Bouteille${remaining > 1 ? 's' : ''}`;
+            }
+          }
         } else {
-          // For other items: keep original format
-          displayText = `${remaining} ${itemType}${remaining > 1 ? 's' : ''}`;
+          // For other items: use parentheses format
+          displayText = `${remaining} (${itemType})`;
         }
         
         netReturnableItems.push(`${displayText} (${dateStr})`);
