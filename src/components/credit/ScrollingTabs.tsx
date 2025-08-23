@@ -832,16 +832,22 @@ const ScrollingTabs: React.FC<ScrollingTabsProps> = ({
                       />
                     )}
                     <div className="text-xs text-gray-500 mt-1 text-center">
-                      <div>{client.lastTransactionAt.toLocaleDateString('en-GB', {
-                        day: '2-digit',
-                        month: 'short',
-                        year: 'numeric'
-                      }).replace(/\s/g, '-')}</div>
-                      <div>{client.lastTransactionAt.toLocaleTimeString('en-GB', {
-                        hour: '2-digit',
-                        minute: '2-digit',
-                        hour12: false
-                      })}</div>
+                      <FlipCard
+                        frontContent={<span>{client.lastTransactionAt.toLocaleDateString('en-GB', {
+                          day: '2-digit',
+                          month: 'short',
+                          year: 'numeric'
+                        }).replace(/\s/g, '-')}</span>}
+                        backContent={<span>{client.lastTransactionAt.toLocaleTimeString('en-GB', {
+                          hour: '2-digit',
+                          minute: '2-digit',
+                          hour12: false
+                        })}</span>}
+                        shouldFlip={true}
+                        flipDuration={0.6}
+                        flipDelay={2}
+                        className="inline-block text-xs"
+                      />
                     </div>
                   </div>
                 </div>
