@@ -703,21 +703,31 @@ const ClientActionModal: React.FC<ClientActionModalProps> = ({ client, onClose, 
               ? `This will mark all returnable containers as returned.`
               : `This will mark ${settleAction.quantity} ${settleAction.itemType}${(settleAction.quantity || 0) > 1 ? 's' : ''} as returned.`
           }
-          onConfirm={async () => {
+            const bouteillePattern = /(\d+)\s+(?:(\d+(?:\.\d+)?[Ll])\s+)?bouteilles?(?:\s+([^,\(\)]*))?/gi;
             try {
               setIsProcessing(true);
               if (settleAction.type === 'all') {
                 // Set all available items to be returned
-                const allReturns: {[key: string]: number} = {};
-                Object.entries(availableItems).forEach(([itemType, data]) => {
+              const size = bouteilleMatch[2]?.trim().replace(/l$/i, 'L') || '';
+              const brand = bouteilleMatch[3]?.trim() || '';
+              
+              // Properly capitalize brand name
+              const sizeMatch = description.match(/(\d+(?:\.\d+)?[Ll])/i);
+                word.charAt(0).toUpperCase() + word.slice(1).toLowerCase()
+              ).join(' ') : '';
                   allReturns[itemType] = data.total;
+              // Properly capitalize brand name
+              const capitalizedBrand = brand ? brand.split(' ').map(word => 
+                word.charAt(0).toUpperCase() + word.slice(1).toLowerCase()
+              ).join(' ') : '';
+              
                 });
-                
-                // Process all returns
-                for (const [itemType, quantity] of Object.entries(allReturns)) {
-                  await processItemReturn(itemType, quantity);
-                }
-              } else if (settleAction.itemType && settleAction.quantity) {
+              if (sizeMatch && sizeMatch[1] && capitalizedBrand) {
+                key = `${sizeMatch[1].replace(/l$/i, 'L')} Bouteille ${capitalizedBrand}`;
+              } else if (capitalizedBrand) {
+                key = `Bouteille ${capitalizedBrand}`;
+              } else if (sizeMatch && sizeMatch[1]) {
+                key = `${sizeMatch[1].replace(/l$/i, 'L')} Bouteille`;
                 // Process individual item return
                 await processItemReturn(settleAction.itemType, settleAction.quantity);
               }
