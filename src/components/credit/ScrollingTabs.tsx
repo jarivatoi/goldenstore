@@ -833,21 +833,19 @@ const ScrollingTabs: React.FC<ScrollingTabsProps> = ({
           client={selectedClientForAction}
           onClose={() => {
             console.log('🎭 Modal closing, checking timeline state');
-            const bouteillePattern = /(\d+)\s+(?:(\d+(?:\.\d+)?[Ll])\s+)?bouteilles?(?:\s+([^,]*))?/gi;
             // Clear modal and clicked state immediately
             setSelectedClientForAction(null);
             setClickedTabId(null);
-              const sizeMatch = description.match(/(\d+(?:\.\d+)?[Ll])/i);
-              const size = bouteilleMatch[2]?.trim().replace(/l$/i, 'L') || '';
+            
             setTimeout(() => {
               if (!timelineRef.current || !timelineRef.current.isActive()) {
                 console.log('🚀 Restarting timeline after modal close');
                 if (pausedPositionRef.current !== null) {
-                key = `${sizeMatch[0].replace(/l$/i, 'L')} ${brand}`;
+                  restartTimelineFromPosition(pausedPositionRef.current);
                   pausedPositionRef.current = null;
                 } else {
                   setupContinuousScroll();
-                key = `${sizeMatch[0].replace(/l$/i, 'L')} Bouteille`;
+                }
               } else {
                 console.log('🎬 Timeline already active, no restart needed');
               }
