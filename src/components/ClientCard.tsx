@@ -274,10 +274,16 @@ const ClientCard: React.FC<ClientCardProps> = ({ client, onLongPress, onQuickAdd
                 .map(([type, count]) => `${count} ${type.charAt(0).toUpperCase() + type.slice(1)}`)
                 .join(', ')}
             </p>
-                    displayText = `${itemType}${remaining > 1 ? 's' : ''}`;
-                  }
-                  
-                  netReturnableItems.push(`${remaining} ${displayText} (${dateStr})`);
+          )}
+        </div>
+
+        {/* Quick Add Button */}
+        {onQuickAdd && (
+          <div className="mb-2 sm:mb-3">
+            <button
+              onClick={() => {
+                if (!isLinked) {
+                  onQuickAdd(client);
                 }
               }}
               className={`w-full py-2 px-3 rounded-lg transition-colors flex items-center justify-center gap-2 text-sm font-medium ${
