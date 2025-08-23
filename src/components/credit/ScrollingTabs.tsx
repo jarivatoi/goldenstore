@@ -127,14 +127,6 @@ const ScrollingTabs: React.FC<ScrollingTabsProps> = ({
   const restartTimelineFromPosition = useCallback((startPosition: number) => {
     console.log('🚀 restartTimelineFromPosition called with:', startPosition, 'at time:', new Date().toLocaleTimeString());
     console.log('🚀 Called from stack:', new Error().stack?.split('\n').slice(1, 4).join('\n'));
-    
-    // CRITICAL: Always kill existing timeline first
-    if (timelineRef.current) {
-      console.log('🔪 KILLING existing timeline before creating new one at:', new Date().toLocaleTimeString());
-      timelineRef.current.kill();
-      timelineRef.current = null;
-    }
-    
     const container = containerRef.current;
     const content = contentRef.current;
     
@@ -152,6 +144,13 @@ const ScrollingTabs: React.FC<ScrollingTabsProps> = ({
     if (startPosition > containerWidth || startPosition < -contentWidth) {
       console.log('🔧 Position off-screen, resetting to container width:', containerWidth);
       adjustedPosition = containerWidth; // Start from right edge (visible)
+    }
+    
+    // Kill any existing timeline
+    if (timelineRef.current) {
+      console.log('🔪 Killing existing timeline at:', new Date().toLocaleTimeString());
+      timelineRef.current.kill();
+      timelineRef.current = null;
     }
     
     // Calculate total distance for full cycle
@@ -210,15 +209,24 @@ const ScrollingTabs: React.FC<ScrollingTabsProps> = ({
       console.log('❌ Missing container or content refs at:', new Date().toLocaleTimeString());
       return;
     }
+    // Check if we already have an active timeline
+    if (timelineRef.current && timelineRef.current.isActive()) {
+      console.log('⚠️ Active timeline detected, preserving it at:', new Date().toLocaleTimeString());
+      return;
+    }
     
-    // CRITICAL: Always kill existing timeline first
-    if (timelineRef.current) {
-      console.log('🔪 KILLING existing timeline in setupContinuousScroll at:', new Date().toLocaleTimeString());
+    // If timeline exists but is not active, kill it and create new one
+    if (timelineRef.current && !timelineRef.current.isActive()) {
+      console.log('🔪 Killing inactive timeline and creating new one at:', new Date().toLocaleTimeString());
       timelineRef.current.kill();
       timelineRef.current = null;
     }
     
-    // Check if we already have an active timeline
+    // If timeline exists but is not active, kill it and create new one
+    if (timelineRef.current && !timelineRef.current.isActive()) {
+      console.log('🔪 Killing inactive timeline and creating new one at:', new Date().toLocaleTimeString());
+      timelineRef.current.kill();
+    }
     // Always reset position when creating new timeline
     console.log('🔄 Resetting position and creating new timeline at:', new Date().toLocaleTimeString());
     gsap.set(content, { x: 0 });
@@ -281,8 +289,6 @@ const ScrollingTabs: React.FC<ScrollingTabsProps> = ({
           if (timelineRef.current) {
             console.log('🎯 DRAG STARTED - KILLING TIMELINE at:', new Date().toLocaleTimeString());
             console.log('🎯 Timeline was active:', timelineRef.current.isActive());
-            timelineRef.current.kill();
-            timelineRef.current = null;
             timelineRef.current.kill();
           }
         },
