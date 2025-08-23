@@ -280,6 +280,33 @@ const ScrollingTabs: React.FC<ScrollingTabsProps> = ({
         throwResistance: 1000, // Lower value = more throw, higher = less throw
         maxDuration: 2, // Shorter inertia duration
         minDuration: 0.1,
+        onDragStart: function() {
+          console.log('🖱️ DRAG START - PAUSING TIMELINE at:', new Date().toLocaleTimeString());
+          setIsDragging(true);
+          dragHasExceededThreshold.current = false;
+          
+          // Store current position when drag starts
+          const currentX = gsap.getProperty(contentRef.current, "x") as number;
+          pausedPositionRef.current = currentX;
+          console.log('🎬 Storing position on drag start:', currentX);
+          
+          // Kill timeline when dragging starts
+          if (timelineRef.current) {
+            timelineRef.current.kill();
+            timelineRef.current = null;
+            console.log('🔪 Timeline killed on drag start');
+          }
+        },
+        onDrag: function() {
+          const dragDistance = Math.abs(this.x - this.startX);
+          if (dragDistance > 10) {
+            dragHasExceededThreshold.current = true;
+          }
+        },
+        onDragEnd: function() {
+          console.log('🖱️ DRAG END - RESTARTING TIMELINE from stored position:', pausedPositionRef.current, 'at:', new Date().toLocaleTimeString());
+          setIsDragging(false);
+          
           // ALWAYS resume from the stored position (which was captured at click time)
           const resumePosition = pausedPositionRef.current;
           // ALWAYS resume from the stored position (which was captured at click time)
