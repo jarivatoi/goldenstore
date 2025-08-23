@@ -68,8 +68,9 @@ const ClientGrid: React.FC<ClientGridProps> = ({
     // Calculate bounds based on content and container width
     const maxDrag = Math.max(0, contentWidth - containerWidth);
     
-    // For single card or non-overflowing content, disable dragging entirely
-    const shouldEnableDrag = contentWidth > containerWidth + 50; // Add 50px buffer
+    // Smart drag detection: only enable if there's significant overflow
+    const overflowAmount = contentWidth - containerWidth;
+    const shouldEnableDrag = overflowAmount > 100; // Require at least 100px overflow
     
     // Create draggable instance
     if (shouldEnableDrag) {
