@@ -189,6 +189,11 @@ const ScrollingTabs: React.FC<ScrollingTabsProps> = ({
           repeat: -1, // Infinite repeat of full cycle
           duration: fullCycleDuration,
           ease: "none"
+        }, 0)
+        .call(() => {
+          // Clear saved position when starting fresh infinite loop
+          pausedPositionRef.current = null;
+          console.log('🔄 Cleared saved position for fresh infinite loop');
         });
     } else {
       console.log('🔄 Starting fresh cycle at:', new Date().toLocaleTimeString());
@@ -199,6 +204,11 @@ const ScrollingTabs: React.FC<ScrollingTabsProps> = ({
           repeat: -1, // Infinite repeat of full cycle
           duration: fullCycleDuration,
           ease: "none"
+        })
+        .call(() => {
+          // Clear saved position when starting fresh infinite loop
+          pausedPositionRef.current = null;
+          console.log('🔄 Cleared saved position for fresh infinite loop');
         });
     }
     console.log('✅ Timeline restart complete at:', new Date().toLocaleTimeString());
