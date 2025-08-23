@@ -607,15 +607,14 @@ const ClientActionModal: React.FC<ClientActionModalProps> = ({ client, onClose, 
                             : [];
                           
                           return relevantTransactions.map((transaction, index) => {
-                          const transactionDate = new Date(transaction.date || Date.now());
                           return (
                             <p key={index} className="truncate">
                               • <ScrollingText 
-                                text={`${transaction.description} (${transaction.quantity} ${itemType}) - ${new Date(transaction.date).toLocaleDateString('en-GB', {
+                                text={`${transaction.description} (${transaction.quantity} ${itemType}) - ${transaction.date.toLocaleDateString('en-GB', {
                                 day: '2-digit',
                                 month: '2-digit',
                                 year: 'numeric'
-                              })} ${new Date(transaction.date).toLocaleTimeString('en-GB', {
+                              })} ${transaction.date.toLocaleTimeString('en-GB', {
                                 hour: '2-digit',
                                 minute: '2-digit',
                                 hour12: false
@@ -643,11 +642,11 @@ const ClientActionModal: React.FC<ClientActionModalProps> = ({ client, onClose, 
                           return returnedTransactions.map((transaction, index) => (
                             <p key={`returned-${index}`} className="truncate text-green-600">
                               • <ScrollingText 
-                                text={`${transaction.description} - ${new Date(transaction.date).toLocaleDateString('en-GB', {
+                                text={`${transaction.description} - ${transaction.date.toLocaleDateString('en-GB', {
                                 day: '2-digit',
                                 month: '2-digit',
                                 year: 'numeric'
-                              })} ${new Date(transaction.date).toLocaleTimeString('en-GB', {
+                              })} ${transaction.date.toLocaleTimeString('en-GB', {
                                 hour: '2-digit',
                                 minute: '2-digit',
                                 hour12: false
