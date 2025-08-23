@@ -211,18 +211,12 @@ const ScrollingTabs: React.FC<ScrollingTabsProps> = ({
       return;
     }
     
-    // CRITICAL: Kill ALL existing timelines when fresh entry is made from right
+    // CRITICAL: Always kill existing timeline first
     if (timelineRef.current) {
       console.log('🔪 KILLING existing timeline in setupContinuousScroll at:', new Date().toLocaleTimeString());
       timelineRef.current.kill();
       timelineRef.current = null;
     }
-    
-    // Kill any orphaned timelines that might exist on the content element
-    gsap.killTweensOf(content);
-    
-    // Force stop any running animations on the content
-    gsap.set(content, { clearProps: "all" });
     
     // Check if we already have an active timeline
     // Always reset position when creating new timeline
@@ -289,6 +283,7 @@ const ScrollingTabs: React.FC<ScrollingTabsProps> = ({
             console.log('🎯 Timeline was active:', timelineRef.current.isActive());
             timelineRef.current.kill();
             timelineRef.current = null;
+            timelineRef.current.kill();
           }
         },
         onThrowComplete: function() {
@@ -374,15 +369,13 @@ const ScrollingTabs: React.FC<ScrollingTabsProps> = ({
       setLongPressTimer(null);
     }
     
-    // ALWAYS store current position before opening modal, regardless of timeline state
-    if (contentRef.current) {
+    // Store current position before opening modal (if timeline is active)
+    if (timelineRef.current && timelineRef.current.isActive()) {
       const currentX = gsap.getProperty(contentRef.current, "x") as number;
       pausedPositionRef.current = currentX;
-      console.log('🎬 Storing position before modal open:', currentX, 'timeline active:', timelineRef.current?.isActive());
-    }
-    
-    // Kill timeline when opening modal (if it exists)
-    if (timelineRef.current) {
+      console.log('🎬 Storing position before modal open:', currentX);
+      
+      // Kill timeline when opening modal
       timelineRef.current.kill();
       timelineRef.current = null;
       console.log('🎬 Timeline killed for modal');
