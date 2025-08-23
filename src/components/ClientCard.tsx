@@ -307,7 +307,16 @@ const ClientCard: React.FC<ClientCardProps> = ({ client, onLongPress, onQuickAdd
                 }
               }}
               className={`w-full py-2 px-3 rounded-lg transition-colors flex items-center justify-center gap-2 text-sm font-medium ${
-                isLinked 
+               // Properly capitalize L in bottle sizes and fix spelling
+               let formattedItemType = itemType;
+               
+               // Fix capitalization of L in sizes (1l → 1L, 1.5l → 1.5L, etc.)
+               formattedItemType = formattedItemType.replace(/(\d+(?:\.\d+)?)l\b/gi, '$1L');
+               
+               // Ensure proper spelling of Bouteille
+               formattedItemType = formattedItemType.replace(/boteille/gi, 'Bouteille');
+               
+               displayText = `${remaining} ${formattedItemType}${remaining > 1 ? 's' : ''}`;
                   ? 'bg-gray-300 text-gray-500 cursor-not-allowed' 
                   : 'bg-green-500 hover:bg-green-600 text-white'
               }`}
