@@ -840,7 +840,10 @@ const ScrollingTabs: React.FC<ScrollingTabsProps> = ({
               }
             }, 100);
           }}
-          onResetCalculator={onResetCalculator}
+          onResetCalculator={() => {
+            // Don't reset calculator when closing modal - only reset when explicitly requested
+            console.log('🔗 Modal requested calculator reset - ignoring to preserve client linking');
+          }}
           onViewDetails={setSelectedClientForDetail}
         />
       )}
