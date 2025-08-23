@@ -586,7 +586,7 @@ const ReturnableItemRow: React.FC<ReturnableItemRowProps> = ({ itemType, quantit
       
       // Close modal after processing return
       setTimeout(() => {
-        window.location.reload(); // Force full refresh to update all components
+        onClose(); // Just close the modal instead of full page reload
       }, 500);
     } catch (error) {
       alert('Failed to process return');
