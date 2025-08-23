@@ -571,21 +571,39 @@ const ScrollingTabs: React.FC<ScrollingTabsProps> = ({
                   const returned = returnedQuantities[itemType] || 0;
                   const remaining = Math.max(0, total - returned);
                   if (remaining > 0) {
-                    let truncated = '';
+                    let displayText = '';
                     if (itemType.includes('Chopine')) {
-                      truncated = `${remaining} (Ch)`;
-                    } else if (itemType.includes('Bouteille')) {
-                      const sizeMatch = itemType.match(/(\d+(?:\.\d+)?L)/i);
-                      if (sizeMatch) {
-                        truncated = `${remaining} (${sizeMatch[1].toUpperCase()})`;
+                      // Extract brand if present: "Chopine Brand" -> "Brand"
+                      const brand = itemType.replace('Chopine', '').trim();
+                      if (brand) {
+                        displayText = `${remaining} (${brand})`;
                       } else {
-                        truncated = `${remaining} (Bt)`;
+                        displayText = `${remaining} (${remaining > 1 ? 'Chopines' : 'Chopine'})`;
+                      }
+                    } else if (itemType.includes('Bouteille')) {
+                      // Extract size and brand: "1.5L Bouteille Brand" -> "1.5L Brand"
+                      const sizeMatch = itemType.match(/(\d+(?:\.\d+)?L)/);
+                      const brandMatch = itemType.match(/Bouteille\s+(.+)/);
+                      const brand = brandMatch?.[1]?.trim() || '';
+                      
+                      if (sizeMatch) {
+                        if (brand) {
+                          displayText = `${remaining} (${sizeMatch[1]} ${brand})`;
+                        } else {
+                          displayText = `${remaining} (${sizeMatch[1]} ${remaining > 1 ? 'Bouteilles' : 'Bouteille'})`;
+                        }
+                      } else {
+                        if (brand) {
+                          displayText = `${remaining} (${brand})`;
+                        } else {
+                          displayText = `${remaining} (${remaining > 1 ? 'Bouteilles' : 'Bouteille'})`;
+                        }
                       }
                     } else {
-                      const shortName = itemType.substring(0, 3);
-                      truncated = `${remaining} ${shortName}`;
+                      // For other items, just show the item type as-is
+                      displayText = `${remaining} (${itemType})`;
                     }
-                    truncatedItems.push(truncated);
+                    truncatedItems.push(displayText);
                   }
                 });
                 
