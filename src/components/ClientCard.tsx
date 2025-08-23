@@ -194,6 +194,22 @@ const ClientCard: React.FC<ClientCardProps> = ({ client, onLongPress, onQuickAdd
         
         // Format the display text properly
         let displayText = '';
+        let dateText = '';
+        let timeText = '';
+        
+        // Format date and time for flip card
+        const formattedDate = transactionDate.toLocaleDateString('en-GB', {
+          day: '2-digit',
+          month: 'short',
+          year: 'numeric'
+        }).replace(/\s/g, '-');
+        
+        const formattedTime = transactionDate.toLocaleTimeString('en-GB', {
+          hour: '2-digit',
+          minute: '2-digit',
+          hour12: false
+        });
+        
         if (itemType.includes('Chopine')) {
           // For Chopine items: "8 Chopine beer" (no pluralization for display)
           const brand = itemType.replace('Chopine', '').trim();
@@ -222,13 +238,16 @@ const ClientCard: React.FC<ClientCardProps> = ({ client, onLongPress, onQuickAdd
           displayText = `${remaining} (${itemType})`;
         }
         
-        netReturnableItems.push(`${displayText} (${dateStr})`);
+        // Create the returnable item with flip card for date
+        netReturnableItems.push({
+          text: displayText,
+          date: formattedDate,
+          time: formattedTime
+        });
       }
     });
     
-    // Fix bottle size capitalization (1l → 1L, 1.5l → 1.5L, etc.)
-    const formattedText = netReturnableItems.length > 0 ? netReturnableItems.join(', ') : '';
-    return formattedText.replace(/(\d+(?:\.\d+)?)l\b/gi, '$1L');
+    return netReturnableItems;
   }, [client.id, getClientTransactions, forceUpdate]);
   
   const returnableItemsText = getReturnableItemsText;
@@ -366,15 +385,30 @@ const ClientCard: React.FC<ClientCardProps> = ({ client, onLongPress, onQuickAdd
 
         {/* Returnable Items or Last Transaction Date */}
         <div className="text-xs sm:text-sm text-gray-500 min-h-[3rem] flex flex-col justify-end">
-          {returnableItemsText ? (
+          {returnableItemsText.length > 0 ? (
             <div className="mb-2">
               <ScrollingText 
-                text={returnableItemsText}
                 className="text-orange-600 font-medium"
                 pauseDuration={0.5}
                 scrollDuration={2.5}
                 easing="power1.inOut"
-              />
+              >
+                {returnableItemsText.map((item, index) => (
+                  <span key={index}>
+                    {index > 0 && ', '}
+                    {item.text} (
+                    <FlipCard
+                      frontContent={<span>{item.date}</span>}
+                      backContent={<span>{item.time}</span>}
+                      shouldFlip={true}
+                      flipDuration={0.6}
+                      flipDelay={2}
+                      className="inline-block"
+                    />
+                    )
+                  </span>
+                ))}
+              </ScrollingText>
             </div>
           ) : (
             <div className="mb-2 h-5"></div>
@@ -400,7 +434,7 @@ const ClientCard: React.FC<ClientCardProps> = ({ client, onLongPress, onQuickAdd
                   })}
                 </span>
               }
-              shouldFlip={!!returnableItemsText}
+              shouldFlip={returnableItemsText.length > 0}
               flipDuration={0.6}
               flipDelay={3}
               className="flex-1"
