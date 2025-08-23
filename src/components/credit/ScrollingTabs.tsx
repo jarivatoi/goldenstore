@@ -555,6 +555,7 @@ const ScrollingTabs: React.FC<ScrollingTabsProps> = ({
                   const returned = returnedQuantities[itemType] || 0;
                   const remaining = Math.max(0, total - returned);
                   if (remaining > 0) {
+                    console.log('🔍 Processing itemType:', itemType, 'remaining:', remaining);
                     let truncated = '';
                     if (itemType.includes('Chopine')) {
                       // Extract brand if present
@@ -562,8 +563,9 @@ const ScrollingTabs: React.FC<ScrollingTabsProps> = ({
                       const brand = brandMatch ? brandMatch[1] : '';
                      truncated = `${remaining} (Ch)`;
                     } else if (itemType.includes('Bouteille')) {
-                      // Extract size from itemType (e.g., "1.5L Bouteille" -> "1.5L")
+                      // Extract size from itemType (e.g., "1.5L Bouteille" -> "1.5L" or "1.5L Brand" -> "1.5L")
                       const sizeMatch = itemType.match(/(\d+(?:\.\d+)?L)/);
+                      console.log('🔍 Bouteille sizeMatch:', sizeMatch, 'for itemType:', itemType);
                       if (sizeMatch) {
                         truncated = `${remaining} (${sizeMatch[1]})`;
                       } else {
@@ -574,6 +576,7 @@ const ScrollingTabs: React.FC<ScrollingTabsProps> = ({
                       const shortName = itemType.substring(0, 3);
                       truncated = `${remaining} ${shortName}`;
                     }
+                    console.log('🔍 Final truncated text:', truncated);
                     truncatedItems.push(truncated);
                   }
                 });
