@@ -46,7 +46,7 @@ const FlipCard: React.FC<FlipCardProps> = ({
     gsap.set(front, {
       rotationY: 0,
       backfaceVisibility: "hidden",
-      transformStyle: "preserve-3d"
+      transformStyle: "preserve-3d",
       display: "flex",
       alignItems: "center",
       justifyContent: "center",
