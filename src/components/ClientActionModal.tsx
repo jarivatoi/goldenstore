@@ -11,6 +11,7 @@ interface ClientActionModalProps {
   onClose: () => void;
   onQuickAdd?: (client: Client) => void;
   onResetCalculator?: () => void;
+  onViewDetails?: (client: Client) => void;
 }
 
 /**
@@ -19,7 +20,7 @@ interface ClientActionModalProps {
  * 
  * Shows partial payment and settle options when swiping up on client card
  */
-const ClientActionModal: React.FC<ClientActionModalProps> = ({ client, onClose, onQuickAdd, onResetCalculator }) => {
+const ClientActionModal: React.FC<ClientActionModalProps> = ({ client, onClose, onQuickAdd, onResetCalculator, onViewDetails }) => {
   const { addPartialPayment, settleClient, getClientTotalDebt, returnBottles, getClientBottlesOwed, getClientTransactions, addTransaction } = useCredit();
   const [showPartialPayment, setShowPartialPayment] = useState(false);
   const [showReturnTab, setShowReturnTab] = useState(false);
@@ -366,7 +367,7 @@ const ClientActionModal: React.FC<ClientActionModalProps> = ({ client, onClose, 
               <button
                 onClick={() => {
                   onClose();
-                  setSelectedClientForDetail(client);
+                  onViewDetails?.(client);
                 }}
                 disabled={isProcessing}
                 className="w-full flex items-center gap-4 p-4 bg-blue-50 hover:bg-blue-100 rounded-lg border border-blue-200 transition-colors disabled:opacity-50"

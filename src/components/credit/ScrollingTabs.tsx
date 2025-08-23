@@ -833,6 +833,7 @@ const ScrollingTabs: React.FC<ScrollingTabsProps> = ({
           }}
           onQuickAdd={onQuickAdd}
           onResetCalculator={onResetCalculator}
+          onViewDetails={setSelectedClientForDetail}
         />
       )}
 
