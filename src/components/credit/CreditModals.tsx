@@ -25,6 +25,8 @@ interface CreditModalsProps {
   onConfirmDeleteAll: () => void;
   onCancelDeleteAll: () => void;
   
+  // Delete All Clients Handler
+  onDeleteAllClients: () => void;
 }
 
 /**
@@ -48,6 +50,7 @@ const CreditModals: React.FC<CreditModalsProps> = ({
   onDeleteAllPasscodeChange,
   onConfirmDeleteAll,
   onCancelDeleteAll,
+  onDeleteAllClients,
 }) => {
   const { clients, getClientTotalDebt } = useCredit();
   const [clientSortOption, setClientSortOption] = React.useState<'id' | 'name'>('id');
@@ -89,6 +92,26 @@ const CreditModals: React.FC<CreditModalsProps> = ({
                   Here you can permanently delete clients (e.g., if they have passed away). 
                   Their ID will become available for new clients.
                 </p>
+
+                {/* Delete All Clients Button */}
+                <div className="mb-6 p-4 bg-red-50 border border-red-200 rounded-lg">
+                  <div className="flex items-center justify-between mb-3">
+                    <div>
+                      <h4 className="font-medium text-red-800">Danger Zone</h4>
+                      <p className="text-sm text-red-600">Permanently delete all client data</p>
+                    </div>
+                    <button
+                      onClick={onDeleteAllClients}
+                      className="px-4 py-2 bg-red-500 hover:bg-red-600 text-white rounded-lg transition-colors flex items-center gap-2"
+                    >
+                      <Trash2 size={16} />
+                      Delete All Clients
+                    </button>
+                  </div>
+                  <p className="text-xs text-red-600">
+                    This will permanently delete all {clients.length} clients and their transaction history.
+                  </p>
+                </div>
 
                 {/* Sort Filter */}
                 <div className="mb-4">

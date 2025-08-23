@@ -11,7 +11,6 @@ interface CreditHeaderProps {
   onToggleFilterDropdown: () => void;
   onShowSettings: () => void;
   onShowUnifiedDataManager: () => void;
-  onDeleteAllClients: () => void;
   sortOption: 'name' | 'date' | 'debt';
   onSortChange: (sort: 'name' | 'date' | 'debt') => void;
   showSortDropdown: boolean;
@@ -34,7 +33,6 @@ const CreditHeader: React.FC<CreditHeaderProps> = ({
   onToggleFilterDropdown,
   onShowSettings,
   onShowUnifiedDataManager,
-  onDeleteAllClients,
   sortOption,
   onSortChange,
   showSortDropdown,
@@ -76,14 +74,6 @@ const CreditHeader: React.FC<CreditHeaderProps> = ({
             title="Settings"
           >
             <Settings size={20} />
-          </button>
-          
-          <button
-            onClick={onDeleteAllClients}
-            className="p-2 text-red-600 hover:text-red-800 hover:bg-red-100 rounded-lg transition-colors"
-            title="Delete All Clients"
-          >
-            <Trash2 size={20} />
           </button>
         </div>
       </div>

@@ -676,7 +676,6 @@ const CreditManagement: React.FC = () => {
             onShowUnifiedDataManager={() => {
               setShowUnifiedDataManager(true);
             }}
-            onDeleteAllClients={handleDeleteAllClients}
             sortOption={sortOption}
             onSortChange={setSortOption}
             showSortDropdown={showSortDropdown}
@@ -769,6 +768,7 @@ const CreditManagement: React.FC = () => {
           setShowDeleteAllConfirm(false);
           setDeleteAllPasscode('');
         }}
+        onDeleteAllClients={handleDeleteAllClients}
       />
     </div>
   );
