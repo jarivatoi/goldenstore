@@ -361,6 +361,14 @@ const ScrollingTabs: React.FC<ScrollingTabsProps> = ({
     console.log('👆 handleTabClick called for client:', client.name, 'at:', new Date().toLocaleTimeString());
     console.log('🎬 Timeline status before click - isActive:', timelineRef.current?.isActive(), 'exists:', !!timelineRef.current);
     
+    // Add golden glow effect immediately on click
+    setClickedTabId(client.id);
+    
+    // Remove glow effect after animation completes
+    setTimeout(() => {
+      setClickedTabId(null);
+    }, 800); // Slightly longer to show the full golden effect
+    
     // Clear any existing long press timer
     if (longPressTimer) {
       clearTimeout(longPressTimer);
@@ -623,7 +631,7 @@ const ScrollingTabs: React.FC<ScrollingTabsProps> = ({
                         : `${getCardBackgroundColor()} hover:shadow-md ${hasOverdueItems ? 'animate-urgent-glow animate-subtle-shake' : ''}`
                   } ${
                     clickedTabId === client.id 
-                      ? 'animate-pulse-attention bg-yellow-200 border-yellow-400 shadow-lg scale-110 z-50' 
+                      ? 'animate-golden-glow bg-gradient-to-br from-yellow-200 via-yellow-300 to-amber-400 border-yellow-500 shadow-2xl scale-110 z-50' 
                       : totalDebt > 1000
                       ? 'animate-high-debt-pulsate'
                       : (() => {
