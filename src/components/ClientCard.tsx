@@ -201,7 +201,7 @@ const ClientCard: React.FC<ClientCardProps> = ({ client, onLongPress, onQuickAdd
     return formattedText.replace(/(\d+(?:\.\d+)?)l\b/gi, '$1L');
   }, [client.id, getClientTransactions, forceUpdate]);
   
-  const returnableItemsText = getReturnableItemsText();
+  const returnableItemsText = getReturnableItemsText;
   const [startY, setStartY] = useState(0);
   const [startX, setStartX] = useState(0);
   const [currentY, setCurrentY] = useState(0);
