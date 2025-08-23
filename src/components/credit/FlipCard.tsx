@@ -106,17 +106,23 @@ const FlipCard: React.FC<FlipCardProps> = ({
       className={`relative inline-flex items-center justify-center ${className}`}
       style={{
         transformStyle: "preserve-3d",
-        textAlign: "center"
+        textAlign: "center",
+        display: "inline-flex",
+        alignItems: "center",
+        justifyContent: "center"
       }}
     >
       {/* Front Side */}
       <div 
         ref={frontRef}
-        className="w-full h-full flex items-center justify-center"
+        className="w-full h-full flex items-center justify-center text-center"
         style={{
           backfaceVisibility: "hidden",
           transformStyle: "preserve-3d",
-          textAlign: "center"
+          textAlign: "center",
+          display: "flex",
+          alignItems: "center",
+          justifyContent: "center"
         }}
       >
         {frontContent}
@@ -125,11 +131,14 @@ const FlipCard: React.FC<FlipCardProps> = ({
       {/* Back Side */}
       <div 
         ref={backRef}
-        className="absolute top-0 left-0 w-full h-full flex items-center justify-center"
+        className="absolute top-0 left-0 w-full h-full flex items-center justify-center text-center"
         style={{
           backfaceVisibility: "hidden",
           transformStyle: "preserve-3d",
-          textAlign: "center"
+          textAlign: "center",
+          display: "flex",
+          alignItems: "center",
+          justifyContent: "center"
         }}
       >
         {backContent}
