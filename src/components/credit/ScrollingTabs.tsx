@@ -211,12 +211,18 @@ const ScrollingTabs: React.FC<ScrollingTabsProps> = ({
       return;
     }
     
-    // CRITICAL: Always kill existing timeline first
+    // CRITICAL: Kill ALL existing timelines when fresh entry is made from right
     if (timelineRef.current) {
       console.log('🔪 KILLING existing timeline in setupContinuousScroll at:', new Date().toLocaleTimeString());
       timelineRef.current.kill();
       timelineRef.current = null;
     }
+    
+    // Kill any orphaned timelines that might exist on the content element
+    gsap.killTweensOf(content);
+    
+    // Force stop any running animations on the content
+    gsap.set(content, { clearProps: "all" });
     
     // Check if we already have an active timeline
     // Always reset position when creating new timeline
