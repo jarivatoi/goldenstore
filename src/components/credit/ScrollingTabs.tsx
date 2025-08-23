@@ -390,6 +390,12 @@ const ScrollingTabs: React.FC<ScrollingTabsProps> = ({
     console.log('👆 handleTabClick called for client:', client.name, 'at:', new Date().toLocaleTimeString());
     console.log('🎬 Timeline status before click - isActive:', timelineRef.current?.isActive(), 'exists:', !!timelineRef.current);
     
+    // Only proceed if this was a real click (not a drag that exceeded threshold)
+    if (dragHasExceededThreshold.current) {
+      console.log('🚫 Ignoring click because drag exceeded threshold');
+      return;
+    }
+    
     // Add golden glow effect immediately on click
     setClickedTabId(client.id);
     
