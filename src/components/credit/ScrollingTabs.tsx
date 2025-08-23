@@ -444,8 +444,8 @@ const ScrollingTabs: React.FC<ScrollingTabsProps> = ({
               const isLinked = linkedClient?.id === client.id;
               const hasOverdueItems = hasOverdueReturnables(client);
               
-              // Get returnable items for this client - recalculated on each render
-              const getReturnableItemsForCard = React.useMemo(() => {
+              // Get returnable items for this client - calculated fresh each render
+              const getReturnableItemsForCard = () => {
                 const clientTransactions = getClientTransactions(client.id);
                 const returnableItems: {[key: string]: number} = {};
                 
@@ -479,16 +479,16 @@ const ScrollingTabs: React.FC<ScrollingTabsProps> = ({
                   
                   while ((bouteilleMatch = bouteillePattern.exec(description)) !== null) {
                     const quantity = parseInt(bouteilleMatch[1]);
-                   const size = bouteilleMatch[2]?.trim().toUpperCase() || '';
+                    const size = bouteilleMatch[2]?.trim().toUpperCase() || '';
                     const brand = bouteilleMatch[3]?.trim() || '';
                     
                     let key;
                     if (size && brand) {
-                     key = `${size} Bouteille ${brand}`;
+                      key = `${size} Bouteille ${brand}`;
                     } else if (brand) {
                       key = `Bouteille ${brand}`;
                     } else if (size) {
-                     key = `${size} Bouteille`;
+                      key = `${size} Bouteille`;
                     } else {
                       key = 'Bouteille';
                     }
@@ -500,17 +500,17 @@ const ScrollingTabs: React.FC<ScrollingTabsProps> = ({
                   }
                   
                   if (description.includes('bouteille') && !bouteillePattern.test(description)) {
-                   const sizeMatch = description.match(/(\d+(?:\.\d+)?L)/i);
+                    const sizeMatch = description.match(/(\d+(?:\.\d+)?L)/i);
                     const brandMatch = description.match(/bouteilles?\s+([^,]*)/i);
                     const brand = brandMatch?.[1]?.trim() || '';
                     
                     let key;
-                   if (sizeMatch && sizeMatch[1] && brand) {
-                     key = `${sizeMatch[1].toUpperCase()} Bouteille ${brand}`;
+                    if (sizeMatch && sizeMatch[1] && brand) {
+                      key = `${sizeMatch[1].toUpperCase()} Bouteille ${brand}`;
                     } else if (brand) {
                       key = `Bouteille ${brand}`;
-                   } else if (sizeMatch && sizeMatch[1]) {
-                     key = `${sizeMatch[1].toUpperCase()} Bouteille`;
+                    } else if (sizeMatch && sizeMatch[1]) {
+                      key = `${sizeMatch[1].toUpperCase()} Bouteille`;
                     } else {
                       key = 'Bouteille';
                     }
@@ -556,36 +556,28 @@ const ScrollingTabs: React.FC<ScrollingTabsProps> = ({
                   const returned = returnedQuantities[itemType] || 0;
                   const remaining = Math.max(0, total - returned);
                   if (remaining > 0) {
-                    console.log('🔍 Processing itemType:', itemType, 'remaining:', remaining);
                     let truncated = '';
                     if (itemType.includes('Chopine')) {
-                      // Extract brand if present
-                      const brandMatch = itemType.match(/Chopine\s+(.+)/);
-                      const brand = brandMatch ? brandMatch[1] : '';
-                     truncated = `${remaining} (Ch)`;
+                      truncated = `${remaining} (Ch)`;
                     } else if (itemType.includes('Bouteille')) {
-                      // Extract size from itemType (e.g., "1.5L Bouteille" -> "1.5L" or "1.5L Brand" -> "1.5L")
                       const sizeMatch = itemType.match(/(\d+(?:\.\d+)?L)/i);
-                      console.log('🔍 Bouteille sizeMatch:', sizeMatch, 'for itemType:', itemType);
                       if (sizeMatch) {
                         truncated = `${remaining} (${sizeMatch[1].toUpperCase()})`;
                       } else {
-                        // No size found, use generic Bt format
                         truncated = `${remaining} (Bt)`;
                       }
                     } else {
                       const shortName = itemType.substring(0, 3);
                       truncated = `${remaining} ${shortName}`;
                     }
-                    console.log('🔍 Final truncated text:', truncated);
                     truncatedItems.push(truncated);
                   }
                 });
                 
                 return truncatedItems.join(', ');
-              }, [client.id, getClientTransactions]); // Recalculate when client transactions change
+              };
               
-              const returnableItemsText = getReturnableItemsForCard;
+              const returnableItemsText = getReturnableItemsForCard();
               
               // Determine card background color based on debt amount (same as big cards)
               const getCardBackgroundColor = () => {
