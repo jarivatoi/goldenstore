@@ -313,15 +313,13 @@ const ScrollingTabs: React.FC<ScrollingTabsProps> = ({
         onThrowComplete: function() {
           console.log('🎯 THROW COMPLETE - RESTARTING TIMELINE from stored position:', pausedPositionRef.current, 'at:', new Date().toLocaleTimeString());
           
-          // ALWAYS resume from the stored position (which was captured at click time)
-          const resumePosition = pausedPositionRef.current;
-          console.log('🚀 Resuming timeline from stored position:', resumePosition);
-          
-          if (resumePosition !== null) {
-            restartTimelineFromPosition(resumePosition);
+          // Check if we have a stored position from a modal interaction
+          if (pausedPositionRef.current !== null) {
+            console.log('🚀 Resuming timeline from stored modal position:', pausedPositionRef.current);
+            restartTimelineFromPosition(pausedPositionRef.current);
             pausedPositionRef.current = null; // Clear stored position
           } else {
-            console.log('🚀 No stored position, creating fresh timeline from current position after throw');
+            console.log('🚀 No stored modal position, creating fresh timeline from current position after throw');
             // Fallback: start fresh from current position
             const currentX = gsap.getProperty(contentRef.current, "x") as number;
             restartTimelineFromPosition(currentX);
