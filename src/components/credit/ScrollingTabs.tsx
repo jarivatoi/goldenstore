@@ -395,6 +395,11 @@ const ScrollingTabs: React.FC<ScrollingTabsProps> = ({
     console.log('🎬 Timeline status after click - isActive:', timelineRef.current?.isActive(), 'exists:', !!timelineRef.current);
   };
 
+  // Handle double click for quick add
+  const handleTabDoubleClick = (client: Client) => {
+    onQuickAdd(client);
+  };
+
   // Handle long press to show client details
 
   return (
@@ -749,7 +754,10 @@ const ScrollingTabs: React.FC<ScrollingTabsProps> = ({
                     })
                   }}
                   onClick={() => handleTabClick(client)}
-                  onDoubleClick={() => onQuickAdd(client)}
+                  onDoubleClick={(e) => {
+                    e.stopPropagation();
+                    handleTabDoubleClick(client);
+                  }}
                   onContextMenu={(e) => e.preventDefault()} // Prevent right-click menu
                 >
                   <div className="text-center">
