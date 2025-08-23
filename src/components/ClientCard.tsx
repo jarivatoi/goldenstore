@@ -131,33 +131,29 @@ const ClientCard: React.FC<ClientCardProps> = ({ client, onLongPress, onQuickAdd
           returnableItems[key] = 0;
         }
         returnableItems[key] += 1;
-          const bouteillePattern = /(\d+)\s+(?:(\d+(?:\.\d+)?L)\s+)?(?:bouteilles?\s+)?([^,]*)/gi;
+      }
     });
     
     // Calculate returned quantities
     const returnedQuantities: {[key: string]: number} = {};
-            const size = bouteilleMatch[2]?.trim().toUpperCase() || '';
-            const brand = bouteilleMatch[3]?.trim() || '';
-            
-            // Skip if no size and no brand and no "bouteille" keyword
-            if (!size && !brand && !description.includes('bouteille')) {
-              continue;
-            }
+    
+    clientTransactions
+      .filter(transaction => transaction.description.toLowerCase().includes('returned'))
       .forEach(transaction => {
         const description = transaction.description.toLowerCase();
         Object.keys(returnableItems).forEach(itemType => {
-              key = `${size} Bouteille ${brand}`;
+          if (description.includes(itemType.toLowerCase().split(' ')[0])) {
             const match = description.match(/returned:\s*(\d+)\s+/);
             if (match) {
               if (!returnedQuantities[itemType]) {
                 returnedQuantities[itemType] = 0;
               }
               returnedQuantities[itemType] += parseInt(match[1]);
-              key = `${sizeMatch[1].toUpperCase()} Bouteille ${brand}`;
+            }
           }
         });
       });
-              key = `${sizeMatch[1].toUpperCase()} Bouteille`;
+    
     // Calculate net returnable quantities
     const netReturnableItems: string[] = [];
     Object.entries(returnableItems).forEach(([itemType, total]) => {
