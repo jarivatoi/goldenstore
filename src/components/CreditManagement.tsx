@@ -107,7 +107,9 @@ const CreditManagement: React.FC = () => {
             
             while ((chopineMatch = chopinePattern.exec(description)) !== null) {
               const quantity = parseInt(chopineMatch[1]);
-              const brand = chopineMatch[2]?.trim() || '';
+              const brand = chopineMatch[2]?.trim().split(' ').map(word => 
+                word.charAt(0).toUpperCase() + word.slice(1).toLowerCase()
+              ).join(' ') || '';
               const key = brand ? `Chopine ${brand}` : 'Chopine';
               
               if (!returnableItems[key]) {
@@ -123,7 +125,9 @@ const CreditManagement: React.FC = () => {
             while ((bouteilleMatch = bouteillePattern.exec(description)) !== null) {
               const quantity = parseInt(bouteilleMatch[1]);
               const size = bouteilleMatch[2]?.trim() || '';
-              const brand = bouteilleMatch[3]?.trim() || '';
+              const brand = bouteilleMatch[3]?.trim().split(' ').map(word => 
+                word.charAt(0).toUpperCase() + word.slice(1).toLowerCase()
+              ).join(' ') || '';
               
               let key;
               if (size && brand) {
@@ -146,7 +150,9 @@ const CreditManagement: React.FC = () => {
             if (description.includes('bouteille') && !bouteillePattern.test(description)) {
               const sizeMatch = description.match(/(\d+(?:\.\d+)?[Ll])/i);
               const brandMatch = description.match(/bouteilles?\s+([^,]*)/i);
-              const brand = brandMatch?.[1]?.trim() || '';
+              const brand = brandMatch?.[1]?.trim().split(' ').map(word => 
+                word.charAt(0).toUpperCase() + word.slice(1).toLowerCase()
+              ).join(' ') || '';
               
               let key;
               if (sizeMatch && brand) {
@@ -167,7 +173,9 @@ const CreditManagement: React.FC = () => {
             
             if (description.includes('chopine') && !chopinePattern.test(description)) {
               const brandMatch = description.match(/chopines?\s+([^,]*)/i);
-              const brand = brandMatch?.[1]?.trim() || '';
+              const brand = brandMatch?.[1]?.trim().split(' ').map(word => 
+                word.charAt(0).toUpperCase() + word.slice(1).toLowerCase()
+              ).join(' ') || '';
               const key = brand ? `Chopine ${brand}` : 'Chopine';
               
               if (!returnableItems[key]) {
@@ -252,7 +260,9 @@ const CreditManagement: React.FC = () => {
             
             while ((chopineMatch = chopinePattern.exec(description)) !== null) {
               const quantity = parseInt(chopineMatch[1]);
-              const brand = chopineMatch[2]?.trim() || '';
+              const brand = chopineMatch[2]?.trim().split(' ').map(word => 
+                word.charAt(0).toUpperCase() + word.slice(1).toLowerCase()
+              ).join(' ') || '';
               const key = brand ? `Chopine ${brand}` : 'Chopine';
               
               if (!returnableItems[key]) {
@@ -268,7 +278,9 @@ const CreditManagement: React.FC = () => {
             while ((bouteilleMatch = bouteillePattern.exec(description)) !== null) {
               const quantity = parseInt(bouteilleMatch[1]);
               const size = bouteilleMatch[2]?.trim().toUpperCase() || '';
-              const brand = bouteilleMatch[3]?.trim() || '';
+              const brand = bouteilleMatch[3]?.trim().split(' ').map(word => 
+                word.charAt(0).toUpperCase() + word.slice(1).toLowerCase()
+              ).join(' ') || '';
               
               let key;
               if (size && brand) {
@@ -291,7 +303,9 @@ const CreditManagement: React.FC = () => {
             if (description.includes('bouteille') && !bouteillePattern.test(description)) {
               const sizeMatch = description.match(/(\d+(?:\.\d+)?[Ll])/i);
               const brandMatch = description.match(/bouteilles?\s+([^,]*)/i);
-              const brand = brandMatch?.[1]?.trim() || '';
+              const brand = brandMatch?.[1]?.trim().split(' ').map(word => 
+                word.charAt(0).toUpperCase() + word.slice(1).toLowerCase()
+              ).join(' ') || '';
               
               let key;
               if (sizeMatch && brand) {
@@ -312,7 +326,9 @@ const CreditManagement: React.FC = () => {
             
             if (description.includes('chopine') && !chopinePattern.test(description)) {
               const brandMatch = description.match(/chopines?\s+([^,]*)/i);
-              const brand = brandMatch?.[1]?.trim() || '';
+              const brand = brandMatch?.[1]?.trim().split(' ').map(word => 
+                word.charAt(0).toUpperCase() + word.slice(1).toLowerCase()
+              ).join(' ') || '';
               const key = brand ? `Chopine ${brand}` : 'Chopine';
               
               if (!returnableItems[key]) {
@@ -386,7 +402,9 @@ const CreditManagement: React.FC = () => {
           
           while ((chopineMatch = chopinePattern.exec(description)) !== null) {
             const quantity = parseInt(chopineMatch[1]);
-            const brand = chopineMatch[2]?.trim() || '';
+            const brand = chopineMatch[2]?.trim().split(' ').map(word => 
+              word.charAt(0).toUpperCase() + word.slice(1).toLowerCase()
+            ).join(' ') || '';
             const key = brand ? `Chopine ${brand}` : 'Chopine';
             
             if (!returnableItems[key]) {
@@ -402,7 +420,9 @@ const CreditManagement: React.FC = () => {
           while ((bouteilleMatch = bouteillePattern.exec(description)) !== null) {
             const quantity = parseInt(bouteilleMatch[1]);
             const size = bouteilleMatch[2]?.trim().toUpperCase() || '';
-            const brand = bouteilleMatch[3]?.trim() || '';
+            const brand = bouteilleMatch[3]?.trim().split(' ').map(word => 
+              word.charAt(0).toUpperCase() + word.slice(1).toLowerCase()
+            ).join(' ') || '';
             
             let key;
             if (size && brand) {
@@ -425,7 +445,9 @@ const CreditManagement: React.FC = () => {
           if (description.includes('bouteille') && !bouteillePattern.test(description)) {
             const sizeMatch = description.match(/(\d+(?:\.\d+)?L)/i);
             const brandMatch = description.match(/bouteilles?\s+([^,]*)/i);
-            const brand = brandMatch?.[1]?.trim() || '';
+            const brand = brandMatch?.[1]?.trim().split(' ').map(word => 
+              word.charAt(0).toUpperCase() + word.slice(1).toLowerCase()
+            ).join(' ') || '';
             
             let key;
             if (sizeMatch && brand) {
@@ -446,7 +468,9 @@ const CreditManagement: React.FC = () => {
           
           if (description.includes('chopine') && !chopinePattern.test(description)) {
             const brandMatch = description.match(/chopines?\s+([^,]*)/i);
-            const brand = brandMatch?.[1]?.trim() || '';
+            const brand = brandMatch?.[1]?.trim().split(' ').map(word => 
+              word.charAt(0).toUpperCase() + word.slice(1).toLowerCase()
+            ).join(' ') || '';
             const key = brand ? `Chopine ${brand}` : 'Chopine';
             
             if (!returnableItems[key]) {
