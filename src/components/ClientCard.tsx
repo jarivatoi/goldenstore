@@ -200,9 +200,8 @@ const ClientCard: React.FC<ClientCardProps> = ({ client, onLongPress, onQuickAdd
         // Format date and time for flip card
         const formattedDate = transactionDate.toLocaleDateString('en-GB', {
           day: '2-digit',
-          month: 'short',
-          year: 'numeric'
-        }).replace(/\s/g, '-');
+          month: '2-digit'
+        });
         
         const formattedTime = transactionDate.toLocaleTimeString('en-GB', {
           hour: '2-digit',
@@ -415,30 +414,17 @@ const ClientCard: React.FC<ClientCardProps> = ({ client, onLongPress, onQuickAdd
           )}
           <div className="flex items-center gap-2 h-4">
             <Calendar size={12} className="sm:w-3.5 sm:h-3.5 flex-shrink-0" />
-            <FlipCard
-              frontContent={
-                <span className="text-xs sm:text-sm text-gray-500">
-                  {client.lastTransactionAt.toLocaleDateString('en-GB', {
-                    day: '2-digit',
-                    month: 'short',
-                    year: 'numeric'
-                  }).replace(/\s/g, '-')}
-                </span>
-              }
-              backContent={
-                <span className="text-xs sm:text-sm text-gray-500">
-                  {client.lastTransactionAt.toLocaleTimeString('en-GB', {
-                    hour: '2-digit',
-                    minute: '2-digit',
-                    hour12: false
-                  })}
-                </span>
-              }
-              shouldFlip={returnableItemsText.length > 0}
-              flipDuration={0.6}
-              flipDelay={3}
-              className="flex-1"
-            />
+            <span className="text-xs sm:text-sm text-gray-500">
+              {client.lastTransactionAt.toLocaleDateString('en-GB', {
+                day: '2-digit',
+                month: 'short',
+                year: 'numeric'
+              }).replace(/\s/g, '-')} {client.lastTransactionAt.toLocaleTimeString('en-GB', {
+                hour: '2-digit',
+                minute: '2-digit',
+                hour12: false
+              })}
+            </span>
           </div>
         </div>
 
