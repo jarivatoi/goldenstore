@@ -89,6 +89,8 @@ const ClientCard: React.FC<ClientCardProps> = ({ client, onLongPress, onQuickAdd
           key = `${size} ${brand}`;
         } else if (brand) {
           key = `Bouteille ${brand}`;
+        } else if (size) {
+          key = `${size} Bouteille`;
         } else {
           key = 'Bouteille';
         }
@@ -184,21 +186,21 @@ const ClientCard: React.FC<ClientCardProps> = ({ client, onLongPress, onQuickAdd
           // For Chopine items: "8 Chopines beer" or "1 Chopine beer"
           const brand = itemType.replace('Chopine', '').trim();
           if (brand) {
-            displayText = `${remaining} (Chopine${remaining > 1 ? 's' : ''} ${brand})`;
+            displayText = `${remaining} Chopine${remaining > 1 ? 's' : ''} ${brand}`;
           } else {
-            displayText = `${remaining} (Chopine${remaining > 1 ? 's' : ''})`;
+            displayText = `${remaining} Chopine${remaining > 1 ? 's' : ''}`;
           }
         } else if (itemType.includes('Bouteille')) {
           // For Bouteille items: only pluralize "Bouteille", not the whole string
           if (itemType === 'Bouteille') {
-            displayText = `${remaining} (Bouteille${remaining > 1 ? 's' : ''})`;
+            displayText = `${remaining} Bouteille${remaining > 1 ? 's' : ''}`;
           } else {
             // For items like "1.5L Bouteille Green", only pluralize "Bouteille"
-            displayText = `${remaining} (${itemType.replace('Bouteille', `Bouteille${remaining > 1 ? 's' : ''}`)})`;
+            displayText = `${remaining} ${itemType.replace('Bouteille', `Bouteille${remaining > 1 ? 's' : ''}`)}`;
           }
         } else {
           // For other items: don't add pluralization
-          displayText = `${remaining} (${itemType})`;
+          displayText = `${remaining} ${itemType}`;
         }
         
         netReturnableItems.push(`${displayText} (${dateStr})`);
@@ -313,7 +315,7 @@ const ClientCard: React.FC<ClientCardProps> = ({ client, onLongPress, onQuickAdd
           {(bottlesOwed.beer > 0 || bottlesOwed.guinness > 0 || bottlesOwed.malta > 0 || bottlesOwed.coca > 0 || bottlesOwed.chopines > 0) && (
             <p className="text-xs text-orange-600 mt-1">
               + Bottles: {Object.entries(bottlesOwed)
-                .filter(([type, count]) => count > 0)
+                .filter(([_, count]) => count > 0)
                 .map(([type, count]) => `${count} ${type.charAt(0).toUpperCase() + type.slice(1)}`)
                 .join(', ')}
             </p>
