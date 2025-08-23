@@ -584,10 +584,8 @@ const ReturnableItemRow: React.FC<ReturnableItemRowProps> = ({ itemType, quantit
       // Force a re-render of the parent component to update scrolling tabs
       window.dispatchEvent(new CustomEvent('creditDataChanged'));
       
-      // Close modal after processing return
-      setTimeout(() => {
-        onClose(); // Just close the modal instead of full page reload
-      }, 500);
+      // Don't close modal automatically - let user see the update and close manually
+      // This allows the big card to update properly
     } catch (error) {
       alert('Failed to process return');
     } finally {
