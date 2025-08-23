@@ -629,7 +629,23 @@ const ClientActionModal: React.FC<ClientActionModalProps> = ({ client, onClose, 
                               transaction.description.toLowerCase().includes('returned') &&
                               transaction.description.toLowerCase().includes(itemType.toLowerCase())
                             )
-                            .slice(-2); // Show last 2 returned transactions
+                            .filter(transaction => {
+                              // Only show returned transactions that are newer than the most recent non-return transaction for this item type
+                              const mostRecentTakeTransaction = clientTransactions
+                                .filter(t => 
+                                  t.type === 'debt' && 
+                                  !t.description.toLowerCase().includes('returned') &&
+                                  t.description.toLowerCase().includes(itemType.toLowerCase().split(' ')[0])
+                                )
+                                .sort((a, b) => b.date.getTime() - a.date.getTime())[0];
+                              
+                              // If no take transaction exists, don't show any returns
+                              if (!mostRecentTakeTransaction) return false;
+                              
+                              // Only show returns that happened after the most recent take
+                              return transaction.date.getTime() > mostRecentTakeTransaction.date.getTime();
+                            })
+                            .slice(-2); // Show last 2 relevant returned transactions
                           
                           return returnedTransactions.map((transaction, index) => (
                             <p key={`returned-${index}`} className="truncate text-green-600">
