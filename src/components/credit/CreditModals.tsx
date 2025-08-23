@@ -180,13 +180,13 @@ const CreditModals: React.FC<CreditModalsProps> = ({
                     ⚠️ This action cannot be undone. All transactions and payment history will be permanently deleted.
                   </p>
                   <p className="text-sm text-gray-600 mb-3">
-                    Type <strong>DELETE</strong> to confirm:
+                    Enter confirmation code:
                   </p>
                   <input
                     type="text"
                     value={deleteConfirmText}
                     onChange={(e) => onDeleteConfirmTextChange(e.target.value)}
-                    placeholder="Type DELETE to confirm"
+                    placeholder=""
                     className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-red-500 focus:border-red-500"
                   />
                 </div>
@@ -256,13 +256,13 @@ const CreditModals: React.FC<CreditModalsProps> = ({
                     ⚠️ This action cannot be undone. All client data will be permanently lost.
                   </p>
                   <p className="text-sm text-gray-600 mb-3">
-                    Type <strong>client</strong> to confirm:
+                    Enter security code:
                   </p>
                   <input
                     type="text"
                     value={deleteAllPasscode}
                     onChange={(e) => onDeleteAllPasscodeChange(e.target.value)}
-                    placeholder="Type client to confirm"
+                    placeholder=""
                     className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-red-500 focus:border-red-500"
                   />
                 </div>
