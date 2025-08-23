@@ -42,7 +42,6 @@ const ScrollingTabs: React.FC<ScrollingTabsProps> = ({
   const timelineRef = useRef<gsap.core.Timeline | null>(null);
   const draggableRef = useRef<Draggable[] | null>(null);
   const [selectedClientForAction, setSelectedClientForAction] = React.useState<Client | null>(null);
-  const [selectedClientForDetail, setSelectedClientForDetail] = React.useState<Client | null>(null);
   const [isDragging, setIsDragging] = React.useState(false);
   const pausedPositionRef = useRef<number | null>(null);
   const [clickedTabId, setClickedTabId] = React.useState<string | null>(null);
@@ -394,26 +393,6 @@ const ScrollingTabs: React.FC<ScrollingTabsProps> = ({
     setSelectedClientForAction(client);
     
     console.log('🎬 Timeline status after click - isActive:', timelineRef.current?.isActive(), 'exists:', !!timelineRef.current);
-  };
-
-  // Handle double click to show client details
-  const handleTabDoubleClick = (client: Client) => {
-    console.log('👆👆 handleTabDoubleClick called for client:', client.name, 'at:', new Date().toLocaleTimeString());
-    
-    // Store current position before opening modal (if timeline is active)
-    if (timelineRef.current && timelineRef.current.isActive()) {
-      const currentX = gsap.getProperty(contentRef.current, "x") as number;
-      pausedPositionRef.current = currentX;
-      console.log('🎬 Storing position before detail modal open:', currentX);
-      
-      // Kill timeline when opening modal
-      timelineRef.current.kill();
-      timelineRef.current = null;
-      console.log('🎬 Timeline killed for detail modal');
-    }
-    
-    console.log('🎭 Opening detail modal for client:', client.name);
-    setSelectedClientForDetail(client);
   };
 
   // Handle long press to show client details
@@ -770,10 +749,7 @@ const ScrollingTabs: React.FC<ScrollingTabsProps> = ({
                     })
                   }}
                   onClick={() => handleTabClick(client)}
-                  onDoubleClick={(e) => {
-                    e.stopPropagation();
-                    handleTabDoubleClick(client);
-                  }}
+                  onDoubleClick={() => onQuickAdd(client)}
                   onContextMenu={(e) => e.preventDefault()} // Prevent right-click menu
                 >
                   <div className="text-center">
@@ -855,36 +831,6 @@ const ScrollingTabs: React.FC<ScrollingTabsProps> = ({
           }}
           onQuickAdd={onQuickAdd}
           onResetCalculator={onResetCalculator}
-        />
-      )}
-
-      {/* Detail Modal */}
-      {selectedClientForDetail && (
-        <ClientDetailModal
-          client={selectedClientForDetail}
-          onClose={() => {
-            console.log('🎭 Detail modal closing, checking timeline state');
-            
-            // Clear modal state immediately
-            setSelectedClientForDetail(null);
-            setClickedTabId(null);
-            
-            // Only restart timeline if it doesn't exist or isn't active
-            setTimeout(() => {
-              if (!timelineRef.current || !timelineRef.current.isActive()) {
-                console.log('🚀 Restarting timeline after detail modal close');
-                if (pausedPositionRef.current !== null) {
-                  restartTimelineFromPosition(pausedPositionRef.current);
-                  pausedPositionRef.current = null;
-                } else {
-                  setupContinuousScroll();
-                }
-              } else {
-                console.log('🎬 Timeline already active, no restart needed');
-              }
-            }, 100);
-          }}
-          onQuickAdd={onQuickAdd}
         />
       )}
 
