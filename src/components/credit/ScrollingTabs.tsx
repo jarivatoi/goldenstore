@@ -609,7 +609,7 @@ const ScrollingTabs: React.FC<ScrollingTabsProps> = ({
                         // Only use generic Bt format if no size is specified
                         const brandMatch = itemType.match(/Bouteille\s+(.+)/);
                         const brand = brandMatch ? brandMatch[1] : '';
-                        truncated = brand ? `${remaining} Bt(${brand})` : `${remaining} Bt`;
+                        truncated = `${remaining} (Bt)`;
                       }
                     } else {
                       const shortName = itemType.substring(0, 3);
