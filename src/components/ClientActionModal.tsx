@@ -114,7 +114,9 @@ const ClientActionModal: React.FC<ClientActionModalProps> = ({ client, onClose, 
       
       while ((chopineMatch = chopinePattern.exec(description)) !== null) {
         const quantity = parseInt(chopineMatch[1]);
-        const brand = chopineMatch[2]?.trim() || '';
+        const brand = chopineMatch[2]?.trim().split(' ').map(word => 
+          word.charAt(0).toUpperCase() + word.slice(1).toLowerCase()
+        ).join(' ') || '';
         const key = brand ? `Chopine ${brand}` : 'Chopine';
         
        // Skip if we've already processed this item type for this transaction
@@ -142,7 +144,9 @@ const ClientActionModal: React.FC<ClientActionModalProps> = ({ client, onClose, 
       while ((bouteilleMatch = bouteillePattern.exec(description)) !== null) {
         const quantity = parseInt(bouteilleMatch[1]);
         const size = bouteilleMatch[2]?.trim().toUpperCase() || '';
-        const brand = bouteilleMatch[3]?.trim() || '';
+        const brand = bouteilleMatch[3]?.trim().split(' ').map(word => 
+          word.charAt(0).toUpperCase() + word.slice(1).toLowerCase()
+        ).join(' ') || '';
         
         // Format the key based on what we found
         let key;
@@ -177,7 +181,9 @@ const ClientActionModal: React.FC<ClientActionModalProps> = ({ client, onClose, 
       if (!hasMatched && description.includes('bouteille')) {
         const sizeMatch = description.match(/(\d+(?:\.\d+)?[Ll])/i);
         const brandMatch = description.match(/bouteilles?\s+([^,]*)/i);
-        const brand = brandMatch?.[1]?.trim() || '';
+        const brand = brandMatch?.[1]?.trim().split(' ').map(word => 
+          word.charAt(0).toUpperCase() + word.slice(1).toLowerCase()
+        ).join(' ') || '';
         
         let key;
         if (sizeMatch && sizeMatch[0] && brand) {
@@ -209,7 +215,9 @@ const ClientActionModal: React.FC<ClientActionModalProps> = ({ client, onClose, 
       
       if (!hasMatched && description.includes('chopine')) {
         const brandMatch = description.match(/chopines?\s+([^,]*)/i);
-        const brand = brandMatch?.[1]?.trim() || '';
+        const brand = brandMatch?.[1]?.trim().split(' ').map(word => 
+          word.charAt(0).toUpperCase() + word.slice(1).toLowerCase()
+        ).join(' ') || '';
         const key = brand ? `Chopine ${brand}` : 'Chopine';
         
        // Skip if we've already processed this item type for this transaction
