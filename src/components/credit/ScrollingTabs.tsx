@@ -573,7 +573,7 @@ const ScrollingTabs: React.FC<ScrollingTabsProps> = ({
                   if (remaining > 0) {
                     let displayText = '';
                     if (itemType.includes('Chopine')) {
-                      // Format: "3 (Brand)" for Chopines
+                      // Extract brand if present: "Chopine Brand" -> "Brand"
                       const brand = itemType.replace('Chopine', '').trim();
                       if (brand) {
                         displayText = `${remaining} (${brand})`;
@@ -581,7 +581,7 @@ const ScrollingTabs: React.FC<ScrollingTabsProps> = ({
                         displayText = `${remaining} (${remaining > 1 ? 'Chopines' : 'Chopine'})`;
                       }
                     } else if (itemType.includes('Bouteille')) {
-                      // Format: "3 (1.5L Brand)" for Bouteilles
+                      // Extract size and brand: "1.5L Bouteille Brand" -> "1.5L Brand"
                       const sizeMatch = itemType.match(/(\d+(?:\.\d+)?L)/);
                       const brandMatch = itemType.match(/Bouteille\s+(.+)/);
                       const brand = brandMatch?.[1]?.trim() || '';
@@ -590,7 +590,7 @@ const ScrollingTabs: React.FC<ScrollingTabsProps> = ({
                         if (brand) {
                           displayText = `${remaining} (${sizeMatch[1]} ${brand})`;
                         } else {
-                          displayText = `${remaining} (${sizeMatch[1]})`;
+                          displayText = `${remaining} (${sizeMatch[1]} ${remaining > 1 ? 'Bouteilles' : 'Bouteille'})`;
                         }
                       } else {
                         if (brand) {
@@ -600,7 +600,7 @@ const ScrollingTabs: React.FC<ScrollingTabsProps> = ({
                         }
                       }
                     } else {
-                      // For other items, show quantity and type
+                      // For other items, just show the item type as-is
                       displayText = `${remaining} (${itemType})`;
                     }
                     truncatedItems.push(displayText);
