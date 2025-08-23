@@ -45,8 +45,6 @@ const ScrollingTabs: React.FC<ScrollingTabsProps> = ({
   const [isDragging, setIsDragging] = React.useState(false);
   const pausedPositionRef = useRef<number | null>(null);
   const [clickedTabId, setClickedTabId] = React.useState<string | null>(null);
-  const [selectedClientForDetails, setSelectedClientForDetails] = React.useState<Client | null>(null);
-  const [longPressTimer, setLongPressTimer] = React.useState<NodeJS.Timeout | null>(null);
   const { getClientTransactions } = useCredit();
   const dragHasExceededThreshold = useRef(false);
   
@@ -375,12 +373,6 @@ const ScrollingTabs: React.FC<ScrollingTabsProps> = ({
     console.log('👆 handleTabClick called for client:', client.name, 'at:', new Date().toLocaleTimeString());
     console.log('🎬 Timeline status before click - isActive:', timelineRef.current?.isActive(), 'exists:', !!timelineRef.current);
     
-    // Clear any existing long press timer
-    if (longPressTimer) {
-      clearTimeout(longPressTimer);
-      setLongPressTimer(null);
-    }
-    
     // Add click animation immediately
     setClickedTabId(client.id);
     
@@ -400,35 +392,6 @@ const ScrollingTabs: React.FC<ScrollingTabsProps> = ({
     setSelectedClientForAction(client);
     
     console.log('🎬 Timeline status after click - isActive:', timelineRef.current?.isActive(), 'exists:', !!timelineRef.current);
-  };
-
-  // Handle long press start
-  const handleLongPressStart = (client: Client, e: React.TouchEvent | React.MouseEvent) => {
-    e.preventDefault();
-    e.stopPropagation();
-    
-    const timer = setTimeout(() => {
-      // Add click animation for long press
-      setClickedTabId(client.id);
-      
-      // Remove click animation after it completes
-      setTimeout(() => {
-        setClickedTabId(null);
-      }, 600);
-      
-      setSelectedClientForDetails(client);
-      setLongPressTimer(null);
-    }, 1000); // 1 second long press
-    
-    setLongPressTimer(timer);
-  };
-
-  // Handle long press end
-  const handleLongPressEnd = () => {
-    if (longPressTimer) {
-      clearTimeout(longPressTimer);
-      setLongPressTimer(null);
-    }
   };
 
   return (
@@ -788,12 +751,6 @@ const ScrollingTabs: React.FC<ScrollingTabsProps> = ({
                   }}
                   onClick={() => handleTabClick(client)}
                   onDoubleClick={() => onQuickAdd(client)}
-                  onTouchStart={(e) => handleLongPressStart(client, e)}
-                  onTouchEnd={handleLongPressEnd}
-                  onTouchCancel={handleLongPressEnd}
-                  onMouseDown={(e) => handleLongPressStart(client, e)}
-                  onMouseUp={handleLongPressEnd}
-                  onMouseLeave={handleLongPressEnd}
                   onContextMenu={(e) => e.preventDefault()} // Prevent right-click menu
                 >
                   <div className="text-center">
@@ -884,17 +841,6 @@ const ScrollingTabs: React.FC<ScrollingTabsProps> = ({
         />
       )}
 
-      {/* Detail Modal */}
-      {selectedClientForDetails && (
-        <ClientDetailModal
-          client={selectedClientForDetails}
-          onClose={() => {
-            setSelectedClientForDetails(null);
-            setClickedTabId(null);
-          }}
-          onQuickAdd={onQuickAdd}
-        />
-      )}
     </div>
     </>
   );
