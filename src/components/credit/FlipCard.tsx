@@ -47,10 +47,6 @@ const FlipCard: React.FC<FlipCardProps> = ({
       rotationY: 0,
       backfaceVisibility: "hidden",
       transformStyle: "preserve-3d",
-      display: "flex",
-      alignItems: "center",
-      justifyContent: "center",
-      textAlign: "center"
     });
 
     gsap.set(back, {
@@ -62,10 +58,6 @@ const FlipCard: React.FC<FlipCardProps> = ({
       left: 0,
       width: "100%",
       height: "100%",
-      display: "flex",
-      alignItems: "center",
-      justifyContent: "center",
-      textAlign: "center",
       transformOrigin: "center center"
     });
 
@@ -125,14 +117,10 @@ const FlipCard: React.FC<FlipCardProps> = ({
       {/* Front Side */}
       <div 
         ref={frontRef}
-        className="w-full h-full flex items-center justify-center text-center"
+        className="w-full h-full"
         style={{
           backfaceVisibility: "hidden",
           transformStyle: "preserve-3d",
-          display: "flex",
-          alignItems: "center",
-          justifyContent: "center",
-          textAlign: "center",
           width: "100%",
           height: "100%"
         }}
@@ -143,7 +131,7 @@ const FlipCard: React.FC<FlipCardProps> = ({
       {/* Back Side */}
       <div 
         ref={backRef}
-        className="absolute top-0 left-0 w-full h-full flex items-center justify-center text-center"
+        className="absolute top-0 left-0 w-full h-full"
         style={{
           backfaceVisibility: "hidden",
           transformStyle: "preserve-3d",
@@ -152,10 +140,6 @@ const FlipCard: React.FC<FlipCardProps> = ({
           left: 0,
           width: "100%",
           height: "100%",
-          display: "flex",
-          alignItems: "center",
-          justifyContent: "center",
-          textAlign: "center",
           rotateY: "180deg"
         }}
       >
