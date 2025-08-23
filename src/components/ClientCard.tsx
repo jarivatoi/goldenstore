@@ -280,11 +280,33 @@ const ClientCard: React.FC<ClientCardProps> = ({ client, onLongPress, onQuickAdd
         {/* Quick Add Button */}
         {onQuickAdd && (
           <div className="mb-2 sm:mb-3">
-            <button
-              onClick={(e) => {
-                e.stopPropagation();
-                if (!isLinked) {
-                  onQuickAdd(client);
+                    day: '2-digit',
+                    month: 'short',
+                    year: 'numeric'
+                  }).replace(/\s/g, '-');
+                  
+                  // Fix pluralization for proper French/English grammar
+                  let displayText;
+                  if (itemType.includes('Bouteille')) {
+                    if (remaining > 1) {
+                      // For multiple bottles, make "Bouteille" plural but keep the brand/type singular
+                      displayText = itemType.replace('Bouteille', 'Bouteilles');
+                    } else {
+                      displayText = itemType;
+                    }
+                  } else if (itemType.includes('Chopine')) {
+                    if (remaining > 1) {
+                      // For multiple chopines, make "Chopine" plural but keep the brand/type singular
+                      displayText = itemType.replace('Chopine', 'Chopines');
+                    } else {
+                      displayText = itemType;
+                    }
+                  } else {
+                    // For other items, add 's' at the end if plural
+                    displayText = `${itemType}${remaining > 1 ? 's' : ''}`;
+                  }
+                  
+                  netReturnableItems.push(`${remaining} ${displayText} (${dateStr})`);
                 }
               }}
               className={`w-full py-2 px-3 rounded-lg transition-colors flex items-center justify-center gap-2 text-sm font-medium ${
