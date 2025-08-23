@@ -518,7 +518,7 @@ const ScrollingTabs: React.FC<ScrollingTabsProps> = ({
                     
                     let key;
                     if (size && brand) {
-                      key = `${size} Bouteille ${brand}`;
+                      key = `${size} ${brand}`;
                     } else if (brand) {
                       key = `Bouteille ${brand}`;
                     } else if (size) {
@@ -714,11 +714,11 @@ const ScrollingTabs: React.FC<ScrollingTabsProps> = ({
                               
                               let key;
                               if (sizeMatch && brand) {
-                                key = `${sizeMatch[1]} ${capitalizedBrand}`;
+                                key = `${sizeMatch[1].replace(/l$/i, 'L')} ${capitalizedBrand}`;
                               } else if (brand) {
                                 key = `Bouteille ${capitalizedBrand}`;
                               } else if (sizeMatch) {
-                                key = `${sizeMatch[1]} Bouteille`;
+                                key = `${sizeMatch[1].replace(/l$/i, 'L')} Bouteille`;
                               } else {
                                 key = 'Bouteille';
                               }
