@@ -303,12 +303,14 @@ const ScrollingTabs: React.FC<ScrollingTabsProps> = ({
         },
         onThrowComplete: function() {
           console.log('🎯 THROW COMPLETE - RESTARTING TIMELINE from stored position:', pausedPositionRef.current, 'at:', new Date().toLocaleTimeString());
+          console.log('🎯 THROW COMPLETE - Timeline exists before restart:', !!timelineRef.current, 'isActive:', timelineRef.current?.isActive() || false);
           
           // Always resume timeline after throw completes
           const currentX = gsap.getProperty(contentRef.current, "x") as number;
           console.log('🚀 Resuming timeline from current position after throw:', currentX);
           restartTimelineFromPosition(currentX);
           pausedPositionRef.current = null; // Clear any stored position
+          console.log('🎯 THROW COMPLETE - Timeline exists after restart:', !!timelineRef.current, 'isActive:', timelineRef.current?.isActive() || false);
         }
       });
     });
