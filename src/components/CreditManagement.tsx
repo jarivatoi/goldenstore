@@ -611,18 +611,13 @@ const CreditManagement: React.FC = () => {
     }
 
     try {
-      // Get all client IDs before starting deletion
-      const clientIds = clients.map(client => client.id);
+      // Clear all credit data in localStorage directly (batch operation)
+      localStorage.removeItem('creditClients');
+      localStorage.removeItem('creditTransactions');
+      localStorage.removeItem('creditPayments');
       
-      // Delete all clients by ID
-      for (const clientId of clientIds) {
-        try {
-          await deleteClient(clientId);
-        } catch (error) {
-          console.error(`Failed to delete client ${clientId}:`, error);
-          // Continue with other deletions even if one fails
-        }
-      }
+      // Force context to reload empty data
+      window.location.reload();
       
       setShowDeleteAllConfirm(false);
       setDeleteAllPasscode('');
