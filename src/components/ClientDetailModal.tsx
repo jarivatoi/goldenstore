@@ -269,7 +269,7 @@ const ClientDetailModal: React.FC<ClientDetailModalProps> = ({ client, onClose, 
                 
                 // Look for Bouteille items with improved parsing
                 // Pattern: number + space + optional size + bouteille + optional brand
-                const bouteillePattern = /(\d+)\s+(?:(\d+(?:\.\d+)?[Ll])\s+)?bouteilles?(?:\s+([^,\(\)]*))?/gi;
+                const bouteillePattern = /(\d+)\s+(?:(\d+(?:\.\d+)?[Ll])\s+)?bouteilles?(?:\s+([^,]*))?/gi;
                 let bouteilleMatch;
                 
                 while ((bouteilleMatch = bouteillePattern.exec(description)) !== null) {
@@ -284,7 +284,7 @@ const ClientDetailModal: React.FC<ClientDetailModalProps> = ({ client, onClose, 
                   
                   let key;
                   if (size && capitalizedBrand) {
-                    key = `${size} Bouteille ${capitalizedBrand}`;
+                    key = `${size} ${capitalizedBrand}`;
                   } else if (capitalizedBrand) {
                     key = `Bouteille ${capitalizedBrand}`;
                   } else if (size) {
@@ -300,7 +300,7 @@ const ClientDetailModal: React.FC<ClientDetailModalProps> = ({ client, onClose, 
                 }
                 
                 // Handle items without explicit numbers (assume quantity 1) - only if no pattern matched
-                if (!hasMatched && description.includes('bouteille')) {
+                if (description.includes('bouteille') && !bouteillePattern.test(description)) {
                   const sizeMatch = description.match(/(\d+(?:\.\d+)?[Ll])/i);
                   const brandMatch = description.match(/bouteilles?\s+([^,]*)/i);
                   const brand = brandMatch?.[1]?.trim() || '';
@@ -311,11 +311,11 @@ const ClientDetailModal: React.FC<ClientDetailModalProps> = ({ client, onClose, 
                   ).join(' ') : '';
                   
                   let key;
-                  if (sizeMatch && sizeMatch[1] && capitalizedBrand) {
-                    key = `${sizeMatch[1].replace(/l$/i, 'L')} Bouteille ${capitalizedBrand}`;
+                  if (sizeMatch && capitalizedBrand) {
+                    key = `${sizeMatch[1].replace(/l$/i, 'L')} ${capitalizedBrand}`;
                   } else if (capitalizedBrand) {
                     key = `Bouteille ${capitalizedBrand}`;
-                  } else if (sizeMatch && sizeMatch[1]) {
+                  } else if (sizeMatch) {
                     key = `${sizeMatch[1].replace(/l$/i, 'L')} Bouteille`;
                   } else {
                     key = 'Bouteille';

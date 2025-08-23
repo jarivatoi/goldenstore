@@ -147,7 +147,7 @@ const ClientActionModal: React.FC<ClientActionModalProps> = ({ client, onClose, 
         // Format the key based on what we found
         let key;
         if (size && brand) {
-          key = `${size} Bouteille ${brand}`;
+          key = `${size} ${brand}`;
         } else if (brand) {
           key = `Bouteille ${brand}`;
         } else if (size) {
@@ -180,12 +180,12 @@ const ClientActionModal: React.FC<ClientActionModalProps> = ({ client, onClose, 
         const brand = brandMatch?.[1]?.trim() || '';
         
         let key;
-        if (sizeMatch && sizeMatch[0] && brand) {
-          key = `${sizeMatch[1].toUpperCase()} Bouteille ${brand}`;
+        if (sizeMatch && brand) {
+          key = `${sizeMatch[1].replace(/l$/i, 'L')} ${brand}`;
         } else if (brand) {
           key = `Bouteille ${brand}`;
-        } else if (sizeMatch && sizeMatch[0]) {
-          key = `${sizeMatch[1].toUpperCase()} Bouteille`;
+        } else if (sizeMatch) {
+          key = `${sizeMatch[1].replace(/l$/i, 'L')} Bouteille`;
         } else {
           key = 'Bouteille';
         }
