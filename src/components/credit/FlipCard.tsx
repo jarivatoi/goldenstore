@@ -127,10 +127,12 @@ const FlipCard: React.FC<FlipCardProps> = ({
         style={{
           backfaceVisibility: "hidden",
           transformStyle: "preserve-3d",
-          textAlign: "center",
           display: "flex",
           alignItems: "center",
-          justifyContent: "center"
+          justifyContent: "center",
+          textAlign: "center",
+          width: "100%",
+          height: "100%"
         }}
       >
         {frontContent}
@@ -143,10 +145,16 @@ const FlipCard: React.FC<FlipCardProps> = ({
         style={{
           backfaceVisibility: "hidden",
           transformStyle: "preserve-3d",
-          textAlign: "center",
+          position: "absolute",
+          top: 0,
+          left: 0,
+          width: "100%",
+          height: "100%",
           display: "flex",
           alignItems: "center",
-          justifyContent: "center"
+          justifyContent: "center",
+          textAlign: "center",
+          rotateY: "180deg"
         }}
       >
         {backContent}
