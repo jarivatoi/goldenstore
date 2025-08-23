@@ -183,7 +183,9 @@ const ClientCard: React.FC<ClientCardProps> = ({ client, onLongPress, onQuickAdd
       }
     });
     
-    return netReturnableItems.length > 0 ? netReturnableItems.join(', ') : '';
+    // Fix bottle size capitalization (1l → 1L, 1.5l → 1.5L, etc.)
+    const formattedText = netReturnableItems.length > 0 ? netReturnableItems.join(', ') : '';
+    return formattedText.replace(/(\d+(?:\.\d+)?)l\b/gi, '$1L');
   };
   
   const returnableItemsText = getReturnableItemsText();
