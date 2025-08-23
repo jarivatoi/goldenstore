@@ -444,8 +444,8 @@ const ScrollingTabs: React.FC<ScrollingTabsProps> = ({
               const isLinked = linkedClient?.id === client.id;
               const hasOverdueItems = hasOverdueReturnables(client);
               
-              // Get returnable items for this client
-              const getReturnableItemsForCard = () => {
+              // Get returnable items for this client - recalculated on each render
+              const getReturnableItemsForCard = React.useMemo(() => {
                 const clientTransactions = getClientTransactions(client.id);
                 const returnableItems: {[key: string]: number} = {};
                 
@@ -583,9 +583,9 @@ const ScrollingTabs: React.FC<ScrollingTabsProps> = ({
                 });
                 
                 return truncatedItems.join(', ');
-              };
+              }, [client.id, getClientTransactions]); // Recalculate when client transactions change
               
-              const returnableItemsText = getReturnableItemsForCard();
+              const returnableItemsText = getReturnableItemsForCard;
               
               // Determine card background color based on debt amount (same as big cards)
               const getCardBackgroundColor = () => {
