@@ -66,7 +66,11 @@ const ClientCard: React.FC<ClientCardProps> = ({ client, onLongPress, onQuickAdd
       while ((chopineMatch = chopinePattern.exec(description)) !== null) {
         const quantity = parseInt(chopineMatch[1]);
         const brand = chopineMatch[2]?.trim() || '';
-        const key = brand ? `Chopine ${brand}` : 'Chopine';
+        // Capitalize brand name properly
+        const capitalizedBrand = brand ? brand.split(' ').map(word => 
+          word.charAt(0).toUpperCase() + word.slice(1).toLowerCase()
+        ).join(' ') : '';
+        const key = capitalizedBrand ? `Chopine ${capitalizedBrand}` : 'Chopine';
         
         if (!returnableItems[key]) {
           returnableItems[key] = 0;
@@ -89,9 +93,9 @@ const ClientCard: React.FC<ClientCardProps> = ({ client, onLongPress, onQuickAdd
         ).join(' ') : '';
         
         let key;
-        if (size && brand) {
+        if (size && capitalizedBrand) {
           key = `${size} ${capitalizedBrand}`;
-        } else if (brand) {
+        } else if (capitalizedBrand) {
           key = `Bouteille ${capitalizedBrand}`;
         } else if (size) {
           key = `${size} Bouteille`;
@@ -117,9 +121,9 @@ const ClientCard: React.FC<ClientCardProps> = ({ client, onLongPress, onQuickAdd
         ).join(' ') : '';
         
         let key;
-        if (sizeMatch && brand) {
+        if (sizeMatch && capitalizedBrand) {
           key = `${sizeMatch[1].replace(/l$/i, 'L')} ${capitalizedBrand}`;
-        } else if (brand) {
+        } else if (capitalizedBrand) {
           key = `Bouteille ${capitalizedBrand}`;
         } else if (sizeMatch) {
           key = `${sizeMatch[1].replace(/l$/i, 'L')} Bouteille`;
