@@ -177,22 +177,22 @@ const ClientCard: React.FC<ClientCardProps> = ({ client, onLongPress, onQuickAdd
       if (remaining > 0) {
         // Get the most recent transaction date for this item type
         const recentTransaction = clientTransactions
-        const bouteillePattern = /(\d+)\s+(?:(\d+(?:\.\d+)?[Ll])\s+)?bouteilles?(?:\s+([^,\(\)]*))?/gi;
+          .filter(transaction => 
             transaction.type === 'debt' && 
             !transaction.description.toLowerCase().includes('returned') &&
             transaction.description.toLowerCase().includes(itemType.toLowerCase().split(' ')[0])
-          const sizeMatch = description.match(/(\d+(?:\.\d+)?[Ll])/i);
-          const size = bouteilleMatch[2]?.trim().replace(/l$/i, 'L') || '';
-          const brand = bouteilleMatch[3]?.trim() || '';
+          )
+          .sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime())[0];
+        
+        const transactionDate = recentTransaction ? new Date(recentTransaction.date) : new Date();
         const dateStr = transactionDate.toLocaleDateString('en-GB', {
-          // Properly capitalize brand name
-          const capitalizedBrand = brand ? brand.split(' ').map(word => 
-            word.charAt(0).toUpperCase() + word.slice(1).toLowerCase()
-          ).join(' ') : '';
+          day: '2-digit',
+          month: 'short'
+        }).replace(/\s/g, '-');
         
         // Format the display text properly
         let displayText = '';
-            key = `${sizeMatch[1].replace(/l$/i, 'L')} Bouteille ${capitalizedBrand}`;
+        if (itemType.includes('Chopine')) {
           // For Chopine items: "8 Chopines beer" or "1 Chopine beer"
           const brand = itemType.replace('Chopine', '').trim();
           if (brand) {
