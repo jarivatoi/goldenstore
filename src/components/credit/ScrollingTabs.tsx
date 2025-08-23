@@ -283,7 +283,6 @@ const ScrollingTabs: React.FC<ScrollingTabsProps> = ({
             console.log('🎯 Timeline was active:', timelineRef.current.isActive());
             timelineRef.current.kill();
             timelineRef.current = null;
-            timelineRef.current.kill();
           }
         },
         onThrowComplete: function() {
