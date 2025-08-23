@@ -187,7 +187,8 @@ const ClientCard: React.FC<ClientCardProps> = ({ client, onLongPress, onQuickAdd
         const transactionDate = recentTransaction ? new Date(recentTransaction.date) : new Date();
         const dateStr = transactionDate.toLocaleDateString('en-GB', {
           day: '2-digit',
-          month: 'short'
+          month: 'short',
+          year: 'numeric'
         }).replace(/\s/g, '-');
         
         // Format the display text properly
