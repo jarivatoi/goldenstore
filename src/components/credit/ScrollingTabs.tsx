@@ -375,16 +375,25 @@ const ScrollingTabs: React.FC<ScrollingTabsProps> = ({
       setLongPressTimer(null);
     }
     
-    // Store current position before opening modal (if timeline is active)
+    // ALWAYS store current position and kill timeline when opening modal
     if (timelineRef.current && timelineRef.current.isActive()) {
       const currentX = gsap.getProperty(contentRef.current, "x") as number;
       pausedPositionRef.current = currentX;
       console.log('🎬 Storing position before modal open:', currentX);
-      
-      // Kill timeline when opening modal
+    } else {
+      // Even if timeline is not active, store current position
+      const currentX = gsap.getProperty(contentRef.current, "x") as number;
+      pausedPositionRef.current = currentX;
+      console.log('🎬 Storing position (timeline inactive) before modal open:', currentX);
+    }
+    
+    // ALWAYS kill timeline when opening modal
+    if (timelineRef.current) {
       timelineRef.current.kill();
       timelineRef.current = null;
       console.log('🎬 Timeline killed for modal');
+    } else {
+      console.log('🎬 No timeline to kill');
     }
     
     console.log('🎭 Opening modal for client:', client.name);
@@ -837,22 +846,25 @@ const ScrollingTabs: React.FC<ScrollingTabsProps> = ({
           client={selectedClientForAction}
           onClose={() => {
             console.log('🎭 Modal closing, resuming timeline from stored position:', pausedPositionRef.current);
+            
+            // Add golden glow effect on modal close
+            setClickedTabId(selectedClientForAction.id);
+            setTimeout(() => {
+              setClickedTabId(null);
+            }, 800);
+            
             setSelectedClientForAction(null);
             
-            // Resume timeline from stored position after modal closes
+            // ALWAYS create new timeline from stored position after modal closes
             if (pausedPositionRef.current !== null) {
               console.log('🚀 Resuming timeline from stored position:', pausedPositionRef.current);
               restartTimelineFromPosition(pausedPositionRef.current);
               pausedPositionRef.current = null; // Clear stored position
             } else {
-              console.log('🚀 No stored position, setting up fresh timeline');
-              // Don't create fresh timeline, let the existing one continue or restart naturally
-              setTimeout(() => {
-                if (!timelineRef.current || !timelineRef.current.isActive()) {
-                  console.log('🚀 Creating fresh timeline after modal close');
-                  setupContinuousScroll();
-                }
-              }, 100);
+              console.log('🚀 No stored position, creating fresh timeline from container width');
+              // If no stored position, start fresh from right edge
+              const containerWidth = containerRef.current?.offsetWidth || 0;
+              restartTimelineFromPosition(containerWidth);
             }
           }}
           onQuickAdd={onQuickAdd}
@@ -866,22 +878,25 @@ const ScrollingTabs: React.FC<ScrollingTabsProps> = ({
           client={selectedClientForDetails}
           onClose={() => {
             console.log('🎭 Detail modal closing, resuming timeline from stored position:', pausedPositionRef.current);
+            
+            // Add golden glow effect on detail modal close
+            setClickedTabId(selectedClientForDetails.id);
+            setTimeout(() => {
+              setClickedTabId(null);
+            }, 800);
+            
             setSelectedClientForDetails(null);
             
-            // Resume timeline from stored position after modal closes
+            // ALWAYS create new timeline from stored position after detail modal closes
             if (pausedPositionRef.current !== null) {
               console.log('🚀 Resuming timeline from stored position:', pausedPositionRef.current);
               restartTimelineFromPosition(pausedPositionRef.current);
               pausedPositionRef.current = null; // Clear stored position
             } else {
-              console.log('🚀 No stored position, setting up fresh timeline');
-              // Don't create fresh timeline, let the existing one continue or restart naturally
-              setTimeout(() => {
-                if (!timelineRef.current || !timelineRef.current.isActive()) {
-                  console.log('🚀 Creating fresh timeline after modal close');
-                  setupContinuousScroll();
-                }
-              }, 100);
+              console.log('🚀 No stored position, creating fresh timeline from container width');
+              // If no stored position, start fresh from right edge
+              const containerWidth = containerRef.current?.offsetWidth || 0;
+              restartTimelineFromPosition(containerWidth);
             }
           }}
           onQuickAdd={onQuickAdd}
