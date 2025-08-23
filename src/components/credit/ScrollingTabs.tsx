@@ -63,8 +63,21 @@ const ScrollingTabs: React.FC<ScrollingTabsProps> = ({
   React.useEffect(() => {
     const handleCreditDataChanged = () => {
       console.log('🔄 ScrollingTabs received creditDataChanged event');
-      // Force re-render by updating state with timestamp for uniqueness
+      // Force re-render and restart timeline
       setForceUpdate(prev => prev + 1);
+      
+      // Restart timeline to reflect updated data
+      setTimeout(() => {
+        if (timelineRef.current) {
+          console.log('🔄 Killing timeline due to data change');
+          timelineRef.current.kill();
+          timelineRef.current = null;
+        }
+        
+        // Restart timeline with fresh data
+        console.log('🚀 Restarting timeline after data change');
+        setupContinuousScroll();
+      }, 100);
     };
 
     window.addEventListener('creditDataChanged', handleCreditDataChanged);
