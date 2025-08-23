@@ -25,8 +25,6 @@ interface CreditModalsProps {
   onConfirmDeleteAll: () => void;
   onCancelDeleteAll: () => void;
   
-  // Add missing import
-  clients: any[];
 }
 
 /**
@@ -50,7 +48,6 @@ const CreditModals: React.FC<CreditModalsProps> = ({
   onDeleteAllPasscodeChange,
   onConfirmDeleteAll,
   onCancelDeleteAll,
-  clients
 }) => {
   const { clients, getClientTotalDebt } = useCredit();
   const [clientSortOption, setClientSortOption] = React.useState<'id' | 'name'>('id');
