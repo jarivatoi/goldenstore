@@ -517,11 +517,11 @@ const ScrollingTabs: React.FC<ScrollingTabsProps> = ({
                     
                     let key;
                     if (size && brand) {
-                      key = `${size} Bouteille ${brand}`;
+                      key = `${size.toUpperCase()} Bouteille ${brand}`;
                     } else if (brand) {
                       key = `Bouteille ${brand}`;
                     } else if (size) {
-                      key = `${size} Bouteille`;
+                      key = `${size.toUpperCase()} Bouteille`;
                     } else {
                       key = 'Bouteille';
                     }
@@ -604,11 +604,11 @@ const ScrollingTabs: React.FC<ScrollingTabsProps> = ({
                       year: 'numeric'
                     }).replace(/\s/g, '-');
                     
-                    truncatedItems.push(`${remaining} ${itemType} (${dateStr})`);
+                    truncatedItems.push(`${remaining} ${itemType}${remaining > 1 ? 's' : ''} (${dateStr})`);
                   }
                 });
                 
-                return truncatedItems.join(', ');
+                return truncatedItems.length > 0 ? truncatedItems.join(', ') : '';
               };
               
               const returnableItemsText = getReturnableItemsForCard();
