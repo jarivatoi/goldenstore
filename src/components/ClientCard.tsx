@@ -89,10 +89,6 @@ const ClientCard: React.FC<ClientCardProps> = ({ client, onLongPress, onQuickAdd
           key = `${size} ${brand}`;
         } else if (brand) {
           key = `Bouteille ${brand}`;
-          const brand = chopineMatch[2]?.trim().split(' ').map(word => 
-            word.charAt(0).toUpperCase() + word.slice(1).toLowerCase()
-          ).join(' ') || '';
-          const key = brand ? `Chopine ${brand}` : 'Chopine';
         } else {
           key = 'Bouteille';
         }
@@ -106,10 +102,8 @@ const ClientCard: React.FC<ClientCardProps> = ({ client, onLongPress, onQuickAdd
       // Handle items without explicit numbers (assume quantity 1)
       if (description.includes('bouteille') && !bouteillePattern.test(description)) {
         const sizeMatch = description.match(/(\d+(?:\.\d+)?[Ll])/i);
-          const size = bouteilleMatch[2]?.trim().toUpperCase() || '';
-          const brand = bouteilleMatch[3]?.trim().split(' ').map(word => 
-            word.charAt(0).toUpperCase() + word.slice(1).toLowerCase()
-          ).join(' ') || '';
+        const brandMatch = description.match(/bouteilles?\s+([^,]*)/i);
+        const brand = brandMatch?.[1]?.trim().split(' ').map(word => 
           word.charAt(0).toUpperCase() + word.slice(1).toLowerCase()
         ).join(' ') || '';
         
@@ -132,17 +126,15 @@ const ClientCard: React.FC<ClientCardProps> = ({ client, onLongPress, onQuickAdd
       
       if (description.includes('chopine') && !chopinePattern.test(description)) {
         const brandMatch = description.match(/chopines?\s+([^,]*)/i);
-          const brand = brandMatch?.[1]?.trim().split(' ').map(word => 
-            word.charAt(0).toUpperCase() + word.slice(1).toLowerCase()
-          ).join(' ') || '';
+        const brand = brandMatch?.[1]?.trim().split(' ').map(word => 
           word.charAt(0).toUpperCase() + word.slice(1).toLowerCase()
         ).join(' ') || '';
-          if (sizeMatch && sizeMatch[1] && brand) {
-            key = `${sizeMatch[1].toUpperCase()} Bouteille ${brand}`;
+        const key = brand ? `Chopine ${brand}` : 'Chopine';
+        
         if (!returnableItems[key]) {
           returnableItems[key] = 0;
-          } else if (sizeMatch && sizeMatch[1]) {
-            key = `${sizeMatch[1].toUpperCase()} Bouteille`;
+        }
+        returnableItems[key] += 1;
       }
     });
     
@@ -155,9 +147,7 @@ const ClientCard: React.FC<ClientCardProps> = ({ client, onLongPress, onQuickAdd
         Object.keys(returnableItems).forEach(itemType => {
           if (description.includes(itemType.toLowerCase())) {
             const match = description.match(/returned:\s*(\d+)\s+/);
-          const brand = brandMatch?.[1]?.trim().split(' ').map(word => 
-            word.charAt(0).toUpperCase() + word.slice(1).toLowerCase()
-          ).join(' ') || '';
+            if (match) {
               if (!returnedQuantities[itemType]) {
                 returnedQuantities[itemType] = 0;
               }
