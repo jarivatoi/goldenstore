@@ -74,12 +74,12 @@ const ClientCard: React.FC<ClientCardProps> = ({ client, onLongPress, onQuickAdd
       }
       
       // Look for Bouteille items
-      const bouteillePattern = /(\d+)\s+(?:(\d+(?:\.\d+)?[Ll])\s+)?bouteilles?(?:\s+([^,]*))?/gi;
+      const bouteillePattern = /(\d+)\s+(?:(\d+(?:\.\d+)?[Ll])\s+)?bouteilles?(?:\s+([^,\(\)]*))?/gi;
       let bouteilleMatch;
       
       while ((bouteilleMatch = bouteillePattern.exec(description)) !== null) {
         const quantity = parseInt(bouteilleMatch[1]);
-        const size = bouteilleMatch[2]?.trim().toUpperCase() || '';
+        const size = bouteilleMatch[2]?.trim().replace(/l$/i, 'L') || '';
         const brand = bouteilleMatch[3]?.trim() || '';
         
         let key;
@@ -107,11 +107,11 @@ const ClientCard: React.FC<ClientCardProps> = ({ client, onLongPress, onQuickAdd
         
         let key;
         if (sizeMatch && brand) {
-          key = `${sizeMatch[1].toUpperCase()} ${brand}`;
+          key = `${sizeMatch[1].replace(/l$/i, 'L')} ${brand}`;
         } else if (brand) {
           key = `Bouteille ${brand}`;
         } else if (sizeMatch) {
-          key = `${sizeMatch[1].toUpperCase()} Bouteille`;
+          key = `${sizeMatch[1].replace(/l$/i, 'L')} Bouteille`;
         } else {
           key = 'Bouteille';
         }

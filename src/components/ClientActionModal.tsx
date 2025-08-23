@@ -706,17 +706,17 @@ const ClientActionModal: React.FC<ClientActionModalProps> = ({ client, onClose, 
           onConfirm={async () => {
             try {
               setIsProcessing(true);
-              
+              const bouteillePattern = /(\d+)\s+(?:(\d+(?:\.\d+)?[Ll])\s+)?bouteilles?(?:\s+([^,\(\)]*))?/gi;
               if (settleAction.type === 'all') {
                 // Set all available items to be returned
                 const allReturns: {[key: string]: number} = {};
-                Object.entries(availableItems).forEach(([itemType, data]) => {
-                  allReturns[itemType] = data.total;
-                });
+                const sizeMatch = description.match(/(\d+(?:\.\d+)?[Ll])/i);
+                const size = bouteilleMatch[2]?.trim().replace(/l$/i, 'L') || '';
+                  key = `${sizeMatch[0].replace(/l$/i, 'L')} ${brand}`;
                 
                 // Process all returns
                 for (const [itemType, quantity] of Object.entries(allReturns)) {
-                  if (quantity > 0) {
+                  key = `${sizeMatch[0].replace(/l$/i, 'L')} Bouteille`;
                     await processItemReturn(itemType, quantity);
                   }
                 }

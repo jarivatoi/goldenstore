@@ -267,12 +267,12 @@ const CreditManagement: React.FC = () => {
             
             while ((bouteilleMatch = bouteillePattern.exec(description)) !== null) {
               const quantity = parseInt(bouteilleMatch[1]);
-              const size = bouteilleMatch[2]?.trim().toUpperCase() || '';
+              const size = bouteilleMatch[2]?.trim().replace(/l$/i, 'L') || '';
               const brand = bouteilleMatch[3]?.trim() || '';
               
               let key;
               if (size && brand) {
-                key = `${size} Bouteille ${brand}`;
+                key = `${size} ${brand}`;
               } else if (brand) {
                 key = `Bouteille ${brand}`;
               } else if (size) {
@@ -295,11 +295,11 @@ const CreditManagement: React.FC = () => {
               
               let key;
               if (sizeMatch && brand) {
-                key = `${sizeMatch[0].toUpperCase()} Bouteille ${brand}`;
+                key = `${sizeMatch[0].replace(/l$/i, 'L')} ${brand}`;
               } else if (brand) {
                 key = `Bouteille ${brand}`;
               } else if (sizeMatch) {
-                key = `${sizeMatch[0].toUpperCase()} Bouteille`;
+                key = `${sizeMatch[0].replace(/l$/i, 'L')} Bouteille`;
               } else {
                 key = 'Bouteille';
               }
