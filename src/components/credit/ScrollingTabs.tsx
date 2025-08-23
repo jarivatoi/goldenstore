@@ -48,6 +48,7 @@ const ScrollingTabs: React.FC<ScrollingTabsProps> = ({
   const [clickedTabId, setClickedTabId] = React.useState<string | null>(null);
   const { getClientTransactions } = useCredit();
   const dragHasExceededThreshold = useRef(false);
+  const [forceUpdate, setForceUpdate] = React.useState(0);
   
   // Debug: Track what causes component to remount
   React.useEffect(() => {
@@ -58,6 +59,20 @@ const ScrollingTabs: React.FC<ScrollingTabsProps> = ({
     };
   }, []); // Empty dependency array - only runs on mount/unmount
   
+  // Listen for credit data changes to force re-render
+  React.useEffect(() => {
+    const handleCreditDataChanged = () => {
+      // Force re-render by updating state
+      setForceUpdate(prev => prev + 1);
+    };
+
+    window.addEventListener('creditDataChanged', handleCreditDataChanged);
+    
+    return () => {
+      window.removeEventListener('creditDataChanged', handleCreditDataChanged);
+    };
+  }, []);
+
   const sortedClients = React.useMemo(() => {
     const clientsToSort = [...clients];
     
@@ -74,7 +89,7 @@ const ScrollingTabs: React.FC<ScrollingTabsProps> = ({
       default:
         return clientsToSort;
     }
-  }, [clients, sortOption, getClientTotalDebt]);
+  }, [clients, sortOption, getClientTotalDebt, forceUpdate]);
 
   // Helper function to check if client has overdue returnables (3+ weeks old)
   const hasOverdueReturnables = (client: Client): boolean => {
