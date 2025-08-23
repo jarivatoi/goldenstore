@@ -74,6 +74,9 @@ const ScrollingTabs: React.FC<ScrollingTabsProps> = ({
     };
   }, []);
 
+  // Get transactions directly from context to ensure fresh data
+  const { getClientTransactions: getTransactions } = useCredit();
+  
   const sortedClients = React.useMemo(() => {
     console.log('🔄 sortedClients recalculating, forceUpdate:', forceUpdate);
     const clientsToSort = [...clients];
@@ -91,11 +94,11 @@ const ScrollingTabs: React.FC<ScrollingTabsProps> = ({
       default:
         return clientsToSort;
     }
-  }, [clients, sortOption, getClientTotalDebt, forceUpdate, getClientTransactions]);
+  }, [clients, sortOption, getClientTotalDebt, forceUpdate]);
 
   // Helper function to check if client has overdue returnables (3+ weeks old)
   const hasOverdueReturnables = (client: Client): boolean => {
-    const clientTransactions = getClientTransactions(client.id);
+    const clientTransactions = getTransactions(client.id);
     const threeWeeksAgo = Date.now() - (21 * 24 * 60 * 60 * 1000); // 3 weeks in milliseconds
     
     return clientTransactions.some(transaction => {
@@ -464,7 +467,7 @@ const ScrollingTabs: React.FC<ScrollingTabsProps> = ({
               // Force recalculation of returnable items by calling the function fresh each render
               const currentReturnableItems = (() => {
                 console.log('🔄 Recalculating returnable items for client:', client.name, 'forceUpdate:', forceUpdate);
-                const clientTransactions = getClientTransactions(client.id);
+                const clientTransactions = getTransactions(client.id);
                 const returnableItems: {[key: string]: number} = {};
                 
                 clientTransactions.forEach(transaction => {
@@ -623,7 +626,7 @@ const ScrollingTabs: React.FC<ScrollingTabsProps> = ({
                       ? 'animate-high-debt-pulsate'
                       : (() => {
                           // Check if client has returnable items
-                          const clientTransactions = getClientTransactions(client.id);
+                          const clientTransactions = getTransactions(client.id);
                           
                           // Calculate actual unreturned items
                           const returnableItems: {[key: string]: number} = {};
