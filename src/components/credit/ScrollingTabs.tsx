@@ -357,29 +357,8 @@ const ScrollingTabs: React.FC<ScrollingTabsProps> = ({
   // Prevent timeline interference from linkedClient changes
   useEffect(() => {
     console.log('🔗 LINKEDCLIENT EFFECT - linkedClient:', linkedClient?.name || 'none', 'timeline active:', timelineRef.current?.isActive() || false, 'at:', new Date().toLocaleTimeString());
-    
-    if (linkedClient) {
-      // Client linked to calculator - pause timeline and store position
-      if (timelineRef.current && timelineRef.current.isActive()) {
-        const currentX = gsap.getProperty(contentRef.current, "x") as number;
-        pausedPositionRef.current = currentX;
-        console.log('🔗 Client linked - pausing timeline at position:', currentX);
-        
-        timelineRef.current.kill();
-        timelineRef.current = null;
-      }
-    } else {
-      // Client unlinked from calculator - resume timeline from stored position
-      if (pausedPositionRef.current !== null && (!timelineRef.current || !timelineRef.current.isActive())) {
-        console.log('🔗 Client unlinked - resuming timeline from position:', pausedPositionRef.current);
-        restartTimelineFromPosition(pausedPositionRef.current);
-        pausedPositionRef.current = null;
-      } else if (!timelineRef.current || !timelineRef.current.isActive()) {
-        // No stored position, start fresh timeline
-        console.log('🔗 Client unlinked - starting fresh timeline');
-        setupContinuousScroll();
-      }
-    }
+    // Don't let linkedClient changes affect the timeline
+    // The timeline should run independently of calculator state
   }, [linkedClient]);
 
   const getFilterLabel = () => {
