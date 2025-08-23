@@ -478,16 +478,16 @@ const ScrollingTabs: React.FC<ScrollingTabsProps> = ({
                   
                   while ((bouteilleMatch = bouteillePattern.exec(description)) !== null) {
                     const quantity = parseInt(bouteilleMatch[1]);
-                    const size = bouteilleMatch[2]?.trim() || '';
+                   const size = bouteilleMatch[2]?.trim().toUpperCase() || '';
                     const brand = bouteilleMatch[3]?.trim() || '';
                     
                     let key;
                     if (size && brand) {
-                      key = `${size} ${brand}`;
+                     key = `${size} Bouteille ${brand}`;
                     } else if (brand) {
                       key = `Bouteille ${brand}`;
                     } else if (size) {
-                      key = `${size} Bouteille`;
+                     key = `${size} Bouteille`;
                     } else {
                       key = 'Bouteille';
                     }
@@ -499,17 +499,17 @@ const ScrollingTabs: React.FC<ScrollingTabsProps> = ({
                   }
                   
                   if (description.includes('bouteille') && !bouteillePattern.test(description)) {
-                    const sizeMatch = description.match(/(\d+(?:\.\d+)?L)/i);
+                   const sizeMatch = description.match(/(\d+(?:\.\d+)?L)/i);
                     const brandMatch = description.match(/bouteilles?\s+([^,]*)/i);
                     const brand = brandMatch?.[1]?.trim() || '';
                     
                     let key;
-                    if (sizeMatch && brand) {
-                      key = `${sizeMatch[1]} ${brand}`;
+                   if (sizeMatch && sizeMatch[1] && brand) {
+                     key = `${sizeMatch[1].toUpperCase()} Bouteille ${brand}`;
                     } else if (brand) {
                       key = `Bouteille ${brand}`;
-                    } else if (sizeMatch) {
-                      key = `${sizeMatch[1]} Bouteille`;
+                   } else if (sizeMatch && sizeMatch[1]) {
+                     key = `${sizeMatch[1].toUpperCase()} Bouteille`;
                     } else {
                       key = 'Bouteille';
                     }
@@ -536,7 +536,7 @@ const ScrollingTabs: React.FC<ScrollingTabsProps> = ({
                 clientTransactions
                   .filter(transaction => transaction.type === 'debt' && transaction.description.toLowerCase().includes('returned'))
                   .forEach(transaction => {
-                    const description = transaction.description.toLowerCase();
+                         const sizeMatch = itemType.match(/(\d+(?:\.\d+)?L)/i);
                     Object.keys(returnableItems).forEach(itemType => {
                       if (description.includes(itemType.toLowerCase())) {
                         const match = description.match(/returned:\s*(\d+)\s+/);
