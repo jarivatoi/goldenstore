@@ -5,6 +5,7 @@ import { Client } from '../types';
 import { useCredit } from '../context/CreditContext';
 import SettleConfirmationModal from './SettleConfirmationModal';
 import ClientDetailModal from './ClientDetailModal';
+import { ScrollingText } from './ScrollingText';
 
 interface ClientActionModalProps {
   client: Client;
@@ -609,7 +610,8 @@ const ClientActionModal: React.FC<ClientActionModalProps> = ({ client, onClose, 
                           const transactionDate = new Date(transaction.date || Date.now());
                           return (
                             <p key={index} className="truncate">
-                              • {transaction.description} ({transaction.quantity} {itemType}) - {transactionDate.toLocaleDateString('en-GB', {
+                              • <ScrollingText 
+                                text={`${transaction.description} (${transaction.quantity} ${itemType}) - ${transactionDate.toLocaleDateString('en-GB', {
                                 day: '2-digit',
                                 month: '2-digit',
                                 year: 'numeric'
@@ -617,7 +619,12 @@ const ClientActionModal: React.FC<ClientActionModalProps> = ({ client, onClose, 
                                 hour: '2-digit',
                                 minute: '2-digit',
                                 hour12: false
-                              })}
+                              })}`}
+                                className="text-xs text-gray-500"
+                                pauseDuration={1}
+                                scrollDuration={3}
+                                easing="power1.inOut"
+                              />
                             </p>
                           );
                           });
@@ -635,7 +642,8 @@ const ClientActionModal: React.FC<ClientActionModalProps> = ({ client, onClose, 
                           
                           return returnedTransactions.map((transaction, index) => (
                             <p key={`returned-${index}`} className="truncate text-green-600">
-                              • {transaction.description} - {transaction.date.toLocaleDateString('en-GB', {
+                              • <ScrollingText 
+                                text={`${transaction.description} - ${transaction.date.toLocaleDateString('en-GB', {
                                 day: '2-digit',
                                 month: '2-digit',
                                 year: 'numeric'
@@ -643,7 +651,12 @@ const ClientActionModal: React.FC<ClientActionModalProps> = ({ client, onClose, 
                                 hour: '2-digit',
                                 minute: '2-digit',
                                 hour12: false
-                              })}
+                              })}`}
+                                className="text-xs text-green-600"
+                                pauseDuration={1}
+                                scrollDuration={3}
+                                easing="power1.inOut"
+                              />
                             </p>
                           ));
                         })()}
