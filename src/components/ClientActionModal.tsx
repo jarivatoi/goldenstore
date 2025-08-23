@@ -80,7 +80,7 @@ const ClientActionModal: React.FC<ClientActionModalProps> = ({ client, onClose, 
 
   // Parse transactions to find returnable items (Chopine and Bouteille)
   const getReturnableItems = () => {
-    const returnableItems: {[key: string]: {total: number, transactions: Array<{id: string, description: string, amount: number, quantity: number}>}} = {};
+    const returnableItems: {[key: string]: {total: number, transactions: Array<{id: string, description: string, amount: number, quantity: number, date: Date}>}} = {};
     
     // Track processed transactions to prevent duplicates
     const processedTransactions = new Set<string>();
@@ -128,9 +128,7 @@ const ClientActionModal: React.FC<ClientActionModalProps> = ({ client, onClose, 
         }
         returnableItems[key].total += quantity;
         returnableItems[key].transactions.push({
-          id: transaction.id,
-          description: transaction.description,
-          amount: transaction.amount,
+          ...transaction,
           quantity: quantity
         });
         hasMatched = true;
@@ -169,9 +167,7 @@ const ClientActionModal: React.FC<ClientActionModalProps> = ({ client, onClose, 
         }
         returnableItems[key].total += quantity;
         returnableItems[key].transactions.push({
-          id: transaction.id,
-          description: transaction.description,
-          amount: transaction.amount,
+          ...transaction,
           quantity: quantity
         });
         hasMatched = true;
@@ -205,9 +201,7 @@ const ClientActionModal: React.FC<ClientActionModalProps> = ({ client, onClose, 
         }
         returnableItems[key].total += 1;
         returnableItems[key].transactions.push({
-          id: transaction.id,
-          description: transaction.description,
-          amount: transaction.amount,
+          ...transaction,
           quantity: 1
         });
         hasMatched = true;
@@ -229,9 +223,7 @@ const ClientActionModal: React.FC<ClientActionModalProps> = ({ client, onClose, 
         }
         returnableItems[key].total += 1;
         returnableItems[key].transactions.push({
-          id: transaction.id,
-          description: transaction.description,
-          amount: transaction.amount,
+          ...transaction,
           quantity: 1
         });
       }
@@ -308,7 +300,7 @@ const ClientActionModal: React.FC<ClientActionModalProps> = ({ client, onClose, 
   const returnableItems = getReturnableItems();
   
   // Filter out items that have already been returned
-  const availableItems: {[key: string]: {total: number, transactions: Array<{id: string, description: string, amount: number, quantity: number}>}} = {};
+  const availableItems: {[key: string]: {total: number, transactions: Array<{id: string, description: string, amount: number, quantity: number, date: Date}>}} = {};
   
   Object.entries(returnableItems).forEach(([itemType, data]) => {
     // Calculate net quantity (original - returned)
