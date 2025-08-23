@@ -194,12 +194,12 @@ const ClientCard: React.FC<ClientCardProps> = ({ client, onLongPress, onQuickAdd
         // Format the display text properly
         let displayText = '';
         if (itemType.includes('Chopine')) {
-          // For Chopine items: "8 Chopines beer" or "1 Chopine beer"
+          // For Chopine items: "8 Chopine beer" (no pluralization for display)
           const brand = itemType.replace('Chopine', '').trim();
           if (brand) {
-            displayText = `${remaining} Chopine${remaining > 1 ? 's' : ''} ${brand}`;
+            displayText = `${remaining} Chopine ${brand}`;
           } else {
-            displayText = `${remaining} Chopine${remaining > 1 ? 's' : ''}`;
+            displayText = `${remaining} Chopine`;
           }
         } else if (itemType.includes('Bouteille')) {
           // For Bouteille items: check if it has a size (like "1.5L Green")
@@ -208,12 +208,12 @@ const ClientCard: React.FC<ClientCardProps> = ({ client, onLongPress, onQuickAdd
             // For sized bottles like "1.5L Green" -> "3 (1.5L Green)"
             displayText = `${remaining} (${itemType})`;
           } else {
-            // For regular bottles like "Bouteille Green" -> "3 Bouteilles Green"
+            // For regular bottles like "Bouteille Green" -> "3 Bouteille Green"
             const brand = itemType.replace('Bouteille', '').trim();
             if (brand) {
-              displayText = `${remaining} Bouteille${remaining > 1 ? 's' : ''} ${brand}`;
+              displayText = `${remaining} Bouteille ${brand}`;
             } else {
-              displayText = `${remaining} Bouteille${remaining > 1 ? 's' : ''}`;
+              displayText = `${remaining} Bouteille`;
             }
           }
         } else {
