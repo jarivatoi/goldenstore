@@ -299,8 +299,6 @@ const ScrollingTabs: React.FC<ScrollingTabsProps> = ({
           const currentX = gsap.getProperty(contentRef.current, "x") as number;
           console.log('🚀 Resuming timeline from current position after throw:', currentX);
           restartTimelineFromPosition(currentX);
-          pausedPositionRef.current = null; // Clear any stored position
-        }
       });
     });
   }, [sortedClients.length]); // Remove function dependencies to prevent recreation
