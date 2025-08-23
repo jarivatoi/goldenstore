@@ -588,7 +588,26 @@ const ReturnableItemRow: React.FC<ReturnableItemRowProps> = ({ itemType, quantit
     try {
       setIsProcessing(true);
       // Create unique return transaction with timestamp to prevent ID conflicts
-      const uniqueReturnDescription = `Returned: ${pendingQuantity} ${itemType}${pendingQuantity > 1 ? 's' : ''} - ${new Date().toLocaleDateString('en-GB')} ${new Date().toLocaleTimeString('en-GB', { hour: '2-digit', minute: '2-digit' })}`;
+      // Don't pluralize brand names - only add 's' to the base item type
+      let returnDescription = `Returned: ${pendingQuantity} `;
+      
+      if (itemType.includes('Chopine')) {
+        // For Chopine items: "Returned: 2 Chopines Beer" (pluralize Chopine, not brand)
+        const brand = itemType.replace('Chopine', '').trim();
+        returnDescription += `Chopine${pendingQuantity > 1 ? 's' : ''}${brand ? ` ${brand}` : ''}`;
+      } else if (itemType.includes('L ')) {
+        // For sized bottles: "Returned: 2 1.5L Green" (don't pluralize brand)
+        returnDescription += itemType;
+      } else if (itemType.includes('Bouteille')) {
+        // For regular bottles: "Returned: 2 Bouteilles Green" (pluralize Bouteille, not brand)
+        const brand = itemType.replace('Bouteille', '').trim();
+        returnDescription += `Bouteille${pendingQuantity > 1 ? 's' : ''}${brand ? ` ${brand}` : ''}`;
+      } else {
+        // For other items: add 's' only if quantity > 1
+        returnDescription += `${itemType}${pendingQuantity > 1 ? 's' : ''}`;
+      }
+      
+      const uniqueReturnDescription = `${returnDescription} - ${new Date().toLocaleDateString('en-GB')} ${new Date().toLocaleTimeString('en-GB', { hour: '2-digit', minute: '2-digit' })}`;
       await addTransaction(client, uniqueReturnDescription, 0);
       setPendingQuantity(0);
       
