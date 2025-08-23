@@ -139,23 +139,11 @@ const ScrollingTabs: React.FC<ScrollingTabsProps> = ({
     const contentWidth = content.scrollWidth;
     console.log('📏 Container width:', containerWidth, 'Content width:', contentWidth);
     
-    // Smart position adjustment for better visual continuity
+    // FIX: If position is off-screen, reset to visible position
     let adjustedPosition = startPosition;
-    
-    // If position is completely off-screen (too far left), start from right edge
-    if (startPosition < -contentWidth) {
-      console.log('🔧 Position too far left, starting from right edge');
-      adjustedPosition = containerWidth;
-    }
-    // If position is too far right, start from right edge but not beyond
-    else if (startPosition > containerWidth) {
-      console.log('🔧 Position too far right, clamping to container width');
-      adjustedPosition = containerWidth;
-    }
-    // If position is in the visible area or slightly off-screen, keep it
-    else {
-      console.log('🔧 Position is good, keeping original:', startPosition);
-      adjustedPosition = startPosition;
+    if (startPosition > containerWidth || startPosition < -contentWidth) {
+      console.log('🔧 Position off-screen, resetting to container width:', containerWidth);
+      adjustedPosition = containerWidth; // Start from right edge (visible)
     }
     
     // Kill any existing timeline
@@ -165,62 +153,51 @@ const ScrollingTabs: React.FC<ScrollingTabsProps> = ({
       timelineRef.current = null;
     }
     
+    // Calculate total distance for full cycle
+    const totalDistance = contentWidth + containerWidth;
+    const fullCycleDuration = totalDistance / 60; // 60px per second
+    console.log('⏱️ Full cycle duration:', fullCycleDuration);
+    
+    // Create new infinite timeline that matches setupContinuousScroll
+    timelineRef.current = gsap.timeline({ repeat: -1, ease: "none" });
+    console.log('✨ Created new timeline at:', new Date().toLocaleTimeString());
+    
     // Set initial position
     gsap.set(content, { x: adjustedPosition });
     console.log('📍 Set initial position to:', adjustedPosition, '(original was:', startPosition, ')');
     
-    // Use requestAnimationFrame to ensure DOM is ready
-    requestAnimationFrame(() => {
-      const containerWidth = container.offsetWidth;
-      const contentWidth = content.scrollWidth;
-      
-      // Calculate total distance for full cycle
-      const totalDistance = contentWidth + containerWidth;
-      const fullCycleDuration = totalDistance / 60; // 60px per second
-      console.log('⏱️ Full cycle duration:', fullCycleDuration);
-      
-      // Create new infinite timeline
-      timelineRef.current = gsap.timeline({ 
-        repeat: -1, 
-        ease: "none",
-        paused: false,
-        immediateRender: true
-      });
-      console.log('✨ Created new timeline at:', new Date().toLocaleTimeString());
-      
-      // Calculate remaining distance from current position to end
-      const remainingDistance = Math.abs(adjustedPosition - (-contentWidth));
-      const remainingDuration = remainingDistance / 60; // 60px per second
-      console.log('📐 Remaining distance:', remainingDistance, 'Duration:', remainingDuration);
-      
-      // Continue from current position to end, then start infinite loop
-      if (remainingDuration > 0.1) { // Only animate if there's meaningful distance
-        console.log('▶️ Starting animation from current position at:', new Date().toLocaleTimeString());
-        timelineRef.current
-          .to(content, { 
-            x: -contentWidth,
-            duration: remainingDuration,
-            ease: "none"
-          })
-          .set(content, { x: containerWidth }) // Jump to right edge instantly
-          .to(content, {
-            x: -contentWidth,
-            repeat: -1, // Infinite repeat of full cycle
-            duration: fullCycleDuration,
-            ease: "none"
-          });
-      } else {
-        console.log('🔄 Starting fresh cycle at:', new Date().toLocaleTimeString());
-        timelineRef.current
-          .set(content, { x: containerWidth }) // Jump to right edge instantly
-          .to(content, {
-            x: -contentWidth,
-            repeat: -1, // Infinite repeat of full cycle
-            duration: fullCycleDuration,
-            ease: "none"
-          });
-      }
-    });
+    // Calculate remaining distance from current position to end
+    const remainingDistance = Math.abs(adjustedPosition - (-contentWidth));
+    const remainingDuration = remainingDistance / 60; // 60px per second
+    console.log('📐 Remaining distance:', remainingDistance, 'Duration:', remainingDuration);
+    
+    // Continue from current position to end, then start infinite loop
+    if (remainingDuration > 0) {
+      console.log('▶️ Starting animation from current position at:', new Date().toLocaleTimeString());
+      timelineRef.current
+        .to(content, { 
+          x: -contentWidth,
+          duration: remainingDuration,
+          ease: "none"
+        })
+        .set(content, { x: containerWidth }) // Jump to right edge instantly
+        .to(content, {
+          x: -contentWidth,
+          repeat: -1, // Infinite repeat of full cycle
+          duration: fullCycleDuration,
+          ease: "none"
+        });
+    } else {
+      console.log('🔄 Starting fresh cycle at:', new Date().toLocaleTimeString());
+      timelineRef.current
+        .set(content, { x: containerWidth }) // Jump to right edge instantly
+        .to(content, {
+          x: -contentWidth,
+          repeat: -1, // Infinite repeat of full cycle
+          duration: fullCycleDuration,
+          ease: "none"
+        });
+    }
     console.log('✅ Timeline restart complete at:', new Date().toLocaleTimeString());
   }, [sortedClients.length]); // Remove function dependencies to prevent recreation
 
@@ -303,50 +280,25 @@ const ScrollingTabs: React.FC<ScrollingTabsProps> = ({
         throwResistance: 1000, // Lower value = more throw, higher = less throw
         maxDuration: 2, // Shorter inertia duration
         minDuration: 0.1,
+        overshootTolerance: 0, // No overshooting
+        force3D: true,
+        lockAxis: true, // Lock to horizontal axis only
+        minimumMovement: 3, // Require minimum movement to start drag
         onDragStart: function() {
-          console.log('🎯 DRAG START - PAUSING TIMELINE at:', new Date().toLocaleTimeString());
-          setIsDragging(true);
-          dragHasExceededThreshold.current = false;
-          
-          // Store current position when drag starts
-          const currentX = gsap.getProperty(contentRef.current, "x") as number;
-          pausedPositionRef.current = currentX;
-          console.log('🎬 Storing position on drag start:', currentX);
-          
-          // Kill timeline when dragging starts
+          // Kill the timeline on drag start but don't store position yet
           if (timelineRef.current) {
+            console.log('🎯 DRAG STARTED - KILLING TIMELINE at:', new Date().toLocaleTimeString());
+            console.log('🎯 Timeline was active:', timelineRef.current.isActive());
             timelineRef.current.kill();
-            timelineRef.current = null;
-            console.log('🔪 Timeline killed on drag start');
           }
-        },
-        onDrag: function() {
-          const dragDistance = Math.abs(this.x - this.startX);
-          if (dragDistance > 10) {
-            dragHasExceededThreshold.current = true;
-          }
-        },
-        onDragEnd: function() {
-          console.log('🎯 DRAG END - RESTARTING TIMELINE at:', new Date().toLocaleTimeString());
-          setIsDragging(false);
-          
-          // Don't restart timeline here - wait for throw to complete
-          console.log('🎯 DRAG END - Waiting for throw to complete before restarting timeline');
         },
         onThrowComplete: function() {
           console.log('🎯 THROW COMPLETE - RESTARTING TIMELINE from stored position:', pausedPositionRef.current, 'at:', new Date().toLocaleTimeString());
           
-          // Check if we have a stored position from a modal interaction
-          if (pausedPositionRef.current !== null) {
-            console.log('🚀 Resuming timeline from stored modal position:', pausedPositionRef.current);
-            restartTimelineFromPosition(pausedPositionRef.current);
-            pausedPositionRef.current = null; // Clear stored position
-          } else {
-            console.log('🚀 No stored modal position, creating fresh timeline from current position after throw');
-            // Fallback: start fresh from current position
-            const currentX = gsap.getProperty(contentRef.current, "x") as number;
-            restartTimelineFromPosition(currentX);
-          }
+          // Always resume timeline after throw completes
+          const currentX = gsap.getProperty(contentRef.current, "x") as number;
+          console.log('🚀 Resuming timeline from current position after throw:', currentX);
+          restartTimelineFromPosition(currentX);
         }
       });
     });
@@ -409,38 +361,22 @@ const ScrollingTabs: React.FC<ScrollingTabsProps> = ({
     console.log('👆 handleTabClick called for client:', client.name, 'at:', new Date().toLocaleTimeString());
     console.log('🎬 Timeline status before click - isActive:', timelineRef.current?.isActive(), 'exists:', !!timelineRef.current);
     
-    // Only proceed if this was a real click (not a drag that exceeded threshold)
-    if (dragHasExceededThreshold.current) {
-      console.log('🚫 Ignoring click because drag exceeded threshold');
-      return;
-    }
-    
-    // Add golden glow effect immediately on click
-    setClickedTabId(client.id);
-    
-    // Remove glow effect after animation completes
-    setTimeout(() => {
-      setClickedTabId(null);
-    }, 800); // Slightly longer to show the full golden effect
-    
     // Clear any existing long press timer
     if (longPressTimer) {
       clearTimeout(longPressTimer);
       setLongPressTimer(null);
     }
     
-    // ALWAYS store current position when opening modal (regardless of timeline state)
-    const currentX = gsap.getProperty(contentRef.current, "x") as number;
-    pausedPositionRef.current = currentX;
-    console.log('🎬 Storing current position before modal open:', currentX);
-    
-    // ALWAYS kill timeline when opening modal
-    if (timelineRef.current) {
+    // Store current position before opening modal (if timeline is active)
+    if (timelineRef.current && timelineRef.current.isActive()) {
+      const currentX = gsap.getProperty(contentRef.current, "x") as number;
+      pausedPositionRef.current = currentX;
+      console.log('🎬 Storing position before modal open:', currentX);
+      
+      // Kill timeline when opening modal
       timelineRef.current.kill();
       timelineRef.current = null;
       console.log('🎬 Timeline killed for modal');
-    } else {
-      console.log('🎬 No timeline to kill');
     }
     
     console.log('🎭 Opening modal for client:', client.name);
@@ -687,7 +623,7 @@ const ScrollingTabs: React.FC<ScrollingTabsProps> = ({
                         : `${getCardBackgroundColor()} hover:shadow-md ${hasOverdueItems ? 'animate-urgent-glow animate-subtle-shake' : ''}`
                   } ${
                     clickedTabId === client.id 
-                      ? 'animate-golden-glow bg-gradient-to-br from-yellow-200 via-yellow-300 to-amber-400 border-yellow-500 shadow-2xl scale-110 z-50' 
+                      ? 'animate-pulse-attention bg-yellow-200 border-yellow-400 shadow-lg scale-110 z-50' 
                       : totalDebt > 1000
                       ? 'animate-high-debt-pulsate'
                       : (() => {
@@ -893,25 +829,22 @@ const ScrollingTabs: React.FC<ScrollingTabsProps> = ({
           client={selectedClientForAction}
           onClose={() => {
             console.log('🎭 Modal closing, resuming timeline from stored position:', pausedPositionRef.current);
-            
-            // Add golden glow effect on modal close
-            setClickedTabId(selectedClientForAction.id);
-            setTimeout(() => {
-              setClickedTabId(null);
-            }, 800);
-            
             setSelectedClientForAction(null);
             
-            // ALWAYS create new timeline from stored position after modal closes
+            // Resume timeline from stored position after modal closes
             if (pausedPositionRef.current !== null) {
               console.log('🚀 Resuming timeline from stored position:', pausedPositionRef.current);
               restartTimelineFromPosition(pausedPositionRef.current);
               pausedPositionRef.current = null; // Clear stored position
             } else {
-              console.log('🚀 No stored position, creating fresh timeline from container width');
-              // If no stored position, start fresh from right edge
-              const containerWidth = containerRef.current?.offsetWidth || 0;
-              restartTimelineFromPosition(containerWidth);
+              console.log('🚀 No stored position, setting up fresh timeline');
+              // Don't create fresh timeline, let the existing one continue or restart naturally
+              setTimeout(() => {
+                if (!timelineRef.current || !timelineRef.current.isActive()) {
+                  console.log('🚀 Creating fresh timeline after modal close');
+                  setupContinuousScroll();
+                }
+              }, 100);
             }
           }}
           onQuickAdd={onQuickAdd}
@@ -925,25 +858,22 @@ const ScrollingTabs: React.FC<ScrollingTabsProps> = ({
           client={selectedClientForDetails}
           onClose={() => {
             console.log('🎭 Detail modal closing, resuming timeline from stored position:', pausedPositionRef.current);
-            
-            // Add golden glow effect on detail modal close
-            setClickedTabId(selectedClientForDetails.id);
-            setTimeout(() => {
-              setClickedTabId(null);
-            }, 800);
-            
             setSelectedClientForDetails(null);
             
-            // ALWAYS create new timeline from stored position after detail modal closes
+            // Resume timeline from stored position after modal closes
             if (pausedPositionRef.current !== null) {
               console.log('🚀 Resuming timeline from stored position:', pausedPositionRef.current);
               restartTimelineFromPosition(pausedPositionRef.current);
               pausedPositionRef.current = null; // Clear stored position
             } else {
-              console.log('🚀 No stored position, creating fresh timeline from container width');
-              // If no stored position, start fresh from right edge
-              const containerWidth = containerRef.current?.offsetWidth || 0;
-              restartTimelineFromPosition(containerWidth);
+              console.log('🚀 No stored position, setting up fresh timeline');
+              // Don't create fresh timeline, let the existing one continue or restart naturally
+              setTimeout(() => {
+                if (!timelineRef.current || !timelineRef.current.isActive()) {
+                  console.log('🚀 Creating fresh timeline after modal close');
+                  setupContinuousScroll();
+                }
+              }, 100);
             }
           }}
           onQuickAdd={onQuickAdd}
