@@ -274,35 +274,6 @@ const ClientCard: React.FC<ClientCardProps> = ({ client, onLongPress, onQuickAdd
                 .map(([type, count]) => `${count} ${type.charAt(0).toUpperCase() + type.slice(1)}`)
                 .join(', ')}
             </p>
-          )}
-        </div>
-
-        {/* Quick Add Button */}
-        {onQuickAdd && (
-          <div className="mb-2 sm:mb-3">
-                    day: '2-digit',
-                    month: 'short',
-                    year: 'numeric'
-                  }).replace(/\s/g, '-');
-                  
-                  // Fix pluralization for proper French/English grammar
-                  let displayText;
-                  if (itemType.includes('Bouteille')) {
-                    if (remaining > 1) {
-                      // For multiple bottles, make "Bouteille" plural but keep the brand/type singular
-                      displayText = itemType.replace('Bouteille', 'Bouteilles');
-                    } else {
-                      displayText = itemType;
-                    }
-                  } else if (itemType.includes('Chopine')) {
-                    if (remaining > 1) {
-                      // For multiple chopines, make "Chopine" plural but keep the brand/type singular
-                      displayText = itemType.replace('Chopine', 'Chopines');
-                    } else {
-                      displayText = itemType;
-                    }
-                  } else {
-                    // For other items, add 's' at the end if plural
                     displayText = `${itemType}${remaining > 1 ? 's' : ''}`;
                   }
                   
