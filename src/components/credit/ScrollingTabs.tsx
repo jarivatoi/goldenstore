@@ -201,19 +201,6 @@ const ScrollingTabs: React.FC<ScrollingTabsProps> = ({
     console.log('✅ Timeline restart complete at:', new Date().toLocaleTimeString());
   }, [sortedClients.length]); // Remove function dependencies to prevent recreation
 
-  // Handle container clicks (clicks on empty space between cards)
-  const handleContainerClick = useCallback((e: React.MouseEvent) => {
-    // Check if the click was on a card element
-    const target = e.target as HTMLElement;
-    const isCardClick = target.closest('[data-client-card="true"]');
-    
-    if (!isCardClick) {
-      console.log('🖱️ Container click on empty space - timeline continues');
-      // Click was on empty space, don't pause timeline
-      // Timeline should continue running
-    }
-  }, []);
-
   const setupContinuousScroll = useCallback(() => {
     const content = contentRef.current;
     const container = containerRef.current;
