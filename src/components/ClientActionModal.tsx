@@ -144,12 +144,17 @@ const ClientActionModal: React.FC<ClientActionModalProps> = ({ client, onClose, 
         const size = bouteilleMatch[2]?.trim().toUpperCase() || '';
         const brand = bouteilleMatch[3]?.trim() || '';
         
+        // Capitalize brand name properly
+        const capitalizedBrand = brand ? brand.split(' ').map(word => 
+          word.charAt(0).toUpperCase() + word.slice(1).toLowerCase()
+        ).join(' ') : '';
+        
         // Format the key based on what we found
         let key;
         if (size && brand) {
-          key = `${size} Bouteille ${brand}`;
+          key = `${size} Bouteille ${capitalizedBrand}`;
         } else if (brand) {
-          key = `Bouteille ${brand}`;
+          key = `Bouteille ${capitalizedBrand}`;
         } else if (size) {
           key = `${size} Bouteille`;
         } else {
@@ -179,13 +184,18 @@ const ClientActionModal: React.FC<ClientActionModalProps> = ({ client, onClose, 
         const brandMatch = description.match(/bouteilles?\s+([^,]*)/i);
         const brand = brandMatch?.[1]?.trim() || '';
         
+        // Capitalize brand name properly
+        const capitalizedBrand = brand ? brand.split(' ').map(word => 
+          word.charAt(0).toUpperCase() + word.slice(1).toLowerCase()
+        ).join(' ') : '';
+        
         let key;
         if (sizeMatch && sizeMatch[0] && brand) {
-          key = `${sizeMatch[1].toUpperCase()} Bouteille ${brand}`;
+          key = `${sizeMatch[1].replace(/l$/i, 'L')} Bouteille ${capitalizedBrand}`;
         } else if (brand) {
-          key = `Bouteille ${brand}`;
+          key = `Bouteille ${capitalizedBrand}`;
         } else if (sizeMatch && sizeMatch[0]) {
-          key = `${sizeMatch[1].toUpperCase()} Bouteille`;
+          key = `${sizeMatch[1].replace(/l$/i, 'L')} Bouteille`;
         } else {
           key = 'Bouteille';
         }
@@ -210,7 +220,13 @@ const ClientActionModal: React.FC<ClientActionModalProps> = ({ client, onClose, 
       if (!hasMatched && description.includes('chopine')) {
         const brandMatch = description.match(/chopines?\s+([^,]*)/i);
         const brand = brandMatch?.[1]?.trim() || '';
-        const key = brand ? `Chopine ${brand}` : 'Chopine';
+        
+        // Capitalize brand name properly
+        const capitalizedBrand = brand ? brand.split(' ').map(word => 
+          word.charAt(0).toUpperCase() + word.slice(1).toLowerCase()
+        ).join(' ') : '';
+        
+        const key = capitalizedBrand ? `Chopine ${capitalizedBrand}` : 'Chopine';
         
        // Skip if we've already processed this item type for this transaction
        if (transactionItemTypes.has(key)) {
@@ -703,31 +719,21 @@ const ClientActionModal: React.FC<ClientActionModalProps> = ({ client, onClose, 
               ? `This will mark all returnable containers as returned.`
               : `This will mark ${settleAction.quantity} ${settleAction.itemType}${(settleAction.quantity || 0) > 1 ? 's' : ''} as returned.`
           }
-            const bouteillePattern = /(\d+)\s+(?:(\d+(?:\.\d+)?[Ll])\s+)?bouteilles?(?:\s+([^,\(\)]*))?/gi;
+          onConfirm={async () => {
             try {
               setIsProcessing(true);
               if (settleAction.type === 'all') {
                 // Set all available items to be returned
-              const size = bouteilleMatch[2]?.trim().replace(/l$/i, 'L') || '';
-              const brand = bouteilleMatch[3]?.trim() || '';
-              
-              // Properly capitalize brand name
-              const sizeMatch = description.match(/(\d+(?:\.\d+)?[Ll])/i);
-                word.charAt(0).toUpperCase() + word.slice(1).toLowerCase()
-              ).join(' ') : '';
+                const allReturns: {[key: string]: number} = {};
+                Object.entries(availableItems).forEach(([itemType, data]) => {
                   allReturns[itemType] = data.total;
-              // Properly capitalize brand name
-              const capitalizedBrand = brand ? brand.split(' ').map(word => 
-                word.charAt(0).toUpperCase() + word.slice(1).toLowerCase()
-              ).join(' ') : '';
-              
                 });
-              if (sizeMatch && sizeMatch[1] && capitalizedBrand) {
-                key = `${sizeMatch[1].replace(/l$/i, 'L')} Bouteille ${capitalizedBrand}`;
-              } else if (capitalizedBrand) {
-                key = `Bouteille ${capitalizedBrand}`;
-              } else if (sizeMatch && sizeMatch[1]) {
-                key = `${sizeMatch[1].replace(/l$/i, 'L')} Bouteille`;
+                
+                // Process all returns
+                for (const [itemType, quantity] of Object.entries(allReturns)) {
+                  await processItemReturn(itemType, quantity);
+                }
+              } else if (settleAction.itemType && settleAction.quantity) {
                 // Process individual item return
                 await processItemReturn(settleAction.itemType, settleAction.quantity);
               }

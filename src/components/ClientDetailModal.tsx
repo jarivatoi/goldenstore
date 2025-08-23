@@ -274,14 +274,19 @@ const ClientDetailModal: React.FC<ClientDetailModalProps> = ({ client, onClose, 
                 
                 while ((bouteilleMatch = bouteillePattern.exec(description)) !== null) {
                   const quantity = parseInt(bouteilleMatch[1]);
-                  const size = bouteilleMatch[2]?.trim().toUpperCase() || '';
+                  const size = bouteilleMatch[2]?.trim().replace(/l$/i, 'L') || '';
                   const brand = bouteilleMatch[3]?.trim() || '';
                   
+                  // Properly capitalize brand name
+                  const capitalizedBrand = brand ? brand.split(' ').map(word => 
+                    word.charAt(0).toUpperCase() + word.slice(1).toLowerCase()
+                  ).join(' ') : '';
+                  
                   let key;
-                  if (size && brand) {
-                    key = `${size} Bouteille ${brand}`;
-                  } else if (brand) {
-                    key = `Bouteille ${brand}`;
+                  if (size && capitalizedBrand) {
+                    key = `${size} Bouteille ${capitalizedBrand}`;
+                  } else if (capitalizedBrand) {
+                    key = `Bouteille ${capitalizedBrand}`;
                   } else if (size) {
                     key = `${size} Bouteille`;
                   } else {
@@ -300,13 +305,18 @@ const ClientDetailModal: React.FC<ClientDetailModalProps> = ({ client, onClose, 
                   const brandMatch = description.match(/bouteilles?\s+([^,]*)/i);
                   const brand = brandMatch?.[1]?.trim() || '';
                   
+                  // Properly capitalize brand name
+                  const capitalizedBrand = brand ? brand.split(' ').map(word => 
+                    word.charAt(0).toUpperCase() + word.slice(1).toLowerCase()
+                  ).join(' ') : '';
+                  
                   let key;
-                  if (sizeMatch && sizeMatch[0] && brand) {
-                    key = `${sizeMatch[0].toUpperCase()} Bouteille ${brand}`;
-                  } else if (brand) {
-                    key = `Bouteille ${brand}`;
-                  } else if (sizeMatch && sizeMatch[0]) {
-                    key = `${sizeMatch[0].toUpperCase()} Bouteille`;
+                  if (sizeMatch && sizeMatch[1] && capitalizedBrand) {
+                    key = `${sizeMatch[1].replace(/l$/i, 'L')} Bouteille ${capitalizedBrand}`;
+                  } else if (capitalizedBrand) {
+                    key = `Bouteille ${capitalizedBrand}`;
+                  } else if (sizeMatch && sizeMatch[1]) {
+                    key = `${sizeMatch[1].replace(/l$/i, 'L')} Bouteille`;
                   } else {
                     key = 'Bouteille';
                   }

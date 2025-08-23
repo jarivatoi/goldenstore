@@ -679,11 +679,16 @@ const ScrollingTabs: React.FC<ScrollingTabsProps> = ({
                               const size = bouteilleMatch[2]?.trim() || '';
                               const brand = bouteilleMatch[3]?.trim() || '';
                               
+                              // Capitalize brand name properly
+                              const capitalizedBrand = brand ? brand.split(' ').map(word => 
+                                word.charAt(0).toUpperCase() + word.slice(1).toLowerCase()
+                              ).join(' ') : '';
+                              
                               let key;
                               if (size && brand) {
-                                key = `${size} ${brand}`;
+                                key = `${size} ${capitalizedBrand}`;
                               } else if (brand) {
-                                key = `Bouteille ${brand}`;
+                                key = `Bouteille ${capitalizedBrand}`;
                               } else if (size) {
                                 key = `${size} Bouteille`;
                               } else {
@@ -702,11 +707,16 @@ const ScrollingTabs: React.FC<ScrollingTabsProps> = ({
                               const brandMatch = description.match(/bouteilles?\s+([^,]*)/i);
                               const brand = brandMatch?.[1]?.trim() || '';
                               
+                              // Capitalize brand name properly
+                              const capitalizedBrand = brand ? brand.split(' ').map(word => 
+                                word.charAt(0).toUpperCase() + word.slice(1).toLowerCase()
+                              ).join(' ') : '';
+                              
                               let key;
                               if (sizeMatch && brand) {
-                                key = `${sizeMatch[1]} ${brand}`;
+                                key = `${sizeMatch[1]} ${capitalizedBrand}`;
                               } else if (brand) {
-                                key = `Bouteille ${brand}`;
+                                key = `Bouteille ${capitalizedBrand}`;
                               } else if (sizeMatch) {
                                 key = `${sizeMatch[1]} Bouteille`;
                               } else {
@@ -722,7 +732,13 @@ const ScrollingTabs: React.FC<ScrollingTabsProps> = ({
                             if (description.includes('chopine') && !chopinePattern.test(description)) {
                               const brandMatch = description.match(/chopines?\s+([^,]*)/i);
                               const brand = brandMatch?.[1]?.trim() || '';
-                              const key = brand ? `Chopine ${brand}` : 'Chopine';
+                              
+                              // Capitalize brand name properly
+                              const capitalizedBrand = brand ? brand.split(' ').map(word => 
+                                word.charAt(0).toUpperCase() + word.slice(1).toLowerCase()
+                              ).join(' ') : '';
+                              
+                              const key = capitalizedBrand ? `Chopine ${capitalizedBrand}` : 'Chopine';
                               
                               if (!returnableItems[key]) {
                                 returnableItems[key] = 0;
