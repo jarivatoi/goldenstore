@@ -538,11 +538,11 @@ const ScrollingTabs: React.FC<ScrollingTabsProps> = ({
                     const brand = brandMatch?.[1]?.trim() || '';
                     
                     let key;
-                    if (sizeMatch && sizeMatch[1] && brand) {
+                    if (sizeMatch && brand) {
                       key = `${sizeMatch[1].toUpperCase()} Bouteille ${brand}`;
                     } else if (brand) {
                       key = `Bouteille ${brand}`;
-                    } else if (sizeMatch && sizeMatch[1]) {
+                    } else if (sizeMatch) {
                       key = `${sizeMatch[1].toUpperCase()} Bouteille`;
                     } else {
                       key = 'Bouteille';
@@ -589,23 +589,22 @@ const ScrollingTabs: React.FC<ScrollingTabsProps> = ({
                   const returned = returnedQuantities[itemType] || 0;
                   const remaining = Math.max(0, total - returned);
                   if (remaining > 0) {
-                    let displayText = '';
-                    if (itemType.includes('Chopine')) {
-                      displayText = `${remaining} Ch`;
-                    } else if (itemType.includes('1.5L')) {
-                      displayText = `${remaining} 1.5L`;
-                    } else if (itemType.includes('2L')) {
-                      displayText = `${remaining} 2L`;
-                    } else if (itemType.includes('1L') && !itemType.includes('1.5L')) {
-                      displayText = `${remaining} 1L`;
-                    } else if (itemType.includes('0.5L')) {
-                      displayText = `${remaining} 0.5L`;
-                    } else if (itemType.includes('Bouteille')) {
-                      displayText = `${remaining} Bt`;
-                    } else {
-                      displayText = `${remaining} ${itemType.substring(0, 3)}`;
-                    }
-                    truncatedItems.push(displayText);
+                    // Get the most recent transaction date for this item type
+                    const recentTransaction = clientTransactions
+                      .filter(transaction => 
+                        transaction.type === 'debt' && 
+                        !transaction.description.toLowerCase().includes('returned') &&
+                        transaction.description.toLowerCase().includes(itemType.toLowerCase().split(' ')[0])
+                      )
+                      .sort((a, b) => new Date(b.date || Date.now()).getTime() - new Date(a.date || Date.now()).getTime())[0];
+                    const transactionDate = recentTransaction ? new Date(recentTransaction.date || Date.now()) : new Date();
+                    const dateStr = transactionDate.toLocaleDateString('en-GB', {
+                      day: '2-digit',
+                      month: 'short',
+                      year: 'numeric'
+                    }).replace(/\s/g, '-');
+                    
+                    truncatedItems.push(`${remaining} ${itemType} (${dateStr})`);
                   }
                 });
                 
