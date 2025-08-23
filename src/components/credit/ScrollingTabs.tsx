@@ -875,30 +875,33 @@ const ScrollingTabs: React.FC<ScrollingTabsProps> = ({
           onClose={() => {
             console.log('🎭 Modal closing, resuming timeline from stored position:', pausedPositionRef.current);
             
-            // Keep the golden effect visible for a moment during timeline resume
-            // Don't clear selectedClientForAction immediately
+            // Check if a client was linked to calculator (linkedClient state will be updated)
+            // If so, don't resume timeline - it should stay paused
+            // The linkedClient useEffect will handle timeline management
             
-            // Resume timeline from stored position after modal closes
-            if (pausedPositionRef.current !== null) {
-              console.log('🚀 Resuming timeline from stored position:', pausedPositionRef.current);
-              restartTimelineFromPosition(pausedPositionRef.current);
-              pausedPositionRef.current = null; // Clear stored position
-            } else {
-              console.log('🚀 No stored position, setting up fresh timeline');
-              // Don't create fresh timeline, let the existing one continue or restart naturally
-              setTimeout(() => {
-                if (!timelineRef.current || !timelineRef.current.isActive()) {
-                  console.log('🚀 Creating fresh timeline after modal close');
-                  setupContinuousScroll();
-                }
-              }, 100);
-            }
+            // Clear the modal immediately
+            setSelectedClientForAction(null);
+            setClickedTabId(null);
             
-            // Clear the modal and golden effect after timeline resumes
+            // Only resume timeline if no client is linked to calculator
+            // Use setTimeout to allow linkedClient state to update first
             setTimeout(() => {
-              setSelectedClientForAction(null);
-              setClickedTabId(null);
-            }, 500); // Keep golden effect visible for 500ms
+              if (!linkedClient) {
+                // No client linked, safe to resume timeline
+                if (pausedPositionRef.current !== null) {
+                  console.log('🚀 Resuming timeline from stored position:', pausedPositionRef.current);
+                  restartTimelineFromPosition(pausedPositionRef.current);
+                  pausedPositionRef.current = null;
+                } else {
+                  console.log('🚀 No stored position, setting up fresh timeline');
+                  if (!timelineRef.current || !timelineRef.current.isActive()) {
+                    setupContinuousScroll();
+                  }
+                }
+              } else {
+                console.log('🔗 Client linked to calculator, keeping timeline paused');
+              }
+            }, 100);
           }}
           onQuickAdd={onQuickAdd}
           onResetCalculator={onResetCalculator}
