@@ -267,18 +267,19 @@ const ClientDetailModal: React.FC<ClientDetailModalProps> = ({ client, onClose, 
                   returnableItems[key] += quantity;
                 }
                 
-                // Look for Bouteille items
-                const bouteillePattern = /(\d+)\s+(?:(\d+(?:\.\d+)?L)\s+)?bouteilles?(?:\s+([^,]*))?/gi;
+                // Look for Bouteille items with improved parsing
+                // Pattern: number + space + optional size + bouteille + optional brand
+                const bouteillePattern = /(\d+)\s+(?:(\d+(?:\.\d+)?[Ll])\s+)?bouteilles?(?:\s+([^,\(\)]*))?/gi;
                 let bouteilleMatch;
                 
                 while ((bouteilleMatch = bouteillePattern.exec(description)) !== null) {
                   const quantity = parseInt(bouteilleMatch[1]);
-                  const size = bouteilleMatch[2]?.trim() || '';
+                  const size = bouteilleMatch[2]?.trim().toUpperCase() || '';
                   const brand = bouteilleMatch[3]?.trim() || '';
                   
                   let key;
                   if (size && brand) {
-                    key = `${size} ${brand}`;
+                    key = `${size} Bouteille ${brand}`;
                   } else if (brand) {
                     key = `Bouteille ${brand}`;
                   } else if (size) {
@@ -293,19 +294,19 @@ const ClientDetailModal: React.FC<ClientDetailModalProps> = ({ client, onClose, 
                   returnableItems[key] += quantity;
                 }
                 
-                // Handle items without explicit numbers (assume quantity 1)
-                if (description.includes('bouteille') && !bouteillePattern.test(description)) {
-                  const sizeMatch = description.match(/(\d+(?:\.\d+)?L)/i);
+                // Handle items without explicit numbers (assume quantity 1) - only if no pattern matched
+                if (!hasMatched && description.includes('bouteille')) {
+                  const sizeMatch = description.match(/(\d+(?:\.\d+)?[Ll])/i);
                   const brandMatch = description.match(/bouteilles?\s+([^,]*)/i);
                   const brand = brandMatch?.[1]?.trim() || '';
                   
                   let key;
-                  if (sizeMatch && brand) {
-                    key = `${sizeMatch[1]} ${brand}`;
+                  if (sizeMatch && sizeMatch[0] && brand) {
+                    key = `${sizeMatch[0].toUpperCase()} Bouteille ${brand}`;
                   } else if (brand) {
                     key = `Bouteille ${brand}`;
-                  } else if (sizeMatch) {
-                    key = `${sizeMatch[1]} Bouteille`;
+                  } else if (sizeMatch && sizeMatch[0]) {
+                    key = `${sizeMatch[0].toUpperCase()} Bouteille`;
                   } else {
                     key = 'Bouteille';
                   }

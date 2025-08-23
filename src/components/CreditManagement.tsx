@@ -117,7 +117,7 @@ const CreditManagement: React.FC = () => {
             }
             
             // Look for Bouteille items
-            const bouteillePattern = /(\d+)\s+(?:(\d+(?:\.\d+)?L)\s+)?bouteilles?(?:\s+([^,]*))?/gi;
+            const bouteillePattern = /(\d+)\s+(?:(\d+(?:\.\d+)?[Ll])\s+)?bouteilles?(?:\s+([^,]*))?/gi;
             let bouteilleMatch;
             
             while ((bouteilleMatch = bouteillePattern.exec(description)) !== null) {
@@ -144,7 +144,7 @@ const CreditManagement: React.FC = () => {
             
             // Handle items without explicit numbers (assume quantity 1)
             if (description.includes('bouteille') && !bouteillePattern.test(description)) {
-              const sizeMatch = description.match(/(\d+(?:\.\d+)?L)/i);
+              const sizeMatch = description.match(/(\d+(?:\.\d+)?[Ll])/i);
               const brandMatch = description.match(/bouteilles?\s+([^,]*)/i);
               const brand = brandMatch?.[1]?.trim() || '';
               
@@ -262,7 +262,7 @@ const CreditManagement: React.FC = () => {
             }
             
             // Look for Bouteille items
-            const bouteillePattern = /(\d+)\s+(?:(\d+(?:\.\d+)?L)\s+)?bouteilles?(?:\s+([^,]*))?/gi;
+            const bouteillePattern = /(\d+)\s+(?:(\d+(?:\.\d+)?[Ll])\s+)?bouteilles?(?:\s+([^,]*))?/gi;
             let bouteilleMatch;
             
             while ((bouteilleMatch = bouteillePattern.exec(description)) !== null) {
@@ -289,7 +289,7 @@ const CreditManagement: React.FC = () => {
             
             // Handle items without explicit numbers (assume quantity 1)
             if (description.includes('bouteille') && !bouteillePattern.test(description)) {
-              const sizeMatch = description.match(/(\d+(?:\.\d+)?L)/i);
+              const sizeMatch = description.match(/(\d+(?:\.\d+)?[Ll])/i);
               const brandMatch = description.match(/bouteilles?\s+([^,]*)/i);
               const brand = brandMatch?.[1]?.trim() || '';
               
