@@ -591,18 +591,24 @@ const ScrollingTabs: React.FC<ScrollingTabsProps> = ({
                   if (remaining > 0) {
                     let truncated = '';
                     if (itemType.includes('Chopine')) {
-                      truncated = `${remaining} Ch`;
+                      // Extract brand if present
+                      const brandMatch = itemType.match(/Chopine\s+(.+)/);
+                      const brand = brandMatch ? brandMatch[1] : '';
+                      truncated = brand ? `${remaining} Ch(${brand})` : `${remaining} Ch`;
                     } else if (itemType.includes('Bouteille')) {
                       if (itemType.includes('1.5L')) {
-                        truncated = `${remaining} 1.5L`;
+                        truncated = `${remaining} (1.5L)`;
                       } else if (itemType.includes('1L')) {
-                        truncated = `${remaining} Lt`;
+                        truncated = `${remaining} (1L)`;
                       } else if (itemType.includes('2L')) {
-                        truncated = `${remaining} 2L`;
+                        truncated = `${remaining} (2L)`;
                       } else if (itemType.includes('0.5L')) {
-                        truncated = `${remaining} 0.5L`;
+                        truncated = `${remaining} (0.5L)`;
                       } else {
-                        truncated = `${remaining} Bt`;
+                        // Check for brand in bouteille
+                        const brandMatch = itemType.match(/Bouteille\s+(.+)/);
+                        const brand = brandMatch ? brandMatch[1] : '';
+                        truncated = brand ? `${remaining} Bt(${brand})` : `${remaining} Bt`;
                       }
                     } else {
                       const shortName = itemType.substring(0, 3);
