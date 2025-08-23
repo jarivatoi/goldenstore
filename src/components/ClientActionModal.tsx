@@ -651,14 +651,14 @@ const ClientActionModal: React.FC<ClientActionModalProps> = ({ client, onClose, 
                             <p key={`returned-${index}`} className="truncate text-green-600">
                               • <ScrollingText 
                                 text={`${transaction.description} - ${transaction.date.toLocaleDateString('en-GB', {
-                                day: '2-digit',
-                                month: '2-digit',
-                                year: 'numeric'
-                              })} ${transaction.date.toLocaleTimeString('en-GB', {
-                                hour: '2-digit',
-                                minute: '2-digit',
-                                hour12: false
-                              })}`}
+                                  day: '2-digit',
+                                  month: 'short',
+                                  year: '2-digit'
+                                }).replace(/\s/g, '-')} ${transaction.date.toLocaleTimeString('en-GB', {
+                                  hour: '2-digit',
+                                  minute: '2-digit',
+                                  hour12: false
+                                })}`}
                                 className="text-xs text-green-600"
                                 pauseDuration={1}
                                 scrollDuration={3}
