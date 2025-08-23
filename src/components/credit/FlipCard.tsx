@@ -65,7 +65,8 @@ const FlipCard: React.FC<FlipCardProps> = ({
       display: "flex",
       alignItems: "center",
       justifyContent: "center",
-      textAlign: "center"
+      textAlign: "center",
+      transformOrigin: "center center"
     });
 
     // Create flip animation timeline
@@ -86,6 +87,7 @@ const FlipCard: React.FC<FlipCardProps> = ({
           rotationY: "+=180",
           duration: flipDuration,
           ease: "power2.inOut",
+          transformOrigin: "center center",
           onComplete: () => setIsFlipped(prev => !prev)
         });
 
