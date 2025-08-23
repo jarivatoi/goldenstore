@@ -42,6 +42,7 @@ const ScrollingTabs: React.FC<ScrollingTabsProps> = ({
   const timelineRef = useRef<gsap.core.Timeline | null>(null);
   const draggableRef = useRef<Draggable[] | null>(null);
   const [selectedClientForAction, setSelectedClientForAction] = React.useState<Client | null>(null);
+  const [selectedClientForDetail, setSelectedClientForDetail] = React.useState<Client | null>(null);
   const [isDragging, setIsDragging] = React.useState(false);
   const pausedPositionRef = useRef<number | null>(null);
   const [clickedTabId, setClickedTabId] = React.useState<string | null>(null);
@@ -752,10 +753,23 @@ const ScrollingTabs: React.FC<ScrollingTabsProps> = ({
                   onDoubleClick={() => onQuickAdd(client)}
                   onContextMenu={(e) => e.preventDefault()} // Prevent right-click menu
                 >
-                  <div className="text-center">
+                  <div className="text-center relative">
                     <div className="text-sm font-medium text-gray-800 truncate select-none">
                       {client.name}
                     </div>
+                    
+                    {/* Detail Button - Top right corner */}
+                    <button
+                      onClick={(e) => {
+                        e.stopPropagation(); // Prevent triggering the card click
+                        setSelectedClientForDetail(client);
+                      }}
+                      className="absolute top-0 right-0 w-5 h-5 bg-blue-500 hover:bg-blue-600 text-white rounded-full flex items-center justify-center text-xs font-bold transition-colors select-none"
+                      title={`View ${client.name} details`}
+                    >
+                      i
+                    </button>
+                    
                     {clientFilter === 'returnables' ? (
                       <div className="text-xs font-semibold text-orange-600">
                         {returnableItemsText || 'No returnables'}
@@ -834,6 +848,16 @@ const ScrollingTabs: React.FC<ScrollingTabsProps> = ({
         />
       )}
 
+      {/* Detail Modal */}
+      {selectedClientForDetail && (
+        <ClientDetailModal
+          client={selectedClientForDetail}
+          onClose={() => {
+            setSelectedClientForDetail(null);
+          }}
+          onQuickAdd={onQuickAdd}
+        />
+      )}
 
     </div>
     </>
