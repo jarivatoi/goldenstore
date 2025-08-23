@@ -42,11 +42,13 @@ const ScrollingTabs: React.FC<ScrollingTabsProps> = ({
   const timelineRef = useRef<gsap.core.Timeline | null>(null);
   const draggableRef = useRef<Draggable[] | null>(null);
   const [selectedClientForAction, setSelectedClientForAction] = React.useState<Client | null>(null);
+  const [selectedClientForDetails, setSelectedClientForDetails] = React.useState<Client | null>(null);
   const [isDragging, setIsDragging] = React.useState(false);
   const pausedPositionRef = useRef<number | null>(null);
   const [clickedTabId, setClickedTabId] = React.useState<string | null>(null);
   const { getClientTransactions } = useCredit();
   const dragHasExceededThreshold = useRef(false);
+  const longPressTimer = useRef<NodeJS.Timeout | null>(null);
   
   // Debug: Track what causes component to remount
   React.useEffect(() => {
@@ -392,6 +394,21 @@ const ScrollingTabs: React.FC<ScrollingTabsProps> = ({
     setSelectedClientForAction(client);
     
     console.log('🎬 Timeline status after click - isActive:', timelineRef.current?.isActive(), 'exists:', !!timelineRef.current);
+  };
+
+  // Handle long press to show client details
+  const handleLongPressStart = (client: Client) => {
+    longPressTimer.current = setTimeout(() => {
+      console.log('👆 Long press detected for client:', client.name);
+      setSelectedClientForDetails(client);
+    }, 1000); // 1 second long press
+  };
+
+  const handleLongPressEnd = () => {
+    if (longPressTimer.current) {
+      clearTimeout(longPressTimer.current);
+      longPressTimer.current = null;
+    }
   };
 
   return (
@@ -751,6 +768,12 @@ const ScrollingTabs: React.FC<ScrollingTabsProps> = ({
                   }}
                   onClick={() => handleTabClick(client)}
                   onDoubleClick={() => onQuickAdd(client)}
+                  onTouchStart={() => handleLongPressStart(client)}
+                  onTouchEnd={handleLongPressEnd}
+                  onTouchCancel={handleLongPressEnd}
+                  onMouseDown={() => handleLongPressStart(client)}
+                  onMouseUp={handleLongPressEnd}
+                  onMouseLeave={handleLongPressEnd}
                   onContextMenu={(e) => e.preventDefault()} // Prevent right-click menu
                 >
                   <div className="text-center">
@@ -838,6 +861,15 @@ const ScrollingTabs: React.FC<ScrollingTabsProps> = ({
           }}
           onQuickAdd={onQuickAdd}
           onResetCalculator={onResetCalculator}
+        />
+      )}
+
+      {/* Client Detail Modal */}
+      {selectedClientForDetails && (
+        <ClientDetailModal
+          client={selectedClientForDetails}
+          onClose={() => setSelectedClientForDetails(null)}
+          onQuickAdd={onQuickAdd}
         />
       )}
 
