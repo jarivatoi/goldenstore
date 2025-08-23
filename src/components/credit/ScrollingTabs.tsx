@@ -758,18 +758,6 @@ const ScrollingTabs: React.FC<ScrollingTabsProps> = ({
                       {client.name}
                     </div>
                     
-                    {/* Detail Button - Top right corner */}
-                    <button
-                      onClick={(e) => {
-                        e.stopPropagation(); // Prevent triggering the card click
-                        setSelectedClientForDetail(client);
-                      }}
-                      className="absolute top-0 right-0 w-5 h-5 bg-blue-500 hover:bg-blue-600 text-white rounded-full flex items-center justify-center text-xs font-bold transition-colors select-none"
-                      title={`View ${client.name} details`}
-                    >
-                      i
-                    </button>
-                    
                     {clientFilter === 'returnables' ? (
                       <div className="text-xs font-semibold text-orange-600">
                         {returnableItemsText || 'No returnables'}

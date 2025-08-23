@@ -4,6 +4,7 @@ import { X, CreditCard, CheckCircle, DollarSign, RotateCcw, Minus, Plus, Calcula
 import { Client } from '../types';
 import { useCredit } from '../context/CreditContext';
 import SettleConfirmationModal from './SettleConfirmationModal';
+import ClientDetailModal from './ClientDetailModal';
 
 interface ClientActionModalProps {
   client: Client;
