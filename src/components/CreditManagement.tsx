@@ -48,6 +48,10 @@ const CreditManagement: React.FC = () => {
   // Separate search query for main grid (bottom search bar)
   const [mainGridSearchQuery, setMainGridSearchQuery] = useState('');
 
+  // Delete all clients modal state
+  const [showDeleteAllConfirm, setShowDeleteAllConfirm] = useState(false);
+  const [deleteAllPasscode, setDeleteAllPasscode] = useState('');
+
   // Listen for credit data changes to force re-render
   useEffect(() => {
     const handleCreditDataChanged = () => {
@@ -596,9 +600,40 @@ const CreditManagement: React.FC = () => {
     setDeleteConfirmText('');
   };
 
+  const handleDeleteAllClients = () => {
+    setShowDeleteAllConfirm(true);
+    setDeleteAllPasscode('');
+  };
+
+  const confirmDeleteAllClients = async () => {
+    if (deleteAllPasscode !== 'client') {
+      alert('Incorrect passcode. Please type "client" to confirm.');
+      return;
+    }
+
+    try {
+      // Delete all clients one by one
+      for (const client of clients) {
+        await deleteClient(client.id);
+      }
+      
+      setShowDeleteAllConfirm(false);
+      setDeleteAllPasscode('');
+      setShowSettings(false);
+      
+      // Reset calculator state
+      if (onResetCalculator) {
+        onResetCalculator();
+      }
+      
+      alert(`Successfully deleted all ${clients.length} clients`);
+    } catch (error) {
+      alert('Failed to delete all clients');
+    }
+  };
+
   const confirmDeleteClient = async () => {
     if (!clientToDelete || deleteConfirmText !== 'DELETE') {
-      alert('Please type DELETE to confirm');
       return;
     }
 
@@ -608,9 +643,8 @@ const CreditManagement: React.FC = () => {
       setClientToDelete(null);
       setDeleteConfirmText('');
       setShowSettings(false);
-      alert(`Client ${clientToDelete.name} (${clientToDelete.id}) has been permanently deleted`);
     } catch (error) {
-      alert('Failed to delete client');
+      // Error handling will be done in the modal
     }
   };
 
@@ -642,6 +676,7 @@ const CreditManagement: React.FC = () => {
             onShowUnifiedDataManager={() => {
               setShowUnifiedDataManager(true);
             }}
+            onDeleteAllClients={handleDeleteAllClients}
             sortOption={sortOption}
             onSortChange={setSortOption}
             showSortDropdown={showSortDropdown}
@@ -725,6 +760,14 @@ const CreditManagement: React.FC = () => {
           setShowDeleteConfirm(false);
           setClientToDelete(null);
           setDeleteConfirmText('');
+        }}
+        showDeleteAllConfirm={showDeleteAllConfirm}
+        deleteAllPasscode={deleteAllPasscode}
+        onDeleteAllPasscodeChange={setDeleteAllPasscode}
+        onConfirmDeleteAll={confirmDeleteAllClients}
+        onCancelDeleteAll={() => {
+          setShowDeleteAllConfirm(false);
+          setDeleteAllPasscode('');
         }}
       />
     </div>

@@ -49,6 +49,10 @@ const ClientActionModal: React.FC<ClientActionModalProps> = ({ client, onClose, 
     try {
       setIsProcessing(true);
       await addPartialPayment(client.id, amount);
+      
+      // Force timeline reset after payment
+      window.dispatchEvent(new CustomEvent('creditDataChanged'));
+      
       // Reset calculator after successful payment
       if (onResetCalculator) {
         onResetCalculator();
@@ -66,6 +70,10 @@ const ClientActionModal: React.FC<ClientActionModalProps> = ({ client, onClose, 
     try {
       setIsProcessing(true);
       await settleClient(client.id);
+      
+      // Force timeline reset after settling
+      window.dispatchEvent(new CustomEvent('creditDataChanged'));
+      
       onClose();
       if (onResetCalculator) {
         onResetCalculator();
