@@ -267,27 +267,8 @@ const ClientActionModal: React.FC<ClientActionModalProps> = ({ client, onClose, 
 
   const processItemReturn = async (itemType: string, returnQuantity: number) => {
     
-    // Create a return transaction with proper pluralization
-    let returnDescription = '';
-    if (itemType.startsWith('Chopine')) {
-      const brand = itemType.replace('Chopine', '').trim();
-      if (brand) {
-        returnDescription = `Returned: ${returnQuantity} Chopine${returnQuantity > 1 ? 's' : ''} ${brand} - ${new Date().toLocaleDateString('en-GB')}`;
-      } else {
-        returnDescription = `Returned: ${returnQuantity} Chopine${returnQuantity > 1 ? 's' : ''} - ${new Date().toLocaleDateString('en-GB')}`;
-      }
-    } else if (itemType.includes('Bouteille')) {
-      if (itemType === 'Bouteille') {
-        returnDescription = `Returned: ${returnQuantity} Bouteille${returnQuantity > 1 ? 's' : ''} - ${new Date().toLocaleDateString('en-GB')}`;
-      } else {
-        // For items like "1.5L Bouteille Green", only pluralize "Bouteille"
-        const pluralizedItemType = itemType.replace('Bouteille', `Bouteille${returnQuantity > 1 ? 's' : ''}`);
-        returnDescription = `Returned: ${returnQuantity} ${pluralizedItemType} - ${new Date().toLocaleDateString('en-GB')}`;
-      }
-    } else {
-      // For other items, don't add pluralization
-      returnDescription = `Returned: ${returnQuantity} ${itemType} - ${new Date().toLocaleDateString('en-GB')}`;
-    }
+    // Create a return transaction (negative transaction)
+    const returnDescription = `Returned: ${returnQuantity} ${itemType}${returnQuantity > 1 ? 's' : ''} - ${new Date().toLocaleDateString('en-GB')}`;
     
     try {
       // Add a return transaction with zero amount and unique description
