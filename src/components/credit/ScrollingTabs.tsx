@@ -825,15 +825,16 @@ const ScrollingTabs: React.FC<ScrollingTabsProps> = ({
                       />
                     )}
                     <div className="text-xs text-gray-500 mt-1 text-center">
-                      {client.lastTransactionAt.toLocaleDateString('en-GB', {
+                      <div>{client.lastTransactionAt.toLocaleDateString('en-GB', {
                         day: '2-digit',
                         month: 'short',
                         year: 'numeric'
-                      }).replace(/\s/g, '-')} {client.lastTransactionAt.toLocaleTimeString('en-GB', {
+                      }).replace(/\s/g, '-')}</div>
+                      <div>{client.lastTransactionAt.toLocaleTimeString('en-GB', {
                         hour: '2-digit',
                         minute: '2-digit',
                         hour12: false
-                      })}
+                      })}</div>
                     </div>
                   </div>
                 </div>
