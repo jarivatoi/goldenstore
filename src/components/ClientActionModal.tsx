@@ -144,17 +144,12 @@ const ClientActionModal: React.FC<ClientActionModalProps> = ({ client, onClose, 
         const size = bouteilleMatch[2]?.trim().toUpperCase() || '';
         const brand = bouteilleMatch[3]?.trim() || '';
         
-        // Capitalize brand name properly
-        const capitalizedBrand = brand ? brand.split(' ').map(word => 
-          word.charAt(0).toUpperCase() + word.slice(1).toLowerCase()
-        ).join(' ') : '';
-        
         // Format the key based on what we found
         let key;
         if (size && brand) {
-          key = `${size} Bouteille ${capitalizedBrand}`;
+          key = `${size} Bouteille ${brand}`;
         } else if (brand) {
-          key = `Bouteille ${capitalizedBrand}`;
+          key = `Bouteille ${brand}`;
         } else if (size) {
           key = `${size} Bouteille`;
         } else {
@@ -184,18 +179,13 @@ const ClientActionModal: React.FC<ClientActionModalProps> = ({ client, onClose, 
         const brandMatch = description.match(/bouteilles?\s+([^,]*)/i);
         const brand = brandMatch?.[1]?.trim() || '';
         
-        // Capitalize brand name properly
-        const capitalizedBrand = brand ? brand.split(' ').map(word => 
-          word.charAt(0).toUpperCase() + word.slice(1).toLowerCase()
-        ).join(' ') : '';
-        
         let key;
         if (sizeMatch && sizeMatch[0] && brand) {
-          key = `${sizeMatch[1].replace(/l$/i, 'L')} Bouteille ${capitalizedBrand}`;
+          key = `${sizeMatch[1].toUpperCase()} Bouteille ${brand}`;
         } else if (brand) {
-          key = `Bouteille ${capitalizedBrand}`;
+          key = `Bouteille ${brand}`;
         } else if (sizeMatch && sizeMatch[0]) {
-          key = `${sizeMatch[1].replace(/l$/i, 'L')} Bouteille`;
+          key = `${sizeMatch[1].toUpperCase()} Bouteille`;
         } else {
           key = 'Bouteille';
         }
@@ -220,13 +210,7 @@ const ClientActionModal: React.FC<ClientActionModalProps> = ({ client, onClose, 
       if (!hasMatched && description.includes('chopine')) {
         const brandMatch = description.match(/chopines?\s+([^,]*)/i);
         const brand = brandMatch?.[1]?.trim() || '';
-        
-        // Capitalize brand name properly
-        const capitalizedBrand = brand ? brand.split(' ').map(word => 
-          word.charAt(0).toUpperCase() + word.slice(1).toLowerCase()
-        ).join(' ') : '';
-        
-        const key = capitalizedBrand ? `Chopine ${capitalizedBrand}` : 'Chopine';
+        const key = brand ? `Chopine ${brand}` : 'Chopine';
         
        // Skip if we've already processed this item type for this transaction
        if (transactionItemTypes.has(key)) {
