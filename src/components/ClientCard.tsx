@@ -136,13 +136,12 @@ const ClientCard: React.FC<ClientCardProps> = ({ client, onLongPress, onQuickAdd
     
     // Calculate returned quantities
     const returnedQuantities: {[key: string]: number} = {};
-    
     clientTransactions
-      .filter(transaction => transaction.description.toLowerCase().includes('returned'))
+      .filter(transaction => transaction.type === 'debt' && transaction.description.toLowerCase().includes('returned'))
       .forEach(transaction => {
         const description = transaction.description.toLowerCase();
         Object.keys(returnableItems).forEach(itemType => {
-          if (description.includes(itemType.toLowerCase().split(' ')[0])) {
+          if (description.includes(itemType.toLowerCase())) {
             const match = description.match(/returned:\s*(\d+)\s+/);
             if (match) {
               if (!returnedQuantities[itemType]) {

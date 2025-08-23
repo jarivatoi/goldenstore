@@ -716,7 +716,7 @@ const ClientActionModal: React.FC<ClientActionModalProps> = ({ client, onClose, 
                 
                 // Process all returns
                 for (const [itemType, quantity] of Object.entries(allReturns)) {
-          const bouteillePattern = /(\d+)\s+(?:(\d+(?:\.\d+)?L)\s+)?(?:bouteilles?\s+)?([^,\(\)]*)/gi;
+                  if (quantity > 0) {
                     await processItemReturn(itemType, quantity);
                   }
                 }
@@ -724,11 +724,6 @@ const ClientActionModal: React.FC<ClientActionModalProps> = ({ client, onClose, 
                 // Process individual item return
                 await processItemReturn(settleAction.itemType, settleAction.quantity);
               }
-            // Skip if no size and no brand and no "bouteille" keyword
-            if (!size && !brand && !description.includes('bouteille')) {
-              continue;
-            }
-            
               
               // Force a re-render of the parent component to update scrolling tabs
               window.dispatchEvent(new CustomEvent('creditDataChanged'));

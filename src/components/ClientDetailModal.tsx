@@ -268,22 +268,17 @@ const ClientDetailModal: React.FC<ClientDetailModalProps> = ({ client, onClose, 
                 }
                 
                 // Look for Bouteille items
-                const bouteillePattern = /(\d+)\s+(?:(\d+(?:\.\d+)?L)\s+)?(?:bouteilles?\s+)?([^,]*)/gi;
+                const bouteillePattern = /(\d+)\s+(?:(\d+(?:\.\d+)?L)\s+)?bouteilles?(?:\s+([^,]*))?/gi;
                 let bouteilleMatch;
                 
                 while ((bouteilleMatch = bouteillePattern.exec(description)) !== null) {
                   const quantity = parseInt(bouteilleMatch[1]);
-                  const size = bouteilleMatch[2]?.trim().toUpperCase() || '';
+                  const size = bouteilleMatch[2]?.trim() || '';
                   const brand = bouteilleMatch[3]?.trim() || '';
-                  
-                  // Skip if no size and no brand and no "bouteille" keyword
-                  if (!size && !brand && !description.includes('bouteille')) {
-                    continue;
-                  }
                   
                   let key;
                   if (size && brand) {
-                    key = `${size} Bouteille ${brand}`;
+                    key = `${size} ${brand}`;
                   } else if (brand) {
                     key = `Bouteille ${brand}`;
                   } else if (size) {
@@ -306,11 +301,11 @@ const ClientDetailModal: React.FC<ClientDetailModalProps> = ({ client, onClose, 
                   
                   let key;
                   if (sizeMatch && brand) {
-                    key = `${sizeMatch[1].toUpperCase()} Bouteille ${brand}`;
+                    key = `${sizeMatch[1]} ${brand}`;
                   } else if (brand) {
                     key = `Bouteille ${brand}`;
                   } else if (sizeMatch) {
-                    key = `${sizeMatch[1].toUpperCase()} Bouteille`;
+                    key = `${sizeMatch[1]} Bouteille`;
                   } else {
                     key = 'Bouteille';
                   }
