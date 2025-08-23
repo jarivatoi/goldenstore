@@ -210,12 +210,12 @@ const ClientCard: React.FC<ClientCardProps> = ({ client, onLongPress, onQuickAdd
         });
         
         if (itemType.includes('Chopine')) {
-          // For Chopine items: "8 Chopine beer" (no pluralization for display)
+          // For Chopine items: "8 Chopines beer" (with pluralization for display)
           const brand = itemType.replace('Chopine', '').trim();
           if (brand) {
-            displayText = `${remaining} Chopine ${brand}`;
+            displayText = `${remaining} Chopine${remaining > 1 ? 's' : ''} ${brand}`;
           } else {
-            displayText = `${remaining} Chopine`;
+            displayText = `${remaining} Chopine${remaining > 1 ? 's' : ''}`;
           }
         } else if (itemType.includes('Bouteille')) {
           // For Bouteille items: check if it has a size (like "1.5L Green")
