@@ -806,22 +806,22 @@ const ScrollingTabs: React.FC<ScrollingTabsProps> = ({
                     </div>
                     
                     {clientFilter === 'returnables' ? (
-                      <div className="font-semibold text-orange-600" style={{ fontSize: '14px' }}>
+                      <div className="text-xs font-semibold text-orange-600">
                         {currentReturnableItems || 'No returnables'}
                       </div>
                     ) : totalDebt === 0 ? (
-                      <div className="font-semibold text-orange-600" style={{ fontSize: '14px' }}>
+                      <div className="text-xs font-semibold text-orange-600">
                         {currentReturnableItems || 'No returnables'}
                       </div>
                     ) : (
                       <FlipCard
                         frontContent={
-                          <div className="font-semibold text-red-600" style={{ fontSize: '14px' }}>
+                          <div className="text-xs font-semibold text-red-600">
                             Rs {totalDebt.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
                           </div>
                         }
                         backContent={
-                          <div className="font-semibold text-orange-600" style={{ fontSize: '14px' }}>
+                          <div className="text-xs font-semibold text-orange-600">
                             {currentReturnableItems || 'No returnables'}
                           </div>
                         }
