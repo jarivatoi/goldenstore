@@ -444,7 +444,6 @@ const ScrollingTabs: React.FC<ScrollingTabsProps> = ({
               scrollbarWidth: 'none'
             })
           }}
-          onClick={handleContainerClick}
         >
           <div 
             ref={contentRef}
@@ -764,7 +763,6 @@ const ScrollingTabs: React.FC<ScrollingTabsProps> = ({
                       scrollSnapAlign: 'none'
                     })
                   }}
-                  data-client-card="true"
                   onClick={() => handleTabClick(client)}
                   onDoubleClick={() => onQuickAdd(client)}
                   onTouchStart={(e) => handleLongPressStart(client, e)}
