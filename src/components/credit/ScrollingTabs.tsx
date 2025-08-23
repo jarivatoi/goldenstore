@@ -124,7 +124,13 @@ const ScrollingTabs: React.FC<ScrollingTabsProps> = ({
   // Add this helper function to restart the timeline from a specific position
   const restartTimelineFromPosition = useCallback((startPosition: number) => {
     console.log('🚀 restartTimelineFromPosition called with:', startPosition, 'at time:', new Date().toLocaleTimeString());
-    console.log('🚀 Called from stack:', new Error().stack?.split('\n').slice(1, 4).join('\n'));
+    
+    // Prevent multiple timeline creation
+    if (timelineRef.current && timelineRef.current.isActive()) {
+      console.log('⚠️ Timeline already active, skipping restart');
+      return;
+    }
+    
     const container = containerRef.current;
     const content = contentRef.current;
     
@@ -220,27 +226,19 @@ const ScrollingTabs: React.FC<ScrollingTabsProps> = ({
       console.log('❌ Missing container or content refs at:', new Date().toLocaleTimeString());
       return;
     }
-    // Check if we already have an active timeline
+    
+    // Prevent multiple timeline creation
     if (timelineRef.current && timelineRef.current.isActive()) {
       console.log('⚠️ Active timeline detected, preserving it at:', new Date().toLocaleTimeString());
       return;
     }
     
-    // If timeline exists but is not active, kill it and create new one
-    if (timelineRef.current && !timelineRef.current.isActive()) {
-      console.log('🔪 Killing inactive timeline and creating new one at:', new Date().toLocaleTimeString());
+    // Kill any existing timeline before creating new one
+    if (timelineRef.current) {
+      console.log('🔪 Killing existing timeline before creating new one');
       timelineRef.current.kill();
       timelineRef.current = null;
     }
-    
-    // If timeline exists but is not active, kill it and create new one
-    if (timelineRef.current && !timelineRef.current.isActive()) {
-      console.log('🔪 Killing inactive timeline and creating new one at:', new Date().toLocaleTimeString());
-      timelineRef.current.kill();
-    }
-    // Always reset position when creating new timeline
-    console.log('🔄 Resetting position and creating new timeline at:', new Date().toLocaleTimeString());
-    gsap.set(content, { x: 0 });
     
     requestAnimationFrame(() => {
       const containerWidth = container.offsetWidth;
@@ -811,32 +809,26 @@ const ScrollingTabs: React.FC<ScrollingTabsProps> = ({
         <ClientActionModal
           client={selectedClientForAction}
           onClose={() => {
-            console.log('🎭 Modal closing, resuming timeline from stored position:', pausedPositionRef.current);
+            console.log('🎭 Modal closing, checking timeline state');
             
-            // Keep the golden effect visible for a moment during timeline resume
-            // Don't clear selectedClientForAction immediately
+            // Clear modal and clicked state immediately
+            setSelectedClientForAction(null);
+            setClickedTabId(null);
             
-            // Resume timeline from stored position after modal closes
-            if (pausedPositionRef.current !== null) {
-              console.log('🚀 Resuming timeline from stored position:', pausedPositionRef.current);
-              restartTimelineFromPosition(pausedPositionRef.current);
-              pausedPositionRef.current = null; // Clear stored position
-            } else {
-              console.log('🚀 No stored position, setting up fresh timeline');
-              // Don't create fresh timeline, let the existing one continue or restart naturally
-              setTimeout(() => {
-                if (!timelineRef.current || !timelineRef.current.isActive()) {
-                  console.log('🚀 Creating fresh timeline after modal close');
+            // Only restart timeline if it doesn't exist or isn't active
+            setTimeout(() => {
+              if (!timelineRef.current || !timelineRef.current.isActive()) {
+                console.log('🚀 Restarting timeline after modal close');
+                if (pausedPositionRef.current !== null) {
+                  restartTimelineFromPosition(pausedPositionRef.current);
+                  pausedPositionRef.current = null;
+                } else {
                   setupContinuousScroll();
                 }
-              }, 100);
-            }
-            
-            // Clear the modal and golden effect after timeline resumes
-            setTimeout(() => {
-              setSelectedClientForAction(null);
-              setClickedTabId(null);
-            }, 500); // Keep golden effect visible for 500ms
+              } else {
+                console.log('🎬 Timeline already active, no restart needed');
+              }
+            }, 100);
           }}
           onQuickAdd={onQuickAdd}
           onResetCalculator={onResetCalculator}
