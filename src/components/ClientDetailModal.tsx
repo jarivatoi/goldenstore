@@ -99,11 +99,11 @@ const ClientDetailModal: React.FC<ClientDetailModalProps> = ({ client, onClose, 
             
             let key;
             if (size && brand) {
-              key = `${size} ${brand}`;
+              key = `${size.toUpperCase()} Bouteille ${brand}`;
             } else if (brand) {
               key = `Bouteille ${brand}`;
             } else if (size) {
-              key = `${size} Bouteille`;
+              key = `${size.toUpperCase()} Bouteille`;
             } else {
               key = 'Bouteille';
             }
@@ -118,11 +118,11 @@ const ClientDetailModal: React.FC<ClientDetailModalProps> = ({ client, onClose, 
             
             let key;
             if (sizeMatch && brand) {
-              key = `${sizeMatch[1]} ${brand}`;
+              key = `${sizeMatch[1].toUpperCase()} Bouteille ${brand}`;
             } else if (brand) {
               key = `Bouteille ${brand}`;
             } else if (sizeMatch) {
-              key = `${sizeMatch[1]} Bouteille`;
+              key = `${sizeMatch[1].toUpperCase()} Bouteille`;
             } else {
               key = 'Bouteille';
             }
@@ -278,11 +278,11 @@ const ClientDetailModal: React.FC<ClientDetailModalProps> = ({ client, onClose, 
                   
                   let key;
                   if (size && brand) {
-                    key = `${size} ${brand}`;
+                    key = `${size.toUpperCase()} Bouteille ${brand}`;
                   } else if (brand) {
                     key = `Bouteille ${brand}`;
                   } else if (size) {
-                    key = `${size} Bouteille`;
+                    key = `${size.toUpperCase()} Bouteille`;
                   } else {
                     key = 'Bouteille';
                   }
@@ -301,11 +301,11 @@ const ClientDetailModal: React.FC<ClientDetailModalProps> = ({ client, onClose, 
                   
                   let key;
                   if (sizeMatch && brand) {
-                    key = `${sizeMatch[1]} ${brand}`;
+                    key = `${sizeMatch[1].toUpperCase()} Bouteille ${brand}`;
                   } else if (brand) {
                     key = `Bouteille ${brand}`;
                   } else if (sizeMatch) {
-                    key = `${sizeMatch[1]} Bouteille`;
+                    key = `${sizeMatch[1].toUpperCase()} Bouteille`;
                   } else {
                     key = 'Bouteille';
                   }
