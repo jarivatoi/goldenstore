@@ -280,16 +280,20 @@ const ScrollingTabs: React.FC<ScrollingTabsProps> = ({
         throwResistance: 1000, // Lower value = more throw, higher = less throw
         maxDuration: 2, // Shorter inertia duration
         minDuration: 0.1,
-        overshootTolerance: 0, // No overshooting
-        force3D: true,
-        lockAxis: true, // Lock to horizontal axis only
-        minimumMovement: 3, // Require minimum movement to start drag
-        onDragStart: function() {
-          // Kill the timeline on drag start but don't store position yet
-          if (timelineRef.current) {
-            console.log('🎯 DRAG STARTED - KILLING TIMELINE at:', new Date().toLocaleTimeString());
-            console.log('🎯 Timeline was active:', timelineRef.current.isActive());
-            timelineRef.current.kill();
+          // ALWAYS resume from the stored position (which was captured at click time)
+          const resumePosition = pausedPositionRef.current;
+          // ALWAYS resume from the stored position (which was captured at click time)
+          const resumePosition = pausedPositionRef.current;
+          console.log('🚀 Resuming timeline from stored position:', resumePosition);
+          
+          if (resumePosition !== null) {
+            restartTimelineFromPosition(resumePosition);
+            pausedPositionRef.current = null; // Clear stored position
+          } else {
+            console.log('🚀 No stored position, creating fresh timeline from container width');
+            // Fallback: start fresh from right edge
+            const containerWidth = containerRef.current?.offsetWidth || 0;
+            restartTimelineFromPosition(containerWidth);
           }
         },
         onThrowComplete: function() {
@@ -375,17 +379,10 @@ const ScrollingTabs: React.FC<ScrollingTabsProps> = ({
       setLongPressTimer(null);
     }
     
-    // ALWAYS store current position and kill timeline when opening modal
-    if (timelineRef.current && timelineRef.current.isActive()) {
-      const currentX = gsap.getProperty(contentRef.current, "x") as number;
-      pausedPositionRef.current = currentX;
-      console.log('🎬 Storing position before modal open:', currentX);
-    } else {
-      // Even if timeline is not active, store current position
-      const currentX = gsap.getProperty(contentRef.current, "x") as number;
-      pausedPositionRef.current = currentX;
-      console.log('🎬 Storing position (timeline inactive) before modal open:', currentX);
-    }
+    // ALWAYS store current position when opening modal (regardless of timeline state)
+    const currentX = gsap.getProperty(contentRef.current, "x") as number;
+    pausedPositionRef.current = currentX;
+    console.log('🎬 Storing current position before modal open:', currentX);
     
     // ALWAYS kill timeline when opening modal
     if (timelineRef.current) {
