@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import { createPortal } from 'react-dom';
-import { X, CreditCard, CheckCircle, DollarSign, RotateCcw, Minus, Plus, Calculator } from 'lucide-react';
+import { X, CreditCard, CheckCircle, DollarSign, RotateCcw, Minus, Plus, Calculator, User } from 'lucide-react';
 import { Client } from '../types';
 import { useCredit } from '../context/CreditContext';
 import SettleConfirmationModal from './SettleConfirmationModal';
@@ -361,6 +361,24 @@ const ClientActionModal: React.FC<ClientActionModalProps> = ({ client, onClose, 
             // Action Selection
             <div className="space-y-4 select-none">
               <h3 className="text-lg font-medium text-gray-800 mb-4 select-none">Choose Action</h3>
+              
+              {/* View Details Button */}
+              <button
+                onClick={() => {
+                  onClose();
+                  setSelectedClientForDetail(client);
+                }}
+                disabled={isProcessing}
+                className="w-full flex items-center gap-4 p-4 bg-blue-50 hover:bg-blue-100 rounded-lg border border-blue-200 transition-colors disabled:opacity-50"
+              >
+                <div className="bg-blue-500 p-2 rounded-full">
+                  <User size={20} className="text-white" />
+                </div>
+                <div className="text-left select-none">
+                  <h4 className="font-medium text-gray-800 select-none">View Details</h4>
+                  <p className="text-sm text-gray-600 select-none">See transaction history and client info</p>
+                </div>
+              </button>
               
               {/* Link to Calculator Button */}
               <button
