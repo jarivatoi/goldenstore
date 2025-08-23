@@ -452,7 +452,7 @@ const ScrollingTabs: React.FC<ScrollingTabsProps> = ({
             isBigCard ? 'overflow-x-auto' : ''
           }`}
           style={{
-            height: '106px',
+            height: '116px',
             // Remove snap behavior for big card
             ...(isBigCard && {
               scrollSnapType: 'none',
