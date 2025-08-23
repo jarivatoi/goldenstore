@@ -82,11 +82,16 @@ const ClientCard: React.FC<ClientCardProps> = ({ client, onLongPress, onQuickAdd
         const size = bouteilleMatch[2]?.trim().replace(/l$/i, 'L') || '';
         const brand = bouteilleMatch[3]?.trim() || '';
         
+        // Capitalize brand name properly
+        const capitalizedBrand = brand ? brand.split(' ').map(word => 
+          word.charAt(0).toUpperCase() + word.slice(1).toLowerCase()
+        ).join(' ') : '';
+        
         let key;
         if (size && brand) {
-          key = `${size} ${brand}`;
+          key = `${size} ${capitalizedBrand}`;
         } else if (brand) {
-          key = `Bouteille ${brand}`;
+          key = `Bouteille ${capitalizedBrand}`;
         } else if (size) {
           key = `${size} Bouteille`;
         } else {
@@ -105,11 +110,16 @@ const ClientCard: React.FC<ClientCardProps> = ({ client, onLongPress, onQuickAdd
         const brandMatch = description.match(/bouteilles?\s+([^,]*)/i);
         const brand = brandMatch?.[1]?.trim() || '';
         
+        // Capitalize brand name properly
+        const capitalizedBrand = brand ? brand.split(' ').map(word => 
+          word.charAt(0).toUpperCase() + word.slice(1).toLowerCase()
+        ).join(' ') : '';
+        
         let key;
         if (sizeMatch && brand) {
-          key = `${sizeMatch[1].replace(/l$/i, 'L')} ${brand}`;
+          key = `${sizeMatch[1].replace(/l$/i, 'L')} ${capitalizedBrand}`;
         } else if (brand) {
-          key = `Bouteille ${brand}`;
+          key = `Bouteille ${capitalizedBrand}`;
         } else if (sizeMatch) {
           key = `${sizeMatch[1].replace(/l$/i, 'L')} Bouteille`;
         } else {
@@ -125,7 +135,13 @@ const ClientCard: React.FC<ClientCardProps> = ({ client, onLongPress, onQuickAdd
       if (description.includes('chopine') && !chopinePattern.test(description)) {
         const brandMatch = description.match(/chopines?\s+([^,]*)/i);
         const brand = brandMatch?.[1]?.trim() || '';
-        const key = brand ? `Chopine ${brand}` : 'Chopine';
+        
+        // Capitalize brand name properly
+        const capitalizedBrand = brand ? brand.split(' ').map(word => 
+          word.charAt(0).toUpperCase() + word.slice(1).toLowerCase()
+        ).join(' ') : '';
+        
+        const key = capitalizedBrand ? `Chopine ${capitalizedBrand}` : 'Chopine';
         
         if (!returnableItems[key]) {
           returnableItems[key] = 0;
