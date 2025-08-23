@@ -607,7 +607,6 @@ const CreditManagement: React.FC = () => {
 
   const confirmDeleteAllClients = async () => {
     if (deleteAllPasscode !== 'client') {
-      alert('Incorrect passcode. Please type "client" to confirm.');
       return;
     }
 
@@ -622,13 +621,9 @@ const CreditManagement: React.FC = () => {
       setShowSettings(false);
       
       // Reset calculator state
-      if (onResetCalculator) {
-        onResetCalculator();
-      }
-      
-      alert(`Successfully deleted all ${clients.length} clients`);
+      handleResetCalculator();
     } catch (error) {
-      alert('Failed to delete all clients');
+      console.error('Failed to delete all clients:', error);
     }
   };
 
