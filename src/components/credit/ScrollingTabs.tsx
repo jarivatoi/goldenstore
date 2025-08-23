@@ -139,11 +139,23 @@ const ScrollingTabs: React.FC<ScrollingTabsProps> = ({
     const contentWidth = content.scrollWidth;
     console.log('📏 Container width:', containerWidth, 'Content width:', contentWidth);
     
-    // FIX: If position is off-screen, reset to visible position
+    // Smart position adjustment for better visual continuity
     let adjustedPosition = startPosition;
-    if (startPosition > containerWidth || startPosition < -contentWidth) {
-      console.log('🔧 Position off-screen, resetting to container width:', containerWidth);
-      adjustedPosition = containerWidth; // Start from right edge (visible)
+    
+    // If position is completely off-screen (too far left), start from right edge
+    if (startPosition < -contentWidth) {
+      console.log('🔧 Position too far left, starting from right edge');
+      adjustedPosition = containerWidth;
+    }
+    // If position is too far right, start from right edge but not beyond
+    else if (startPosition > containerWidth) {
+      console.log('🔧 Position too far right, clamping to container width');
+      adjustedPosition = containerWidth;
+    }
+    // If position is in the visible area or slightly off-screen, keep it
+    else {
+      console.log('🔧 Position is good, keeping original:', startPosition);
+      adjustedPosition = startPosition;
     }
     
     // Kill any existing timeline
@@ -153,51 +165,62 @@ const ScrollingTabs: React.FC<ScrollingTabsProps> = ({
       timelineRef.current = null;
     }
     
-    // Calculate total distance for full cycle
-    const totalDistance = contentWidth + containerWidth;
-    const fullCycleDuration = totalDistance / 60; // 60px per second
-    console.log('⏱️ Full cycle duration:', fullCycleDuration);
-    
-    // Create new infinite timeline that matches setupContinuousScroll
-    timelineRef.current = gsap.timeline({ repeat: -1, ease: "none" });
-    console.log('✨ Created new timeline at:', new Date().toLocaleTimeString());
-    
     // Set initial position
     gsap.set(content, { x: adjustedPosition });
     console.log('📍 Set initial position to:', adjustedPosition, '(original was:', startPosition, ')');
     
-    // Calculate remaining distance from current position to end
-    const remainingDistance = Math.abs(adjustedPosition - (-contentWidth));
-    const remainingDuration = remainingDistance / 60; // 60px per second
-    console.log('📐 Remaining distance:', remainingDistance, 'Duration:', remainingDuration);
-    
-    // Continue from current position to end, then start infinite loop
-    if (remainingDuration > 0) {
-      console.log('▶️ Starting animation from current position at:', new Date().toLocaleTimeString());
-      timelineRef.current
-        .to(content, { 
-          x: -contentWidth,
-          duration: remainingDuration,
-          ease: "none"
-        })
-        .set(content, { x: containerWidth }) // Jump to right edge instantly
-        .to(content, {
-          x: -contentWidth,
-          repeat: -1, // Infinite repeat of full cycle
-          duration: fullCycleDuration,
-          ease: "none"
-        });
-    } else {
-      console.log('🔄 Starting fresh cycle at:', new Date().toLocaleTimeString());
-      timelineRef.current
-        .set(content, { x: containerWidth }) // Jump to right edge instantly
-        .to(content, {
-          x: -contentWidth,
-          repeat: -1, // Infinite repeat of full cycle
-          duration: fullCycleDuration,
-          ease: "none"
-        });
-    }
+    // Use requestAnimationFrame to ensure DOM is ready
+    requestAnimationFrame(() => {
+      const containerWidth = container.offsetWidth;
+      const contentWidth = content.scrollWidth;
+      
+      // Calculate total distance for full cycle
+      const totalDistance = contentWidth + containerWidth;
+      const fullCycleDuration = totalDistance / 60; // 60px per second
+      console.log('⏱️ Full cycle duration:', fullCycleDuration);
+      
+      // Create new infinite timeline
+      timelineRef.current = gsap.timeline({ 
+        repeat: -1, 
+        ease: "none",
+        paused: false,
+        immediateRender: true
+      });
+      console.log('✨ Created new timeline at:', new Date().toLocaleTimeString());
+      
+      // Calculate remaining distance from current position to end
+      const remainingDistance = Math.abs(adjustedPosition - (-contentWidth));
+      const remainingDuration = remainingDistance / 60; // 60px per second
+      console.log('📐 Remaining distance:', remainingDistance, 'Duration:', remainingDuration);
+      
+      // Continue from current position to end, then start infinite loop
+      if (remainingDuration > 0.1) { // Only animate if there's meaningful distance
+        console.log('▶️ Starting animation from current position at:', new Date().toLocaleTimeString());
+        timelineRef.current
+          .to(content, { 
+            x: -contentWidth,
+            duration: remainingDuration,
+            ease: "none"
+          })
+          .set(content, { x: containerWidth }) // Jump to right edge instantly
+          .to(content, {
+            x: -contentWidth,
+            repeat: -1, // Infinite repeat of full cycle
+            duration: fullCycleDuration,
+            ease: "none"
+          });
+      } else {
+        console.log('🔄 Starting fresh cycle at:', new Date().toLocaleTimeString());
+        timelineRef.current
+          .set(content, { x: containerWidth }) // Jump to right edge instantly
+          .to(content, {
+            x: -contentWidth,
+            repeat: -1, // Infinite repeat of full cycle
+            duration: fullCycleDuration,
+            ease: "none"
+          });
+      }
+    });
     console.log('✅ Timeline restart complete at:', new Date().toLocaleTimeString());
   }, [sortedClients.length]); // Remove function dependencies to prevent recreation
 
