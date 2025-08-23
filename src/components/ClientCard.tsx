@@ -313,31 +313,21 @@ const ClientCard: React.FC<ClientCardProps> = ({ client, onLongPress, onQuickAdd
           {(bottlesOwed.beer > 0 || bottlesOwed.guinness > 0 || bottlesOwed.malta > 0 || bottlesOwed.coca > 0 || bottlesOwed.chopines > 0) && (
             <p className="text-xs text-orange-600 mt-1">
               + Bottles: {Object.entries(bottlesOwed)
-                    displayText = `${remaining} Chopine${remaining > 1 ? 's' : ''} ${brand}`;
+                .filter(([type, count]) => count > 0)
                 .map(([type, count]) => `${count} ${type.charAt(0).toUpperCase() + type.slice(1)}`)
-                    displayText = `${remaining} Chopine${remaining > 1 ? 's' : ''}`;
+                .join(', ')}
             </p>
           )}
-                  // For Bouteille items: show size and brand without "Bouteille" word
-                  const sizeMatch = itemType.match(/(\d+(?:\.\d+)?L)/i);
-                  const brandMatch = itemType.match(/Bouteille\s+(.+)/i);
-                  
-                  if (sizeMatch && brandMatch) {
-                    // Format: "4 1.5L Green" (size + brand, no "Bouteille")
-                    displayText = `${remaining} ${sizeMatch[1].toUpperCase()} ${brandMatch[1]}`;
-                  } else if (sizeMatch) {
-                    // Format: "4 1.5L" (size only, no "Bouteille")
-                    displayText = `${remaining} ${sizeMatch[1].toUpperCase()}`;
-                  } else if (brandMatch) {
-                    // Format: "4 Green" (brand only, no "Bouteille")
-                    displayText = `${remaining} ${brandMatch[1]}`;
+        </div>
+
+        {/* Quick Add Button */}
         {onQuickAdd && (
-                    // Fallback: "4 Bouteilles" (just the word with pluralization)
-                    displayText = `${remaining} Bouteille${remaining > 1 ? 's' : ''}`;
+          <div className="mb-2 sm:mb-3">
+            <button
               onClick={(e) => {
                 e.stopPropagation();
                 if (!isLinked) {
-                  displayText = `${remaining} ${itemType}`;
+                  onQuickAdd(client);
                 }
               }}
               className={`w-full py-2 px-3 rounded-lg transition-colors flex items-center justify-center gap-2 text-sm font-medium ${
