@@ -64,7 +64,7 @@ const ScrollingTabs: React.FC<ScrollingTabsProps> = ({
     const handleCreditDataChanged = () => {
       console.log('🔄 ScrollingTabs received creditDataChanged event');
       // Force re-render by updating state with timestamp for uniqueness
-      setForceUpdate(Date.now());
+      setForceUpdate(prev => prev + 1);
     };
 
     window.addEventListener('creditDataChanged', handleCreditDataChanged);
@@ -91,7 +91,7 @@ const ScrollingTabs: React.FC<ScrollingTabsProps> = ({
       default:
         return clientsToSort;
     }
-  }, [clients, sortOption, getClientTotalDebt, forceUpdate]);
+  }, [clients, sortOption, getClientTotalDebt, forceUpdate, getClientTransactions]);
 
   // Helper function to check if client has overdue returnables (3+ weeks old)
   const hasOverdueReturnables = (client: Client): boolean => {
