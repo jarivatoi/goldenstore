@@ -793,7 +793,7 @@ const ScrollingTabs: React.FC<ScrollingTabsProps> = ({
                   onDoubleClick={() => onQuickAdd(client)}
                   onContextMenu={(e) => e.preventDefault()} // Prevent right-click menu
                 >
-                  <div className="text-center relative">
+                  <div className="text-center relative h-full flex flex-col justify-center">
                     <div className="text-sm font-medium text-gray-800 truncate select-none">
                       {client.name}
                     </div>
