@@ -185,11 +185,16 @@ const ClientCard: React.FC<ClientCardProps> = ({ client, onLongPress, onQuickAdd
             displayText = `${remaining} Chopine${remaining > 1 ? 's' : ''}`;
           }
         } else if (itemType.includes('Bouteille')) {
-          // For Bouteille items: keep original format
-          displayText = `${remaining} ${itemType}${remaining > 1 ? 's' : ''}`;
+          // For Bouteille items: only pluralize "Bouteille", not the whole string
+          if (itemType === 'Bouteille') {
+            displayText = `${remaining} Bouteille${remaining > 1 ? 's' : ''}`;
+          } else {
+            // For items like "1.5L Bouteille Green", only pluralize "Bouteille"
+            displayText = `${remaining} ${itemType.replace('Bouteille', `Bouteille${remaining > 1 ? 's' : ''}`)}`;
+          }
         } else {
-          // For other items: keep original format
-          displayText = `${remaining} ${itemType}${remaining > 1 ? 's' : ''}`;
+          // For other items: don't add pluralization
+          displayText = `${remaining} ${itemType}`;
         }
         
         netReturnableItems.push(`${displayText} (${dateStr})`);
