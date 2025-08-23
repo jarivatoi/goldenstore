@@ -160,7 +160,26 @@ const ClientCard: React.FC<ClientCardProps> = ({ client, onLongPress, onQuickAdd
           month: '2-digit',
           year: 'numeric'
         });
-        netReturnableItems.push(`${remaining} ${itemType}${remaining > 1 ? 's' : ''} (${dateStr})`);
+        
+        // Format the display text properly
+        let displayText = '';
+        if (itemType.startsWith('Chopine')) {
+          // For Chopine items: "8 Chopines beer" or "1 Chopine beer"
+          const brand = itemType.replace('Chopine', '').trim();
+          if (brand) {
+            displayText = `${remaining} Chopine${remaining > 1 ? 's' : ''} ${brand}`;
+          } else {
+            displayText = `${remaining} Chopine${remaining > 1 ? 's' : ''}`;
+          }
+        } else if (itemType.includes('Bouteille')) {
+          // For Bouteille items: keep original format
+          displayText = `${remaining} ${itemType}${remaining > 1 ? 's' : ''}`;
+        } else {
+          // For other items: keep original format
+          displayText = `${remaining} ${itemType}${remaining > 1 ? 's' : ''}`;
+        }
+        
+        netReturnableItems.push(`${displayText} (${dateStr})`);
       }
     });
     
