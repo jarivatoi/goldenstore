@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import { createPortal } from 'react-dom';
-import { X, CreditCard, CheckCircle, DollarSign, RotateCcw, Minus, Plus, Calculator, User } from 'lucide-react';
+import { X, CreditCard, CheckCircle, DollarSign, RotateCcw, Minus, Plus, Calculator, User, ArrowLeft } from 'lucide-react';
 import { Client } from '../types';
 import { useCredit } from '../context/CreditContext';
 import SettleConfirmationModal from './SettleConfirmationModal';
@@ -498,7 +498,7 @@ const ClientActionModal: React.FC<ClientActionModalProps> = ({ client, onClose, 
                   onClick={() => setShowReturnTab(false)}
                   className="text-gray-500 hover:text-gray-700"
                 >
-                  <X size={20} />
+                  <ArrowLeft size={20} />
                 </button>
                 <h3 className="text-lg font-medium text-gray-800 select-none">Return Chopine & Bouteille</h3>
                 <div className="flex-1"></div>
