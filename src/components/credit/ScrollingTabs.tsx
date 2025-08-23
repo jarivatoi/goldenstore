@@ -512,12 +512,12 @@ const ScrollingTabs: React.FC<ScrollingTabsProps> = ({
                   
                   while ((bouteilleMatch = bouteillePattern.exec(description)) !== null) {
                     const quantity = parseInt(bouteilleMatch[1]);
-                    const size = bouteilleMatch[2]?.trim().toUpperCase() || '';
+                    const size = bouteilleMatch[2]?.trim() || '';
                     const brand = bouteilleMatch[3]?.trim() || '';
                     
                     let key;
                     if (size && brand) {
-                      key = `${size} Bouteille ${brand}`;
+                      key = `${size} ${brand}`;
                     } else if (brand) {
                       key = `Bouteille ${brand}`;
                     } else if (size) {
@@ -538,12 +538,12 @@ const ScrollingTabs: React.FC<ScrollingTabsProps> = ({
                     const brand = brandMatch?.[1]?.trim() || '';
                     
                     let key;
-                    if (sizeMatch && sizeMatch[1] && brand) {
-                      key = `${sizeMatch[1].toUpperCase()} Bouteille ${brand}`;
+                    if (sizeMatch && brand) {
+                      key = `${sizeMatch[1]} ${brand}`;
                     } else if (brand) {
                       key = `Bouteille ${brand}`;
-                    } else if (sizeMatch && sizeMatch[1]) {
-                      key = `${sizeMatch[1].toUpperCase()} Bouteille`;
+                    } else if (sizeMatch) {
+                      key = `${sizeMatch[1]} Bouteille`;
                     } else {
                       key = 'Bouteille';
                     }
@@ -589,23 +589,26 @@ const ScrollingTabs: React.FC<ScrollingTabsProps> = ({
                   const returned = returnedQuantities[itemType] || 0;
                   const remaining = Math.max(0, total - returned);
                   if (remaining > 0) {
-                    let displayText = '';
+                    let truncated = '';
                     if (itemType.includes('Chopine')) {
-                      displayText = `${remaining} Ch`;
-                    } else if (itemType.includes('1.5L')) {
-                      displayText = `${remaining} 1.5L`;
-                    } else if (itemType.includes('2L')) {
-                      displayText = `${remaining} 2L`;
-                    } else if (itemType.includes('1L') && !itemType.includes('1.5L')) {
-                      displayText = `${remaining} 1L`;
-                    } else if (itemType.includes('0.5L')) {
-                      displayText = `${remaining} 0.5L`;
+                      truncated = `${remaining} Ch`;
                     } else if (itemType.includes('Bouteille')) {
-                      displayText = `${remaining} Bt`;
+                      if (itemType.includes('1.5L')) {
+                        truncated = `${remaining} 1.5L`;
+                      } else if (itemType.includes('1L')) {
+                        truncated = `${remaining} Lt`;
+                      } else if (itemType.includes('2L')) {
+                        truncated = `${remaining} 2L`;
+                      } else if (itemType.includes('0.5L')) {
+                        truncated = `${remaining} 0.5L`;
+                      } else {
+                        truncated = `${remaining} Bt`;
+                      }
                     } else {
-                      displayText = `${remaining} ${itemType.substring(0, 3)}`;
+                      const shortName = itemType.substring(0, 3);
+                      truncated = `${remaining} ${shortName}`;
                     }
-                    truncatedItems.push(displayText);
+                    truncatedItems.push(truncated);
                   }
                 });
                 
