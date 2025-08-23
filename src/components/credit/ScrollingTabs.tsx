@@ -374,13 +374,15 @@ const ScrollingTabs: React.FC<ScrollingTabsProps> = ({
       setLongPressTimer(null);
     }
     
-    // Store current position before opening modal (if timeline is active)
-    if (timelineRef.current && timelineRef.current.isActive()) {
+    // ALWAYS store current position before opening modal, regardless of timeline state
+    if (contentRef.current) {
       const currentX = gsap.getProperty(contentRef.current, "x") as number;
       pausedPositionRef.current = currentX;
-      console.log('🎬 Storing position before modal open:', currentX);
-      
-      // Kill timeline when opening modal
+      console.log('🎬 Storing position before modal open:', currentX, 'timeline active:', timelineRef.current?.isActive());
+    }
+    
+    // Kill timeline when opening modal (if it exists)
+    if (timelineRef.current) {
       timelineRef.current.kill();
       timelineRef.current = null;
       console.log('🎬 Timeline killed for modal');
