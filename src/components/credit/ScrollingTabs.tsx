@@ -889,30 +889,8 @@ const ScrollingTabs: React.FC<ScrollingTabsProps> = ({
         <ClientDetailModal
           client={selectedClientForDetails}
           onClose={() => {
-            console.log('🎭 Detail modal closing, resuming timeline from stored position:', pausedPositionRef.current);
-            
-            // Keep any visual effects during timeline resume
-            
-            // Resume timeline from stored position after modal closes
-            if (pausedPositionRef.current !== null) {
-              console.log('🚀 Resuming timeline from stored position:', pausedPositionRef.current);
-              restartTimelineFromPosition(pausedPositionRef.current);
-              pausedPositionRef.current = null; // Clear stored position
-            } else {
-              console.log('🚀 No stored position, setting up fresh timeline');
-              // Don't create fresh timeline, let the existing one continue or restart naturally
-              setTimeout(() => {
-                if (!timelineRef.current || !timelineRef.current.isActive()) {
-                  console.log('🚀 Creating fresh timeline after modal close');
-                  setupContinuousScroll();
-                }
-              }, 100);
-            }
-            
-            // Clear the modal after timeline resumes
-            setTimeout(() => {
-              setSelectedClientForDetails(null);
-            }, 300);
+            setSelectedClientForDetails(null);
+            setClickedTabId(null);
           }}
           onQuickAdd={onQuickAdd}
         />
