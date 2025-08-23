@@ -537,7 +537,7 @@ const ScrollingTabs: React.FC<ScrollingTabsProps> = ({
                 clientTransactions
                   .filter(transaction => transaction.type === 'debt' && transaction.description.toLowerCase().includes('returned'))
                   .forEach(transaction => {
-                         const sizeMatch = itemType.match(/(\d+(?:\.\d+)?L)/i);
+                    const description = transaction.description.toLowerCase();
                     Object.keys(returnableItems).forEach(itemType => {
                       if (description.includes(itemType.toLowerCase())) {
                         const match = description.match(/returned:\s*(\d+)\s+/);
