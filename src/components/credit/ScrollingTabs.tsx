@@ -795,6 +795,19 @@ const ScrollingTabs: React.FC<ScrollingTabsProps> = ({
                     <div className="text-xs text-gray-500 mt-1 text-center">
                       {client.lastTransactionAt.toLocaleDateString('en-GB', {
                         day: '2-digit',
+                        month: 'short',
+                        year: 'numeric'
+                      }).replace(/\s/g, '-')} {client.lastTransactionAt.toLocaleTimeString('en-GB', {
+                        hour: '2-digit',
+                        minute: '2-digit',
+                        hour12: false
+                      })}
+                    </span>
+                  </div>
+                </div>
+              </div>
+              
+              {/* Returnable Items Display */}
              {(() => {
                // Force recalculation by including forceUpdate in the calculation
                const _ = forceUpdate; // This ensures the calculation runs when forceUpdate changes
