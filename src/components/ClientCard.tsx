@@ -21,13 +21,26 @@ interface ClientCardProps {
  * Displays individual client information with swipe and long press interactions
  */
 const ClientCard: React.FC<ClientCardProps> = ({ client, onLongPress, onQuickAdd, onResetCalculator, isLinked = false }) => {
-  const { getClientTotalDebt, getClientBottlesOwed } = useCredit();
+  const { getClientTotalDebt, getClientBottlesOwed, getClientTransactions } = useCredit();
   const [showDetails, setShowDetails] = useState(false);
   const [showActions, setShowActions] = useState(false);
+  const [forceUpdate, setForceUpdate] = useState(0);
+  
+  // Listen for credit data changes to force re-render
+  React.useEffect(() => {
+    const handleCreditDataChanged = () => {
+      setForceUpdate(prev => prev + 1);
+    };
+
+    window.addEventListener('creditDataChanged', handleCreditDataChanged);
+    
+    return () => {
+      window.removeEventListener('creditDataChanged', handleCreditDataChanged);
+    };
+  }, []);
   
   // Get returnable items for scrolling display
-  const getReturnableItemsText = (): string => {
-    const { getClientTransactions } = useCredit();
+  const getReturnableItemsText = React.useMemo((): string => {
     const clientTransactions = getClientTransactions(client.id);
     
     const returnableItems: {[key: string]: number} = {};
@@ -186,7 +199,7 @@ const ClientCard: React.FC<ClientCardProps> = ({ client, onLongPress, onQuickAdd
     // Fix bottle size capitalization (1l → 1L, 1.5l → 1.5L, etc.)
     const formattedText = netReturnableItems.length > 0 ? netReturnableItems.join(', ') : '';
     return formattedText.replace(/(\d+(?:\.\d+)?)l\b/gi, '$1L');
-  };
+  }, [client.id, getClientTransactions, forceUpdate]);
   
   const returnableItemsText = getReturnableItemsText();
   const [startY, setStartY] = useState(0);
