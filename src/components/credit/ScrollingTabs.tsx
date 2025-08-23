@@ -281,7 +281,7 @@ const ScrollingTabs: React.FC<ScrollingTabsProps> = ({
         maxDuration: 2, // Shorter inertia duration
         minDuration: 0.1,
         onDragStart: function() {
-          console.log('🖱️ DRAG START - PAUSING TIMELINE at:', new Date().toLocaleTimeString());
+          console.log('🎯 DRAG START - PAUSING TIMELINE at:', new Date().toLocaleTimeString());
           setIsDragging(true);
           dragHasExceededThreshold.current = false;
           
@@ -304,11 +304,9 @@ const ScrollingTabs: React.FC<ScrollingTabsProps> = ({
           }
         },
         onDragEnd: function() {
-          console.log('🖱️ DRAG END - RESTARTING TIMELINE from stored position:', pausedPositionRef.current, 'at:', new Date().toLocaleTimeString());
+          console.log('🎯 DRAG END - RESTARTING TIMELINE at:', new Date().toLocaleTimeString());
           setIsDragging(false);
           
-          // ALWAYS resume from the stored position (which was captured at click time)
-          const resumePosition = pausedPositionRef.current;
           // ALWAYS resume from the stored position (which was captured at click time)
           const resumePosition = pausedPositionRef.current;
           console.log('🚀 Resuming timeline from stored position:', resumePosition);
