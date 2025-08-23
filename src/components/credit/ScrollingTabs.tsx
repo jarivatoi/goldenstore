@@ -594,7 +594,7 @@ const ScrollingTabs: React.FC<ScrollingTabsProps> = ({
                       // Extract brand if present
                       const brandMatch = itemType.match(/Chopine\s+(.+)/);
                       const brand = brandMatch ? brandMatch[1] : '';
-                      truncated = brand ? `${remaining} Ch(${brand})` : `${remaining} Ch`;
+                     truncated = `${remaining} (Ch)`;
                     } else if (itemType.includes('Bouteille')) {
                       // Check for specific sizes first, prioritize size display
                       if (itemType.includes('1.5L')) {
