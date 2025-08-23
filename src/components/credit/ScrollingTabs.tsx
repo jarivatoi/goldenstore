@@ -593,16 +593,16 @@ const ScrollingTabs: React.FC<ScrollingTabsProps> = ({
                     let truncated = '';
                     if (itemType.includes('Chopine')) {
                       truncated = `${remaining} (Ch)`;
-                    } else if (itemType.includes('Bouteille')) {
+                    } else if (itemType.match(/(\d+(?:\.\d+)?L)/i)) {
+                      // For sized bottles like "1.5L Green" -> "4 (1.5L)"
                       const sizeMatch = itemType.match(/(\d+(?:\.\d+)?L)/i);
-                      if (sizeMatch) {
-                        truncated = `${remaining} (${sizeMatch[1].toUpperCase()})`;
-                      } else {
-                        truncated = `${remaining} (Bt)`;
-                      }
+                      truncated = `${remaining} (${sizeMatch[1]})`;
+                    } else if (itemType.includes('Bouteille')) {
+                      // For regular bottles like "Bouteille Green" -> "4 (Bt)"
+                      truncated = `${remaining} (Bt)`;
                     } else {
-                      const shortName = itemType.substring(0, 3);
-                      truncated = `${remaining} ${shortName}`;
+                      // For other items, use first 3 characters
+                      truncated = `${remaining} (${itemType.substring(0, 3)})`;
                     }
                     truncatedItems.push(truncated);
                   }
