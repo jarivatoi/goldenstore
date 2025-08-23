@@ -562,19 +562,12 @@ const ScrollingTabs: React.FC<ScrollingTabsProps> = ({
                       const brand = brandMatch ? brandMatch[1] : '';
                      truncated = `${remaining} (Ch)`;
                     } else if (itemType.includes('Bouteille')) {
-                      // Check for specific sizes first, prioritize size display
-                      if (itemType.includes('1.5L')) {
-                        truncated = `${remaining} (1.5L)`;
-                      } else if (itemType.includes('1L')) {
-                        truncated = `${remaining} (1L)`;
-                      } else if (itemType.includes('2L')) {
-                        truncated = `${remaining} (2L)`;
-                      } else if (itemType.includes('0.5L')) {
-                        truncated = `${remaining} (0.5L)`;
+                      // Extract size from itemType (e.g., "1.5L Bouteille" -> "1.5L")
+                      const sizeMatch = itemType.match(/(\d+(?:\.\d+)?L)/);
+                      if (sizeMatch) {
+                        truncated = `${remaining} (${sizeMatch[1]})`;
                       } else {
-                        // Only use generic Bt format if no size is specified
-                        const brandMatch = itemType.match(/Bouteille\s+(.+)/);
-                        const brand = brandMatch ? brandMatch[1] : '';
+                        // No size found, use generic Bt format
                         truncated = `${remaining} (Bt)`;
                       }
                     } else {
