@@ -564,10 +564,10 @@ const ScrollingTabs: React.FC<ScrollingTabsProps> = ({
                      truncated = `${remaining} (Ch)`;
                     } else if (itemType.includes('Bouteille')) {
                       // Extract size from itemType (e.g., "1.5L Bouteille" -> "1.5L" or "1.5L Brand" -> "1.5L")
-                      const sizeMatch = itemType.match(/(\d+(?:\.\d+)?L)/);
+                      const sizeMatch = itemType.match(/(\d+(?:\.\d+)?L)/i);
                       console.log('🔍 Bouteille sizeMatch:', sizeMatch, 'for itemType:', itemType);
                       if (sizeMatch) {
-                        truncated = `${remaining} (${sizeMatch[1]})`;
+                        truncated = `${remaining} (${sizeMatch[1].toUpperCase()})`;
                       } else {
                         // No size found, use generic Bt format
                         truncated = `${remaining} (Bt)`;
