@@ -64,57 +64,54 @@ const ClientGrid: React.FC<ClientGridProps> = ({
     const containerWidth = container.offsetWidth;
     const contentWidth = content.scrollWidth;
     
-    // Only enable dragging if content overflows container
-    if (contentWidth > containerWidth) {
-      // Calculate bounds based on content and container width
-      const maxDrag = Math.max(0, contentWidth - containerWidth);
-      
-      // Create draggable instance
-      draggableRef.current = Draggable.create(content, {
-        type: "x",
-        bounds: {
-          minX: -maxDrag,
-          maxX: 0
-        },
-        edgeResistance: 0.5,
-        inertia: true,
-        snap: false, // Disable automatic snapping
-        dragResistance: 0.1,
-        throwResistance: 0.005,
-        maxDuration: 2,
-        minDuration: 0.02,
-        overshootTolerance: 0,
-        force3D: true,
-        onDragStart: function() {
-          const currentX = gsap.getProperty(content, "x") as number;
-          dragStartXRef.current = currentX;
-          dragDirectionRef.current = null;
-        },
-        onDrag: function() {
-          const currentX = gsap.getProperty(content, "x") as number;
-          const deltaX = currentX - dragStartXRef.current;
-          
-          // Determine drag direction based on movement
-          if (Math.abs(deltaX) > 10) { // Only set direction after significant movement
-            if (deltaX > 0) {
-              dragDirectionRef.current = 'right'; // Dragging towards right
-            } else {
-              dragDirectionRef.current = 'left'; // Dragging towards left
-            }
+    // Always enable dragging for better UX, even with single card
+    // Calculate bounds based on content and container width
+    const maxDrag = Math.max(0, contentWidth - containerWidth);
+    
+    // Create draggable instance
+    draggableRef.current = Draggable.create(content, {
+      type: "x",
+      bounds: {
+        minX: contentWidth > containerWidth ? -maxDrag : -containerWidth * 0.3, // Allow some drag even with single card
+        maxX: contentWidth > containerWidth ? 0 : containerWidth * 0.3 // Allow some drag even with single card
+      },
+      edgeResistance: contentWidth > containerWidth ? 0.5 : 0.8, // Higher resistance for single card
+      inertia: true,
+      snap: false, // Disable automatic snapping
+      dragResistance: contentWidth > containerWidth ? 0.1 : 0.3, // Higher resistance for single card
+      throwResistance: contentWidth > containerWidth ? 0.005 : 0.02, // Higher resistance for single card
+      maxDuration: 2,
+      minDuration: 0.02,
+      overshootTolerance: 0,
+      force3D: true,
+      onDragStart: function() {
+        const currentX = gsap.getProperty(content, "x") as number;
+        dragStartXRef.current = currentX;
+        dragDirectionRef.current = null;
+      },
+      onDrag: function() {
+        const currentX = gsap.getProperty(content, "x") as number;
+        const deltaX = currentX - dragStartXRef.current;
+        
+        // Determine drag direction based on movement
+        if (Math.abs(deltaX) > 10) { // Only set direction after significant movement
+          if (deltaX > 0) {
+            dragDirectionRef.current = 'right'; // Dragging towards right
+          } else {
+            dragDirectionRef.current = 'left'; // Dragging towards left
           }
-        },
-        onDragEnd: function(this: any) {
-          const currentX = gsap.getProperty(content, "x") as number;
-          const dragDirection = dragDirectionRef.current;
-          const velocity = InertiaPlugin ? InertiaPlugin.getVelocity(content, "x") : 0;
-          
-          // Intelligent snapping based on drag direction and position
+        }
+      },
+      onDragEnd: function(this: any) {
+        const currentX = gsap.getProperty(content, "x") as number;
+        const dragDirection = dragDirectionRef.current;
+        const velocity = InertiaPlugin ? InertiaPlugin.getVelocity(content, "x") : 0;
+        
+        if (contentWidth > containerWidth) {
+          // Normal snapping logic for overflowing content
           let shouldSnap = false;
           let snapTo = currentX;
           
-          // Only snap to edges if:
-          // 1. High velocity carries to very close to edge, OR
-          // 2. User drags very close to edge manually
           const edgeThreshold = 50; // pixels from edge
           const highVelocityThreshold = 1000; // pixels per second
           
@@ -147,15 +144,20 @@ const ClientGrid: React.FC<ClientGridProps> = ({
               force3D: true
             });
           }
-          
-          // Reset drag direction
-          dragDirectionRef.current = null;
+        } else {
+          // For single card or non-overflowing content, always snap back to center
+          gsap.to(content, {
+            x: 0,
+            duration: 0.6,
+            ease: "power2.out",
+            force3D: true
+          });
         }
-      });
-    } else {
-      // Reset position if content doesn't overflow
-      gsap.set(content, { x: 0 });
-    }
+        
+        // Reset drag direction
+        dragDirectionRef.current = null;
+      }
+    });
 
     return () => {
       if (draggableRef.current) {
