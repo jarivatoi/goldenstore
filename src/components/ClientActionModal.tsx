@@ -381,7 +381,10 @@ const ClientActionModal: React.FC<ClientActionModalProps> = ({ client, onClose, 
                   if (onQuickAdd) {
                     onQuickAdd(client);
                   }
-                  onClose();
+                  // Close modal after a brief delay to ensure linking completes
+                  setTimeout(() => {
+                    onClose();
+                  }, 100);
                 }}
                 disabled={isProcessing}
                 className="w-full flex items-center gap-4 p-4 bg-purple-50 hover:bg-purple-100 rounded-lg border border-purple-200 transition-colors disabled:opacity-50"
