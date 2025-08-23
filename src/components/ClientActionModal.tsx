@@ -615,7 +615,7 @@ const ClientActionModal: React.FC<ClientActionModalProps> = ({ client, onClose, 
                                 day: '2-digit',
                                 month: '2-digit',
                                 year: 'numeric'
-                              })} {transactionDate.toLocaleTimeString('en-GB', {
+                              })} ${transactionDate.toLocaleTimeString('en-GB', {
                                 hour: '2-digit',
                                 minute: '2-digit',
                                 hour12: false
@@ -647,7 +647,7 @@ const ClientActionModal: React.FC<ClientActionModalProps> = ({ client, onClose, 
                                 day: '2-digit',
                                 month: '2-digit',
                                 year: 'numeric'
-                              })} {transaction.date.toLocaleTimeString('en-GB', {
+                              })} ${transaction.date.toLocaleTimeString('en-GB', {
                                 hour: '2-digit',
                                 minute: '2-digit',
                                 hour12: false
