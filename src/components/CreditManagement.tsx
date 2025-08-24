@@ -773,10 +773,10 @@ const CreditManagement: React.FC = () => {
                     e.stopPropagation();
                     handleCalculatorCancel();
                   }}
-                  className="text-gray-500 hover:text-gray-700 transition-colors"
-                  title="Cancel link to client"
+                  className="px-2 py-1 text-xs bg-red-500 hover:bg-red-600 text-white rounded transition-colors"
+                  title="Unlink client from calculator"
                 >
-                  <X size={20} />
+                  Unlink
                 </button>
               </>
             )}
