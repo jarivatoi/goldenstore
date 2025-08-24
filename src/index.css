@@ -198,6 +198,34 @@ body {
   animation: subtle-shake 3s ease-in-out infinite;
 }
 
+/* Enhanced shake animation for returnables */
+@keyframes returnables-shake {
+  0%, 100% { transform: translateX(0) rotate(0deg); }
+  10% { transform: translateX(-2px) rotate(-1deg); }
+  20% { transform: translateX(2px) rotate(1deg); }
+  30% { transform: translateX(-2px) rotate(-0.5deg); }
+  40% { transform: translateX(2px) rotate(0.5deg); }
+  50% { transform: translateX(-1px) rotate(-0.2deg); }
+  60% { transform: translateX(1px) rotate(0.2deg); }
+  70% { transform: translateX(0) rotate(0deg); }
+}
+
+.animate-returnables-shake {
+  animation: returnables-shake 2s ease-in-out infinite;
+}
+
+/* Enhanced bounce animation for high debt */
+@keyframes high-debt-bounce {
+  0%, 100% { transform: translateY(0) scale(1); }
+  25% { transform: translateY(-8px) scale(1.05); }
+  50% { transform: translateY(-4px) scale(1.02); }
+  75% { transform: translateY(-2px) scale(1.01); }
+}
+
+.animate-high-debt-bounce {
+  animation: high-debt-bounce 2s ease-in-out infinite;
+}
+
 /* Wobble animation for very high debt amounts (>= Rs 1000) */
 @keyframes wobble {
   0%, 100% { transform: translateX(0) rotate(0deg); }

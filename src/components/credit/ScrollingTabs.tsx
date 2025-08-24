@@ -570,12 +570,13 @@ const ScrollingTabs: React.FC<ScrollingTabsProps> = ({
                   } ${
                     clickedTabId === client.id 
                       ? 'animate-pulse-attention bg-yellow-200 border-yellow-400 shadow-lg scale-110 z-50' 
-                      : totalDebt >= 1000
-                      ? 'animate-wobble'
-                      : totalDebt >= 500
-                      ? 'animate-subtle-shake'
                       : (() => {
-                          // Check if client has returnable items
+                          // Priority 1: High debt (>= 1000) gets bounce animation
+                          if (totalDebt >= 1000) {
+                            return 'animate-bounce';
+                          }
+                          
+                          // Priority 2: Check if client has returnable items - gets shake animation
                           const clientTransactions = getTransactions(client.id);
                           
                           // Calculate actual unreturned items
@@ -710,8 +711,8 @@ const ScrollingTabs: React.FC<ScrollingTabsProps> = ({
                             return remaining > 0;
                           });
                           
-                          return hasUnreturnedItems ? 'animate-bounce' : '';
-                          return hasUnreturnedItems ? 'animate-bounce' : '';
+                          // Return shake animation for clients with returnables
+                          return hasUnreturnedItems ? 'animate-subtle-shake' : '';
                         })()
                   }`}
                   style={{
