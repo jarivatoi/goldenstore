@@ -156,8 +156,15 @@ const MiniCalculator: React.FC<MiniCalculatorProps> = ({
             <div className="flex items-center gap-2 flex-1">
               <span className="font-medium truncate">{label}</span>
               <button
+                onTouchStart={(e) => e.stopPropagation()}
+                onTouchEnd={(e) => {
+                  e.stopPropagation();
+                  e.preventDefault();
+                  setIsEditingLabel(true);
+                }}
                 onClick={() => setIsEditingLabel(true)}
                 className="text-blue-200 hover:text-white transition-colors"
+                style={{ touchAction: 'manipulation', zIndex: 1000 }}
               >
                 <Edit2 size={14} />
               </button>
@@ -171,14 +178,25 @@ const MiniCalculator: React.FC<MiniCalculatorProps> = ({
                 className="bg-blue-400 text-white placeholder-blue-200 border-none outline-none rounded px-2 py-1 text-sm flex-1"
                 placeholder="Enter label..."
                 autoFocus
+                onTouchStart={(e) => e.stopPropagation()}
+                onTouchEnd={(e) => e.stopPropagation()}
+                style={{ touchAction: 'manipulation' }}
                 onKeyDown={(e) => {
+                  e.stopPropagation();
                   if (e.key === 'Enter') handleSaveLabel();
                   if (e.key === 'Escape') handleCancelEditLabel();
                 }}
               />
               <button
+                onTouchStart={(e) => e.stopPropagation()}
+                onTouchEnd={(e) => {
+                  e.stopPropagation();
+                  e.preventDefault();
+                  handleSaveLabel();
+                }}
                 onClick={handleSaveLabel}
                 className="text-blue-200 hover:text-white transition-colors"
+                style={{ touchAction: 'manipulation', zIndex: 1000 }}
               >
                 <Check size={14} />
               </button>
@@ -186,8 +204,15 @@ const MiniCalculator: React.FC<MiniCalculatorProps> = ({
           )}
         </div>
         <button
+          onTouchStart={(e) => e.stopPropagation()}
+          onTouchEnd={(e) => {
+            e.stopPropagation();
+            e.preventDefault();
+            onClose();
+          }}
           onClick={onClose}
           className="text-blue-200 hover:text-white transition-colors ml-2"
+          style={{ touchAction: 'manipulation', zIndex: 1000 }}
         >
           <X size={16} />
         </button>
