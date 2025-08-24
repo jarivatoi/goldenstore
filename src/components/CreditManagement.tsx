@@ -642,7 +642,7 @@ const CreditManagement: React.FC = () => {
   };
 
   const confirmDeleteAllClients = async () => {
-    if (deleteAllPasscode !== 'client') {
+    if (deleteAllPasscode !== 'DELETE') {
       return;
     }
 
