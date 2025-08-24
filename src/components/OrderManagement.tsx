@@ -1097,13 +1097,13 @@ const AddItemModal: React.FC<AddItemModalProps> = ({
       return;
     }
 
-    const isVatNil = vatPercent === 0;
-
     const vatPercent = parseFloat(vatPercentage);
     if (isNaN(vatPercent) || vatPercent < 0 || vatPercent > 100) {
       alert('Please enter a valid VAT percentage (0-100)');
       return;
     }
+
+    const isVatNil = vatPercent === 0;
 
     // Call the modified onAdd function with VAT status
     onAdd(e, isVatNil, vatPercent);
