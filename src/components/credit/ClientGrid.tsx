@@ -186,8 +186,10 @@ const ClientGrid: React.FC<ClientGridProps> = ({
                   : 'bg-gray-100 text-gray-600 hover:bg-gray-200'
               }`}
             >
-              {showAllClients ? <UserCheck size={12} /> : <Users size={12} />}
-              {showAllClients ? 'Active' : 'All'}
+              <div className="flex items-center gap-1">
+                {showAllClients ? <UserCheck size={12} /> : <Users size={12} />}
+                <span>{showAllClients ? 'Active' : 'All'}</span>
+              </div>
             </button>
           </div>
         </div>
