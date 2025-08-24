@@ -78,7 +78,6 @@ try {
         
         // Mobile-specific headers
         if (isMobile) {
-          headers.set('Prefer', 'return=minimal');
           headers.set('X-Client-Info', `golden-store-mobile-${isPWA ? 'pwa' : 'browser'}`);
           headers.set('Cache-Control', 'no-cache, no-store, must-revalidate');
           headers.set('Pragma', 'no-cache');
