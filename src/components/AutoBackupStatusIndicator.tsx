@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { Clock, CloudUpload, AlertCircle, CheckCircle, Wifi, WifiOff } from 'lucide-react';
+import { Clock, UploadCloud as CloudUpload, AlertCircle, CheckCircle, Wifi, WifiOff } from 'lucide-react';
 import { automaticBackupManager, BackupStatus } from '../utils/automaticBackupManager';
 
 interface AutoBackupStatusIndicatorProps {
