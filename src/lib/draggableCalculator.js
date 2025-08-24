@@ -115,7 +115,7 @@ let _docElement = document.documentElement,
     _addListener = function(element, type, func, capture) {
         if (element.addEventListener) {
             let touchType = _touchEventLookup[type];
-            capture = capture || (_supportsPassive ? {passive: false} : false);
+            capture = capture || (_supportsPassive ? {passive: false, capture: true} : true);
             element.addEventListener(touchType || type, func, capture);
             if (touchType && type !== touchType) {
                 element.addEventListener(type, func, capture);
@@ -137,6 +137,7 @@ let _docElement = document.documentElement,
     },
     _preventDefault = function(e) {
         e.preventDefault && e.preventDefault();
+        e.stopPropagation && e.stopPropagation();
         if (e.preventManipulation) {
             e.preventManipulation();
         }
@@ -299,11 +300,14 @@ export class DraggableCalculator {
     }
     
     _onPress(e) {
+        // Prevent event from affecting background elements
+        e.preventDefault();
+        e.stopPropagation();
+        
         if (e.type === "touchstart") {
             this.pointerEvent = e.touches[0];
         } else {
             this.pointerEvent = e;
-            e.preventDefault();
         }
         
         this.isPressed = true;
@@ -340,6 +344,10 @@ export class DraggableCalculator {
     
     _onDrag(e) {
         if (!this.isPressed) return;
+        
+        // Prevent event from affecting background elements
+        e.preventDefault();
+        e.stopPropagation();
         
         if (e.type.indexOf("touch") !== -1) {
             this.pointerEvent = e.touches[0];

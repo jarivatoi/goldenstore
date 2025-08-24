@@ -4,6 +4,7 @@ import { X, Edit2, Check, Calculator, Plus } from 'lucide-react';
 import { gsap } from 'gsap';
 import { DraggableCalculator } from '../../lib/draggableCalculator.js';
 import { processCalculatorInput, evaluateExpression } from '../../utils/creditCalculatorUtils';
+import ClientSearchModal from '../ClientSearchModal';
 
 interface MiniCalculatorProps {
   id: string;
@@ -35,6 +36,7 @@ const MiniCalculator: React.FC<MiniCalculatorProps> = ({
   const [description, setDescription] = useState('');
   const [showAddForm, setShowAddForm] = useState(false);
   const [error, setError] = useState('');
+  const [showClientSearch, setShowClientSearch] = useState(false);
   const [isVisible, setIsVisible] = useState(false);
   
   const calculatorRef = useRef<HTMLDivElement>(null);
@@ -115,18 +117,9 @@ const MiniCalculator: React.FC<MiniCalculatorProps> = ({
       return;
     }
 
-    try {
-      onAddToClient(amount, description.trim(), label);
-      
-      // Reset calculator and form
-      setCalculatorValue('0');
-      setIsCalculatorActive(false);
-      setDescription('');
-      setShowAddForm(false);
-      setError('');
-    } catch (err) {
-      setError('Failed to add transaction');
-    }
+    // Show client search modal instead of directly adding
+    setShowClientSearch(true);
+    setShowAddForm(false);
   };
 
   const handleQuickAction = (action: string) => {
@@ -447,12 +440,39 @@ const MiniCalculator: React.FC<MiniCalculatorProps> = ({
                 disabled={!description.trim() || calculatorValue === '0' || calculatorValue === 'Error'}
                 className="flex-1 px-3 py-2 bg-blue-500 hover:bg-blue-600 disabled:bg-gray-300 disabled:cursor-not-allowed text-white rounded text-sm transition-colors"
               >
-                Add
+                Select Client
               </button>
             </div>
           </div>
         )}
       </div>
+
+      {/* Client Search Modal */}
+      {showClientSearch && (
+        <ClientSearchModal
+          calculatorValue={calculatorValue}
+          onClose={() => {
+            setShowClientSearch(false);
+            setDescription('');
+            setError('');
+          }}
+          onAddToClient={async (client, desc) => {
+            try {
+              const amount = evaluateExpression(calculatorValue);
+              await onAddToClient(amount, desc, label);
+              
+              // Reset calculator and form
+              setCalculatorValue('0');
+              setIsCalculatorActive(false);
+              setDescription('');
+              setShowClientSearch(false);
+              setError('');
+            } catch (err) {
+              setError('Failed to add transaction');
+            }
+          }}
+        />
+      )}
     </div>
   );
 
