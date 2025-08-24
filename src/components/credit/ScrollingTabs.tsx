@@ -731,9 +731,6 @@ const ScrollingTabs: React.FC<ScrollingTabsProps> = ({
                   <div className="text-center relative h-full flex flex-col justify-center">
                     {/* Client name with bottle icon if has returnables */}
                     <div className="flex items-center justify-center gap-1 mb-1">
-                      {currentReturnableItems && (
-                        <Bottle size={12} className="text-orange-500 flex-shrink-0" />
-                      )}
                       <div className="text-sm font-medium text-gray-800 truncate select-none">
                         {client.name}
                       </div>
