@@ -162,30 +162,6 @@ let _docElement = document.documentElement,
     _doc,
     _docIsReady,
     _dragInstances = [],
-    _lookup = {},
-    _lookupCount = 0,
-    _clickableTagExp = /^(?:a|input|textarea|button|select)$/i,
-    _lastDragTime = 0,
-    _temp1 = {},
-    _windowProxy = {},
-    _isTouchDevice,
-    _touchEventLookup = {touchstart:"mousedown", touchmove:"mousemove", touchcancel:"mouseup", touchend:"mouseup"},
-    _supportsPassive,
-    _matrix,
-    _point1 = {x:0, y:0},
-    _point2 = {x:0, y:0},
-    _isMultiTouching,
-    _multiTouchID1,
-    _multiTouchID2,
-    _lockAxis,
-    _dragCount = 0,
-    _isAndroid = (function() {
-        try {
-            return (window.navigator.userAgent.toLowerCase().indexOf("android") !== -1);
-        } catch (e) {
-            return false;
-        }
-    })(),
     _lastPointerEventTimeout,
     _synthetic = {},
     _throttledCall = function(func, wait) {
