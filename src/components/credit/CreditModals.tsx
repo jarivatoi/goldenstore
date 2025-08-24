@@ -223,7 +223,7 @@ const CreditModals: React.FC<CreditModalsProps> = ({
                   </button>
                   <button
                     onClick={onConfirmDelete}
-                    disabled={deleteConfirmText !== 'DELETE'}
+                    disabled={deleteConfirmText !== 'Delete'}
                     className="flex-1 px-4 py-2 bg-red-500 text-white rounded-lg hover:bg-red-600 disabled:bg-gray-300 disabled:cursor-not-allowed transition-colors"
                   >
                     Delete Client
@@ -299,7 +299,7 @@ const CreditModals: React.FC<CreditModalsProps> = ({
                   </button>
                   <button
                     onClick={onConfirmDeleteAll}
-                    disabled={deleteAllPasscode !== 'client'}
+                    disabled={deleteAllPasscode !== 'DELETE'}
                     className="flex-1 px-4 py-2 bg-red-500 text-white rounded-lg hover:bg-red-600 disabled:bg-gray-300 disabled:cursor-not-allowed transition-colors"
                   >
                     Delete All Clients
