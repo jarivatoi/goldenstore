@@ -610,7 +610,7 @@ const CategoryCard: React.FC<CategoryCardProps> = ({
   if (isEditing) {
     return (
       <div className="bg-white rounded-lg shadow-md p-4 border border-gray-200 select-none">
-        <div className="space-y-3 select-none">
+        <div className="mb-4 select-none">
           <input
             type="text"
             value={editName}
@@ -623,13 +623,13 @@ const CategoryCard: React.FC<CategoryCardProps> = ({
         <div className="flex gap-2 select-none">
           <button
             onClick={handleSave}
-            className="flex-1 bg-green-500 text-white px-3 py-1 rounded text-sm select-none"
+            className="flex-1 bg-green-500 text-white px-3 py-2 rounded text-sm hover:bg-green-600 transition-colors select-none"
           >
             Save
           </button>
           <button
             onClick={onCancelEdit}
-            className="flex-1 bg-gray-500 text-white px-3 py-1 rounded text-sm select-none"
+            className="flex-1 bg-gray-500 text-white px-3 py-2 rounded text-sm hover:bg-gray-600 transition-colors select-none"
           >
             Cancel
           </button>
