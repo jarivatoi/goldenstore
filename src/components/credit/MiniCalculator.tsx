@@ -275,30 +275,32 @@ const MiniCalculator: React.FC<MiniCalculatorProps> = ({
         >
           {isMinimized ? <Maximize2 size={16} /> : <Minus size={16} />}
         </button>
-        <button
-          onTouchStart={(e) => {
-            e.preventDefault();
-          }}
-          onTouchEnd={(e) => {
-            e.stopPropagation();
-            e.preventDefault();
-            onClose();
-          }}
-          onClick={(e) => {
-            e.stopPropagation();
-            e.preventDefault();
-            onClose();
-          }}
-          className="text-blue-200 hover:text-white transition-colors ml-2"
-          style={{ 
-            touchAction: 'manipulation', 
-            zIndex: 10001,
-            position: 'relative',
-            pointerEvents: 'auto'
-          }}
-        >
-          <X size={16} />
-        </button>
+        {!isMinimized && (
+          <button
+            onTouchStart={(e) => {
+              e.preventDefault();
+            }}
+            onTouchEnd={(e) => {
+              e.stopPropagation();
+              e.preventDefault();
+              onClose();
+            }}
+            onClick={(e) => {
+              e.stopPropagation();
+              e.preventDefault();
+              onClose();
+            }}
+            className="text-blue-200 hover:text-white transition-colors ml-2"
+            style={{ 
+              touchAction: 'manipulation', 
+              zIndex: 10001,
+              position: 'relative',
+              pointerEvents: 'auto'
+            }}
+          >
+            <X size={16} />
+          </button>
+        )}
       </div>
 
       {/* Calculator Display */}
