@@ -90,7 +90,7 @@ export class SupabaseBackupManager {
       }
 
       if (!data || !data.backup_data) {
-        throw new Error('No valid backup found on server. Please create a backup first by using "Export Database" → "Server Backup".');
+        return null;
       }
 
       // Debug logging to understand what we received

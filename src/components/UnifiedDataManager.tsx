@@ -426,6 +426,16 @@ const UnifiedDataManager: React.FC<UnifiedDataManagerProps> = ({ isOpen, onClose
       // Load backup data
       const data = await SupabaseBackupManager.loadFromSupabase();
       
+      if (!data) {
+        setModal({
+          type: 'error',
+          title: 'No Server Backup Found',
+          message: 'No valid backup found on the server. Please create a server backup first or import from a local file.',
+          onConfirm: () => setModal({ type: null, title: '', message: '' })
+        });
+        return;
+      }
+      
       // Count total items for confirmation
       const totalItems = 
         (data.priceList?.items?.length || 0) +
