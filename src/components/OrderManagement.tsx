@@ -491,6 +491,29 @@ const OrderManagement: React.FC = () => {
         />
       )}
 
+      {/* Edit Item Modal */}
+      {showEditItem && editingItem && selectedCategory && (
+        <EditItemModal
+          category={selectedCategory}
+          item={editingItem}
+          onClose={() => {
+            setShowEditItem(false);
+            setEditingItem(null);
+            setEditItemName('');
+            setEditItemPrice('');
+            setEditItemVatPercentage('15');
+          }}
+          onSave={handleEditItem}
+          itemName={editItemName}
+          setItemName={setEditItemName}
+          itemPrice={editItemPrice}
+          setItemPrice={setEditItemPrice}
+          itemVatPercentage={editItemVatPercentage}
+          setItemVatPercentage={setEditItemVatPercentage}
+          isSubmitting={isSubmitting}
+        />
+      )}
+
       {/* Category Delete Confirmation Modal */}
       <ConfirmationModal
         isOpen={showDeleteCategoryModal}
@@ -1662,6 +1685,154 @@ const EditOrderModal: React.FC<EditOrderModalProps> = ({ order, itemTemplates, o
             </div>
           </div>
         </form>
+      </div>
+    </div>
+  );
+};
+
+// Edit Item Modal Component
+interface EditItemModalProps {
+  category: OrderCategory;
+  item: OrderItemTemplate;
+  onClose: () => void;
+  onSave: (item: OrderItemTemplate, newName: string, newPrice: number, isVatNil: boolean) => Promise<void>;
+  itemName: string;
+  setItemName: (name: string) => void;
+  itemPrice: string;
+  setItemPrice: (price: string) => void;
+  itemVatPercentage: string;
+  setItemVatPercentage: (vat: string) => void;
+  isSubmitting: boolean;
+}
+
+const EditItemModal: React.FC<EditItemModalProps> = ({
+  category,
+  item,
+  onClose,
+  onSave,
+  itemName,
+  setItemName,
+  itemPrice,
+  setItemPrice,
+  itemVatPercentage,
+  setItemVatPercentage,
+  isSubmitting
+}) => {
+  const handleSubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
+    
+    if (!itemName.trim()) {
+      alert('Please enter an item name');
+      return;
+    }
+
+    const price = parseFloat(itemPrice);
+    if (isNaN(price) || price < 0) {
+      alert('Please enter a valid price');
+      return;
+    }
+
+    const vatPercent = parseFloat(itemVatPercentage);
+    if (isNaN(vatPercent) || vatPercent < 0 || vatPercent > 100) {
+      alert('Please enter a valid VAT percentage (0-100)');
+      return;
+    }
+
+    try {
+      await onSave(item, itemName.trim(), price, vatPercent === 0);
+    } catch (err) {
+      alert(err instanceof Error ? err.message : 'Failed to update item');
+    }
+  };
+
+  return (
+    <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center p-4 z-50 select-none">
+      <div className="bg-white rounded-xl shadow-lg w-full max-w-md overflow-hidden select-none">
+        <div className="p-6 select-none">
+          <h3 className="text-lg font-semibold text-gray-900 mb-4 select-none">
+            <div className="text-center select-none">Edit Item in {category.name}</div>
+          </h3>
+          
+          <form onSubmit={handleSubmit} className="select-none">
+            <div className="mb-4 select-none">
+              <label className="block text-sm font-medium text-gray-700 mb-2 select-none">
+                Item Name
+              </label>
+              <input
+                type="text"
+                value={itemName}
+                onChange={(e) => {
+                  // Auto-capitalize with unit preservation
+                  const formatted = e.target.value
+                    .split(' ')
+                    .map(word => {
+                      // Check if word is a unit (e.g., 2L, 1.5L, 0.5L)
+                      if (/^\d+(\.\d+)?L$/i.test(word)) {
+                        return word.toUpperCase();
+                      }
+                      // Regular capitalization for other words
+                      return word.charAt(0).toUpperCase() + word.slice(1).toLowerCase();
+                    })
+                    .join(' ');
+                  setItemName(formatted);
+                }}
+                placeholder="e.g., Matinee, Palmal, Rothman"
+                className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 select-text"
+                autoFocus
+              />
+            </div>
+            
+            <div className="mb-4 select-none">
+              <label className="block text-sm font-medium text-gray-700 mb-2 select-none">
+                Unit Price (Rs)
+              </label>
+              <input
+                type="number"
+                value={itemPrice}
+                onChange={(e) => setItemPrice(e.target.value)}
+                min="0"
+                step="0.01"
+                placeholder="0.00"
+                className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 select-text"
+              />
+            </div>
+            
+            <div className="mb-4 select-none">
+              <label className="block text-sm font-medium text-gray-700 mb-2 select-none">
+                VAT (%)
+              </label>
+              <input
+                type="number"
+                value={itemVatPercentage}
+                onChange={(e) => setItemVatPercentage(e.target.value)}
+                min="0"
+                max="100"
+                className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 bg-white select-text"
+              />
+              <p className="text-xs text-gray-500 mt-1 select-none">
+                Enter 0 for VAT Nil items
+              </p>
+            </div>
+            
+            <div className="flex gap-3 select-none">
+              <button
+                type="button"
+                onClick={onClose}
+                disabled={isSubmitting}
+                className="flex-1 px-4 py-2 border border-gray-300 rounded-lg text-gray-700 hover:bg-gray-50 disabled:opacity-50 select-none"
+              >
+                Cancel
+              </button>
+              <button
+                type="submit"
+                disabled={isSubmitting || !itemName.trim() || !itemPrice.trim()}
+                className="flex-1 px-4 py-2 bg-blue-500 text-white rounded-lg hover:bg-blue-600 disabled:opacity-50 select-none"
+              >
+                {isSubmitting ? 'Saving...' : 'Save Changes'}
+              </button>
+            </div>
+          </form>
+        </div>
       </div>
     </div>
   );
