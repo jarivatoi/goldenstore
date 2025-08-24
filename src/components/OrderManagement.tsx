@@ -1692,7 +1692,7 @@ interface EditItemModalProps {
   category: OrderCategory;
   item: OrderItemTemplate;
   onClose: () => void;
-  onSave: (item: OrderItemTemplate, newName: string, newPrice: number, isVatNil: boolean) => Promise<void>;
+  onSave: (item: OrderItemTemplate, newName: string, newPrice: number, isVatNil: boolean, newVatPercentage: number) => Promise<void>;
   itemName: string;
   setItemName: (name: string) => void;
   itemPrice: string;
@@ -1746,8 +1746,8 @@ const EditItemModal: React.FC<EditItemModalProps> = ({
       return;
     }
 
-    onSave(item, itemName.trim(), price, isVatNil, vatPercent);
-      await onSave(item, itemName.trim(), price, vatPercent === 0);
+    try {
+      await onSave(item, itemName.trim(), price, isVatNil, vatPercent);
     } catch (err) {
       alert(err instanceof Error ? err.message : 'Failed to update item');
     }
