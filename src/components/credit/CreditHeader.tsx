@@ -1,5 +1,6 @@
 import React from 'react';
 import { Users, UserCheck, Database, Settings, Download, Upload, ArrowUpDown, Trash2 } from 'lucide-react';
+import MiniCalculatorManager from './MiniCalculatorManager';
 
 interface CreditHeaderProps {
   totalDebtAllClients: number;
@@ -57,6 +58,12 @@ const CreditHeader: React.FC<CreditHeaderProps> = ({
           >
             {!showAllClients ? <UserCheck size={20} /> : <Users size={20} />}
           </button>
+          
+          {/* Mini Calculator Manager */}
+          <MiniCalculatorManager onAddToClient={(amount, description, label) => {
+            // This will be handled by the mini calculator for now
+            console.log('Mini calculator transaction:', { amount, description, label });
+          }} />
           
           <div className="relative">
             <button
