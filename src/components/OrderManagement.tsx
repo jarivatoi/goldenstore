@@ -71,10 +71,6 @@ const OrderManagement: React.FC = () => {
   }, []);
 
   // Get filtered categories
-  const [showEditItem, setShowEditItem] = useState(false);
-  const [editItemName, setEditItemName] = useState('');
-  const [editItemPrice, setEditItemPrice] = useState('');
-  const [editItemVatPercentage, setEditItemVatPercentage] = useState('15');
   const filteredCategories = searchCategories(searchQuery);
 
   // Handle add category
@@ -651,45 +647,50 @@ const CategoryCard: React.FC<CategoryCardProps> = ({
             <div className="p-3 bg-green-50 rounded-lg border border-green-200 h-full flex flex-col justify-center select-none">
               <div className="flex items-center justify-between select-none">
                 <span className="text-sm font-medium text-green-800 select-none">
-                  Rs {latestOrder.totalCost.toLocaleString('en-IN', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
-                </span>
-                <span className="text-xs text-green-600 select-none">
                   {latestOrder.orderDate.toLocaleDateString('en-GB', {
                     day: '2-digit',
                     month: 'short',
                     year: 'numeric'
-                  }).replace(/\s/g, '-')}
+                  })}
                 </span>
               </div>
               <p className="text-xs text-green-600 mt-1 select-none">Latest Order</p>
             </div>
           ) : (
             <div className="h-full flex items-center justify-center select-none">
-              <p className="text-gray-400 text-sm select-none">No orders yet</p>
+              <p className="text-sm text-gray-500 select-none">No orders yet</p>
             </div>
           )}
         </div>
-        
-        <div className="text-sm text-gray-600 mb-4 select-none">
-          <p className="select-none">{itemsCount} items • {ordersCount} orders</p>
+
+        {/* Stats */}
+        <div className="space-y-2 mb-4 select-none">
+          <div className="flex justify-between text-sm select-none">
+            <span className="text-gray-600 select-none">Items:</span>
+            <span className="font-medium select-none">{itemsCount}</span>
+          </div>
+          <div className="flex justify-between text-sm select-none">
+            <span className="text-gray-600 select-none">Orders:</span>
+            <span className="font-medium select-none">{ordersCount}</span>
+          </div>
         </div>
       </div>
-      
-      {/* Buttons at bottom - Fixed position */}
-      <div className="p-4 pt-0 select-none">
+
+      {/* Action buttons - Fixed at bottom */}
+      <div className="p-4 pt-0 mt-auto select-none">
         <div className="flex gap-2 select-none">
           <button
             onClick={onManage}
-            className="flex-1 bg-blue-500 hover:bg-blue-600 text-white py-2 px-4 rounded-md transition-colors flex items-center justify-center gap-1 select-none"
+            className="flex-1 bg-blue-500 text-white px-3 py-2 rounded text-sm hover:bg-blue-600 transition-colors flex items-center justify-center gap-1 select-none"
           >
-            <Edit2 size={16} />
+            <Edit2 size={14} />
             <span className="select-none">Manage</span>
           </button>
           <button
             onClick={onOrder}
-            className="flex-1 bg-green-500 hover:bg-green-600 text-white py-2 px-4 rounded-md transition-colors flex items-center justify-center gap-1 select-none"
+            className="flex-1 bg-green-500 text-white px-3 py-2 rounded text-sm hover:bg-green-600 transition-colors flex items-center justify-center gap-1 select-none"
           >
-            <Plus size={16} />
+            <Plus size={14} />
             <span className="select-none">Order</span>
           </button>
         </div>
@@ -698,21 +699,14 @@ const CategoryCard: React.FC<CategoryCardProps> = ({
   );
 };
 
+// Item Template Card Component
 interface ItemTemplateCardProps {
   item: OrderItemTemplate;
   onEdit: () => void;
   onDelete: () => void;
 }
 
-const ItemTemplateCard: React.FC<ItemTemplateCardProps> = ({
-  item,
-  onEdit,
-  onDelete
-}) => {
-  const [editName, setEditName] = useState(item.name);
-  const [editPrice, setEditPrice] = useState(item.unitPrice.toString());
-  const [editVatNil, setEditVatNil] = useState(item.isVatNil);
-
+const ItemTemplateCard: React.FC<ItemTemplateCardProps> = ({ item, onEdit, onDelete }) => {
   const vatAmount = item.isVatNil ? 0 : (item.unitPrice * item.vatPercentage) / 100;
   const totalPrice = item.unitPrice + vatAmount;
 
@@ -1666,131 +1660,6 @@ const EditOrderModal: React.FC<EditOrderModalProps> = ({ order, itemTemplates, o
             </div>
           </div>
         </form>
-      </div>
-    </div>
-  );
-};
-
-// Edit Item Modal Component
-interface EditItemModalProps {
-  category: OrderCategory;
-  item: OrderItemTemplate;
-  onClose: () => void;
-  onEdit: (e: React.FormEvent) => void;
-  itemName: string;
-  setItemName: (name: string) => void;
-  itemPrice: string;
-  setItemPrice: (price: string) => void;
-  itemVatPercentage: string;
-  setItemVatPercentage: (vat: string) => void;
-  isSubmitting: boolean;
-}
-
-const EditItemModal: React.FC<EditItemModalProps> = ({
-  category,
-  item,
-  onClose,
-  onEdit,
-  itemName,
-  setItemName,
-  itemPrice,
-  setItemPrice,
-  itemVatPercentage,
-  setItemVatPercentage,
-  isSubmitting
-}) => {
-  return (
-    <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center p-4 z-50 select-none">
-      <div className="bg-white rounded-xl shadow-lg w-full max-w-md overflow-hidden select-none">
-        <div className="p-6 select-none">
-          <div className="text-center mb-4 select-none">
-            <h3 className="text-lg font-semibold text-gray-900 select-none">
-              Edit Item in {category.name}
-            </h3>
-          </div>
-          
-          <form onSubmit={onEdit} className="select-none">
-            <div className="mb-4 select-none">
-              <label className="block text-sm font-medium text-gray-700 mb-2 select-none">
-                Item Name
-              </label>
-              <input
-                type="text"
-                value={itemName}
-                onChange={(e) => {
-                  // Auto-capitalize with unit preservation
-                  const formatted = e.target.value
-                    .split(' ')
-                    .map(word => {
-                      // Check if word is a unit (e.g., 2L, 1.5L, 0.5L)
-                      if (/^\d+(\.\d+)?L$/i.test(word)) {
-                        return word.toUpperCase();
-                      }
-                      // Regular capitalization for other words
-                      return word.charAt(0).toUpperCase() + word.slice(1).toLowerCase();
-                    })
-                    .join(' ');
-                  setItemName(formatted);
-                }}
-                placeholder="e.g., Matinee, Palmal, Rothman"
-                className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 select-text"
-                autoFocus
-              />
-            </div>
-            
-            <div className="mb-4 select-none">
-              <label className="block text-sm font-medium text-gray-700 mb-2 select-none">
-                Unit Price (Rs)
-              </label>
-              <input
-                type="number"
-                value={itemPrice}
-                onChange={(e) => setItemPrice(e.target.value)}
-                min="0"
-                step="0.01"
-                placeholder="0.00"
-                className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 bg-white select-text"
-              />
-            </div>
-            
-            <div className="mb-4 select-none">
-              <label className="block text-sm font-medium text-gray-700 mb-2 select-none">
-                VAT (%)
-              </label>
-              <input
-                type="number"
-                value={itemVatPercentage}
-                onChange={(e) => setItemVatPercentage(e.target.value)}
-                min="0"
-                max="100"
-                step="0.01"
-                placeholder="15"
-                className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 bg-white select-text"
-              />
-              <p className="text-xs text-gray-500 mt-1 select-none">
-                Enter 0 for VAT Nil items
-              </p>
-            </div>
-            
-            <div className="flex gap-3 select-none">
-              <button
-                type="button"
-                onClick={onClose}
-                disabled={isSubmitting}
-                className="flex-1 px-4 py-2 border border-gray-300 rounded-lg text-gray-700 hover:bg-gray-50 select-none"
-              >
-                Cancel
-              </button>
-              <button
-                type="submit"
-                disabled={isSubmitting || !itemName.trim() || !itemPrice.trim()}
-                className="flex-1 px-4 py-2 bg-blue-500 text-white rounded-lg hover:bg-blue-600 disabled:opacity-50 select-none"
-              >
-                {isSubmitting ? 'Updating...' : 'Update Item'}
-              </button>
-            </div>
-          </form>
-        </div>
       </div>
     </div>
   );
