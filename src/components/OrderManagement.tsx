@@ -1159,13 +1159,21 @@ const AddItemModal: React.FC<AddItemModalProps> = ({
               </label>
               <input
                 type="number"
-                value={vatPercentage}
-                onChange={(e) => setVatPercentage(e.target.value)}
+               value={newItemVatPercentage}
+               onChange={(e) => {
+                 const value = e.target.value;
+                 // Allow empty string for clearing, or valid numbers
+                 if (value === '' || (!isNaN(parseFloat(value)) && parseFloat(value) >= 0 && parseFloat(value) <= 100)) {
+                   setNewItemVatPercentage(value);
+                 }
+               }}
                 min="0"
                 max="100"
                 step="0.01"
                 placeholder="15"
-                className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 select-text"
+               className="w-full px-4 py-3 text-lg border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 select-text"
+               inputMode="decimal"
+               pattern="[0-9]*\.?[0-9]*"
               />
               <p className="text-xs text-gray-500 mt-1 select-none">
                 Enter 0 for VAT Nil items
