@@ -8,7 +8,7 @@ import CreditCalculator from './credit/CreditCalculator';
 import CreditHeader from './credit/CreditHeader';
 import ClientGrid from './credit/ClientGrid';
 import CreditModals from './credit/CreditModals';
-import MiniCalculatorManager from './credit/MiniCalculatorManager';
+import MiniCalculator from './credit/MiniCalculator';
 import { Client } from '../types';
 import { processCalculatorInput, evaluateExpression } from '../utils/creditCalculatorUtils';
 import { exportCompleteDatabase, importCompleteDatabase } from '../utils/creditDataUtils';
@@ -52,6 +52,13 @@ const CreditManagement: React.FC = () => {
   // Delete all clients modal state
   const [showDeleteAllConfirm, setShowDeleteAllConfirm] = useState(false);
   const [deleteAllPasscode, setDeleteAllPasscode] = useState('');
+  
+  // Mini calculator state
+  const [miniCalculators, setMiniCalculators] = useState<Array<{
+    id: string;
+    label: string;
+    position: { x: number; y: number };
+  }>>([]);
 
   // Listen for credit data changes to force re-render
   useEffect(() => {
@@ -562,6 +569,33 @@ const CreditManagement: React.FC = () => {
     setIsCalculatorActive(false);
     setShowClientSearch(false);
   };
+  
+  // Mini calculator functions
+  const createMiniCalculator = () => {
+    const baseX = 100;
+    const baseY = 150;
+    const offset = miniCalculators.length * 40;
+    
+    const newCalculator = {
+      id: `mini-calc-${Date.now()}-${Math.random().toString(36).substr(2, 9)}`,
+      label: `Quick Calc ${miniCalculators.length + 1}`,
+      position: { 
+        x: baseX + offset, 
+        y: baseY + offset 
+      }
+    };
+
+    setMiniCalculators(prev => [...prev, newCalculator]);
+  };
+
+  const closeMiniCalculator = (id: string) => {
+    setMiniCalculators(prev => prev.filter(calc => calc.id !== id));
+  };
+
+  const handleMiniCalculatorTransaction = async (amount: number, description: string, label: string) => {
+    // For now, just show an alert - in future this could open client search
+    alert(`Transaction from ${label}:\nAmount: Rs ${amount.toFixed(2)}\nDescription: ${description}\n\nNote: This would normally open the client search modal to select a client.`);
+  };
 
   const handleAddToClient = async (client: Client, description: string) => {
     try {
@@ -708,15 +742,222 @@ const CreditManagement: React.FC = () => {
         </div>
 
         {/* Right Side - Calculator Section */}
-        <CreditCalculator
-          calculatorValue={calculatorValue}
-          calculatorMemory={calculatorMemory}
-          linkedClient={linkedClient}
-          onCalculatorInput={handleCalculatorInput}
-          onCalculatorCancel={handleCalculatorCancel}
-          onAddToClient={() => setShowClientSearch(true)}
-          isDisabled={calculatorValue === 'Error'}
-        />
+        <div className="w-full lg:w-80 bg-white rounded-lg shadow-lg p-4 lg:p-6 order-1 lg:order-2 flex flex-col">
+          {/* Calculator Header - Clickable */}
+          <div 
+            className="flex items-center gap-2 mb-4 cursor-pointer hover:bg-gray-50 p-2 rounded-lg transition-colors"
+            onClick={createMiniCalculator}
+            title="Click to create floating mini calculator"
+          >
+            <div className="bg-blue-100 p-2 rounded-full">
+              <Calculator size={24} className="text-blue-600" />
+            </div>
+            <div className="flex-1">
+              <h3 className="text-lg lg:text-xl font-semibold text-gray-800">Calculator</h3>
+              <p className="text-xs text-gray-500">Click to create mini calculator</p>
+            </div>
+            {linkedClient && (
+              <>
+                <p className="text-xs lg:text-sm text-green-600 font-medium">
+                  Adding to: {linkedClient.name}
+                </p>
+                <button
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    handleCalculatorCancel();
+                  }}
+                  className="text-gray-500 hover:text-gray-700 transition-colors"
+                  title="Cancel link to client"
+                >
+                  <X size={20} />
+                </button>
+              </>
+            )}
+          </div>
+
+          {/* Calculator Display */}
+          <div className="mb-4">
+            <div className="bg-gray-100 rounded-lg p-4 text-right relative">
+              {calculatorMemory !== 0 && (
+                <div className="absolute top-2 left-3 text-xs text-blue-600 font-semibold">
+                  M
+                </div>
+              )}
+              <div className="text-xl sm:text-2xl font-mono text-gray-800 min-h-[2rem] flex items-center justify-end overflow-hidden">
+                <div className="truncate max-w-full" title={calculatorValue}>
+                  {calculatorValue}
+                </div>
+              </div>
+            </div>
+          </div>
+
+          {/* Calculator Buttons */}
+          <div className="grid grid-cols-5 gap-2 mb-4">
+            {/* Row 0 - Memory Functions */}
+            <button
+              onClick={() => handleCalculatorInput('M+')}
+              className="bg-purple-500 hover:bg-purple-600 text-white p-3 rounded-lg font-semibold text-sm"
+            >
+              M+
+            </button>
+            <button
+              onClick={() => handleCalculatorInput('MR')}
+              className="bg-purple-500 hover:bg-purple-600 text-white p-3 rounded-lg font-semibold text-sm"
+            >
+              MR
+            </button>
+            <button
+              onClick={() => handleCalculatorInput('MC')}
+              className="bg-purple-500 hover:bg-purple-600 text-white p-3 rounded-lg font-semibold text-sm"
+            >
+              MC
+            </button>
+            <button
+              onClick={() => handleCalculatorInput('CE')}
+              className="bg-orange-500 hover:bg-orange-600 text-white p-3 rounded-lg font-semibold text-sm"
+            >
+              CE
+            </button>
+            <button
+              onClick={() => handleCalculatorInput('C')}
+              className="bg-red-500 hover:bg-red-600 text-white p-3 rounded-lg font-semibold text-sm"
+            >
+              C
+            </button>
+
+            {/* Row 1 */}
+            <button
+              onClick={() => handleCalculatorInput('7')}
+              className="bg-gray-200 hover:bg-gray-300 text-gray-800 p-4 rounded-lg font-semibold text-lg"
+            >
+              7
+            </button>
+            <button
+              onClick={() => handleCalculatorInput('8')}
+              className="bg-gray-200 hover:bg-gray-300 text-gray-800 p-3 rounded-lg font-semibold"
+            >
+              8
+            </button>
+            <button
+              onClick={() => handleCalculatorInput('9')}
+              className="bg-gray-200 hover:bg-gray-300 text-gray-800 p-3 rounded-lg font-semibold"
+            >
+              9
+            </button>
+            <button
+              onClick={() => handleCalculatorInput('/')}
+              className="bg-blue-500 hover:bg-blue-600 text-white p-3 rounded-lg font-semibold"
+            >
+              ÷
+            </button>
+            <button
+              onClick={() => handleCalculatorInput('⌫')}
+              className="bg-gray-500 hover:bg-gray-600 text-white p-3 rounded-lg font-semibold"
+            >
+              ⌫
+            </button>
+
+            {/* Row 2 */}
+            <button
+              onClick={() => handleCalculatorInput('4')}
+              className="bg-gray-200 hover:bg-gray-300 text-gray-800 p-3 rounded-lg font-semibold"
+            >
+              4
+            </button>
+            <button
+              onClick={() => handleCalculatorInput('5')}
+              className="bg-gray-200 hover:bg-gray-300 text-gray-800 p-3 rounded-lg font-semibold"
+            >
+              5
+            </button>
+            <button
+              onClick={() => handleCalculatorInput('6')}
+              className="bg-gray-200 hover:bg-gray-300 text-gray-800 p-3 rounded-lg font-semibold"
+            >
+              6
+            </button>
+            <button
+              onClick={() => handleCalculatorInput('*')}
+              className="bg-blue-500 hover:bg-blue-600 text-white p-3 rounded-lg font-semibold"
+            >
+              ×
+            </button>
+            <button
+              onClick={() => handleCalculatorInput('-')}
+              className="bg-blue-500 hover:bg-blue-600 text-white p-3 rounded-lg font-semibold row-span-2"
+            >
+              −
+            </button>
+
+            {/* Row 3 */}
+            <button
+              onClick={() => handleCalculatorInput('1')}
+              className="bg-gray-200 hover:bg-gray-300 text-gray-800 p-3 rounded-lg font-semibold"
+            >
+              1
+            </button>
+            <button
+              onClick={() => handleCalculatorInput('2')}
+              className="bg-gray-200 hover:bg-gray-300 text-gray-800 p-3 rounded-lg font-semibold"
+            >
+              2
+            </button>
+            <button
+              onClick={() => handleCalculatorInput('3')}
+              className="bg-gray-200 hover:bg-gray-300 text-gray-800 p-3 rounded-lg font-semibold"
+            >
+              3
+            </button>
+            <button
+              onClick={() => handleCalculatorInput('+')}
+              className="bg-blue-500 hover:bg-blue-600 text-white p-3 rounded-lg font-semibold row-span-2"
+            >
+              +
+            </button>
+
+            {/* Row 4 */}
+            <button
+              onClick={() => handleCalculatorInput('0')}
+              className="bg-gray-200 hover:bg-gray-300 text-gray-800 p-3 rounded-lg font-semibold col-span-2"
+            >
+              0
+            </button>
+            <button
+              onClick={() => handleCalculatorInput('.')}
+              className="bg-gray-200 hover:bg-gray-300 text-gray-800 p-3 rounded-lg font-semibold"
+            >
+              .
+            </button>
+            <button
+              onClick={() => handleCalculatorInput('=')}
+              className="bg-green-500 hover:bg-green-600 text-white p-3 rounded-lg font-semibold"
+            >
+              =
+            </button>
+          </div>
+
+          {/* Add Button */}
+          <button
+            onClick={() => setShowClientSearch(true)}
+            disabled={calculatorValue === 'Error'}
+            className={`w-full ${linkedClient ? 'bg-blue-500 hover:bg-blue-600' : 'bg-green-500 hover:bg-green-600'} disabled:bg-gray-300 disabled:cursor-not-allowed text-white p-4 rounded-lg font-semibold text-lg flex items-center justify-center gap-2`}
+          >
+            <Plus size={20} />
+            {linkedClient ? `Add to ${linkedClient.name}` : 'Add to Client'}
+          </button>
+        </div>
+
+        {/* Render Mini Calculators */}
+        {miniCalculators.map((calc) => (
+          <MiniCalculator
+            key={calc.id}
+            id={calc.id}
+            initialLabel={calc.label}
+            initialPosition={calc.position}
+            onClose={() => closeMiniCalculator(calc.id)}
+            onAddToClient={handleMiniCalculatorTransaction}
+          />
+        ))}
       </div>
 
       {/* Modals */}

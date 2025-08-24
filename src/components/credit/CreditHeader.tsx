@@ -61,19 +61,6 @@ const CreditHeader: React.FC<CreditHeaderProps> = ({
             {!showAllClients ? <UserCheck size={20} /> : <Users size={20} />}
           </button>
           
-          {/* Mini Calculator Manager */}
-          <MiniCalculatorManager 
-            onAddToClient={async (amount, description, label) => {
-              try {
-                const mockClient = { id: 'temp', name: 'Temp Client' };
-                await onAddToClientFromMini(mockClient, description);
-              } catch (error) {
-                console.error('Mini calculator transaction failed:', error);
-                alert(`Failed to add transaction from ${label}`);
-              }
-            }} 
-          />
-          
           <button
             onClick={onShowUnifiedDataManager}
             className="p-2 text-gray-600 hover:text-gray-800 hover:bg-gray-100 rounded-lg transition-colors"
