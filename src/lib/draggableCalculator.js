@@ -375,9 +375,25 @@ export class DraggableCalculator {
         this.lastY = currentY;
         this.lastTime = currentTime;
         
-        // Update position - free movement, no bounds
+        // Calculate new position
         let newX = this.x + this.deltaX;
         let newY = this.y + this.deltaY;
+        
+        // Get calculator dimensions for boundary calculations
+        const rect = this.target.getBoundingClientRect();
+        const calcWidth = rect.width;
+        const calcHeight = rect.height;
+        
+        // Define screen boundaries with padding
+        const padding = 20; // Keep 20px visible on all sides
+        const minX = -(calcWidth - padding); // Left boundary (keep right edge visible)
+        const maxX = window.innerWidth - padding; // Right boundary (keep left edge visible)
+        const minY = -(calcHeight - padding); // Top boundary (keep bottom edge visible)
+        const maxY = window.innerHeight - padding; // Bottom boundary (keep top edge visible)
+        
+        // Apply screen boundaries during drag
+        newX = Math.max(minX, Math.min(maxX, newX));
+        newY = Math.max(minY, Math.min(maxY, newY));
         
         gsap.set(this.target, { x: newX, y: newY });
         
@@ -436,10 +452,17 @@ export class DraggableCalculator {
         let throwX = (this.velocityX * velocityMultiplier) / this.throwResistance;
         let throwY = (this.velocityY * velocityMultiplier) / this.throwResistance;
         
-        // Limit maximum throw distance to prevent calculator from flying off screen
-        let maxThrow = 1200; // Much larger throw distance
-        throwX = Math.max(-maxThrow, Math.min(maxThrow, throwX));
-        throwY = Math.max(-maxThrow, Math.min(maxThrow, throwY));
+        // Get calculator dimensions for boundary calculations
+        const rect = this.target.getBoundingClientRect();
+        const calcWidth = rect.width;
+        const calcHeight = rect.height;
+        
+        // Define screen boundaries with padding
+        const padding = 20; // Keep 20px visible on all sides
+        const minX = -(calcWidth - padding); // Left boundary (keep right edge visible)
+        const maxX = window.innerWidth - padding; // Right boundary (keep left edge visible)
+        const minY = -(calcHeight - padding); // Top boundary (keep bottom edge visible)
+        const maxY = window.innerHeight - padding; // Bottom boundary (keep top edge visible)
         
         // Calculate duration based on velocity
         let maxVelocity = Math.max(Math.abs(this.velocityX), Math.abs(this.velocityY));
@@ -449,25 +472,9 @@ export class DraggableCalculator {
         let finalX = this.x + throwX;
         let finalY = this.y + throwY;
         
-        // Keep calculator within reasonable screen bounds (soft bounds - can go slightly off screen)
-        let screenPadding = 100; // Allow some off screen movement
-        let maxX = window.innerWidth + screenPadding;
-        let minX = -screenPadding;
-        let maxY = window.innerHeight + screenPadding;
-        let minY = -screenPadding;
-        
-        // Apply soft bounds (gentle bounce back if too far off screen)
-        if (finalX > maxX) {
-            finalX = maxX - (finalX - maxX) * 0.3; // Gentle bounce back (70% momentum preserved)
-        } else if (finalX < minX) {
-            finalX = minX - (finalX - minX) * 0.3; // Gentle bounce back (70% momentum preserved)
-        }
-        
-        if (finalY > maxY) {
-            finalY = maxY - (finalY - maxY) * 0.3; // Gentle bounce back (70% momentum preserved)
-        } else if (finalY < minY) {
-            finalY = minY - (finalY - minY) * 0.3; // Gentle bounce back (70% momentum preserved)
-        }
+        // Apply strict screen boundaries (calculator always stays visible)
+        finalX = Math.max(minX, Math.min(maxX, finalX));
+        finalY = Math.max(minY, Math.min(maxY, finalY));
         
         // Apply momentum animation with bounce-back if needed
         gsap.to(this.target, {
