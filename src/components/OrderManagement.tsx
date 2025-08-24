@@ -59,8 +59,6 @@ const OrderManagement: React.FC = () => {
   const [editItemVatPercentage, setEditItemVatPercentage] = useState('15');
   const [showDeleteItemModal, setShowDeleteItemModal] = useState(false);
   const [itemToDelete, setItemToDelete] = useState<OrderItemTemplate | null>(null);
-  const [showDeleteItemModal, setShowDeleteItemModal] = useState(false);
-  const [itemToDelete, setItemToDelete] = useState<OrderItemTemplate | null>(null);
   React.useEffect(() => {
     const handleDuplicateOrderEvent = (event: CustomEvent) => {
       setDuplicateOrderInfo(event.detail);
@@ -174,7 +172,6 @@ const OrderManagement: React.FC = () => {
     
     try {
       await deleteCategory(categoryToDelete.id);
-      await updateItemTemplate(editingItem.id, editItemName.trim(), price, vatPercent === 0, vatPercent);
       setShowDeleteCategoryModal(false);
       setCategoryToDelete(null);
     } catch (error) {
@@ -225,15 +222,6 @@ const OrderManagement: React.FC = () => {
     
     try {
       await deleteItemTemplate(itemToDelete.id);
-    setItemToDelete(item);
-    setShowDeleteItemModal(true);
-  };
-
-  const confirmDeleteItem = async () => {
-    if (!itemToDelete) return;
-    
-    try {
-      await deleteItemTemplate(itemToDelete.id);
       setShowDeleteItemModal(false);
       setItemToDelete(null);
     } catch (error) {
@@ -247,10 +235,6 @@ const OrderManagement: React.FC = () => {
     }
   };
 
-  const cancelDeleteItem = () => {
-    setShowDeleteItemModal(false);
-    setItemToDelete(null);
-  };
   const cancelDeleteItem = () => {
     setShowDeleteItemModal(false);
     setItemToDelete(null);
@@ -585,17 +569,6 @@ const OrderManagement: React.FC = () => {
       />
 
       {/* Item Template Delete Confirmation Modal */}
-      <ConfirmationModal
-        isOpen={showDeleteItemModal}
-        title="Delete Item"
-        message={itemToDelete ? `Are you sure you want to delete "${itemToDelete.name}"?\n\nThis will also remove this item from all existing orders in this category.\n\nThis action cannot be undone.` : ''}
-        confirmText="Delete Item"
-        cancelText="Cancel"
-        type="danger"
-        onConfirm={confirmDeleteItem}
-        onCancel={cancelDeleteItem}
-      />
-
       <ConfirmationModal
         isOpen={showDeleteItemModal}
         title="Delete Item"
