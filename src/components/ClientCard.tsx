@@ -260,6 +260,8 @@ const ClientCard: React.FC<ClientCardProps> = ({ client, onLongPress, onQuickAdd
   const [currentX, setCurrentX] = useState(0);
   const longPressTimer = useRef<NodeJS.Timeout | null>(null);
   const cardRef = useRef<HTMLDivElement>(null);
+  const lastTapRef = useRef<number>(0);
+  const tapCountRef = useRef<number>(0);
 
   const totalDebt = getClientTotalDebt(client.id);
   const bottlesOwed = getClientBottlesOwed(client.id);
@@ -285,6 +287,27 @@ const ClientCard: React.FC<ClientCardProps> = ({ client, onLongPress, onQuickAdd
     if (longPressTimer.current) {
       clearTimeout(longPressTimer.current);
     }
+    
+    // Handle double tap for iPhone
+    const now = Date.now();
+    const timeSinceLastTap = now - lastTapRef.current;
+    
+    if (timeSinceLastTap < 300 && timeSinceLastTap > 0) {
+      // Double tap detected
+      tapCountRef.current += 1;
+      if (tapCountRef.current === 2) {
+        setShowActions(true);
+        tapCountRef.current = 0;
+      }
+    } else {
+      // Single tap or first tap of potential double tap
+      tapCountRef.current = 1;
+      setTimeout(() => {
+        tapCountRef.current = 0;
+      }, 300);
+    }
+    
+    lastTapRef.current = now;
   };
 
   // Mouse event handlers for desktop
