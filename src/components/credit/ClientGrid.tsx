@@ -173,9 +173,21 @@ const ClientGrid: React.FC<ClientGridProps> = ({
           <h3 className="text-sm font-medium text-gray-700">
             {showAllClients ? 'All Clients' : 'Active Clients'}
           </h3>
-          <span className="text-xs text-gray-500 bg-gray-100 px-2 py-1 rounded-full">
-            {clients.length} client{clients.length !== 1 ? 's' : ''}
-          </span>
+          <div className="flex items-center gap-2">
+            <span className="text-xs text-gray-500 bg-gray-100 px-2 py-1 rounded-full">
+              {clients.length} client{clients.length !== 1 ? 's' : ''}
+            </span>
+            <button
+              onClick={onToggleAllClients}
+              className={`text-xs px-2 py-1 rounded-full transition-colors ${
+                showAllClients 
+                  ? 'bg-blue-100 text-blue-700 font-medium' 
+                  : 'bg-gray-100 text-gray-600 hover:bg-gray-200'
+              }`}
+            >
+              {showAllClients ? 'Active' : 'All'}
+            </button>
+          </div>
         </div>
       </div>
 
