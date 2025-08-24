@@ -63,10 +63,10 @@ const MiniCalculator: React.FC<MiniCalculatorProps> = ({
     // Create draggable calculator instance with momentum and free movement
     draggableRef.current = DraggableCalculator.create(element, {
       trigger: ".drag-handle",
-      inertia: true,
-      throwResistance: 1000,
-      maxDuration: 3,
-      minDuration: 0.1,
+      inertia: true, // Enable momentum
+      throwResistance: 30, // Lower = more momentum
+      maxDuration: 3, // Maximum momentum duration
+      minDuration: 0.3, // Minimum momentum duration
       onDragStart: function() {
         // Bring to front during drag
         gsap.set(element, { zIndex: 10000 });
