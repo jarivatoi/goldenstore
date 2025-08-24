@@ -64,13 +64,19 @@ const MiniCalculator: React.FC<MiniCalculatorProps> = ({
     // Create draggable instance
     draggableRef.current = Draggable.create(element, {
       type: "x,y",
-      bounds: "body",
-      edgeResistance: 0.8,
+      bounds: window,
+      edgeResistance: 0.1,
       inertia: true,
-      cursor: "grab",
-      activeCursor: "grabbing",
-      dragClickables: false, // Prevent dragging when clicking buttons
+      cursor: "move",
+      activeCursor: "move",
+      dragClickables: false,
       trigger: ".drag-handle", // Only drag from the header
+      throwProps: {
+        resistance: 300
+      },
+      snap: false,
+      lockAxis: false,
+      allowEventDefault: false,
       onDragStart: function() {
         gsap.set(element, { zIndex: 1000 });
       },
