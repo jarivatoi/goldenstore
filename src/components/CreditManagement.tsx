@@ -745,22 +745,23 @@ const CreditManagement: React.FC = () => {
         {/* Right Side - Calculator Section */}
         <div className="w-full lg:w-80 bg-white rounded-lg shadow-lg p-4 lg:p-6 order-1 lg:order-2 flex flex-col">
           {/* Calculator Header - Clickable */}
-          <div 
-            className="flex items-center gap-2 mb-4 cursor-pointer hover:bg-gray-50 p-2 rounded-lg transition-colors"
-            onClick={(e) => {
-              e.preventDefault();
-              e.stopPropagation();
-              console.log('🧮 Calculator header clicked!');
-              createMiniCalculator();
-            }}
-            title="Click to create floating mini calculator"
-          >
-            <div className="bg-blue-100 p-2 rounded-full">
-              <Calculator size={24} className="text-blue-600" />
-            </div>
-            <div className="flex-1">
+          <div className="flex items-center gap-2 mb-4">
+            <button
+              className="flex items-center gap-2 cursor-pointer hover:bg-gray-50 p-2 rounded-lg transition-colors"
+              onClick={(e) => {
+                e.preventDefault();
+                e.stopPropagation();
+                console.log('🧮 Calculator header clicked!');
+                createMiniCalculator();
+              }}
+              title="Click to create floating mini calculator"
+            >
+              <div className="bg-blue-100 p-2 rounded-full">
+                <Calculator size={24} className="text-blue-600" />
+              </div>
               <h3 className="text-lg lg:text-xl font-semibold text-gray-800">Calculator +</h3>
-            </div>
+            </button>
+            <div className="flex-1"></div>
             {linkedClient && (
               <>
                 <p className="text-xs lg:text-sm text-green-600 font-medium">
