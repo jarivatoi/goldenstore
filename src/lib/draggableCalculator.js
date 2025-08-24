@@ -359,8 +359,9 @@ export class DraggableCalculator {
         // Calculate velocity for inertia
         let timeDelta = currentTime - this.lastTime;
         if (timeDelta > 0) {
-            this.velocityX = (currentX - this.lastX) / timeDelta;
-            this.velocityY = (currentY - this.lastY) / timeDelta;
+            // Calculate velocity in pixels per millisecond, then scale up for better momentum
+            this.velocityX = ((currentX - this.lastX) / timeDelta) * 10; // Scale up velocity
+            this.velocityY = ((currentY - this.lastY) / timeDelta) * 10; // Scale up velocity
         }
         
         this.lastX = currentX;
@@ -407,8 +408,8 @@ export class DraggableCalculator {
         this.x = matrix.m41 || 0;
         this.y = matrix.m42 || 0;
         
-        // Apply inertia/momentum if enabled and there's sufficient velocity
-        if (this.inertia && wasDragging && (Math.abs(this.velocityX) > 0.5 || Math.abs(this.velocityY) > 0.5)) {
+        // Apply inertia/momentum if enabled and there's sufficient velocity (much lower threshold)
+        if (this.inertia && wasDragging && (Math.abs(this.velocityX) > 0.01 || Math.abs(this.velocityY) > 0.01)) {
             this._applyInertia();
         } else {
             // Reset z-index after a delay
@@ -424,18 +425,18 @@ export class DraggableCalculator {
     
     _applyInertia() {
         // Calculate throw distance based on velocity and resistance (enhanced formula)
-        let velocityMultiplier = 500; // Maximum momentum distance
+        let velocityMultiplier = 2000; // Much higher momentum distance
         let throwX = (this.velocityX * velocityMultiplier) / this.throwResistance;
         let throwY = (this.velocityY * velocityMultiplier) / this.throwResistance;
         
-        // Limit maximum throw distance to prevent calculator from flying off screen
-        let maxThrow = 800; // Much larger throw distance
+        // Limit maximum throw distance but allow very long throws
+        let maxThrow = 2000; // Massive throw distance
         throwX = Math.max(-maxThrow, Math.min(maxThrow, throwX));
         throwY = Math.max(-maxThrow, Math.min(maxThrow, throwY));
         
         // Calculate duration based on velocity
         let maxVelocity = Math.max(Math.abs(this.velocityX), Math.abs(this.velocityY));
-        let duration = Math.max(this.minDuration, Math.min(this.maxDuration, maxVelocity / 20)); // Longer momentum duration
+        let duration = Math.max(this.minDuration, Math.min(this.maxDuration, maxVelocity / 5)); // Much longer momentum duration
         
         // Final position after throw
         let finalX = this.x + throwX;
