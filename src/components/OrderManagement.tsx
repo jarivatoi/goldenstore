@@ -1709,6 +1709,9 @@ const EditOrderModal: React.FC<EditOrderModalProps> = ({ order, itemTemplates, o
                         type="checkbox"
                         checked={item.isAvailable}
                         onChange={(e) => updateOrderItem(item.id, 'isAvailable', e.target.checked)}
+                        className="w-4 h-4"
+                      />
+                    </div>
                   </div>
                 ))}
               </div>
