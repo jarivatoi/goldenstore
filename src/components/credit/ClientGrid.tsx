@@ -166,6 +166,12 @@ const ClientGrid: React.FC<ClientGridProps> = ({
     };
   }, [clients.length]); // Recalculate when number of clients changes
 
+  const handleQuickAdd = (client: Client) => {
+    onQuickAdd(client);
+    // Auto-scroll to top to access calculator
+    window.scrollTo({ top: 0, behavior: 'smooth' });
+  };
+
   return (
     <div className="bg-white rounded-lg shadow-sm border border-gray-200 mb-4">
       {/* Header */}
@@ -229,7 +235,7 @@ const ClientGrid: React.FC<ClientGridProps> = ({
                   key={client.id}
                   client={client}
                   onLongPress={() => onClientLongPress(client)}
-                  onQuickAdd={onQuickAdd}
+                  onQuickAdd={handleQuickAdd}
                   onResetCalculator={onResetCalculator}
                   isLinked={linkedClient?.id === client.id}
                 />
