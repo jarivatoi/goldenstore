@@ -1,6 +1,6 @@
 import React, { useState, useRef, useEffect } from 'react';
 import { createPortal } from 'react-dom';
-import { X, Edit2, Check, Calculator, Plus } from 'lucide-react';
+import { X, Edit2, Check, Calculator, Plus, Minus, Maximize2 } from 'lucide-react';
 import { gsap } from 'gsap';
 import { DraggableCalculator } from '../../lib/draggableCalculator.js';
 import { processCalculatorInput, evaluateExpression } from '../../utils/creditCalculatorUtils';
@@ -38,6 +38,7 @@ const MiniCalculator: React.FC<MiniCalculatorProps> = ({
   const [error, setError] = useState('');
   const [showClientSearch, setShowClientSearch] = useState(false);
   const [isVisible, setIsVisible] = useState(false);
+  const [isMinimized, setIsMinimized] = useState(false);
   
   const calculatorRef = useRef<HTMLDivElement>(null);
   const draggableRef = useRef<DraggableCalculator | null>(null);
@@ -140,12 +141,13 @@ const MiniCalculator: React.FC<MiniCalculatorProps> = ({
       ref={calculatorRef}
       className="fixed bg-white rounded-lg shadow-2xl border border-gray-300 select-none"
       style={{
-        width: '280px',
+        width: isMinimized ? '200px' : '280px',
         zIndex: 9999,
-        maxHeight: '90vh',
+        maxHeight: isMinimized ? 'auto' : '90vh',
         overflow: 'hidden',
         left: 0,
-        top: 0
+        top: 0,
+        transition: 'width 0.3s ease-in-out'
       }}
       onTouchStart={(e) => {
         // Allow dragging only if not clicking on buttons
@@ -255,6 +257,31 @@ const MiniCalculator: React.FC<MiniCalculatorProps> = ({
           onTouchEnd={(e) => {
             e.stopPropagation();
             e.preventDefault();
+            setIsMinimized(!isMinimized);
+          }}
+          onClick={(e) => {
+            e.stopPropagation();
+            e.preventDefault();
+            setIsMinimized(!isMinimized);
+          }}
+          className="text-blue-200 hover:text-white transition-colors ml-2"
+          style={{ 
+            touchAction: 'manipulation', 
+            zIndex: 10001,
+            position: 'relative',
+            pointerEvents: 'auto'
+          }}
+          title={isMinimized ? 'Maximize calculator' : 'Minimize calculator'}
+        >
+          {isMinimized ? <Maximize2 size={16} /> : <Minus size={16} />}
+        </button>
+        <button
+          onTouchStart={(e) => {
+            e.preventDefault();
+          }}
+          onTouchEnd={(e) => {
+            e.stopPropagation();
+            e.preventDefault();
             onClose();
           }}
           onClick={(e) => {
@@ -275,7 +302,14 @@ const MiniCalculator: React.FC<MiniCalculatorProps> = ({
       </div>
 
       {/* Calculator Display */}
-      <div className="p-3 bg-gray-50">
+      <div 
+        className="bg-gray-50 overflow-hidden transition-all duration-300 ease-in-out"
+        style={{
+          maxHeight: isMinimized ? '0px' : '200px',
+          padding: isMinimized ? '0 12px' : '12px',
+          opacity: isMinimized ? 0 : 1
+        }}
+      >
         <div className="bg-gray-100 rounded-lg p-3 text-right relative">
           {calculatorMemory !== 0 && (
             <div className="absolute top-1 left-2 text-xs text-blue-600 font-semibold">
@@ -291,7 +325,14 @@ const MiniCalculator: React.FC<MiniCalculatorProps> = ({
       </div>
 
       {/* Calculator Buttons */}
-      <div className="p-3 bg-white">
+      <div 
+        className="bg-white overflow-hidden transition-all duration-300 ease-in-out"
+        style={{
+          maxHeight: isMinimized ? '0px' : '500px',
+          padding: isMinimized ? '0 12px' : '12px',
+          opacity: isMinimized ? 0 : 1
+        }}
+      >
         <div className="grid grid-cols-4 gap-1 mb-3">
           {/* Row 1 */}
           <button
