@@ -306,7 +306,7 @@ const OrderManagement: React.FC = () => {
                   </button>
                 </div>
               </form>
-            </div>
+            )}
           </>
         ) : (
           // Category Detail View
