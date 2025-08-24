@@ -2,7 +2,7 @@ import React, { useEffect, useRef } from 'react';
 import { useCallback } from 'react';
 import { gsap } from 'gsap';
 import { Draggable } from '../../lib/draggable.js';
-import { Bot as Bottle, X } from 'lucide-react';
+import { Bot as Bottle } from 'lucide-react';
 import { Client } from '../../types';
 import ClientActionModal from '../ClientActionModal';
 import ClientDetailModal from '../ClientDetailModal';
@@ -50,13 +50,6 @@ const ScrollingTabs: React.FC<ScrollingTabsProps> = ({
   const { getClientTransactions } = useCredit();
   const dragHasExceededThreshold = useRef(false);
   const [forceUpdate, setForceUpdate] = React.useState(0);
-  
-  // Test controls state
-  const [showTestControls, setShowTestControls] = React.useState(false);
-  const [testTransition, setTestTransition] = React.useState('scroll-transition-smooth');
-  const [forceShakeTest, setForceShakeTest] = React.useState(false);
-  const tapCountRef = useRef(0);
-  const lastTapTimeRef = useRef(0);
   
   // Listen for credit data changes to force re-render
   React.useEffect(() => {
@@ -394,20 +387,6 @@ const ScrollingTabs: React.FC<ScrollingTabsProps> = ({
           className={`overflow-hidden py-4 w-full h-30 flex items-center relative z-10 ${
             isBigCard ? 'overflow-x-auto' : ''
           }`}
-          onTouchStart={(e) => {
-            // Triple tap detection for test controls
-            const now = Date.now();
-            if (now - lastTapTimeRef.current < 500) {
-              tapCountRef.current += 1;
-              if (tapCountRef.current >= 3) {
-                setShowTestControls(!showTestControls);
-                tapCountRef.current = 0;
-              }
-            } else {
-              tapCountRef.current = 1;
-            }
-            lastTapTimeRef.current = now;
-          }}
           style={{
             height: '116px',
             // Remove snap behavior for big card
@@ -420,7 +399,7 @@ const ScrollingTabs: React.FC<ScrollingTabsProps> = ({
         >
           <div 
             ref={contentRef}
-            className={`flex gap-6 whitespace-nowrap relative z-10 ${testTransition}`}
+            className="flex gap-6 whitespace-nowrap relative z-10"
             style={{ 
               minWidth: 'max-content',
               // Remove snap behavior for big card
@@ -587,7 +566,7 @@ const ScrollingTabs: React.FC<ScrollingTabsProps> = ({
                       ? 'bg-blue-50 border-blue-200 shadow-md'
                       : isDragging
                         ? getCardBackgroundColor()
-                        : `${getCardBackgroundColor()} hover:shadow-md ${hasOverdueItems || forceShakeTest ? 'animate-urgent-glow animate-subtle-shake' : ''}`
+                        : `${getCardBackgroundColor()} hover:shadow-md ${hasOverdueItems ? 'animate-urgent-glow animate-subtle-shake' : ''}`
                   } ${
                     clickedTabId === client.id 
                       ? 'animate-pulse-attention bg-yellow-200 border-yellow-400 shadow-lg scale-110 z-50' 
@@ -733,7 +712,7 @@ const ScrollingTabs: React.FC<ScrollingTabsProps> = ({
                           });
                           
                           // Return shake animation for clients with returnables (only if debt < 1000)
-                          return (hasUnreturnedItems || forceShakeTest) ? 'animate-subtle-shake' : '';
+                          return hasUnreturnedItems ? 'animate-subtle-shake' : '';
                         })()
                   }`}
                   style={{
@@ -812,72 +791,6 @@ const ScrollingTabs: React.FC<ScrollingTabsProps> = ({
           </div>
         </div>
       </div>
-
-      {/* Test Controls - Triple tap to show */}
-      {showTestControls && (
-        <div className="fixed top-20 right-4 bg-white rounded-lg shadow-lg border border-gray-300 p-4 z-50 max-w-xs">
-          <div className="flex items-center justify-between mb-3">
-            <h4 className="font-semibold text-gray-800">Animation Test</h4>
-            <button
-              onClick={() => setShowTestControls(false)}
-              className="text-gray-500 hover:text-gray-700"
-            >
-              <X size={16} />
-            </button>
-          </div>
-          
-          {/* Transition Options */}
-          <div className="mb-3">
-            <label className="block text-sm font-medium text-gray-700 mb-2">
-              Scroll Transition:
-            </label>
-            <select
-              value={testTransition}
-              onChange={(e) => {
-                setTestTransition(e.target.value);
-                if (contentRef.current) {
-                  contentRef.current.className = contentRef.current.className.replace(/scroll-transition-\w+/g, '');
-                  contentRef.current.classList.add(e.target.value);
-                }
-              }}
-              className="w-full px-2 py-1 text-xs border border-gray-300 rounded"
-            >
-              <option value="scroll-transition-smooth">Smooth (Default)</option>
-              <option value="scroll-transition-elastic">Elastic Bounce</option>
-              <option value="scroll-transition-spring">Spring Physics</option>
-              <option value="scroll-transition-snap">Quick Snap</option>
-              <option value="scroll-transition-drift">Slow Drift</option>
-              <option value="scroll-transition-rubber">Rubber Band</option>
-              <option value="scroll-transition-magnetic">Magnetic Pull</option>
-              <option value="scroll-transition-fluid">Fluid Motion</option>
-              <option value="scroll-transition-instant">Instant</option>
-              <option value="scroll-transition-wave">Wave Motion</option>
-              <option value="scroll-transition-momentum">Momentum</option>
-              <option value="scroll-transition-gentle">Gentle Ease</option>
-            </select>
-          </div>
-          
-          {/* Shake Test */}
-          <div className="mb-3">
-            <label className="flex items-center gap-2">
-              <input
-                type="checkbox"
-                checked={forceShakeTest}
-                onChange={(e) => setForceShakeTest(e.target.checked)}
-                className="rounded"
-              />
-              <span className="text-sm text-gray-700">Force Shake Test</span>
-            </label>
-          </div>
-          
-          {/* Instructions */}
-          <div className="text-xs text-gray-500 bg-gray-50 p-2 rounded">
-            <p className="mb-1">• Select transition to test scrolling</p>
-            <p className="mb-1">• Check "Force Shake" to test shake animation</p>
-            <p>• Triple tap this area to hide controls</p>
-          </div>
-        </div>
-      )}
 
       {/* Action Modal */}
       {selectedClientForAction && (
