@@ -147,6 +147,13 @@ const MiniCalculator: React.FC<MiniCalculatorProps> = ({
         left: 0,
         top: 0
       }}
+      onTouchStart={(e) => {
+        // Allow dragging only if not clicking on buttons
+        const target = e.target as HTMLElement;
+        if (target.closest('button') || target.closest('input')) {
+          e.stopPropagation();
+        }
+      }}
     >
       {/* Header - Drag Handle */}
       <div className="drag-handle bg-blue-500 text-white p-3 rounded-t-lg cursor-grab active:cursor-grabbing flex items-center justify-between">
@@ -156,15 +163,27 @@ const MiniCalculator: React.FC<MiniCalculatorProps> = ({
             <div className="flex items-center gap-2 flex-1">
               <span className="font-medium truncate">{label}</span>
               <button
-                onTouchStart={(e) => e.stopPropagation()}
+                onTouchStart={(e) => {
+                  e.stopPropagation();
+                  e.preventDefault();
+                }}
                 onTouchEnd={(e) => {
                   e.stopPropagation();
                   e.preventDefault();
                   setIsEditingLabel(true);
                 }}
-                onClick={() => setIsEditingLabel(true)}
+                onClick={(e) => {
+                  e.stopPropagation();
+                  e.preventDefault();
+                  setIsEditingLabel(true);
+                }}
                 className="text-blue-200 hover:text-white transition-colors"
-                style={{ touchAction: 'manipulation', zIndex: 1000 }}
+                style={{ 
+                  touchAction: 'manipulation', 
+                  zIndex: 10001,
+                  position: 'relative',
+                  pointerEvents: 'auto'
+                }}
               >
                 <Edit2 size={14} />
               </button>
@@ -178,9 +197,24 @@ const MiniCalculator: React.FC<MiniCalculatorProps> = ({
                 className="bg-blue-400 text-white placeholder-blue-200 border-none outline-none rounded px-2 py-1 text-sm flex-1"
                 placeholder="Enter label..."
                 autoFocus
-                onTouchStart={(e) => e.stopPropagation()}
-                onTouchEnd={(e) => e.stopPropagation()}
-                style={{ touchAction: 'manipulation' }}
+                onTouchStart={(e) => {
+                  e.stopPropagation();
+                  e.preventDefault();
+                }}
+                onTouchEnd={(e) => {
+                  e.stopPropagation();
+                  e.preventDefault();
+                }}
+                onClick={(e) => {
+                  e.stopPropagation();
+                  e.preventDefault();
+                }}
+                style={{ 
+                  touchAction: 'manipulation',
+                  zIndex: 10001,
+                  position: 'relative',
+                  pointerEvents: 'auto'
+                }}
                 onKeyDown={(e) => {
                   e.stopPropagation();
                   if (e.key === 'Enter') handleSaveLabel();
@@ -188,15 +222,26 @@ const MiniCalculator: React.FC<MiniCalculatorProps> = ({
                 }}
               />
               <button
-                onTouchStart={(e) => e.stopPropagation()}
+                onTouchStart={(e) => {
+                  e.preventDefault();
+                }}
                 onTouchEnd={(e) => {
                   e.stopPropagation();
                   e.preventDefault();
                   handleSaveLabel();
                 }}
-                onClick={handleSaveLabel}
+                onClick={(e) => {
+                  e.stopPropagation();
+                  e.preventDefault();
+                  handleSaveLabel();
+                }}
                 className="text-blue-200 hover:text-white transition-colors"
-                style={{ touchAction: 'manipulation', zIndex: 1000 }}
+                style={{ 
+                  touchAction: 'manipulation', 
+                  zIndex: 10001,
+                  position: 'relative',
+                  pointerEvents: 'auto'
+                }}
               >
                 <Check size={14} />
               </button>
@@ -204,15 +249,26 @@ const MiniCalculator: React.FC<MiniCalculatorProps> = ({
           )}
         </div>
         <button
-          onTouchStart={(e) => e.stopPropagation()}
+          onTouchStart={(e) => {
+            e.preventDefault();
+          }}
           onTouchEnd={(e) => {
             e.stopPropagation();
             e.preventDefault();
             onClose();
           }}
-          onClick={onClose}
+          onClick={(e) => {
+            e.stopPropagation();
+            e.preventDefault();
+            onClose();
+          }}
           className="text-blue-200 hover:text-white transition-colors ml-2"
-          style={{ touchAction: 'manipulation', zIndex: 1000 }}
+          style={{ 
+            touchAction: 'manipulation', 
+            zIndex: 10001,
+            position: 'relative',
+            pointerEvents: 'auto'
+          }}
         >
           <X size={16} />
         </button>
