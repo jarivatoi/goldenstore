@@ -76,7 +76,10 @@ let _docElement = document.documentElement,
         }
         return obj;
     },
-    _getGSAP = () => gsap || (typeof(window) !== "undefined" && (gsap = window.gsap)) && gsap.registerPlugin && gsap,
+    _getGSAP = () => {
+        let _gsap = gsap || (typeof(window) !== "undefined" && window.gsap);
+        return _gsap && _gsap.registerPlugin && _gsap;
+    },
     _isFunction = value => typeof(value) === "function",
     _isObject = value => typeof(value) === "object",
     _isUndefined = value => typeof(value) === "undefined",
