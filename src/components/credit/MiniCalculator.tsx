@@ -63,7 +63,6 @@ const MiniCalculator: React.FC<MiniCalculatorProps> = ({
 
     // Create draggable calculator instance with momentum and free movement
     draggableRef.current = DraggableCalculator.create(element, {
-      trigger: ".drag-handle",
       inertia: true, // Enable momentum
       throwResistance: 30, // Lower = more momentum
       maxDuration: 3, // Maximum momentum duration
@@ -150,15 +149,16 @@ const MiniCalculator: React.FC<MiniCalculatorProps> = ({
         transition: 'width 0.3s ease-in-out'
       }}
       onTouchStart={(e) => {
-        // Allow dragging only if not clicking on buttons
+        // Prevent dragging when clicking on interactive elements
         const target = e.target as HTMLElement;
-        if (target.closest('button') || target.closest('input')) {
+        if (target.closest('button') || target.closest('input') || target.closest('select')) {
           e.stopPropagation();
+          e.preventDefault();
         }
       }}
     >
       {/* Header - Drag Handle */}
-      <div className="drag-handle bg-blue-500 text-white p-3 rounded-t-lg cursor-grab active:cursor-grabbing flex items-center justify-between">
+      <div className="bg-blue-500 text-white p-3 rounded-t-lg cursor-grab active:cursor-grabbing flex items-center justify-between">
         <div className="flex items-center gap-2 flex-1">
           <Calculator size={16} />
           {!isEditingLabel ? (
