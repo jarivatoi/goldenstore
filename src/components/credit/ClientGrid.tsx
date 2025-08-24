@@ -3,7 +3,7 @@ import { useEffect, useRef } from 'react';
 import { gsap } from 'gsap';
 import { InertiaPlugin } from 'gsap/InertiaPlugin';
 import { Draggable } from '../../lib/draggable.js';
-import { Search, X } from 'lucide-react';
+import { Search, X, Users, UserCheck } from 'lucide-react';
 import { Client } from '../../types';
 import ClientCard from '../ClientCard';
 
@@ -186,6 +186,7 @@ const ClientGrid: React.FC<ClientGridProps> = ({
                   : 'bg-gray-100 text-gray-600 hover:bg-gray-200'
               }`}
             >
+              {showAllClients ? <UserCheck size={12} /> : <Users size={12} />}
               {showAllClients ? 'Active' : 'All'}
             </button>
           </div>
