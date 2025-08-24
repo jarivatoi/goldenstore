@@ -89,8 +89,24 @@ export class SupabaseBackupManager {
         throw new Error(`Failed to load backup from server: ${error.message}`);
       }
 
-      if (!data || !data.backup_data) {
-        throw new Error('Invalid backup data found on server');
+      if (!data) {
+        throw new Error('No backup record found on server');
+      }
+
+      // Debug logging to understand what we received
+      console.log('📊 Backup record retrieved:', {
+        id: data.id,
+        backup_name: data.backup_name,
+        created_at: data.created_at,
+        file_size: data.file_size,
+        backup_data_type: typeof data.backup_data,
+        backup_data_is_null: data.backup_data === null,
+        backup_data_is_undefined: data.backup_data === undefined,
+        backup_data_keys: data.backup_data ? Object.keys(data.backup_data) : 'N/A'
+      });
+
+      if (!data.backup_data) {
+        throw new Error(`Invalid backup data found on server. The backup_data field is ${data.backup_data === null ? 'null' : 'undefined'}. This may indicate a database storage issue or the backup was not saved properly.`);
       }
 
       console.log(`✅ Database backup loaded from Supabase (${(data.file_size / 1024).toFixed(1)} KB)`);
