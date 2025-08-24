@@ -6,6 +6,7 @@ import { useCredit } from '../context/CreditContext';
 import { useOver } from '../context/OverContext';
 import { useOrder } from '../context/OrderContext';
 import { SupabaseBackupManager } from '../utils/supabaseBackupManager';
+import AutoBackupSettings from './AutoBackupSettings';
 
 interface UnifiedDataManagerProps {
   isOpen: boolean;
@@ -540,6 +541,9 @@ const UnifiedDataManager: React.FC<UnifiedDataManagerProps> = ({ isOpen, onClose
                 </div>
               </button>
             </div>
+
+            {/* Auto Backup Settings */}
+            <AutoBackupSettings />
 
             {/* Warning */}
             <div className="mt-6 bg-yellow-50 border border-yellow-200 rounded-lg p-4 select-none">

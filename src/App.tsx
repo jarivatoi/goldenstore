@@ -50,6 +50,8 @@ import { OrderProvider } from './context/OrderContext';
 import LoadingSpinner from './components/LoadingSpinner';
 import OnDeviceConsole from './components/OnDeviceConsole';
 import SupabaseStatusIndicator from './components/SupabaseStatusIndicator';
+import AutoBackupStatusIndicator from './components/AutoBackupStatusIndicator';
+import { automaticBackupManager } from './utils/automaticBackupManager';
 
 function MainAppContent() {
   const [activeTab, setActiveTab] = useState<'Over' | 'PriceList' | 'Order' | 'Credit'>(() => {
@@ -187,6 +189,7 @@ function MainAppContent() {
         </div>
         <div className="flex items-center">
           <SupabaseStatusIndicator className="ml-3" />
+          <AutoBackupStatusIndicator className="ml-3" />
         </div>
       </div>
       
