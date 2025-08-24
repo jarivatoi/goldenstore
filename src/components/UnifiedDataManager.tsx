@@ -281,31 +281,46 @@ const UnifiedDataManager: React.FC<UnifiedDataManagerProps> = ({ isOpen, onClose
       setIsProcessing(true);
       setModal({ type: null, title: '', message: '' });
       
-      // Import to Price List
+      // Import all data to localStorage (since contexts don't have import methods)
       if (data.priceList?.items) {
-        const priceListItems = data.priceList.items.map((item: any) => ({
-          ...item,
-          createdAt: new Date(item.createdAt),
-          lastEditedAt: item.lastEditedAt ? new Date(item.lastEditedAt) : undefined
-        }));
-        await importPriceItems(priceListItems);
+        localStorage.setItem('priceListItems', JSON.stringify(data.priceList.items));
       }
       
-      // Import to Credit Management would go here
-      // Note: You'll need to add import functions to the Credit context
+      // Import Credit Management data
+      if (data.creditManagement?.clients) {
+        localStorage.setItem('creditClients', JSON.stringify(data.creditManagement.clients));
+      }
+      if (data.creditManagement?.transactions) {
+        localStorage.setItem('creditTransactions', JSON.stringify(data.creditManagement.transactions));
+      }
+      if (data.creditManagement?.payments) {
+        localStorage.setItem('creditPayments', JSON.stringify(data.creditManagement.payments));
+      }
       
-      // Import to Over Management would go here
-      // Note: You'll need to add import functions to the Over context
+      // Import Over Management data
+      if (data.overManagement?.items) {
+        localStorage.setItem('overItems', JSON.stringify(data.overManagement.items));
+      }
       
-      // Import to Order Management would go here
-      // Note: You'll need to add import functions to the Order context
+      // Import Order Management data
+      if (data.orderManagement?.categories) {
+        localStorage.setItem('orderCategories', JSON.stringify(data.orderManagement.categories));
+      }
+      if (data.orderManagement?.itemTemplates) {
+        localStorage.setItem('orderItemTemplates', JSON.stringify(data.orderManagement.itemTemplates));
+      }
+      if (data.orderManagement?.orders) {
+        localStorage.setItem('orders', JSON.stringify(data.orderManagement.orders));
+      }
       
       setModal({
         type: 'success',
         title: 'Import Successful',
-        message: 'Database imported successfully! All your data has been restored.',
+        message: 'Database imported successfully! All your data has been restored.\n\nPlease refresh the page to see all imported data.',
         onConfirm: () => {
           setModal({ type: null, title: '', message: '' });
+          // Refresh the page to reload all data
+          window.location.reload();
           onClose();
         }
       });
