@@ -75,34 +75,36 @@ export class SupabaseBackupManager {
     }
 
     try {
-      const { data, error } = await supabase
+      const { data, error, count } = await supabase
         .from('database_backups')
-        .select('id, backup_data, backup_name, created_at, file_size')
+        .select('*', { count: 'exact' })
         .order('created_at', { ascending: false })
-        .limit(1)
-        .single();
+        .limit(1);
 
       if (error) {
-        if (error.code === 'PGRST116') {
-          throw new Error('No backup found on server');
-        }
+        console.warn('Supabase query error:', error);
         throw new Error(`Failed to load backup from server: ${error.message}`);
       }
 
-      if (!data || !data.backup_data) {
+      if (!data || data.length === 0) {
+        throw new Error('No backup found on server. Please create a backup first by using "Export Database" → "Server Backup".');
+      }
+
+      const backupRecord = data[0];
+      if (!backupRecord || !backupRecord.backup_data) {
         throw new Error('No valid backup found on server. Please create a backup first by using "Export Database" → "Server Backup".');
       }
 
       // Debug logging to understand what we received
       console.log('📊 Backup record retrieved:', {
-        id: data.id,
-        backup_name: data.backup_name,
-        created_at: data.created_at,
-        file_size: data.file_size,
-        backup_data_type: typeof data.backup_data,
-        backup_data_is_null: data.backup_data === null,
-        backup_data_is_undefined: data.backup_data === undefined,
-        backup_data_keys: data.backup_data ? Object.keys(data.backup_data) : 'N/A'
+        id: backupRecord.id,
+        backup_name: backupRecord.backup_name,
+        created_at: backupRecord.created_at,
+        file_size: backupRecord.file_size,
+        backup_data_type: typeof backupRecord.backup_data,
+        backup_data_is_null: backupRecord.backup_data === null,
+        backup_data_is_undefined: backupRecord.backup_data === undefined,
+        backup_data_keys: backupRecord.backup_data ? Object.keys(backupRecord.backup_data) : 'N/A'
       });
 
 
@@ -110,10 +112,10 @@ export class SupabaseBackupManager {
       let parsedBackupData;
       try {
         // Handle both string and object formats
-        if (typeof data.backup_data === 'string') {
-          parsedBackupData = JSON.parse(data.backup_data);
-        } else if (typeof data.backup_data === 'object' && data.backup_data !== null) {
-          parsedBackupData = data.backup_data;
+        if (typeof backupRecord.backup_data === 'string') {
+          parsedBackupData = JSON.parse(backupRecord.backup_data);
+        } else if (typeof backupRecord.backup_data === 'object' && backupRecord.backup_data !== null) {
+          parsedBackupData = backupRecord.backup_data;
         } else {
           throw new Error('Invalid backup data format');
         }
@@ -131,7 +133,7 @@ export class SupabaseBackupManager {
         throw new Error(`Failed to parse backup data: ${parseError instanceof Error ? parseError.message : 'Unknown parsing error'}`);
       }
 
-      console.log(`✅ Database backup loaded from Supabase (${(data.file_size / 1024).toFixed(1)} KB)`);
+      console.log(`✅ Database backup loaded from Supabase (${(backupRecord.file_size / 1024).toFixed(1)} KB)`);
       return parsedBackupData;
     } catch (error) {
       console.error('❌ Supabase backup load failed:', error);
@@ -148,10 +150,9 @@ export class SupabaseBackupManager {
     }
 
     try {
-      const { data, error, count } = await supabase
+      const { count, error } = await supabase
         .from('database_backups')
-        .select('id', { count: 'exact' })
-        .limit(1);
+        .select('*', { count: 'exact', head: true });
 
       if (error) {
         console.warn('Error checking backup existence:', error);
@@ -179,17 +180,17 @@ export class SupabaseBackupManager {
         .from('database_backups')
         .select('backup_name, created_at, file_size')
         .order('created_at', { ascending: false })
-        .limit(1)
-        .single();
+        .limit(1);
 
-      if (error || !data) {
+      if (error || !data || data.length === 0) {
         return null;
       }
 
+      const backupRecord = data[0];
       return {
-        name: data.backup_name,
-        date: new Date(data.created_at).toLocaleDateString('en-GB'),
-        size: data.file_size
+        name: backupRecord.backup_name,
+        date: new Date(backupRecord.created_at).toLocaleDateString('en-GB'),
+        size: backupRecord.file_size
       };
     } catch (error) {
       return null;
