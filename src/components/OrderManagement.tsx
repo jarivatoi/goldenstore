@@ -52,7 +52,6 @@ const OrderManagement: React.FC = () => {
   const [orderToDelete, setOrderToDelete] = useState<Order | null>(null);
   const [showDuplicateOrderModal, setShowDuplicateOrderModal] = useState(false);
   const [duplicateOrderInfo, setDuplicateOrderInfo] = useState<{categoryName: string, orderDate: string} | null>(null);
-  const [showDeleteItemModal, setShowDeleteItemModal] = useState(false);
   // Listen for duplicate order events from modals
   React.useEffect(() => {
     const handleDuplicateOrderEvent = (event: CustomEvent) => {
@@ -66,8 +65,6 @@ const OrderManagement: React.FC = () => {
       window.removeEventListener('showDuplicateOrderModal', handleDuplicateOrderEvent as EventListener);
     };
   }, []);
-
-  const [itemToDelete, setItemToDelete] = useState<OrderItemTemplate | null>(null);
 
   // Get filtered categories
   const filteredCategories = searchCategories(searchQuery);
@@ -207,26 +204,11 @@ const OrderManagement: React.FC = () => {
 
   // Handle delete item template
   const handleDeleteItem = async (item: OrderItemTemplate) => {
-    setItemToDelete(item);
-    setShowDeleteItemModal(true);
-  };
-
-  const confirmDeleteItem = async () => {
-    if (!itemToDelete) return;
-    
     try {
-      await deleteItemTemplate(itemToDelete.id);
-      alert(`Item template "${itemToDelete.name}" has been deleted successfully.`);
-      setShowDeleteItemModal(false);
-      setItemToDelete(null);
+      await deleteItemTemplate(item.id);
     } catch (error) {
-      alert('Failed to delete item template. Please try again.');
+      alert('Failed to delete item. Please try again.');
     }
-  };
-
-  const cancelDeleteItem = () => {
-    setShowDeleteItemModal(false);
-    setItemToDelete(null);
   };
 
   if (isLoading) {
@@ -532,17 +514,6 @@ const OrderManagement: React.FC = () => {
       />
 
       {/* Item Template Delete Confirmation Modal */}
-      <ConfirmationModal
-        isOpen={showDeleteItemModal}
-        title="Delete Item Template"
-        message={itemToDelete ? `Are you sure you want to delete "${itemToDelete.name}"?\n\nThis will also remove this item from all existing orders in this category.\n\nThis action cannot be undone.` : ''}
-        confirmText="Delete Item"
-        cancelText="Cancel"
-        type="danger"
-        onConfirm={confirmDeleteItem}
-        onCancel={cancelDeleteItem}
-      />
-
       {/* Duplicate Order Validation Modal */}
       <ConfirmationModal
         isOpen={showDuplicateOrderModal}
