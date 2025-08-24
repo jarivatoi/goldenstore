@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import { createPortal } from 'react-dom';
-import { X, CreditCard, CheckCircle, DollarSign, RotateCcw, Minus, Plus, Calculator, User, ArrowLeft } from 'lucide-react';
+import { X, CreditCard, CheckCircle, DollarSign, RotateCcw, Minus, Plus, Calculator, User, ArrowLeft, AlertTriangle } from 'lucide-react';
 import { Client } from '../types';
 import { useCredit } from '../context/CreditContext';
 import SettleConfirmationModal from './SettleConfirmationModal';
@@ -34,6 +34,7 @@ const ClientActionModal: React.FC<ClientActionModalProps> = ({ client, onClose, 
     itemType?: string;
     quantity?: number;
   } | null>(null);
+  const [showAccountSettleConfirm, setShowAccountSettleConfirm] = useState(false);
 
   const totalDebt = getClientTotalDebt(client.id);
   const bottlesOwed = getClientBottlesOwed(client.id);
@@ -442,7 +443,7 @@ const ClientActionModal: React.FC<ClientActionModalProps> = ({ client, onClose, 
 
               {/* Settle Button */}
               <button
-                onClick={handleSettle}
+                onClick={() => setShowAccountSettleConfirm(true)}
                 disabled={isProcessing}
                 className="w-full flex items-center gap-4 p-4 bg-green-50 hover:bg-green-100 rounded-lg border border-green-200 transition-colors disabled:opacity-50"
               >
@@ -747,6 +748,101 @@ const ClientActionModal: React.FC<ClientActionModalProps> = ({ client, onClose, 
           }}
           isProcessing={isProcessing}
         />
+      )}
+
+      {/* Account Settle Confirmation Modal */}
+      {showAccountSettleConfirm && (
+        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-[9999] overflow-hidden p-4 select-none" style={{ height: '100vh' }}>
+          <div className="bg-white rounded-2xl w-full max-w-md max-h-[90vh] overflow-y-auto select-none">
+            
+            {/* Header */}
+            <div className="flex items-center justify-between p-6 border-b border-gray-200 select-none">
+              <div className="flex items-center gap-3 select-none">
+                <div className="bg-green-100 p-2 rounded-full select-none">
+                  <CheckCircle size={20} className="text-green-600" />
+                </div>
+                <h2 className="text-xl font-semibold text-gray-900 select-none">Settle Account</h2>
+              </div>
+              <button 
+                onClick={() => setShowAccountSettleConfirm(false)}
+                disabled={isProcessing}
+                className="text-gray-500 hover:text-gray-700 transition-colors disabled:opacity-50"
+              >
+                <X size={24} />
+              </button>
+            </div>
+
+            {/* Content */}
+            <div className="p-6 select-none">
+              <div className="flex items-start gap-3 mb-4 select-none">
+                <div className="bg-yellow-100 p-2 rounded-full flex-shrink-0 select-none">
+                  <AlertTriangle size={20} className="text-yellow-600" />
+                </div>
+                <div className="flex-1 select-none">
+                  <p className="text-gray-700 mb-2 select-none">
+                    Are you sure you want to settle the account for <strong>{client.name}</strong>?
+                  </p>
+                  <div className="bg-gray-50 rounded-lg p-3 border border-gray-200 mb-3 select-none">
+                    <div className="space-y-1 text-sm select-none">
+                      <p className="select-none">
+                        <span className="font-medium">Outstanding Debt:</span> Rs {totalDebt.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
+                      </p>
+                      {Object.values(bottlesOwed).some(count => count > 0) && (
+                        <p className="select-none">
+                          <span className="font-medium">Bottles Owed:</span> {Object.entries(bottlesOwed)
+                            .filter(([_, count]) => count > 0)
+                            .map(([type, count]) => `${count} ${type.charAt(0).toUpperCase() + type.slice(1)}${count > 1 ? 's' : ''}`)
+                            .join(', ')}
+                        </p>
+                      )}
+                      {Object.keys(availableItems).length > 0 && (
+                        <p className="select-none">
+                          <span className="font-medium">Returnable Items:</span> {Object.entries(availableItems)
+                            .map(([itemType, data]) => `${data.total} ${itemType}`)
+                            .join(', ')}
+                        </p>
+                      )}
+                    </div>
+                  </div>
+                </div>
+              </div>
+
+              <div className="bg-yellow-50 border border-yellow-200 rounded-lg p-4 mb-6 select-none">
+                <p className="text-sm text-yellow-800 select-none">
+                  <strong>⚠️ This action will:</strong>
+                </p>
+                <ul className="text-sm text-yellow-700 mt-2 space-y-1 ml-4 select-none">
+                  <li className="select-none">• Mark the account as fully paid</li>
+                  <li className="select-none">• Clear all transaction history</li>
+                  <li className="select-none">• Reset all bottle counts to zero</li>
+                  <li className="select-none">• Clear all returnable items</li>
+                  <li className="select-none">• This action cannot be undone</li>
+                </ul>
+              </div>
+
+              {/* Action Buttons */}
+              <div className="flex gap-3 select-none">
+                <button
+                  onClick={() => setShowAccountSettleConfirm(false)}
+                  disabled={isProcessing}
+                  className="flex-1 px-4 py-3 border border-gray-300 rounded-lg text-gray-700 bg-white hover:bg-gray-50 transition-colors disabled:opacity-50 font-medium select-none"
+                >
+                  Cancel
+                </button>
+                <button
+                  onClick={async () => {
+                    setShowAccountSettleConfirm(false);
+                    await handleSettle();
+                  }}
+                  disabled={isProcessing}
+                  className="flex-1 px-4 py-3 bg-green-500 text-white rounded-lg hover:bg-green-600 transition-colors disabled:opacity-50 font-medium select-none"
+                >
+                  {isProcessing ? 'Settling...' : 'Settle Account'}
+                </button>
+              </div>
+            </div>
+          </div>
+        </div>
       )}
     </div>
   );
