@@ -1,0 +1,153 @@
+/**
+ * SUPABASE BACKUP MANAGER
+ * =======================
+ * 
+ * Manages complete database JSON backups to/from Supabase
+ * Provides fast backup/restore without individual table operations
+ */
+
+import { supabase } from '../lib/supabase';
+
+export interface DatabaseBackup {
+  id: string;
+  backup_data: any;
+  backup_name: string;
+  created_at: string;
+  file_size: number;
+}
+
+export class SupabaseBackupManager {
+  
+  /**
+   * Save complete database JSON to Supabase
+   * Overwrites any existing backup to save space
+   */
+  static async saveToSupabase(databaseJson: any, backupName?: string): Promise<void> {
+    if (!supabase) {
+      throw new Error('Supabase not available');
+    }
+
+    try {
+      const jsonString = JSON.stringify(databaseJson);
+      const fileSize = new Blob([jsonString]).size;
+      
+      const backupData = {
+        backup_data: databaseJson,
+        backup_name: backupName || `Golden Store Backup ${new Date().toLocaleDateString('en-GB')}`,
+        file_size: fileSize,
+        created_at: new Date().toISOString()
+      };
+
+      // First, delete any existing backups to save space (keep only 1 backup)
+      const { error: deleteError } = await supabase
+        .from('database_backups')
+        .delete()
+        .neq('id', '00000000-0000-0000-0000-000000000000'); // Delete all existing
+
+      if (deleteError) {
+        console.warn('Warning: Could not clear old backups:', deleteError);
+        // Continue anyway - not critical
+      }
+
+      // Insert new backup
+      const { error: insertError } = await supabase
+        .from('database_backups')
+        .insert(backupData);
+
+      if (insertError) {
+        throw new Error(`Failed to save backup to server: ${insertError.message}`);
+      }
+
+      console.log(`✅ Database backup saved to Supabase (${(fileSize / 1024).toFixed(1)} KB)`);
+    } catch (error) {
+      console.error('❌ Supabase backup failed:', error);
+      throw error;
+    }
+  }
+
+  /**
+   * Load complete database JSON from Supabase
+   * Gets the most recent backup
+   */
+  static async loadFromSupabase(): Promise<any> {
+    if (!supabase) {
+      throw new Error('Supabase not available');
+    }
+
+    try {
+      const { data, error } = await supabase
+        .from('database_backups')
+        .select('*')
+        .order('created_at', { ascending: false })
+        .limit(1)
+        .single();
+
+      if (error) {
+        if (error.code === 'PGRST116') {
+          throw new Error('No backup found on server');
+        }
+        throw new Error(`Failed to load backup from server: ${error.message}`);
+      }
+
+      if (!data || !data.backup_data) {
+        throw new Error('Invalid backup data found on server');
+      }
+
+      console.log(`✅ Database backup loaded from Supabase (${(data.file_size / 1024).toFixed(1)} KB)`);
+      return data.backup_data;
+    } catch (error) {
+      console.error('❌ Supabase backup load failed:', error);
+      throw error;
+    }
+  }
+
+  /**
+   * Check if backup exists on Supabase
+   */
+  static async hasBackupOnSupabase(): Promise<boolean> {
+    if (!supabase) {
+      return false;
+    }
+
+    try {
+      const { data, error } = await supabase
+        .from('database_backups')
+        .select('id')
+        .limit(1);
+
+      return !error && data && data.length > 0;
+    } catch (error) {
+      return false;
+    }
+  }
+
+  /**
+   * Get backup info from Supabase
+   */
+  static async getBackupInfo(): Promise<{ name: string; date: string; size: number } | null> {
+    if (!supabase) {
+      return null;
+    }
+
+    try {
+      const { data, error } = await supabase
+        .from('database_backups')
+        .select('backup_name, created_at, file_size')
+        .order('created_at', { ascending: false })
+        .limit(1)
+        .single();
+
+      if (error || !data) {
+        return null;
+      }
+
+      return {
+        name: data.backup_name,
+        date: new Date(data.created_at).toLocaleDateString('en-GB'),
+        size: data.file_size
+      };
+    } catch (error) {
+      return null;
+    }
+  }
+}
