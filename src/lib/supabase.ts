@@ -280,6 +280,29 @@ export type Database = {
           is_available?: boolean | null;
         };
       };
+      database_backups: {
+        Row: {
+          id: string;
+          backup_data: any;
+          backup_name: string;
+          created_at: string | null;
+          file_size: number | null;
+        };
+        Insert: {
+          id?: string;
+          backup_data: any;
+          backup_name?: string;
+          created_at?: string | null;
+          file_size?: number | null;
+        };
+        Update: {
+          id?: string;
+          backup_data?: any;
+          backup_name?: string;
+          created_at?: string | null;
+          file_size?: number | null;
+        };
+      };
     };
   };
 };
