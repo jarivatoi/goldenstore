@@ -146,9 +146,9 @@ const OrderManagement: React.FC = () => {
   };
 
   // Handle edit item template
-  const handleEditItem = async (item: OrderItemTemplate, newName: string, newPrice: number, isVatNil: boolean) => {
+  const handleEditItem = async (item: OrderItemTemplate, newName: string, newPrice: number, isVatNil: boolean, newVatPercentage: number) => {
     try {
-      await updateItemTemplate(item.id, newName, newPrice, isVatNil);
+      await updateItemTemplate(item.id, newName, newPrice, isVatNil, newVatPercentage);
       setEditingItem(null);
       setShowEditItem(false);
       setEditItemName('');
@@ -1695,7 +1695,7 @@ interface EditItemModalProps {
   category: OrderCategory;
   item: OrderItemTemplate;
   onClose: () => void;
-  onSave: (item: OrderItemTemplate, newName: string, newPrice: number, isVatNil: boolean) => Promise<void>;
+  onSave: (item: OrderItemTemplate, newName: string, newPrice: number, isVatNil: boolean, newVatPercentage: number) => Promise<void>;
   itemName: string;
   setItemName: (name: string) => void;
   itemPrice: string;
@@ -1750,7 +1750,7 @@ const EditItemModal: React.FC<EditItemModalProps> = ({
     }
 
     try {
-      await onSave(item, itemName.trim(), price, vatPercent === 0);
+      await onSave(item, itemName.trim(), price, isVatNil, vatPercent);
     } catch (err) {
       alert(err instanceof Error ? err.message : 'Failed to update item');
     }
