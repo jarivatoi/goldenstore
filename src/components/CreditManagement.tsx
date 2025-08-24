@@ -735,6 +735,7 @@ const CreditManagement: React.FC = () => {
             searchQuery={mainGridSearchQuery}
             onSearchChange={setMainGridSearchQuery}
             showAllClients={showAllClients}
+            onToggleAllClients={() => setShowAllClients(!showAllClients)}
             onClientLongPress={setSelectedClient}
             onQuickAdd={handleQuickAdd}
             onResetCalculator={handleResetCalculator}

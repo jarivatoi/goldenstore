@@ -50,18 +50,6 @@ const CreditHeader: React.FC<CreditHeaderProps> = ({
         </h2>
         <div className="flex items-center gap-2">
           <button
-            onClick={onToggleAllClients}
-            className={`p-2 rounded-lg transition-colors ${
-              !showAllClients 
-                ? 'text-blue-600 bg-blue-100 hover:bg-blue-200' 
-                : 'text-gray-600 hover:text-gray-800 hover:bg-gray-100'
-            }`}
-            title={!showAllClients ? 'Show Active Clients Only' : 'Show All Clients'}
-          >
-            {!showAllClients ? <UserCheck size={20} /> : <Users size={20} />}
-          </button>
-          
-          <button
             onClick={onShowUnifiedDataManager}
             className="p-2 text-gray-600 hover:text-gray-800 hover:bg-gray-100 rounded-lg transition-colors"
             title="Database Import/Export"

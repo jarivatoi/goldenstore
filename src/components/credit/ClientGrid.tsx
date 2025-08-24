@@ -15,6 +15,7 @@ interface ClientGridProps {
   searchQuery: string;
   onSearchChange: (query: string) => void;
   showAllClients: boolean;
+  onToggleAllClients: () => void;
   onClientLongPress: (client: Client) => void;
   onQuickAdd: (client: Client) => void;
   onResetCalculator: () => void;
