@@ -1,4 +1,5 @@
 import React, { useState, useEffect } from 'react';
+import { Calculator, Plus, X } from 'lucide-react';
 import { useCredit } from '../context/CreditContext';
 import ClientDetailModal from './ClientDetailModal';
 import ClientSearchModal from './ClientSearchModal';
