@@ -63,8 +63,15 @@ const CreditHeader: React.FC<CreditHeaderProps> = ({
           
           {/* Mini Calculator Manager - Creates floating calculators */}
           <MiniCalculatorManager 
-            onAddToClient={(amount, description, label) => {
-              alert(`Transaction from ${label}:\nAmount: Rs ${amount.toFixed(2)}\nDescription: ${description}\n\nNote: This would normally open the client search modal to select a client.`);
+            onAddToClient={async (amount, description, label) => {
+              try {
+                // Create a mock client object for the transaction
+                const mockClient = { id: 'temp', name: 'Temp Client' };
+                await onAddToClientFromMini(mockClient, description);
+              } catch (error) {
+                console.error('Mini calculator transaction failed:', error);
+                alert(`Failed to add transaction from ${label}`);
+              }
             }} 
           />
           

@@ -22,7 +22,7 @@ const MiniCalculatorManager: React.FC<MiniCalculatorManagerProps> = ({ onAddToCl
   const [calculators, setCalculators] = useState<MiniCalculatorInstance[]>([]);
 
   const createNewCalculator = () => {
-    console.log('Creating new mini calculator...');
+    console.log('🧮 Creating new mini calculator...');
     
     // Calculate position for new calculator (staggered)
     const baseX = 100;
@@ -38,36 +38,27 @@ const MiniCalculatorManager: React.FC<MiniCalculatorManagerProps> = ({ onAddToCl
       }
     };
 
-    console.log('New calculator created:', newCalculator);
+    console.log('🧮 New calculator created:', newCalculator);
     setCalculators(prev => {
       const updated = [...prev, newCalculator];
-      console.log('Updated calculators array:', updated);
+      console.log('🧮 Updated calculators array length:', updated.length);
       return updated;
     });
   };
 
   const closeCalculator = (id: string) => {
-    console.log('Closing calculator:', id);
+    console.log('🧮 Closing calculator:', id);
     setCalculators(prev => prev.filter(calc => calc.id !== id));
   };
 
-  const handleAddToClient = (amount: number, description: string, label: string) => {
-    // For now, just show an alert with the transaction details
-    // In a real implementation, this would integrate with the client search modal
-    alert(`Transaction from ${label}:\nAmount: Rs ${amount.toFixed(2)}\nDescription: ${description}\n\nNote: This would normally open the client search modal to select a client.`);
-    
-    // Call the parent callback
-    onAddToClient(amount, description, label);
-  };
-
-  console.log('MiniCalculatorManager render - calculators count:', calculators.length);
+  console.log('🧮 MiniCalculatorManager render - calculators count:', calculators.length);
 
   return (
     <>
       {/* Mini Calculator Button */}
       <button
         onClick={createNewCalculator}
-        className="p-2 text-gray-600 hover:text-gray-800 hover:bg-gray-100 rounded-lg transition-colors"
+        className="p-2 text-purple-600 hover:text-purple-800 hover:bg-purple-100 rounded-lg transition-colors border border-purple-200"
         title="Create Mini Calculator"
       >
         <Calculator size={20} />
@@ -75,7 +66,7 @@ const MiniCalculatorManager: React.FC<MiniCalculatorManagerProps> = ({ onAddToCl
 
       {/* Render all mini calculators */}
       {calculators.map((calc) => {
-        console.log('Rendering calculator:', calc.id);
+        console.log('🧮 Rendering calculator:', calc.id);
         return (
           <MiniCalculator
             key={calc.id}
@@ -83,7 +74,7 @@ const MiniCalculatorManager: React.FC<MiniCalculatorManagerProps> = ({ onAddToCl
             initialLabel={calc.label}
             initialPosition={calc.position}
             onClose={() => closeCalculator(calc.id)}
-            onAddToClient={handleAddToClient}
+            onAddToClient={onAddToClient}
           />
         );
       })}
