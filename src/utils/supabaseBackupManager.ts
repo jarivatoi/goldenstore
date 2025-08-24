@@ -32,7 +32,7 @@ export class SupabaseBackupManager {
       const fileSize = new Blob([jsonString]).size;
       
       const backupData = {
-        backup_data: jsonString,
+        backup_data: databaseJson,
         backup_name: backupName || `Golden Store Backup ${new Date().toLocaleDateString('en-GB')}`,
         file_size: fileSize,
         created_at: new Date().toISOString()
