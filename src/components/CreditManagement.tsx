@@ -747,7 +747,12 @@ const CreditManagement: React.FC = () => {
           {/* Calculator Header - Clickable */}
           <div 
             className="flex items-center gap-2 mb-4 cursor-pointer hover:bg-gray-50 p-2 rounded-lg transition-colors"
-            onClick={createMiniCalculator}
+            onClick={(e) => {
+              e.preventDefault();
+              e.stopPropagation();
+              console.log('🧮 Calculator header clicked!');
+              createMiniCalculator();
+            }}
             title="Click to create floating mini calculator"
           >
             <div className="bg-blue-100 p-2 rounded-full">
