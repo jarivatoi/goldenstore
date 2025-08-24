@@ -354,156 +354,481 @@ const MiniCalculator: React.FC<MiniCalculatorProps> = ({
         <div className="grid grid-cols-4 gap-1 mb-3">
           {/* Row 1 */}
           <button
+            onTouchStart={(e) => {
+              e.stopPropagation();
+              e.preventDefault();
+            }}
+            onTouchEnd={(e) => {
+              e.stopPropagation();
+              e.preventDefault();
+              handleCalculatorInput('C');
+            }}
             onClick={() => handleCalculatorInput('C')}
             className="bg-red-500 hover:bg-red-600 text-white p-2 rounded text-sm font-semibold"
+            style={{ 
+              touchAction: 'manipulation',
+              userSelect: 'none',
+              WebkitUserSelect: 'none'
+            }}
           >
             C
           </button>
           <button
+            onTouchStart={(e) => {
+              e.stopPropagation();
+              e.preventDefault();
+            }}
+            onTouchEnd={(e) => {
+              e.stopPropagation();
+              e.preventDefault();
+              handleCalculatorInput('CE');
+            }}
             onClick={() => handleCalculatorInput('CE')}
             className="bg-orange-500 hover:bg-orange-600 text-white p-2 rounded text-sm font-semibold"
+            style={{ 
+              touchAction: 'manipulation',
+              userSelect: 'none',
+              WebkitUserSelect: 'none'
+            }}
           >
             CE
           </button>
           <button
+            onTouchStart={(e) => {
+              e.stopPropagation();
+              e.preventDefault();
+            }}
+            onTouchEnd={(e) => {
+              e.stopPropagation();
+              e.preventDefault();
+              handleCalculatorInput('⌫');
+            }}
             onClick={() => handleCalculatorInput('⌫')}
             className="bg-gray-500 hover:bg-gray-600 text-white p-2 rounded text-sm font-semibold"
+            style={{ 
+              touchAction: 'manipulation',
+              userSelect: 'none',
+              WebkitUserSelect: 'none'
+            }}
           >
             ⌫
           </button>
           <button
+            onTouchStart={(e) => {
+              e.stopPropagation();
+              e.preventDefault();
+            }}
+            onTouchEnd={(e) => {
+              e.stopPropagation();
+              e.preventDefault();
+              handleCalculatorInput('/');
+            }}
             onClick={() => handleCalculatorInput('/')}
             className="bg-blue-500 hover:bg-blue-600 text-white p-2 rounded text-sm font-semibold"
+            style={{ 
+              touchAction: 'manipulation',
+              userSelect: 'none',
+              WebkitUserSelect: 'none'
+            }}
           >
             ÷
           </button>
 
           {/* Row 2 */}
           <button
+            onTouchStart={(e) => {
+              e.stopPropagation();
+              e.preventDefault();
+            }}
+            onTouchEnd={(e) => {
+              e.stopPropagation();
+              e.preventDefault();
+              handleCalculatorInput('7');
+            }}
             onClick={() => handleCalculatorInput('7')}
             className="bg-gray-200 hover:bg-gray-300 text-gray-800 p-2 rounded text-sm font-semibold"
+            style={{ 
+              touchAction: 'manipulation',
+              userSelect: 'none',
+              WebkitUserSelect: 'none'
+            }}
           >
             7
           </button>
           <button
+            onTouchStart={(e) => {
+              e.stopPropagation();
+              e.preventDefault();
+            }}
+            onTouchEnd={(e) => {
+              e.stopPropagation();
+              e.preventDefault();
+              handleCalculatorInput('8');
+            }}
             onClick={() => handleCalculatorInput('8')}
             className="bg-gray-200 hover:bg-gray-300 text-gray-800 p-2 rounded text-sm font-semibold"
+            style={{ 
+              touchAction: 'manipulation',
+              userSelect: 'none',
+              WebkitUserSelect: 'none'
+            }}
           >
             8
           </button>
           <button
+            onTouchStart={(e) => {
+              e.stopPropagation();
+              e.preventDefault();
+            }}
+            onTouchEnd={(e) => {
+              e.stopPropagation();
+              e.preventDefault();
+              handleCalculatorInput('9');
+            }}
             onClick={() => handleCalculatorInput('9')}
             className="bg-gray-200 hover:bg-gray-300 text-gray-800 p-2 rounded text-sm font-semibold"
+            style={{ 
+              touchAction: 'manipulation',
+              userSelect: 'none',
+              WebkitUserSelect: 'none'
+            }}
           >
             9
           </button>
           <button
+            onTouchStart={(e) => {
+              e.stopPropagation();
+              e.preventDefault();
+            }}
+            onTouchEnd={(e) => {
+              e.stopPropagation();
+              e.preventDefault();
+              handleCalculatorInput('*');
+            }}
             onClick={() => handleCalculatorInput('*')}
             className="bg-blue-500 hover:bg-blue-600 text-white p-2 rounded text-sm font-semibold"
+            style={{ 
+              touchAction: 'manipulation',
+              userSelect: 'none',
+              WebkitUserSelect: 'none'
+            }}
           >
             ×
           </button>
 
           {/* Row 3 */}
           <button
+            onTouchStart={(e) => {
+              e.stopPropagation();
+              e.preventDefault();
+            }}
+            onTouchEnd={(e) => {
+              e.stopPropagation();
+              e.preventDefault();
+              handleCalculatorInput('4');
+            }}
             onClick={() => handleCalculatorInput('4')}
             className="bg-gray-200 hover:bg-gray-300 text-gray-800 p-2 rounded text-sm font-semibold"
+            style={{ 
+              touchAction: 'manipulation',
+              userSelect: 'none',
+              WebkitUserSelect: 'none'
+            }}
           >
             4
           </button>
           <button
+            onTouchStart={(e) => {
+              e.stopPropagation();
+              e.preventDefault();
+            }}
+            onTouchEnd={(e) => {
+              e.stopPropagation();
+              e.preventDefault();
+              handleCalculatorInput('5');
+            }}
             onClick={() => handleCalculatorInput('5')}
             className="bg-gray-200 hover:bg-gray-300 text-gray-800 p-2 rounded text-sm font-semibold"
+            style={{ 
+              touchAction: 'manipulation',
+              userSelect: 'none',
+              WebkitUserSelect: 'none'
+            }}
           >
             5
           </button>
           <button
+            onTouchStart={(e) => {
+              e.stopPropagation();
+              e.preventDefault();
+            }}
+            onTouchEnd={(e) => {
+              e.stopPropagation();
+              e.preventDefault();
+              handleCalculatorInput('6');
+            }}
             onClick={() => handleCalculatorInput('6')}
             className="bg-gray-200 hover:bg-gray-300 text-gray-800 p-2 rounded text-sm font-semibold"
+            style={{ 
+              touchAction: 'manipulation',
+              userSelect: 'none',
+              WebkitUserSelect: 'none'
+            }}
           >
             6
           </button>
           <button
+            onTouchStart={(e) => {
+              e.stopPropagation();
+              e.preventDefault();
+            }}
+            onTouchEnd={(e) => {
+              e.stopPropagation();
+              e.preventDefault();
+              handleCalculatorInput('-');
+            }}
             onClick={() => handleCalculatorInput('-')}
             className="bg-blue-500 hover:bg-blue-600 text-white p-2 rounded text-sm font-semibold"
+            style={{ 
+              touchAction: 'manipulation',
+              userSelect: 'none',
+              WebkitUserSelect: 'none'
+            }}
           >
             −
           </button>
 
           {/* Row 4 */}
           <button
+            onTouchStart={(e) => {
+              e.stopPropagation();
+              e.preventDefault();
+            }}
+            onTouchEnd={(e) => {
+              e.stopPropagation();
+              e.preventDefault();
+              handleCalculatorInput('1');
+            }}
             onClick={() => handleCalculatorInput('1')}
             className="bg-gray-200 hover:bg-gray-300 text-gray-800 p-2 rounded text-sm font-semibold"
+            style={{ 
+              touchAction: 'manipulation',
+              userSelect: 'none',
+              WebkitUserSelect: 'none'
+            }}
           >
             1
           </button>
           <button
+            onTouchStart={(e) => {
+              e.stopPropagation();
+              e.preventDefault();
+            }}
+            onTouchEnd={(e) => {
+              e.stopPropagation();
+              e.preventDefault();
+              handleCalculatorInput('2');
+            }}
             onClick={() => handleCalculatorInput('2')}
             className="bg-gray-200 hover:bg-gray-300 text-gray-800 p-2 rounded text-sm font-semibold"
+            style={{ 
+              touchAction: 'manipulation',
+              userSelect: 'none',
+              WebkitUserSelect: 'none'
+            }}
           >
             2
           </button>
           <button
+            onTouchStart={(e) => {
+              e.stopPropagation();
+              e.preventDefault();
+            }}
+            onTouchEnd={(e) => {
+              e.stopPropagation();
+              e.preventDefault();
+              handleCalculatorInput('3');
+            }}
             onClick={() => handleCalculatorInput('3')}
             className="bg-gray-200 hover:bg-gray-300 text-gray-800 p-2 rounded text-sm font-semibold"
+            style={{ 
+              touchAction: 'manipulation',
+              userSelect: 'none',
+              WebkitUserSelect: 'none'
+            }}
           >
             3
           </button>
           <button
+            onTouchStart={(e) => {
+              e.stopPropagation();
+              e.preventDefault();
+            }}
+            onTouchEnd={(e) => {
+              e.stopPropagation();
+              e.preventDefault();
+              handleCalculatorInput('+');
+            }}
             onClick={() => handleCalculatorInput('+')}
             className="bg-blue-500 hover:bg-blue-600 text-white p-2 rounded text-sm font-semibold"
+            style={{ 
+              touchAction: 'manipulation',
+              userSelect: 'none',
+              WebkitUserSelect: 'none'
+            }}
           >
             +
           </button>
 
           {/* Row 5 */}
           <button
+            onTouchStart={(e) => {
+              e.stopPropagation();
+              e.preventDefault();
+            }}
+            onTouchEnd={(e) => {
+              e.stopPropagation();
+              e.preventDefault();
+              handleCalculatorInput('0');
+            }}
             onClick={() => handleCalculatorInput('0')}
             className="bg-gray-200 hover:bg-gray-300 text-gray-800 p-2 rounded text-sm font-semibold col-span-2"
+            style={{ 
+              touchAction: 'manipulation',
+              userSelect: 'none',
+              WebkitUserSelect: 'none'
+            }}
           >
             0
           </button>
           <button
+            onTouchStart={(e) => {
+              e.stopPropagation();
+              e.preventDefault();
+            }}
+            onTouchEnd={(e) => {
+              e.stopPropagation();
+              e.preventDefault();
+              handleCalculatorInput('.');
+            }}
             onClick={() => handleCalculatorInput('.')}
             className="bg-gray-200 hover:bg-gray-300 text-gray-800 p-2 rounded text-sm font-semibold"
+            style={{ 
+              touchAction: 'manipulation',
+              userSelect: 'none',
+              WebkitUserSelect: 'none'
+            }}
           >
             .
           </button>
           <button
+            onTouchStart={(e) => {
+              e.stopPropagation();
+              e.preventDefault();
+            }}
+            onTouchEnd={(e) => {
+              e.stopPropagation();
+              e.preventDefault();
+              handleCalculatorInput('=');
+            }}
             onClick={() => handleCalculatorInput('=')}
             className="bg-green-500 hover:bg-green-600 text-white p-2 rounded text-sm font-semibold"
+            style={{ 
+              touchAction: 'manipulation',
+              userSelect: 'none',
+              WebkitUserSelect: 'none'
+            }}
           >
             =
           </button>
 
           {/* Row 6 - Memory Functions */}
           <button
+            onTouchStart={(e) => {
+              e.stopPropagation();
+              e.preventDefault();
+            }}
+            onTouchEnd={(e) => {
+              e.stopPropagation();
+              e.preventDefault();
+              handleCalculatorInput('M+');
+            }}
             onClick={() => handleCalculatorInput('M+')}
             className="bg-purple-500 hover:bg-purple-600 text-white p-2 rounded text-xs font-semibold"
+            style={{ 
+              touchAction: 'manipulation',
+              userSelect: 'none',
+              WebkitUserSelect: 'none'
+            }}
           >
             M+
           </button>
           <button
+            onTouchStart={(e) => {
+              e.stopPropagation();
+              e.preventDefault();
+            }}
+            onTouchEnd={(e) => {
+              e.stopPropagation();
+              e.preventDefault();
+              handleCalculatorInput('MR');
+            }}
             onClick={() => handleCalculatorInput('MR')}
             className="bg-purple-500 hover:bg-purple-600 text-white p-2 rounded text-xs font-semibold"
+            style={{ 
+              touchAction: 'manipulation',
+              userSelect: 'none',
+              WebkitUserSelect: 'none'
+            }}
           >
             MR
           </button>
           <button
+            onTouchStart={(e) => {
+              e.stopPropagation();
+              e.preventDefault();
+            }}
+            onTouchEnd={(e) => {
+              e.stopPropagation();
+              e.preventDefault();
+              handleCalculatorInput('MC');
+            }}
             onClick={() => handleCalculatorInput('MC')}
             className="bg-purple-500 hover:bg-purple-600 text-white p-2 rounded text-xs font-semibold"
+            style={{ 
+              touchAction: 'manipulation',
+              userSelect: 'none',
+              WebkitUserSelect: 'none'
+            }}
           >
             MC
           </button>
           <button
-            onClick={() => setShowAddForm(!showAddForm)}
+            onTouchStart={(e) => {
+              e.stopPropagation();
+              e.preventDefault();
+            }}
+            onTouchEnd={(e) => {
+              e.stopPropagation();
+              e.preventDefault();
+              if (calculatorValue !== '0' && calculatorValue !== 'Error') {
+                setShowClientSearch(true);
+              }
+            }}
             disabled={calculatorValue === '0' || calculatorValue === 'Error'}
-            onClick={() => {
+            onClick={(e) => {
+              e.stopPropagation();
+              e.preventDefault();
               if (calculatorValue !== '0' && calculatorValue !== 'Error') {
                 setShowClientSearch(true);
               }
             }}
             className="bg-green-500 hover:bg-green-600 disabled:bg-gray-300 disabled:cursor-not-allowed text-white p-2 rounded text-xs font-semibold"
+            style={{ 
+              touchAction: 'manipulation',
+              userSelect: 'none',
+              WebkitUserSelect: 'none'
+            }}
           >
             Add
           </button>
