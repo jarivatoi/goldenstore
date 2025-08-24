@@ -135,10 +135,25 @@ export class SupabaseBackupManager {
     try {
       const { data, error } = await supabase
         .from('database_backups')
-        .select('id, backup_data')
+        .select('backup_data')
         .limit(1);
 
-      return !error && data && data.length > 0 && data[0].backup_data;
+      if (error || !data || data.length === 0) {
+        return false;
+      }
+
+      const backupData = data[0].backup_data;
+      
+      // Check if backup_data is valid (not null, undefined, or empty)
+      if (!backupData || 
+          backupData === null || 
+          backupData === undefined ||
+          (typeof backupData === 'string' && backupData.trim() === '') ||
+          (typeof backupData === 'object' && Object.keys(backupData).length === 0)) {
+        return false;
+      }
+
+      return true;
     } catch (error) {
       return false;
     }
