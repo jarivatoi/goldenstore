@@ -59,6 +59,7 @@ const OrderManagement: React.FC = () => {
   const [editItemVatPercentage, setEditItemVatPercentage] = useState('15');
   const [showDeleteItemModal, setShowDeleteItemModal] = useState(false);
   const [itemToDelete, setItemToDelete] = useState<OrderItemTemplate | null>(null);
+  
   React.useEffect(() => {
     const handleDuplicateOrderEvent = (event: CustomEvent) => {
       setDuplicateOrderInfo(event.detail);
