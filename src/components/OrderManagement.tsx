@@ -57,6 +57,8 @@ const OrderManagement: React.FC = () => {
   const [editItemName, setEditItemName] = useState('');
   const [editItemPrice, setEditItemPrice] = useState('');
   const [editItemVatPercentage, setEditItemVatPercentage] = useState('15');
+  const [showDeleteItemModal, setShowDeleteItemModal] = useState(false);
+  const [itemToDelete, setItemToDelete] = useState<OrderItemTemplate | null>(null);
   React.useEffect(() => {
     const handleDuplicateOrderEvent = (event: CustomEvent) => {
       setDuplicateOrderInfo(event.detail);
@@ -212,11 +214,25 @@ const OrderManagement: React.FC = () => {
 
   // Handle delete item template
   const handleDeleteItem = async (item: OrderItemTemplate) => {
+    setItemToDelete(item);
+    setShowDeleteItemModal(true);
+  };
+
+  const confirmDeleteItem = async () => {
+    if (!itemToDelete) return;
+    
     try {
-      await deleteItemTemplate(item.id);
+      await deleteItemTemplate(itemToDelete.id);
+      setShowDeleteItemModal(false);
+      setItemToDelete(null);
     } catch (error) {
       alert('Failed to delete item. Please try again.');
     }
+  };
+
+  const cancelDeleteItem = () => {
+    setShowDeleteItemModal(false);
+    setItemToDelete(null);
   };
 
   if (isLoading) {
@@ -548,6 +564,17 @@ const OrderManagement: React.FC = () => {
       />
 
       {/* Item Template Delete Confirmation Modal */}
+      <ConfirmationModal
+        isOpen={showDeleteItemModal}
+        title="Delete Item"
+        message={itemToDelete ? `Are you sure you want to delete "${itemToDelete.name}"?\n\nThis will also remove this item from all existing orders in this category.\n\nThis action cannot be undone.` : ''}
+        confirmText="Delete Item"
+        cancelText="Cancel"
+        type="danger"
+        onConfirm={confirmDeleteItem}
+        onCancel={cancelDeleteItem}
+      />
+
       {/* Duplicate Order Validation Modal */}
       <ConfirmationModal
         isOpen={showDuplicateOrderModal}
