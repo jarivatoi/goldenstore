@@ -42,7 +42,6 @@ const MiniCalculator: React.FC<MiniCalculatorProps> = ({
   const calculatorRef = useRef<HTMLDivElement>(null);
   const draggableRef = useRef<Draggable[] | null>(null);
 
-  console.log('MiniCalculator render:', { id, label, position: initialPosition });
 
   // Initialize draggable functionality
   useEffect(() => {
@@ -71,7 +70,6 @@ const MiniCalculator: React.FC<MiniCalculatorProps> = ({
       }
     });
 
-    console.log('Draggable created for calculator:', id);
 
     return () => {
       if (draggableRef.current) {
