@@ -358,6 +358,11 @@ const MiniCalculator: React.FC<MiniCalculatorProps> = ({
           <button
             onClick={() => setShowAddForm(!showAddForm)}
             disabled={calculatorValue === '0' || calculatorValue === 'Error'}
+            onClick={() => {
+              if (calculatorValue !== '0' && calculatorValue !== 'Error') {
+                setShowClientSearch(true);
+              }
+            }}
             className="bg-green-500 hover:bg-green-600 disabled:bg-gray-300 disabled:cursor-not-allowed text-white p-2 rounded text-xs font-semibold"
           >
             Add
@@ -365,86 +370,6 @@ const MiniCalculator: React.FC<MiniCalculatorProps> = ({
         </div>
 
         {/* Add Transaction Form */}
-        {showAddForm && (
-          <div className="border-t border-gray-200 pt-3 mt-3">
-            <div className="mb-3">
-              <label className="block text-xs font-medium text-gray-700 mb-1">
-                Description
-              </label>
-              <input
-                type="text"
-                value={description}
-                onChange={(e) => {
-                  const formatted = e.target.value
-                    .split(' ')
-                    .map(word => word.charAt(0).toUpperCase() + word.slice(1).toLowerCase())
-                    .join(' ');
-                  setDescription(formatted);
-                }}
-                placeholder="Enter item description..."
-                className="w-full px-2 py-2 text-sm border border-gray-300 rounded focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
-              />
-            </div>
-
-            {/* Quick Action Buttons */}
-            <div className="mb-3">
-              <div className="grid grid-cols-3 gap-1 mb-2">
-                {['Cig', 'Rum', 'Can', 'Soft', 'Cake', 'Juice'].map((action) => (
-                  <button
-                    key={action}
-                    type="button"
-                    onClick={() => handleQuickAction(action)}
-                    className="px-2 py-1 text-xs bg-blue-100 hover:bg-blue-200 text-blue-800 rounded transition-colors"
-                  >
-                    {action}
-                  </button>
-                ))}
-              </div>
-              <div className="grid grid-cols-2 gap-1">
-                <button
-                  type="button"
-                  onClick={() => handleQuickAction('Chopine')}
-                  className="px-2 py-1 text-xs bg-orange-100 hover:bg-orange-200 text-orange-800 rounded transition-colors"
-                >
-                  Chopine
-                </button>
-                <button
-                  type="button"
-                  onClick={() => handleQuickAction('Bouteille')}
-                  className="px-2 py-1 text-xs bg-orange-100 hover:bg-orange-200 text-orange-800 rounded transition-colors"
-                >
-                  Bouteille
-                </button>
-              </div>
-            </div>
-
-            {error && (
-              <div className="mb-2 p-2 bg-red-50 border border-red-200 rounded text-xs text-red-600">
-                {error}
-              </div>
-            )}
-
-            <div className="flex gap-2">
-              <button
-                onClick={() => {
-                  setShowAddForm(false);
-                  setDescription('');
-                  setError('');
-                }}
-                className="flex-1 px-3 py-2 bg-gray-200 hover:bg-gray-300 text-gray-800 rounded text-sm transition-colors"
-              >
-                Cancel
-              </button>
-              <button
-                onClick={handleAddTransaction}
-                disabled={!description.trim() || calculatorValue === '0' || calculatorValue === 'Error'}
-                className="flex-1 px-3 py-2 bg-blue-500 hover:bg-blue-600 disabled:bg-gray-300 disabled:cursor-not-allowed text-white rounded text-sm transition-colors"
-              >
-                Select Client
-              </button>
-            </div>
-          </div>
-        )}
       </div>
 
       {/* Client Search Modal */}
@@ -453,18 +378,16 @@ const MiniCalculator: React.FC<MiniCalculatorProps> = ({
           calculatorValue={calculatorValue}
           onClose={() => {
             setShowClientSearch(false);
-            setDescription('');
             setError('');
           }}
-          onAddToClient={async (client, desc) => {
+          onAddToClient={async (client, description) => {
             try {
               const amount = evaluateExpression(calculatorValue);
-              await onAddToClient(amount, desc, label);
+              await onAddToClient(amount, description, label);
               
               // Reset calculator and form
               setCalculatorValue('0');
               setIsCalculatorActive(false);
-              setDescription('');
               setShowClientSearch(false);
               setError('');
             } catch (err) {
