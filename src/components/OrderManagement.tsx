@@ -53,6 +53,10 @@ const OrderManagement: React.FC = () => {
   const [showDuplicateOrderModal, setShowDuplicateOrderModal] = useState(false);
   const [duplicateOrderInfo, setDuplicateOrderInfo] = useState<{categoryName: string, orderDate: string} | null>(null);
   // Listen for duplicate order events from modals
+  const [showEditItem, setShowEditItem] = useState(false);
+  const [editItemName, setEditItemName] = useState('');
+  const [editItemPrice, setEditItemPrice] = useState('');
+  const [editItemVatPercentage, setEditItemVatPercentage] = useState('15');
   React.useEffect(() => {
     const handleDuplicateOrderEvent = (event: CustomEvent) => {
       setDuplicateOrderInfo(event.detail);
