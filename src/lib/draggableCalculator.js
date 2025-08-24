@@ -41,6 +41,11 @@ let _docElement = document.documentElement,
             return false;
         }
     })(),
+    _touchEventLookup = {
+        "mousedown": "touchstart",
+        "mouseup": "touchend",
+        "mousemove": "touchmove"
+    },
     _supportsPassive,
     _matrix,
     _point1 = {x:0, y:0},
