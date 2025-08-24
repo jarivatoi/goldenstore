@@ -2,11 +2,136 @@ import React, { useState, useRef, useEffect } from 'react';
 import { createPortal } from 'react-dom';
 import { X, Edit2, Check, Calculator, Plus } from 'lucide-react';
 import { gsap } from 'gsap';
-import { Draggable } from '../../lib/draggable.js';
 import { processCalculatorInput, evaluateExpression } from '../../utils/creditCalculatorUtils';
 
-// Register GSAP plugins
-gsap.registerPlugin(Draggable);
+/**
+ * SIMPLE DRAGGABLE IMPLEMENTATION FOR MINI CALCULATOR
+ * ===================================================
+ * 
+ * Custom draggable implementation that allows free movement without bounds
+ */
+class SimpleDraggable {
+  private element: HTMLElement;
+  private isDragging = false;
+  private startX = 0;
+  private startY = 0;
+  private initialX = 0;
+  private initialY = 0;
+  private dragHandle: HTMLElement | null = null;
+
+  constructor(element: HTMLElement, options: { trigger?: string } = {}) {
+    this.element = element;
+    this.dragHandle = options.trigger ? element.querySelector(options.trigger) : element;
+    this.init();
+  }
+
+  private init() {
+    if (!this.dragHandle) return;
+
+    this.dragHandle.style.cursor = 'grab';
+    this.dragHandle.addEventListener('mousedown', this.handleMouseDown);
+    this.dragHandle.addEventListener('touchstart', this.handleTouchStart, { passive: false });
+  }
+
+  private handleMouseDown = (e: MouseEvent) => {
+    e.preventDefault();
+    this.startDrag(e.clientX, e.clientY);
+    
+    document.addEventListener('mousemove', this.handleMouseMove);
+    document.addEventListener('mouseup', this.handleMouseUp);
+    
+    if (this.dragHandle) {
+      this.dragHandle.style.cursor = 'grabbing';
+    }
+  };
+
+  private handleTouchStart = (e: TouchEvent) => {
+    e.preventDefault();
+    const touch = e.touches[0];
+    this.startDrag(touch.clientX, touch.clientY);
+    
+    document.addEventListener('touchmove', this.handleTouchMove, { passive: false });
+    document.addEventListener('touchend', this.handleTouchEnd);
+    
+    if (this.dragHandle) {
+      this.dragHandle.style.cursor = 'grabbing';
+    }
+  };
+
+  private startDrag(clientX: number, clientY: number) {
+    this.isDragging = true;
+    this.startX = clientX;
+    this.startY = clientY;
+    
+    const rect = this.element.getBoundingClientRect();
+    this.initialX = rect.left;
+    this.initialY = rect.top;
+    
+    // Bring to front
+    this.element.style.zIndex = '10000';
+  }
+
+  private handleMouseMove = (e: MouseEvent) => {
+    if (!this.isDragging) return;
+    e.preventDefault();
+    this.updatePosition(e.clientX, e.clientY);
+  };
+
+  private handleTouchMove = (e: TouchEvent) => {
+    if (!this.isDragging) return;
+    e.preventDefault();
+    const touch = e.touches[0];
+    this.updatePosition(touch.clientX, touch.clientY);
+  };
+
+  private updatePosition(clientX: number, clientY: number) {
+    const deltaX = clientX - this.startX;
+    const deltaY = clientY - this.startY;
+    
+    const newX = this.initialX + deltaX;
+    const newY = this.initialY + deltaY;
+    
+    // Allow free movement - no bounds checking
+    gsap.set(this.element, { x: newX, y: newY });
+  }
+
+  private handleMouseUp = () => {
+    this.endDrag();
+    document.removeEventListener('mousemove', this.handleMouseMove);
+    document.removeEventListener('mouseup', this.handleMouseUp);
+  };
+
+  private handleTouchEnd = () => {
+    this.endDrag();
+    document.removeEventListener('touchmove', this.handleTouchMove);
+    document.removeEventListener('touchend', this.handleTouchEnd);
+  };
+
+  private endDrag() {
+    this.isDragging = false;
+    
+    if (this.dragHandle) {
+      this.dragHandle.style.cursor = 'grab';
+    }
+    
+    // Reset z-index after a delay
+    setTimeout(() => {
+      this.element.style.zIndex = '9999';
+    }, 100);
+  }
+
+  public destroy() {
+    if (this.dragHandle) {
+      this.dragHandle.removeEventListener('mousedown', this.handleMouseDown);
+      this.dragHandle.removeEventListener('touchstart', this.handleTouchStart);
+    }
+    
+    document.removeEventListener('mousemove', this.handleMouseMove);
+    document.removeEventListener('mouseup', this.handleMouseUp);
+    document.removeEventListener('touchmove', this.handleTouchMove);
+    document.removeEventListener('touchend', this.handleTouchEnd);
+  }
+}
 
 interface MiniCalculatorProps {
   id: string;
@@ -41,7 +166,7 @@ const MiniCalculator: React.FC<MiniCalculatorProps> = ({
   const [isVisible, setIsVisible] = useState(false);
   
   const calculatorRef = useRef<HTMLDivElement>(null);
-  const draggableRef = useRef<Draggable[] | null>(null);
+  const draggableRef = useRef<SimpleDraggable | null>(null);
 
   // Show calculator after mount to prevent render issues
   useEffect(() => {
@@ -61,28 +186,14 @@ const MiniCalculator: React.FC<MiniCalculatorProps> = ({
     // Set initial position
     gsap.set(element, { x: initialPosition.x, y: initialPosition.y });
 
-    // Create draggable instance
-    draggableRef.current = Draggable.create(element, {
-      type: "x,y",
-      bounds: "body",
-      edgeResistance: 0.8,
-      inertia: true,
-      cursor: "grab",
-      activeCursor: "grabbing",
-      dragClickables: false, // Prevent dragging when clicking buttons
-      trigger: ".drag-handle", // Only drag from the header
-      onDragStart: function() {
-        gsap.set(element, { zIndex: 1000 });
-      },
-      onDragEnd: function() {
-        gsap.set(element, { zIndex: 999 });
-      }
+    // Create simple draggable instance with free movement
+    draggableRef.current = new SimpleDraggable(element, {
+      trigger: ".drag-handle"
     });
-
 
     return () => {
       if (draggableRef.current) {
-        draggableRef.current.forEach(d => d.kill());
+        draggableRef.current.destroy();
       }
     };
   }, [initialPosition, id, isVisible]);
