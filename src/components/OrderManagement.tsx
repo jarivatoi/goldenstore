@@ -138,7 +138,7 @@ const OrderManagement: React.FC = () => {
   // Handle edit category
   const handleEditCategory = async (category: OrderCategory, newName: string, newVatPercentage: number) => {
     try {
-      await updateCategory(category.id, newName, newVatPercentage);
+      await updateCategory(category.id, newName, 15); // Fixed 15% VAT
       setEditingCategory(null);
     } catch (err) {
       alert('Failed to update category');
@@ -596,16 +596,14 @@ const CategoryCard: React.FC<CategoryCardProps> = ({
 }) => {
   const { getOrdersByCategory } = useOrder();
   const [editName, setEditName] = useState(category.name);
-  const [editVatPercentage, setEditVatPercentage] = useState(category.vatPercentage.toString());
 
   // Get latest order for this category
   const categoryOrders = getOrdersByCategory(category.id);
   const latestOrder = categoryOrders.length > 0 ? categoryOrders[0] : null;
   
   const handleSave = () => {
-    const vatPercentage = parseFloat(editVatPercentage);
-    if (editName.trim() && !isNaN(vatPercentage) && vatPercentage >= 0 && vatPercentage <= 100) {
-      onSaveEdit(editName.trim(), vatPercentage);
+    if (editName.trim()) {
+      onSaveEdit(editName.trim(), 15); // Fixed 15% VAT
     }
   };
 
@@ -620,16 +618,6 @@ const CategoryCard: React.FC<CategoryCardProps> = ({
             className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-purple-500 select-text"
             placeholder="Category name"
             autoFocus
-          />
-          <input
-            type="number"
-            value={editVatPercentage}
-            onChange={(e) => setEditVatPercentage(e.target.value)}
-            min="0"
-            max="100"
-            step="0.01"
-            className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-purple-500 select-text"
-            placeholder="VAT percentage"
           />
         </div>
         <div className="flex gap-2 select-none">
@@ -698,7 +686,7 @@ const CategoryCard: React.FC<CategoryCardProps> = ({
         </div>
         
         <div className="text-sm text-gray-600 mb-4 select-none">
-          <p className="select-none">{itemsCount} items • {ordersCount} orders • VAT {vatPercentage}%</p>
+          <p className="select-none">{itemsCount} items • {ordersCount} orders</p>
         </div>
       </div>
       
