@@ -89,8 +89,8 @@ export class SupabaseBackupManager {
         throw new Error(`Failed to load backup from server: ${error.message}`);
       }
 
-      if (!data) {
-        throw new Error('No backup record found on server');
+      if (!data || !data.backup_data) {
+        throw new Error('No valid backup found on server. Please create a backup first by using "Export Database" → "Server Backup".');
       }
 
       // Debug logging to understand what we received
@@ -105,9 +105,6 @@ export class SupabaseBackupManager {
         backup_data_keys: data.backup_data ? Object.keys(data.backup_data) : 'N/A'
       });
 
-      if (!data.backup_data) {
-        throw new Error(`Invalid backup data found on server. The backup_data field is ${data.backup_data === null ? 'null' : 'undefined'}. This may indicate a database storage issue or the backup was not saved properly.`);
-      }
 
       // Parse the JSON string back to object
       let parsedBackupData;
@@ -138,10 +135,10 @@ export class SupabaseBackupManager {
     try {
       const { data, error } = await supabase
         .from('database_backups')
-        .select('id')
+        .select('id, backup_data')
         .limit(1);
 
-      return !error && data && data.length > 0;
+      return !error && data && data.length > 0 && data[0].backup_data;
     } catch (error) {
       return false;
     }
