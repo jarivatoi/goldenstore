@@ -711,7 +711,7 @@ const ScrollingTabs: React.FC<ScrollingTabsProps> = ({
                             return remaining > 0;
                           });
                           
-                          // Return shake animation for clients with returnables
+                          // Return shake animation for clients with returnables (only if debt < 1000)
                           return hasUnreturnedItems ? 'animate-subtle-shake' : '';
                         })()
                   }`}
