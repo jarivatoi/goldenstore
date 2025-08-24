@@ -67,6 +67,10 @@ const OrderManagement: React.FC = () => {
   }, []);
 
   // Get filtered categories
+  const [showEditItem, setShowEditItem] = useState(false);
+  const [editItemName, setEditItemName] = useState('');
+  const [editItemPrice, setEditItemPrice] = useState('');
+  const [editItemVatPercentage, setEditItemVatPercentage] = useState('15');
   const filteredCategories = searchCategories(searchQuery);
 
   // Handle add category
@@ -146,6 +150,10 @@ const OrderManagement: React.FC = () => {
     try {
       await updateItemTemplate(item.id, newName, newPrice, isVatNil);
       setEditingItem(null);
+      setShowEditItem(false);
+      setEditItemName('');
+      setEditItemPrice('');
+      setEditItemVatPercentage('15');
     } catch (err) {
       alert('Failed to update item');
     }
@@ -401,11 +409,14 @@ const OrderManagement: React.FC = () => {
                     <ItemTemplateCard
                       key={item.id}
                       item={item}
-                      onEdit={() => setEditingItem(item)}
+                      onEdit={() => {
+                        setEditingItem(item);
+                        setEditItemName(item.name);
+                        setEditItemPrice(item.unitPrice.toString());
+                        setEditItemVatPercentage(item.isVatNil ? '0' : item.vatPercentage.toString());
+                        setShowEditItem(true);
+                      }}
                       onDelete={() => handleDeleteItem(item)}
-                      isEditing={editingItem?.id === item.id}
-                      onSaveEdit={(newName, newPrice, isVatNil) => handleEditItem(item, newName, newPrice, isVatNil)}
-                      onCancelEdit={() => setEditingItem(null)}
                     />
                   ))}
                 </div>
