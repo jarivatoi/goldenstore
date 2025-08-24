@@ -51,6 +51,8 @@ import LoadingSpinner from './components/LoadingSpinner';
 import OnDeviceConsole from './components/OnDeviceConsole';
 import SupabaseStatusIndicator from './components/SupabaseStatusIndicator';
 import AutoBackupStatusIndicator from './components/AutoBackupStatusIndicator';
+import BankingNotifications from './components/BankingNotifications';
+import BankingSmsParser from './components/BankingSmsParser';
 import { automaticBackupManager } from './utils/automaticBackupManager';
 
 function MainAppContent() {
@@ -169,7 +171,11 @@ function MainAppContent() {
         );
       case 'Credit':
         return (
-          <CreditManagement />
+          <>
+            <BankingNotifications />
+            <BankingSmsParser />
+            <CreditManagement />
+          </>
         );
       default:
         return null;
