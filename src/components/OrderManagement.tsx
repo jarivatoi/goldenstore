@@ -413,7 +413,7 @@ const OrderManagement: React.FC = () => {
                         setEditingItem(item);
                         setEditItemName(item.name);
                         setEditItemPrice(item.unitPrice.toString());
-                        setEditItemVatPercentage(item.isVatNil ? '0' : item.vatPercentage.toString());
+                        setEditItemVatPercentage(item.vatPercentage.toString());
                         setShowEditItem(true);
                       }}
                       onDelete={() => handleDeleteItem(item)}
@@ -647,50 +647,45 @@ const CategoryCard: React.FC<CategoryCardProps> = ({
             <div className="p-3 bg-green-50 rounded-lg border border-green-200 h-full flex flex-col justify-center select-none">
               <div className="flex items-center justify-between select-none">
                 <span className="text-sm font-medium text-green-800 select-none">
+                  Rs {latestOrder.totalCost.toLocaleString('en-IN', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
+                </span>
+                <span className="text-xs text-green-600 select-none">
                   {latestOrder.orderDate.toLocaleDateString('en-GB', {
                     day: '2-digit',
                     month: 'short',
                     year: 'numeric'
-                  })}
+                  }).replace(/\s/g, '-')}
                 </span>
               </div>
               <p className="text-xs text-green-600 mt-1 select-none">Latest Order</p>
             </div>
           ) : (
             <div className="h-full flex items-center justify-center select-none">
-              <p className="text-sm text-gray-500 select-none">No orders yet</p>
+              <p className="text-gray-400 text-sm select-none">No orders yet</p>
             </div>
           )}
         </div>
-
-        {/* Stats */}
-        <div className="space-y-2 mb-4 select-none">
-          <div className="flex justify-between text-sm select-none">
-            <span className="text-gray-600 select-none">Items:</span>
-            <span className="font-medium select-none">{itemsCount}</span>
-          </div>
-          <div className="flex justify-between text-sm select-none">
-            <span className="text-gray-600 select-none">Orders:</span>
-            <span className="font-medium select-none">{ordersCount}</span>
-          </div>
+        
+        <div className="text-sm text-gray-600 mb-4 select-none">
+          <p className="select-none">{itemsCount} items • {ordersCount} orders</p>
         </div>
       </div>
-
-      {/* Action buttons - Fixed at bottom */}
-      <div className="p-4 pt-0 mt-auto select-none">
+      
+      {/* Buttons at bottom - Fixed position */}
+      <div className="p-4 pt-0 select-none">
         <div className="flex gap-2 select-none">
           <button
             onClick={onManage}
-            className="flex-1 bg-blue-500 text-white px-3 py-2 rounded text-sm hover:bg-blue-600 transition-colors flex items-center justify-center gap-1 select-none"
+            className="flex-1 bg-blue-500 hover:bg-blue-600 text-white py-2 px-4 rounded-md transition-colors flex items-center justify-center gap-1 select-none"
           >
-            <Edit2 size={14} />
+            <Edit2 size={16} />
             <span className="select-none">Manage</span>
           </button>
           <button
             onClick={onOrder}
-            className="flex-1 bg-green-500 text-white px-3 py-2 rounded text-sm hover:bg-green-600 transition-colors flex items-center justify-center gap-1 select-none"
+            className="flex-1 bg-green-500 hover:bg-green-600 text-white py-2 px-4 rounded-md transition-colors flex items-center justify-center gap-1 select-none"
           >
-            <Plus size={14} />
+            <Plus size={16} />
             <span className="select-none">Order</span>
           </button>
         </div>
@@ -699,14 +694,21 @@ const CategoryCard: React.FC<CategoryCardProps> = ({
   );
 };
 
-// Item Template Card Component
 interface ItemTemplateCardProps {
   item: OrderItemTemplate;
   onEdit: () => void;
   onDelete: () => void;
 }
 
-const ItemTemplateCard: React.FC<ItemTemplateCardProps> = ({ item, onEdit, onDelete }) => {
+const ItemTemplateCard: React.FC<ItemTemplateCardProps> = ({
+  item,
+  onEdit,
+  onDelete
+}) => {
+  const [editName, setEditName] = useState(item.name);
+  const [editPrice, setEditPrice] = useState(item.unitPrice.toString());
+  const [editVatNil, setEditVatNil] = useState(item.isVatNil);
+
   const vatAmount = item.isVatNil ? 0 : (item.unitPrice * item.vatPercentage) / 100;
   const totalPrice = item.unitPrice + vatAmount;
 
