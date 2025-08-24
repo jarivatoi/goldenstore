@@ -58,11 +58,6 @@ const ScrollingTabs: React.FC<ScrollingTabsProps> = ({
   const tapCountRef = useRef(0);
   const lastTapTimeRef = useRef(0);
   
-  // Test controls state
-  const [showTestControls, setShowTestControls] = React.useState(false);
-  const [testTransition, setTestTransition] = React.useState('scroll-transition-smooth');
-  const [forceShakeTest, setForceShakeTest] = React.useState(false);
-  
   // Listen for credit data changes to force re-render
   React.useEffect(() => {
     const handleCreditDataChanged = () => {
