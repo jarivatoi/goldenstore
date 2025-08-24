@@ -379,21 +379,6 @@ export class DraggableCalculator {
         let newX = this.x + this.deltaX;
         let newY = this.y + this.deltaY;
         
-        // Get calculator dimensions for boundary calculations
-        const rect = this.target.getBoundingClientRect();
-        const calcWidth = rect.width;
-        const calcHeight = rect.height;
-        
-        // Define strict screen boundaries - calculator must stay completely inside
-        const minX = 0; // Left boundary (calculator left edge can't go past screen left)
-        const maxX = window.innerWidth - calcWidth; // Right boundary (calculator right edge can't go past screen right)
-        const minY = 0; // Top boundary (calculator top edge can't go past screen top)
-        const maxY = window.innerHeight - calcHeight; // Bottom boundary (calculator bottom edge can't go past screen bottom)
-        
-        // Apply strict screen boundaries during drag
-        newX = Math.max(minX, Math.min(maxX, newX));
-        newY = Math.max(minY, Math.min(maxY, newY));
-        
         gsap.set(this.target, { x: newX, y: newY });
         
         if (!this.isDragging) {
