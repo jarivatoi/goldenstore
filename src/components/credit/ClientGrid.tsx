@@ -33,6 +33,7 @@ const ClientGrid: React.FC<ClientGridProps> = ({
   searchQuery,
   onSearchChange,
   showAllClients,
+  onToggleAllClients,
   onClientLongPress,
   onQuickAdd,
   onResetCalculator,
