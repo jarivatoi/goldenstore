@@ -759,8 +759,7 @@ const CreditManagement: React.FC = () => {
               <Calculator size={24} className="text-blue-600" />
             </div>
             <div className="flex-1">
-              <h3 className="text-lg lg:text-xl font-semibold text-gray-800">Calculator</h3>
-              <p className="text-xs text-gray-500">Click to create mini calculator</p>
+              <h3 className="text-lg lg:text-xl font-semibold text-gray-800">Calculator +</h3>
             </div>
             {linkedClient && (
               <>
