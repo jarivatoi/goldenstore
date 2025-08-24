@@ -170,7 +170,7 @@ const OrderManagement: React.FC = () => {
     
     try {
       await deleteCategory(categoryToDelete.id);
-      alert(`Category "${categoryToDelete.name}" has been deleted successfully.`);
+      await updateItemTemplate(editingItem.id, editItemName.trim(), price, vatPercent === 0, vatPercent);
       setShowDeleteCategoryModal(false);
       setCategoryToDelete(null);
     } catch (error) {

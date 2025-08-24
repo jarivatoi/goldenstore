@@ -488,7 +488,7 @@ export const OrderProvider: React.FC<{ children: React.ReactNode }> = ({ childre
     }
   };
 
-  const updateItemTemplate = async (id: string, name: string, unitPrice: number, isVatNil: boolean): Promise<void> => {
+  const updateItemTemplate = async (id: string, name: string, unitPrice: number, isVatNil: boolean, vatPercentage?: number): Promise<void> => {
     try {
       const formattedName = formatName(name);
       
@@ -499,7 +499,8 @@ export const OrderProvider: React.FC<{ children: React.ReactNode }> = ({ childre
           .update({
             name: formattedName,
             unit_price: unitPrice,
-            is_vat_nil: isVatNil
+            is_vat_nil: isVatNil,
+            vat_percentage: vatPercentage || 15
           })
           .eq('id', id);
         
@@ -507,12 +508,12 @@ export const OrderProvider: React.FC<{ children: React.ReactNode }> = ({ childre
         
         // Update local state
         setItemTemplates(prev => prev.map(temp => 
-          temp.id === id ? { ...temp, name: formattedName, unitPrice, isVatNil } : temp
+          temp.id === id ? { ...temp, name: formattedName, unitPrice, isVatNil, vatPercentage: vatPercentage || 15 } : temp
         ));
       } else {
         // Fallback to localStorage
         const updatedTemplates = itemTemplates.map(temp => 
-          temp.id === id ? { ...temp, name: formattedName, unitPrice, isVatNil } : temp
+          temp.id === id ? { ...temp, name: formattedName, unitPrice, isVatNil, vatPercentage: vatPercentage || 15 } : temp
         );
         setItemTemplates(updatedTemplates);
         localStorage.setItem('orderItemTemplates', JSON.stringify(updatedTemplates.map(template => ({
