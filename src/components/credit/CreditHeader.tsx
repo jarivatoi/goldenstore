@@ -38,7 +38,7 @@ const CreditHeader: React.FC<CreditHeaderProps> = ({
   sortOption,
   onSortChange,
   showSortDropdown,
-  onToggleSortDropdown
+  onToggleSortDropdown,
   onAddToClientFromMini
 }) => {
   return (
