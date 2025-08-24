@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { createPortal } from 'react-dom';
-import { Clock, Save, TestTube, CheckCircle, AlertTriangle, X } from 'lucide-react';
+import { Clock, Save, TestTube, CheckCircle, AlertTriangle, X, ChevronDown, ChevronUp } from 'lucide-react';
 import { automaticBackupManager } from '../utils/automaticBackupManager';
 
 interface AutoBackupSettingsProps {
@@ -24,6 +24,7 @@ const AutoBackupSettings: React.FC<AutoBackupSettingsProps> = ({ onClose }) => {
   const [hour, setHour] = useState(18);
   const [minute, setMinute] = useState(0);
   const [enabled, setEnabled] = useState(true);
+  const [isMinimized, setIsMinimized] = useState(true);
   const [isTesting, setIsTesting] = useState(false);
   const [modal, setModal] = useState<ModalState>({
     isOpen: false,
@@ -94,14 +95,27 @@ const AutoBackupSettings: React.FC<AutoBackupSettingsProps> = ({ onClose }) => {
   return (
     <>
       <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-4">
-        <div className="flex items-center gap-3 mb-4">
-          <div className="bg-blue-100 p-2 rounded-full">
-            <Clock size={20} className="text-blue-600" />
+        <div className="flex items-center justify-between mb-4">
+          <div className="flex items-center gap-3">
+            <div className="bg-blue-100 p-2 rounded-full">
+              <Clock size={20} className="text-blue-600" />
+            </div>
+            <h3 className="text-lg font-semibold text-gray-800">Automatic Backup</h3>
           </div>
-          <h3 className="text-lg font-semibold text-gray-800">Automatic Backup</h3>
+          <button
+            onClick={() => setIsMinimized(!isMinimized)}
+            className="p-2 text-gray-500 hover:text-gray-700 hover:bg-gray-100 rounded-lg transition-colors"
+            title={isMinimized ? 'Expand settings' : 'Minimize settings'}
+          >
+            {isMinimized ? <ChevronDown size={20} /> : <ChevronUp size={20} />}
+          </button>
         </div>
 
-        <div className="space-y-4">
+        <div 
+          className={`space-y-4 overflow-hidden transition-all duration-300 ease-in-out ${
+            isMinimized ? 'max-h-0 opacity-0' : 'max-h-96 opacity-100'
+          }`}
+        >
           {/* Enable/Disable */}
           <div className="flex items-center justify-between">
             <label className="text-sm font-medium text-gray-700">
