@@ -608,40 +608,27 @@ const CategoryCard: React.FC<CategoryCardProps> = ({
 
   if (isEditing) {
     return (
-      <div className="bg-white rounded-lg shadow-md p-6 border border-gray-200 select-none">
-        <div className="flex items-center justify-between mb-4 select-none">
-          <button
-            onClick={onCancelEdit}
-            className="text-purple-600 hover:text-purple-700 transition-colors select-none"
-          >
-            ← Back to Categories
-          </button>
-          <h3 className="text-lg font-semibold text-gray-800 select-none">Edit Category</h3>
-          <div className="w-24"></div> {/* Spacer for centering */}
-        </div>
-        <div className="mb-6 select-none">
-          <label className="block text-sm font-medium text-gray-700 mb-2 text-center select-none">
-            Category Name
-          </label>
+      <div className="bg-white rounded-lg shadow-md p-4 border border-gray-200 select-none">
+        <div className="mb-4 select-none">
           <input
             type="text"
             value={editName}
             onChange={(e) => setEditName(e.target.value)}
-            className="w-full px-4 py-3 text-lg border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-purple-500 text-center select-text"
+            className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-purple-500 select-text"
             placeholder="Category name"
             autoFocus
           />
         </div>
-        <div className="flex gap-3 select-none">
+        <div className="flex gap-2 select-none">
           <button
             onClick={handleSave}
-            className="flex-1 bg-green-500 text-white px-4 py-3 rounded-lg text-lg font-medium hover:bg-green-600 transition-colors select-none"
+            className="flex-1 bg-green-500 text-white px-3 py-2 rounded text-sm hover:bg-green-600 transition-colors select-none"
           >
             Save
           </button>
           <button
             onClick={onCancelEdit}
-            className="flex-1 bg-gray-500 text-white px-4 py-3 rounded-lg text-lg font-medium hover:bg-gray-600 transition-colors select-none"
+            className="flex-1 bg-gray-500 text-white px-3 py-2 rounded text-sm hover:bg-gray-600 transition-colors select-none"
           >
             Cancel
           </button>
