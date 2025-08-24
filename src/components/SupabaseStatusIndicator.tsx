@@ -136,20 +136,20 @@ const SupabaseStatusIndicator: React.FC<SupabaseStatusIndicatorProps> = ({ class
 
   return (
     <div 
-      className={`relative ${className}`}
+      className={`relative flex items-center justify-center ${className}`}
       title={`${statusConfig.title} (Last checked: ${lastChecked.toLocaleTimeString()})`}
     >
       {/* Big glowing dot */}
       <div 
         className={`
-          w-4 h-4 rounded-full 
+          w-3 h-3 rounded-full 
           ${statusConfig.color} 
           shadow-lg ${statusConfig.glow}
           ${statusConfig.pulse}
           transition-all duration-300
         `}
         style={{
-          boxShadow: `0 0 20px ${
+          boxShadow: `0 0 10px ${
             status === 'connected' ? '#10b981' :
             status === 'connecting' ? '#f59e0b' :
             status === 'error' ? '#ef4444' :
@@ -161,14 +161,14 @@ const SupabaseStatusIndicator: React.FC<SupabaseStatusIndicatorProps> = ({ class
       {/* Outer glow ring for extra emphasis */}
       <div 
         className={`
-          absolute inset-0 w-4 h-4 rounded-full 
+          absolute inset-0 w-3 h-3 rounded-full 
           ${statusConfig.color} 
           opacity-30 
           ${statusConfig.pulse}
           transition-all duration-300
         `}
         style={{
-          transform: 'scale(1.5)',
+          transform: 'scale(1.3)',
           filter: 'blur(2px)'
         }}
       />
