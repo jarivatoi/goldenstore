@@ -447,14 +447,6 @@ const MiniCalculator: React.FC<MiniCalculatorProps> = ({
     </div>
   );
 
-  const handleQuickAction = (action: string) => {
-    if (description.trim() === '') {
-      setDescription(action);
-    } else {
-      setDescription(prev => prev + ', ' + action);
-    }
-  };
-
   return createPortal(modalContent, document.body);
 };
 
