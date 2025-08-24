@@ -181,15 +181,15 @@ function MainAppContent() {
     <div className="min-h-screen bg-gray-50 flex flex-col w-full">
       {/* Header with Sign Out */}
       <div className="bg-white border-b border-gray-200 p-4 flex items-center">
-        <div className="w-4"></div> {/* Spacer to balance the right side */}
+        <div className="w-7"></div> {/* Spacer to balance the right side */}
         <div className="flex items-center justify-center flex-1">
           <h1 className="text-xl font-semibold text-gray-900 text-center">
             <span className="select-none">Golden Store</span>
           </h1>
         </div>
-        <div className="flex items-center gap-2 min-w-0">
-          <SupabaseStatusIndicator className="" />
-          <AutoBackupStatusIndicator className="" />
+        <div className="flex items-center">
+          <SupabaseStatusIndicator className="ml-3" />
+          <AutoBackupStatusIndicator className="ml-3" />
         </div>
       </div>
       

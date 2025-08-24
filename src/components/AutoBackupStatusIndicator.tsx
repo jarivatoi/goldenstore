@@ -59,25 +59,25 @@ const AutoBackupStatusIndicator: React.FC<AutoBackupStatusIndicatorProps> = ({ c
 
   const getStatusIcon = () => {
     if (!status.isEnabled) {
-      return <Clock size={12} className="text-gray-400" />;
+      return <Clock size={16} className="text-gray-400" />;
     }
 
     if (status.lastError) {
-      return <AlertCircle size={12} className="text-red-500" />;
+      return <AlertCircle size={16} className="text-red-500" />;
     }
 
     if (status.pendingBackups > 0) {
-      return <CloudUpload size={12} className="text-yellow-500 animate-pulse" />;
+      return <CloudUpload size={16} className="text-yellow-500 animate-pulse" />;
     }
 
     if (status.lastBackup) {
       const hoursSinceBackup = (Date.now() - status.lastBackup.getTime()) / (1000 * 60 * 60);
       if (hoursSinceBackup < 24) {
-        return <CheckCircle size={12} className="text-green-500" />;
+        return <CheckCircle size={16} className="text-green-500" />;
       }
     }
 
-    return <Clock size={12} className="text-blue-500" />;
+    return <Clock size={16} className="text-blue-500" />;
   };
 
   const getStatusText = () => {
@@ -127,26 +127,26 @@ const AutoBackupStatusIndicator: React.FC<AutoBackupStatusIndicatorProps> = ({ c
 
   return (
     <div 
-      className={`flex items-center gap-1 ${className}`}
+      className={`flex items-center gap-2 ${className}`}
       title={getStatusText()}
     >
       {/* Network status */}
-      <div className="flex items-center justify-center">
+      <div className="flex items-center">
         {isOnline ? (
-          <Wifi size={12} className="text-green-500" />
+          <Wifi size={14} className="text-green-500" />
         ) : (
-          <WifiOff size={12} className="text-red-500" />
+          <WifiOff size={14} className="text-red-500" />
         )}
       </div>
       
       {/* Backup status */}
-      <div className="flex items-center justify-center">
+      <div className="flex items-center">
         {getStatusIcon()}
       </div>
       
       {/* Pending indicator */}
       {status.pendingBackups > 0 && (
-        <div className="bg-yellow-500 text-white text-xs rounded-full w-4 h-4 flex items-center justify-center font-bold">
+        <div className="bg-yellow-500 text-white text-xs rounded-full w-5 h-5 flex items-center justify-center font-bold">
           {status.pendingBackups}
         </div>
       )}
