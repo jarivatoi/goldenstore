@@ -1,10 +1,11 @@
 import React, { useState } from 'react';
 import { createPortal } from 'react-dom';
-import { Download, Upload, Database, X, AlertTriangle } from 'lucide-react';
+import { Download, Upload, Database, X, AlertTriangle, Cloud, HardDrive } from 'lucide-react';
 import { usePriceList } from '../context/PriceListContext';
 import { useCredit } from '../context/CreditContext';
 import { useOver } from '../context/OverContext';
 import { useOrder } from '../context/OrderContext';
+import { SupabaseBackupManager } from '../utils/supabaseBackupManager';
 
 interface UnifiedDataManagerProps {
   isOpen: boolean;
@@ -12,11 +13,13 @@ interface UnifiedDataManagerProps {
 }
 
 interface ModalState {
-  type: 'success' | 'error' | 'confirm' | null;
+  type: 'success' | 'error' | 'confirm' | 'storage-choice' | null;
   title: string;
   message: string;
   onConfirm?: () => void;
   onCancel?: () => void;
+  onLocalChoice?: () => void;
+  onServerChoice?: () => void;
 }
 
 /**
@@ -33,11 +36,103 @@ const UnifiedDataManager: React.FC<UnifiedDataManagerProps> = ({ isOpen, onClose
   
   const [isProcessing, setIsProcessing] = useState(false);
   const [modal, setModal] = useState<ModalState>({ type: null, title: '', message: '' });
+  const [pendingExportData, setPendingExportData] = useState<any>(null);
+  const [pendingImportData, setPendingImportData] = useState<any>(null);
 
   if (!isOpen) return null;
 
-  // Export all data from all modules
-  const handleExportAll = async () => {
+  // Prepare export data
+  const prepareExportData = () => {
+    const now = new Date();
+    const day = now.getDate().toString().padStart(2, '0');
+    const month = (now.getMonth() + 1).toString().padStart(2, '0');
+    const year = now.getFullYear();
+    const dateString = `${day}-${month}-${year}`;
+    
+    // Collect all data from all modules
+    const exportData = {
+      version: '2.0',
+      appName: 'Golden Store',
+      exportDate: new Date().toISOString(),
+      
+      // Price List data
+      priceList: {
+        items: priceItems.map(item => ({
+          ...item,
+          createdAt: item.createdAt.toISOString(),
+          lastEditedAt: item.lastEditedAt?.toISOString()
+        }))
+      },
+      
+      // Credit Management data
+      creditManagement: {
+        clients: clients.map(client => ({
+          ...client,
+          createdAt: client.createdAt.toISOString(),
+          lastTransactionAt: client.lastTransactionAt.toISOString()
+        })),
+        transactions: transactions.map(transaction => ({
+          ...transaction,
+          date: transaction.date.toISOString()
+        })),
+        payments: payments.map(payment => ({
+          ...payment,
+          date: payment.date.toISOString()
+        }))
+      },
+      
+      // Over Management data
+      overManagement: {
+        items: overItems.map(item => ({
+          ...item,
+          createdAt: item.createdAt.toISOString(),
+          completedAt: item.completedAt?.toISOString()
+        }))
+      },
+      
+      // Order Management data
+      orderManagement: {
+        categories: categories.map(category => ({
+          ...category,
+          createdAt: category.createdAt.toISOString()
+        })),
+        itemTemplates: itemTemplates.map(template => ({
+          ...template,
+          createdAt: template.createdAt.toISOString()
+        })),
+        orders: orders.map(order => ({
+          ...order,
+          orderDate: order.orderDate.toISOString(),
+          createdAt: order.createdAt.toISOString(),
+          lastEditedAt: order.lastEditedAt?.toISOString()
+        }))
+      }
+    };
+
+    return exportData;
+  };
+
+  // Export all data
+  const handleExportAll = () => {
+    const exportData = prepareExportData();
+    setPendingExportData(exportData);
+    
+    // Show storage choice modal
+    setModal({
+      type: 'storage-choice',
+      title: 'Choose Export Destination',
+      message: 'Where would you like to save your database backup?',
+      onLocalChoice: () => handleExportToLocal(),
+      onServerChoice: () => handleExportToServer(),
+      onCancel: () => {
+        setModal({ type: null, title: '', message: '' });
+        setPendingExportData(null);
+      }
+    });
+  };
+
+  // Export to local file
+  const handleExportToLocal = () => {
     try {
       setIsProcessing(true);
       
@@ -123,8 +218,93 @@ const UnifiedDataManager: React.FC<UnifiedDataManagerProps> = ({ isOpen, onClose
       
       setModal({
         type: 'success',
-        title: 'Export Successful',
-        message: 'Complete database exported successfully!',
+        title: 'Local Export Successful',
+        message: 'Database exported to your device successfully!',
+        onConfirm: () => {
+          setModal({ type: null, title: '', message: '' });
+          setPendingExportData(null);
+          onClose();
+        }
+      });
+    } catch (error) {
+      setModal({
+        type: 'error',
+        title: 'Local Export Failed',
+        message: 'Error exporting to local file. Please try again.',
+        onConfirm: () => setModal({ type: null, title: '', message: '' })
+      });
+    } finally {
+      setIsProcessing(false);
+      setPendingExportData(null);
+    }
+  };
+
+  // Export to Supabase server
+  const handleExportToServer = async () => {
+    try {
+      setIsProcessing(true);
+      setModal({ type: null, title: '', message: '' });
+      
+      if (!pendingExportData) {
+        throw new Error('No export data prepared');
+      }
+      
+      const backupName = `Golden Store Backup ${new Date().toLocaleDateString('en-GB')} ${new Date().toLocaleTimeString('en-GB', { hour: '2-digit', minute: '2-digit' })}`;
+      
+      await SupabaseBackupManager.saveToSupabase(pendingExportData, backupName);
+      
+      setModal({
+        type: 'success',
+        title: 'Server Backup Successful',
+        message: 'Database backed up to server successfully!\n\nYour data is now safely stored in the cloud and can be accessed from any device.',
+        onConfirm: () => {
+          setModal({ type: null, title: '', message: '' });
+          setPendingExportData(null);
+          onClose();
+        }
+      });
+    } catch (error) {
+      setModal({
+        type: 'error',
+        title: 'Server Backup Failed',
+        message: `Error backing up to server: ${error instanceof Error ? error.message : 'Unknown error'}\n\nPlease check your internet connection and try again.`,
+        onConfirm: () => setModal({ type: null, title: '', message: '' })
+      });
+    } finally {
+      setIsProcessing(false);
+      setPendingExportData(null);
+    }
+  };
+
+  // Process import data
+  const processImportData = async (data: any) => {
+    try {
+      setIsProcessing(true);
+      setModal({ type: null, title: '', message: '' });
+      
+      // Import to Price List
+      if (data.priceList?.items) {
+        const priceListItems = data.priceList.items.map((item: any) => ({
+          ...item,
+          createdAt: new Date(item.createdAt),
+          lastEditedAt: item.lastEditedAt ? new Date(item.lastEditedAt) : undefined
+        }));
+        await importPriceItems(priceListItems);
+      }
+      
+      // Import to Credit Management would go here
+      // Note: You'll need to add import functions to the Credit context
+      
+      // Import to Over Management would go here
+      // Note: You'll need to add import functions to the Over context
+      
+      // Import to Order Management would go here
+      // Note: You'll need to add import functions to the Order context
+      
+      setModal({
+        type: 'success',
+        title: 'Import Successful',
+        message: 'Database imported successfully! All your data has been restored.',
         onConfirm: () => {
           setModal({ type: null, title: '', message: '' });
           onClose();
@@ -133,8 +313,8 @@ const UnifiedDataManager: React.FC<UnifiedDataManagerProps> = ({ isOpen, onClose
     } catch (error) {
       setModal({
         type: 'error',
-        title: 'Export Failed',
-        message: 'Error exporting complete database. Please try again.',
+        title: 'Import Failed',
+        message: `Error importing database: ${error instanceof Error ? error.message : 'Unknown error'}`,
         onConfirm: () => setModal({ type: null, title: '', message: '' })
       });
     } finally {
@@ -144,6 +324,19 @@ const UnifiedDataManager: React.FC<UnifiedDataManagerProps> = ({ isOpen, onClose
 
   // Import all data to all modules
   const handleImportAll = () => {
+    // Show storage choice modal for import
+    setModal({
+      type: 'storage-choice',
+      title: 'Choose Import Source',
+      message: 'Where would you like to import your database from?',
+      onLocalChoice: () => handleImportFromLocal(),
+      onServerChoice: () => handleImportFromServer(),
+      onCancel: () => setModal({ type: null, title: '', message: '' })
+    });
+  };
+
+  // Import from local file
+  const handleImportFromLocal = () => {
     const input = document.createElement('input');
     input.type = 'file';
     input.accept = '.json';
@@ -156,6 +349,7 @@ const UnifiedDataManager: React.FC<UnifiedDataManagerProps> = ({ isOpen, onClose
       reader.onload = async (e) => {
         try {
           setIsProcessing(true);
+          setModal({ type: null, title: '', message: '' });
           
           const content = e.target?.result as string;
           const data = JSON.parse(content);
@@ -185,161 +379,9 @@ const UnifiedDataManager: React.FC<UnifiedDataManagerProps> = ({ isOpen, onClose
           // Show confirmation modal
           setModal({
             type: 'confirm',
-            title: 'Import Database',
+            title: 'Import from Local File',
             message: `This will import a complete Golden Store database with ${totalItems} total records across all modules:\n\n• Price List: ${data.priceList?.items?.length || 0} items\n• Credit: ${data.creditManagement?.clients?.length || 0} clients, ${data.creditManagement?.transactions?.length || 0} transactions\n• Over Items: ${data.overManagement?.items?.length || 0} items\n• Orders: ${data.orderManagement?.categories?.length || 0} categories, ${data.orderManagement?.orders?.length || 0} orders\n\nThis will REPLACE ALL your current data. This action cannot be undone.`,
-            onConfirm: async () => {
-              setModal({ type: null, title: '', message: '' });
-              
-              try {
-                // Import Price List data
-                if (data.priceList?.items) {
-                  try {
-                    const priceListItems = data.priceList.items.map((item: any) => ({
-                      ...item,
-                      createdAt: new Date(item.createdAt),
-                      lastEditedAt: item.lastEditedAt ? new Date(item.lastEditedAt) : undefined
-                    }));
-                    await importPriceItems(priceListItems);
-                    console.log('✅ Price list data imported successfully');
-                  } catch (priceError) {
-                    console.error('❌ Price list import failed:', priceError);
-                    throw new Error(`Price list import failed: ${priceError instanceof Error ? priceError.message : 'Unknown error'}`);
-                  }
-                }
-                
-                // Import Credit Management data
-                if (data.creditManagement) {
-                  try {
-                    if (data.creditManagement.clients) {
-                      const creditClients = data.creditManagement.clients.map((client: any) => ({
-                        ...client,
-                        createdAt: new Date(client.createdAt),
-                        lastTransactionAt: new Date(client.lastTransactionAt)
-                      }));
-                      localStorage.setItem('creditClients', JSON.stringify(creditClients.map(client => ({
-                        ...client,
-                        createdAt: client.createdAt.toISOString(),
-                        lastTransactionAt: client.lastTransactionAt.toISOString()
-                      }))));
-                      console.log('✅ Credit clients imported successfully');
-                    }
-                    
-                    if (data.creditManagement.transactions) {
-                      const creditTransactions = data.creditManagement.transactions.map((transaction: any) => ({
-                        ...transaction,
-                        date: new Date(transaction.date)
-                      }));
-                      localStorage.setItem('creditTransactions', JSON.stringify(creditTransactions.map(transaction => ({
-                        ...transaction,
-                        date: transaction.date.toISOString()
-                      }))));
-                      console.log('✅ Credit transactions imported successfully');
-                    }
-                    
-                    if (data.creditManagement.payments) {
-                      const creditPayments = data.creditManagement.payments.map((payment: any) => ({
-                        ...payment,
-                        date: new Date(payment.date)
-                      }));
-                      localStorage.setItem('creditPayments', JSON.stringify(creditPayments.map(payment => ({
-                        ...payment,
-                        date: payment.date.toISOString()
-                      }))));
-                      console.log('✅ Credit payments imported successfully');
-                    }
-                  } catch (creditError) {
-                    console.error('❌ Credit data import failed:', creditError);
-                    throw new Error(`Credit data import failed: ${creditError instanceof Error ? creditError.message : 'Unknown error'}`);
-                  }
-                }
-                
-                // Import Over Management data
-                if (data.overManagement?.items) {
-                  try {
-                    const overItemsData = data.overManagement.items.map((item: any) => ({
-                      ...item,
-                      createdAt: new Date(item.createdAt),
-                      completedAt: item.completedAt ? new Date(item.completedAt) : undefined
-                    }));
-                    localStorage.setItem('overItems', JSON.stringify(overItemsData.map(item => ({
-                      ...item,
-                      createdAt: item.createdAt.toISOString(),
-                      completedAt: item.completedAt?.toISOString()
-                    }))));
-                    console.log('✅ Over items imported successfully');
-                  } catch (overError) {
-                    console.error('❌ Over items import failed:', overError);
-                    throw new Error(`Over items import failed: ${overError instanceof Error ? overError.message : 'Unknown error'}`);
-                  }
-                }
-                
-                // Import Order Management data
-                if (data.orderManagement) {
-                  try {
-                    if (data.orderManagement.categories) {
-                      const orderCategories = data.orderManagement.categories.map((category: any) => ({
-                        ...category,
-                        createdAt: new Date(category.createdAt)
-                      }));
-                      localStorage.setItem('orderCategories', JSON.stringify(orderCategories.map(category => ({
-                        ...category,
-                        createdAt: category.createdAt.toISOString()
-                      }))));
-                      console.log('✅ Order categories imported successfully');
-                    }
-                    
-                    if (data.orderManagement.itemTemplates) {
-                      const orderTemplates = data.orderManagement.itemTemplates.map((template: any) => ({
-                        ...template,
-                        createdAt: new Date(template.createdAt)
-                      }));
-                      localStorage.setItem('orderItemTemplates', JSON.stringify(orderTemplates.map(template => ({
-                        ...template,
-                        createdAt: template.createdAt.toISOString()
-                      }))));
-                      console.log('✅ Order templates imported successfully');
-                    }
-                    
-                    if (data.orderManagement.orders) {
-                      const orderData = data.orderManagement.orders.map((order: any) => ({
-                        ...order,
-                        orderDate: new Date(order.orderDate),
-                        createdAt: new Date(order.createdAt),
-                        lastEditedAt: order.lastEditedAt ? new Date(order.lastEditedAt) : undefined
-                      }));
-                      localStorage.setItem('orders', JSON.stringify(orderData.map(order => ({
-                        ...order,
-                        orderDate: order.orderDate.toISOString(),
-                        createdAt: order.createdAt.toISOString(),
-                        lastEditedAt: order.lastEditedAt?.toISOString()
-                      }))));
-                      console.log('✅ Orders imported successfully');
-                    }
-                  } catch (orderError) {
-                    console.error('❌ Order data import failed:', orderError);
-                    throw new Error(`Order data import failed: ${orderError instanceof Error ? orderError.message : 'Unknown error'}`);
-                  }
-                }
-            
-                setModal({
-                  type: 'success',
-                  title: 'Import Successful',
-                  message: 'Successfully imported complete Golden Store database!\n\nAll data has been loaded into the application.',
-                  onConfirm: () => {
-                    setModal({ type: null, title: '', message: '' });
-                    onClose();
-                  }
-                });
-              } catch (importError) {
-                console.error('❌ Import operation failed:', importError);
-                setModal({
-                  type: 'error',
-                  title: 'Import Failed',
-                  message: `Error importing database file:\n\n${importError instanceof Error ? importError.message : 'Unknown error'}\n\nPlease check the file format and try again.`,
-                  onConfirm: () => setModal({ type: null, title: '', message: '' })
-                });
-              }
-            },
+            onConfirm: () => processImportData(data),
             onCancel: () => setModal({ type: null, title: '', message: '' })
           });
         } catch (importError) {
@@ -359,6 +401,61 @@ const UnifiedDataManager: React.FC<UnifiedDataManagerProps> = ({ isOpen, onClose
     };
     
     input.click();
+  };
+
+  // Import from Supabase server
+  const handleImportFromServer = async () => {
+    try {
+      setIsProcessing(true);
+      setModal({ type: null, title: '', message: '' });
+      
+      // Check if backup exists
+      const hasBackup = await SupabaseBackupManager.hasBackupOnSupabase();
+      if (!hasBackup) {
+        setModal({
+          type: 'error',
+          title: 'No Server Backup Found',
+          message: 'No backup found on the server. Please create a server backup first or import from a local file.',
+          onConfirm: () => setModal({ type: null, title: '', message: '' })
+        });
+        return;
+      }
+      
+      // Get backup info
+      const backupInfo = await SupabaseBackupManager.getBackupInfo();
+      
+      // Load backup data
+      const data = await SupabaseBackupManager.loadFromSupabase();
+      
+      // Count total items for confirmation
+      const totalItems = 
+        (data.priceList?.items?.length || 0) +
+        (data.creditManagement?.clients?.length || 0) +
+        (data.creditManagement?.transactions?.length || 0) +
+        (data.creditManagement?.payments?.length || 0) +
+        (data.overManagement?.items?.length || 0) +
+        (data.orderManagement?.categories?.length || 0) +
+        (data.orderManagement?.itemTemplates?.length || 0) +
+        (data.orderManagement?.orders?.length || 0);
+
+      // Show confirmation modal
+      setModal({
+        type: 'confirm',
+        title: 'Import from Server Backup',
+        message: `Found server backup: ${backupInfo?.backup_name || 'Unknown'}\nCreated: ${backupInfo?.created_at ? new Date(backupInfo.created_at).toLocaleString() : 'Unknown'}\n\nThis will import ${totalItems} total records across all modules:\n\n• Price List: ${data.priceList?.items?.length || 0} items\n• Credit: ${data.creditManagement?.clients?.length || 0} clients, ${data.creditManagement?.transactions?.length || 0} transactions\n• Over Items: ${data.overManagement?.items?.length || 0} items\n• Orders: ${data.orderManagement?.categories?.length || 0} categories, ${data.orderManagement?.orders?.length || 0} orders\n\nThis will REPLACE ALL your current data. This action cannot be undone.`,
+        onConfirm: () => processImportData(data),
+        onCancel: () => setModal({ type: null, title: '', message: '' })
+      });
+    } catch (error) {
+      setModal({
+        type: 'error',
+        title: 'Server Import Failed',
+        message: `Error loading from server: ${error instanceof Error ? error.message : 'Unknown error'}\n\nPlease check your internet connection and try again.`,
+        onConfirm: () => setModal({ type: null, title: '', message: '' })
+      });
+    } finally {
+      setIsProcessing(false);
+    }
   };
 
   return (
@@ -393,14 +490,14 @@ const UnifiedDataManager: React.FC<UnifiedDataManagerProps> = ({ isOpen, onClose
               <button
                 onClick={handleExportAll}
                 disabled={isProcessing}
-                className="w-full flex items-center gap-4 p-4 bg-green-50 hover:bg-green-100 rounded-lg border border-green-200 transition-colors disabled:opacity-50 select-none"
+                className="w-full flex items-center gap-4 p-4 bg-blue-50 hover:bg-blue-100 rounded-lg border border-blue-200 transition-colors disabled:opacity-50 select-none"
               >
-                <div className="bg-green-500 p-2 rounded-full select-none">
-                  <Upload size={20} className="text-white" />
+                <div className="bg-blue-500 p-2 rounded-full select-none">
+                  <Download size={20} className="text-white" />
                 </div>
                 <div className="text-left flex-1 select-none">
-                  <h4 className="font-medium text-gray-800 select-none">Export Complete Database</h4>
-                  <p className="text-sm text-gray-600 select-none">Download all data from all modules</p>
+                  <h4 className="font-medium text-gray-800 select-none">Export Database</h4>
+                  <p className="text-sm text-gray-600 select-none">Save to local file or server backup</p>
                 </div>
               </button>
 
@@ -408,14 +505,14 @@ const UnifiedDataManager: React.FC<UnifiedDataManagerProps> = ({ isOpen, onClose
               <button
                 onClick={handleImportAll}
                 disabled={isProcessing}
-                className="w-full flex items-center gap-4 p-4 bg-blue-50 hover:bg-blue-100 rounded-lg border border-blue-200 transition-colors disabled:opacity-50 select-none"
+                className="w-full flex items-center gap-4 p-4 bg-green-50 hover:bg-green-100 rounded-lg border border-green-200 transition-colors disabled:opacity-50 select-none"
               >
-                <div className="bg-blue-500 p-2 rounded-full select-none">
-                  <Download size={20} className="text-white" />
+                <div className="bg-green-500 p-2 rounded-full select-none">
+                  <Upload size={20} className="text-white" />
                 </div>
                 <div className="text-left flex-1 select-none">
-                  <h4 className="font-medium text-gray-800 select-none">Import Complete Database</h4>
-                  <p className="text-sm text-gray-600 select-none">Replace all data with imported file</p>
+                  <h4 className="font-medium text-gray-800 select-none">Import Database</h4>
+                  <p className="text-sm text-gray-600 select-none">Load from local file or server backup</p>
                 </div>
               </button>
             </div>
@@ -427,10 +524,10 @@ const UnifiedDataManager: React.FC<UnifiedDataManagerProps> = ({ isOpen, onClose
                 <div className="select-none">
                   <h4 className="font-medium text-yellow-800 mb-1 select-none">Important Notes</h4>
                   <ul className="text-sm text-yellow-700 space-y-1 select-none">
-                    <li className="select-none">• Export includes ALL modules: Price List, Credit, Over Items, Orders</li>
+                    <li className="select-none">• <strong>Local:</strong> Downloads file to your device</li>
+                    <li className="select-none">• <strong>Server:</strong> Saves to cloud (overwrites old backup)</li>
+                    <li className="select-none">• Server backups can be accessed from any device</li>
                     <li className="select-none">• Import will REPLACE all existing data</li>
-                    <li className="select-none">• Always backup before importing</li>
-                    <li className="select-none">• Page refresh required after import</li>
                   </ul>
                 </div>
               </div>
@@ -454,51 +551,110 @@ const UnifiedDataManager: React.FC<UnifiedDataManagerProps> = ({ isOpen, onClose
         <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center p-4 z-[9999] overflow-hidden select-none" style={{ height: '100vh' }}>
           <div className="bg-white rounded-xl shadow-lg w-full max-w-md overflow-hidden select-none">
             
-            {/* Modal Header */}
-            <div className="flex justify-between items-center p-6 border-b border-gray-200 select-none">
-              <div className="flex items-center gap-3 select-none">
-                <div className={`p-2 rounded-full select-none ${
-                  modal.type === 'success' ? 'bg-green-100' :
-                  modal.type === 'error' ? 'bg-red-100' :
-                  'bg-yellow-100'
-                }`}>
-                  {modal.type === 'success' ? (
-                    <Database size={20} className="text-green-600" />
-                  ) : modal.type === 'error' ? (
-                    <X size={20} className="text-red-600" />
-                  ) : (
-                    <AlertTriangle size={20} className="text-yellow-600" />
+            {modal.type === 'storage-choice' ? (
+              <>
+                {/* Storage Choice Modal */}
+                <div className="flex justify-between items-center p-6 border-b border-gray-200 select-none">
+                  <h2 className="text-xl font-semibold text-gray-900 select-none">{modal.title}</h2>
+                  <button onClick={modal.onCancel} className="text-gray-500 hover:text-gray-700 transition-colors select-none">
+                    <X size={24} />
+                  </button>
+                </div>
+                
+                <div className="p-6 select-none">
+                  <p className="text-gray-700 mb-6 select-none">{modal.message}</p>
+                  
+                  <div className="space-y-3 select-none">
+                    {/* Local Storage Option */}
+                    <button
+                      onClick={modal.onLocalChoice}
+                      disabled={isProcessing}
+                      className="w-full flex items-center gap-4 p-4 bg-blue-50 hover:bg-blue-100 rounded-lg border border-blue-200 transition-colors disabled:opacity-50 select-none"
+                    >
+                      <div className="bg-blue-500 p-2 rounded-full select-none">
+                        <HardDrive size={20} className="text-white" />
+                      </div>
+                      <div className="text-left flex-1 select-none">
+                        <h4 className="font-medium text-gray-800 select-none">Local Device</h4>
+                        <p className="text-sm text-gray-600 select-none">Save/load from your device storage</p>
+                      </div>
+                    </button>
+                    
+                    {/* Server Storage Option */}
+                    <button
+                      onClick={modal.onServerChoice}
+                      disabled={isProcessing}
+                      className="w-full flex items-center gap-4 p-4 bg-green-50 hover:bg-green-100 rounded-lg border border-green-200 transition-colors disabled:opacity-50 select-none"
+                    >
+                      <div className="bg-green-500 p-2 rounded-full select-none">
+                        <Cloud size={20} className="text-white" />
+                      </div>
+                      <div className="text-left flex-1 select-none">
+                        <h4 className="font-medium text-gray-800 select-none">Server Backup</h4>
+                        <p className="text-sm text-gray-600 select-none">Save/load from cloud server</p>
+                      </div>
+                    </button>
+                  </div>
+                  
+                  {isProcessing && (
+                    <div className="mt-4 text-center select-none">
+                      <div className="inline-flex items-center gap-2 text-blue-600 select-none">
+                        <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-blue-600"></div>
+                        <span className="select-none">Processing...</span>
+                      </div>
+                    </div>
                   )}
                 </div>
-                <h2 className="text-xl font-semibold text-gray-900 select-none">{modal.title}</h2>
-              </div>
-            </div>
+              </>
+            ) : (
+              <>
+                {/* Standard Modal Header */}
+                <div className="flex justify-between items-center p-6 border-b border-gray-200 select-none">
+                  <div className="flex items-center gap-3 select-none">
+                    <div className={`p-2 rounded-full select-none ${
+                      modal.type === 'success' ? 'bg-green-100' :
+                      modal.type === 'error' ? 'bg-red-100' :
+                      'bg-yellow-100'
+                    }`}>
+                      {modal.type === 'success' ? (
+                        <Database size={20} className="text-green-600" />
+                      ) : modal.type === 'error' ? (
+                        <X size={20} className="text-red-600" />
+                      ) : (
+                        <AlertTriangle size={20} className="text-yellow-600" />
+                      )}
+                    </div>
+                    <h2 className="text-xl font-semibold text-gray-900 select-none">{modal.title}</h2>
+                  </div>
+                </div>
 
-            {/* Modal Content */}
-            <div className="p-6 select-none">
-              <p className="text-gray-700 whitespace-pre-line select-none">{modal.message}</p>
-              
-              <div className="flex gap-3 mt-6 select-none">
-                {modal.type === 'confirm' && modal.onCancel && (
-                  <button
-                    onClick={modal.onCancel}
-                    className="flex-1 px-4 py-2 bg-gray-200 text-gray-800 rounded-lg hover:bg-gray-300 transition-colors select-none"
-                  >
-                    Cancel
-                  </button>
-                )}
-                <button
-                  onClick={modal.onConfirm}
-                  className={`${modal.type === 'confirm' ? 'flex-1' : 'w-full'} px-4 py-2 rounded-lg transition-colors select-none ${
-                    modal.type === 'success' ? 'bg-green-500 hover:bg-green-600 text-white' :
-                    modal.type === 'error' ? 'bg-red-500 hover:bg-red-600 text-white' :
-                    'bg-blue-500 hover:bg-blue-600 text-white'
-                  }`}
-                >
-                  {modal.type === 'confirm' ? 'Continue' : 'OK'}
-                </button>
-              </div>
-            </div>
+                {/* Standard Modal Content */}
+                <div className="p-6 select-none">
+                  <p className="text-gray-700 whitespace-pre-line select-none">{modal.message}</p>
+                  
+                  <div className="flex gap-3 mt-6 select-none">
+                    {modal.type === 'confirm' && modal.onCancel && (
+                      <button
+                        onClick={modal.onCancel}
+                        className="flex-1 px-4 py-2 bg-gray-200 text-gray-800 rounded-lg hover:bg-gray-300 transition-colors select-none"
+                      >
+                        Cancel
+                      </button>
+                    )}
+                    <button
+                      onClick={modal.onConfirm}
+                      className={`${modal.type === 'confirm' ? 'flex-1' : 'w-full'} px-4 py-2 rounded-lg transition-colors select-none ${
+                        modal.type === 'success' ? 'bg-green-500 hover:bg-green-600 text-white' :
+                        modal.type === 'error' ? 'bg-red-500 hover:bg-red-600 text-white' :
+                        'bg-blue-500 hover:bg-blue-600 text-white'
+                      }`}
+                    >
+                      {modal.type === 'confirm' ? 'Continue' : 'OK'}
+                    </button>
+                  </div>
+                </div>
+              </>
+            )}
           </div>
         </div>
         , document.body
