@@ -115,14 +115,17 @@ const OrderManagement: React.FC = () => {
       return;
     }
 
-    const vatPercent = parseFloat(newItemVatPercentage);
-    if (isNaN(vatPercent) || vatPercent < 0 || vatPercent > 100) {
+    const parsedVatPercent = parseFloat(newItemVatPercentage);
+    if (isNaN(parsedVatPercent) || parsedVatPercent < 0 || parsedVatPercent > 100) {
       alert('Please enter a valid VAT percentage (0-100)');
       return;
     }
+
+    const isVatNil = parsedVatPercent === 0;
+
     try {
       setIsSubmitting(true);
-      await addItemTemplate(selectedCategory.id, newItemName.trim(), price, vatPercent === 0, vatPercent);
+      await addItemTemplate(selectedCategory.id, newItemName.trim(), price, isVatNil, parsedVatPercent);
       setNewItemName('');
       setNewItemPrice('');
       setNewItemVatPercentage('15');
