@@ -22,10 +22,12 @@ const MiniCalculatorManager: React.FC<MiniCalculatorManagerProps> = ({ onAddToCl
   const [calculators, setCalculators] = useState<MiniCalculatorInstance[]>([]);
 
   const createNewCalculator = () => {
+    console.log('Creating new mini calculator...');
+    
     // Calculate position for new calculator (staggered)
-    const baseX = 50;
-    const baseY = 100;
-    const offset = calculators.length * 30; // Stagger by 30px
+    const baseX = 100;
+    const baseY = 150;
+    const offset = calculators.length * 40; // Stagger by 40px
     
     const newCalculator: MiniCalculatorInstance = {
       id: `mini-calc-${Date.now()}-${Math.random().toString(36).substr(2, 9)}`,
@@ -36,10 +38,16 @@ const MiniCalculatorManager: React.FC<MiniCalculatorManagerProps> = ({ onAddToCl
       }
     };
 
-    setCalculators(prev => [...prev, newCalculator]);
+    console.log('New calculator created:', newCalculator);
+    setCalculators(prev => {
+      const updated = [...prev, newCalculator];
+      console.log('Updated calculators array:', updated);
+      return updated;
+    });
   };
 
   const closeCalculator = (id: string) => {
+    console.log('Closing calculator:', id);
     setCalculators(prev => prev.filter(calc => calc.id !== id));
   };
 
@@ -51,6 +59,8 @@ const MiniCalculatorManager: React.FC<MiniCalculatorManagerProps> = ({ onAddToCl
     // Call the parent callback
     onAddToClient(amount, description, label);
   };
+
+  console.log('MiniCalculatorManager render - calculators count:', calculators.length);
 
   return (
     <>
@@ -64,16 +74,19 @@ const MiniCalculatorManager: React.FC<MiniCalculatorManagerProps> = ({ onAddToCl
       </button>
 
       {/* Render all mini calculators */}
-      {calculators.map((calc) => (
-        <MiniCalculator
-          key={calc.id}
-          id={calc.id}
-          initialLabel={calc.label}
-          initialPosition={calc.position}
-          onClose={() => closeCalculator(calc.id)}
-          onAddToClient={handleAddToClient}
-        />
-      ))}
+      {calculators.map((calc) => {
+        console.log('Rendering calculator:', calc.id);
+        return (
+          <MiniCalculator
+            key={calc.id}
+            id={calc.id}
+            initialLabel={calc.label}
+            initialPosition={calc.position}
+            onClose={() => closeCalculator(calc.id)}
+            onAddToClient={handleAddToClient}
+          />
+        );
+      })}
     </>
   );
 };

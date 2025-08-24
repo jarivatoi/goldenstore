@@ -1,6 +1,6 @@
 import React, { useState, useRef, useEffect } from 'react';
 import { createPortal } from 'react-dom';
-import { X, Edit2, Check, Calculator, Plus, User } from 'lucide-react';
+import { X, Edit2, Check, Calculator, Plus } from 'lucide-react';
 import { gsap } from 'gsap';
 import { Draggable } from '../../lib/draggable.js';
 import { processCalculatorInput, evaluateExpression } from '../../utils/creditCalculatorUtils';
@@ -42,6 +42,8 @@ const MiniCalculator: React.FC<MiniCalculatorProps> = ({
   const calculatorRef = useRef<HTMLDivElement>(null);
   const draggableRef = useRef<Draggable[] | null>(null);
 
+  console.log('MiniCalculator render:', { id, label, position: initialPosition });
+
   // Initialize draggable functionality
   useEffect(() => {
     if (!calculatorRef.current) return;
@@ -69,12 +71,14 @@ const MiniCalculator: React.FC<MiniCalculatorProps> = ({
       }
     });
 
+    console.log('Draggable created for calculator:', id);
+
     return () => {
       if (draggableRef.current) {
         draggableRef.current.forEach(d => d.kill());
       }
     };
-  }, [initialPosition]);
+  }, [initialPosition, id]);
 
   const handleCalculatorInput = (value: string) => {
     const result = processCalculatorInput(calculatorValue, value, calculatorMemory);
@@ -143,7 +147,7 @@ const MiniCalculator: React.FC<MiniCalculatorProps> = ({
       }}
     >
       {/* Header - Drag Handle */}
-      <div className="drag-handle bg-purple-500 text-white p-3 rounded-t-lg cursor-grab active:cursor-grabbing flex items-center justify-between">
+      <div className="drag-handle bg-blue-500 text-white p-3 rounded-t-lg cursor-grab active:cursor-grabbing flex items-center justify-between">
         <div className="flex items-center gap-2 flex-1">
           <Calculator size={16} />
           {!isEditingLabel ? (
@@ -151,7 +155,7 @@ const MiniCalculator: React.FC<MiniCalculatorProps> = ({
               <span className="font-medium truncate">{label}</span>
               <button
                 onClick={() => setIsEditingLabel(true)}
-                className="text-purple-200 hover:text-white transition-colors"
+                className="text-blue-200 hover:text-white transition-colors"
               >
                 <Edit2 size={14} />
               </button>
@@ -162,7 +166,7 @@ const MiniCalculator: React.FC<MiniCalculatorProps> = ({
                 type="text"
                 value={editedLabel}
                 onChange={(e) => setEditedLabel(e.target.value)}
-                className="bg-purple-400 text-white placeholder-purple-200 border-none outline-none rounded px-2 py-1 text-sm flex-1"
+                className="bg-blue-400 text-white placeholder-blue-200 border-none outline-none rounded px-2 py-1 text-sm flex-1"
                 placeholder="Enter label..."
                 autoFocus
                 onKeyDown={(e) => {
@@ -172,7 +176,7 @@ const MiniCalculator: React.FC<MiniCalculatorProps> = ({
               />
               <button
                 onClick={handleSaveLabel}
-                className="text-purple-200 hover:text-white transition-colors"
+                className="text-blue-200 hover:text-white transition-colors"
               >
                 <Check size={14} />
               </button>
@@ -181,7 +185,7 @@ const MiniCalculator: React.FC<MiniCalculatorProps> = ({
         </div>
         <button
           onClick={onClose}
-          className="text-purple-200 hover:text-white transition-colors ml-2"
+          className="text-blue-200 hover:text-white transition-colors ml-2"
         >
           <X size={16} />
         </button>
@@ -305,7 +309,7 @@ const MiniCalculator: React.FC<MiniCalculatorProps> = ({
           </button>
           <button
             onClick={() => handleCalculatorInput('+')}
-            className="bg-blue-500 hover:bg-blue-600 text-white p-2 rounded text-sm font-semibold row-span-2"
+            className="bg-blue-500 hover:bg-blue-600 text-white p-2 rounded text-sm font-semibold"
           >
             +
           </button>
@@ -323,8 +327,14 @@ const MiniCalculator: React.FC<MiniCalculatorProps> = ({
           >
             .
           </button>
+          <button
+            onClick={() => handleCalculatorInput('=')}
+            className="bg-green-500 hover:bg-green-600 text-white p-2 rounded text-sm font-semibold"
+          >
+            =
+          </button>
 
-          {/* Row 6 - Memory and Equals */}
+          {/* Row 6 - Memory Functions */}
           <button
             onClick={() => handleCalculatorInput('M+')}
             className="bg-purple-500 hover:bg-purple-600 text-white p-2 rounded text-xs font-semibold"
@@ -344,22 +354,13 @@ const MiniCalculator: React.FC<MiniCalculatorProps> = ({
             MC
           </button>
           <button
-            onClick={() => handleCalculatorInput('=')}
-            className="bg-green-500 hover:bg-green-600 text-white p-2 rounded text-sm font-semibold"
+            onClick={() => setShowAddForm(!showAddForm)}
+            disabled={calculatorValue === '0' || calculatorValue === 'Error'}
+            className="bg-green-500 hover:bg-green-600 disabled:bg-gray-300 disabled:cursor-not-allowed text-white p-2 rounded text-xs font-semibold"
           >
-            =
+            Add
           </button>
         </div>
-
-        {/* Add Transaction Button */}
-        <button
-          onClick={() => setShowAddForm(!showAddForm)}
-          disabled={calculatorValue === '0' || calculatorValue === 'Error'}
-          className="w-full bg-green-500 hover:bg-green-600 disabled:bg-gray-300 disabled:cursor-not-allowed text-white p-2 rounded font-semibold text-sm flex items-center justify-center gap-2 mb-2"
-        >
-          <Plus size={16} />
-          Add Transaction
-        </button>
 
         {/* Add Transaction Form */}
         {showAddForm && (
@@ -379,7 +380,7 @@ const MiniCalculator: React.FC<MiniCalculatorProps> = ({
                   setDescription(formatted);
                 }}
                 placeholder="Enter item description..."
-                className="w-full px-2 py-2 text-sm border border-gray-300 rounded focus:outline-none focus:ring-2 focus:ring-purple-500 focus:border-purple-500"
+                className="w-full px-2 py-2 text-sm border border-gray-300 rounded focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
               />
             </div>
 
@@ -435,7 +436,7 @@ const MiniCalculator: React.FC<MiniCalculatorProps> = ({
               <button
                 onClick={handleAddTransaction}
                 disabled={!description.trim() || calculatorValue === '0' || calculatorValue === 'Error'}
-                className="flex-1 px-3 py-2 bg-purple-500 hover:bg-purple-600 disabled:bg-gray-300 disabled:cursor-not-allowed text-white rounded text-sm transition-colors"
+                className="flex-1 px-3 py-2 bg-blue-500 hover:bg-blue-600 disabled:bg-gray-300 disabled:cursor-not-allowed text-white rounded text-sm transition-colors"
               >
                 Add
               </button>
@@ -445,6 +446,14 @@ const MiniCalculator: React.FC<MiniCalculatorProps> = ({
       </div>
     </div>
   );
+
+  const handleQuickAction = (action: string) => {
+    if (description.trim() === '') {
+      setDescription(action);
+    } else {
+      setDescription(prev => prev + ', ' + action);
+    }
+  };
 
   return createPortal(modalContent, document.body);
 };
