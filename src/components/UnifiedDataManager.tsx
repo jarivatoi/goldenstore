@@ -245,13 +245,12 @@ const UnifiedDataManager: React.FC<UnifiedDataManagerProps> = ({ isOpen, onClose
       setIsProcessing(true);
       setModal({ type: null, title: '', message: '' });
       
-      if (!pendingExportData) {
-        throw new Error('No export data prepared');
-      }
+      // Prepare export data if not already prepared
+      const exportData = pendingExportData || prepareExportData();
       
       const backupName = `Golden Store Backup ${new Date().toLocaleDateString('en-GB')} ${new Date().toLocaleTimeString('en-GB', { hour: '2-digit', minute: '2-digit' })}`;
       
-      await SupabaseBackupManager.saveToSupabase(pendingExportData, backupName);
+      await SupabaseBackupManager.saveToSupabase(exportData, backupName);
       
       setModal({
         type: 'success',
