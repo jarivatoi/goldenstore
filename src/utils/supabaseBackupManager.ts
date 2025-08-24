@@ -77,7 +77,7 @@ export class SupabaseBackupManager {
     try {
       const { data, error } = await supabase
         .from('database_backups')
-        .select('*')
+        .select('id, backup_data, backup_name, created_at, file_size')
         .order('created_at', { ascending: false })
         .limit(1)
         .single();
