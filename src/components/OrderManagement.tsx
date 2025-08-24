@@ -991,7 +991,6 @@ const OrderCard: React.FC<OrderCardProps> = ({ order, itemTemplates, onDelete, o
                 className="w-full px-4 py-3 text-lg border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 select-text"
                 inputMode="decimal"
                 pattern="[0-9]*\.?[0-9]*"
-              </div>
               <p className="text-xs text-gray-500 mt-1 select-none">Enter 0 for VAT Nil items</p>
             </div>
             <div className="flex items-center gap-2 select-none">
