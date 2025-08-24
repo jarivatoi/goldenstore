@@ -708,7 +708,7 @@ const ItemTemplateCard: React.FC<ItemTemplateCardProps> = ({
   const handleSave = () => {
     const price = parseFloat(editPrice);
     if (editName.trim() && !isNaN(price) && price >= 0) {
-      onSaveEdit(editName.trim(), price, editVatNil);
+      onSaveEdit(editName.trim(), price, item.isVatNil);
     }
   };
 
@@ -737,17 +737,6 @@ const ItemTemplateCard: React.FC<ItemTemplateCardProps> = ({
             className="px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 select-text"
             placeholder="Unit price"
           />
-        </div>
-        <div className="mb-3 select-none">
-          <label className="flex items-center select-none">
-            <input
-              type="checkbox"
-              checked={editVatNil}
-              onChange={(e) => setEditVatNil(e.target.checked)}
-              className="w-4 h-4 text-blue-600 bg-gray-100 border-gray-300 rounded focus:ring-blue-500"
-            />
-            <span className="ml-2 text-sm text-gray-700 select-none">VAT Nil (No VAT applicable)</span>
-          </label>
         </div>
         <div className="flex gap-2 select-none">
           <button
