@@ -38,14 +38,23 @@ const MiniCalculator: React.FC<MiniCalculatorProps> = ({
   const [description, setDescription] = useState('');
   const [showAddForm, setShowAddForm] = useState(false);
   const [error, setError] = useState('');
+  const [isVisible, setIsVisible] = useState(false);
   
   const calculatorRef = useRef<HTMLDivElement>(null);
   const draggableRef = useRef<Draggable[] | null>(null);
 
+  // Show calculator after mount to prevent render issues
+  useEffect(() => {
+    const timer = setTimeout(() => {
+      setIsVisible(true);
+    }, 50);
+    
+    return () => clearTimeout(timer);
+  }, []);
 
   // Initialize draggable functionality
   useEffect(() => {
-    if (!calculatorRef.current) return;
+    if (!calculatorRef.current || !isVisible) return;
 
     const element = calculatorRef.current;
     
@@ -76,7 +85,7 @@ const MiniCalculator: React.FC<MiniCalculatorProps> = ({
         draggableRef.current.forEach(d => d.kill());
       }
     };
-  }, [initialPosition, id]);
+  }, [initialPosition, id, isVisible]);
 
   const handleCalculatorInput = (value: string) => {
     const result = processCalculatorInput(calculatorValue, value, calculatorMemory);
@@ -133,15 +142,22 @@ const MiniCalculator: React.FC<MiniCalculatorProps> = ({
     }
   };
 
+  // Don't render until visible to prevent React warnings
+  if (!isVisible) {
+    return null;
+  }
+
   const modalContent = (
     <div
       ref={calculatorRef}
       className="fixed bg-white rounded-lg shadow-2xl border border-gray-300 select-none"
       style={{
         width: '280px',
-        zIndex: 999,
+        zIndex: 9999,
         maxHeight: '90vh',
-        overflow: 'hidden'
+        overflow: 'hidden',
+        left: 0,
+        top: 0
       }}
     >
       {/* Header - Drag Handle */}
