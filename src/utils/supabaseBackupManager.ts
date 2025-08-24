@@ -133,28 +133,20 @@ export class SupabaseBackupManager {
     }
 
     try {
-      const { data, error } = await supabase
+      const { data, error, count } = await supabase
         .from('database_backups')
-        .select('backup_data')
+        .select('id', { count: 'exact' })
         .limit(1);
 
-      if (error || !data || data.length === 0) {
+      if (error) {
+        console.warn('Error checking backup existence:', error);
         return false;
       }
 
-      const backupData = data[0].backup_data;
-      
-      // Check if backup_data is valid (not null, undefined, or empty)
-      if (!backupData || 
-          backupData === null || 
-          backupData === undefined ||
-          (typeof backupData === 'string' && backupData.trim() === '') ||
-          (typeof backupData === 'object' && Object.keys(backupData).length === 0)) {
-        return false;
-      }
-
-      return true;
+      // Return true if any records exist
+      return (count || 0) > 0;
     } catch (error) {
+      console.warn('Exception checking backup existence:', error);
       return false;
     }
   }
