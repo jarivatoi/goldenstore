@@ -1,5 +1,5 @@
 import React from 'react';
-import { Users, UserCheck, Database, Settings, Download, Upload, ArrowUpDown, Trash2 } from 'lucide-react';
+import { Users, UserCheck, Database, Settings, ArrowUpDown, Calculator } from 'lucide-react';
 import MiniCalculatorManager from './MiniCalculatorManager';
 
 interface CreditHeaderProps {
@@ -61,22 +61,20 @@ const CreditHeader: React.FC<CreditHeaderProps> = ({
             {!showAllClients ? <UserCheck size={20} /> : <Users size={20} />}
           </button>
           
-          {/* Mini Calculator Manager */}
-          <MiniCalculatorManager onAddToClient={(amount, description, label) => {
-            // For now, show alert with transaction details
-            // In future, this could open client search modal
-            alert(`Transaction from ${label}:\nAmount: Rs ${amount.toFixed(2)}\nDescription: ${description}\n\nNote: This would normally open the client search modal to select a client.`);
-          }} />
+          {/* Mini Calculator Manager - Creates floating calculators */}
+          <MiniCalculatorManager 
+            onAddToClient={(amount, description, label) => {
+              alert(`Transaction from ${label}:\nAmount: Rs ${amount.toFixed(2)}\nDescription: ${description}\n\nNote: This would normally open the client search modal to select a client.`);
+            }} 
+          />
           
-          <div className="relative">
-            <button
-             onClick={onShowUnifiedDataManager}
-              className="p-2 text-gray-600 hover:text-gray-800 hover:bg-gray-100 rounded-lg transition-colors"
-              title="Database Import/Export"
-            >
-              <Database size={20} />
-            </button>
-          </div>
+          <button
+            onClick={onShowUnifiedDataManager}
+            className="p-2 text-gray-600 hover:text-gray-800 hover:bg-gray-100 rounded-lg transition-colors"
+            title="Database Import/Export"
+          >
+            <Database size={20} />
+          </button>
           
           <button
             onClick={onShowSettings}
