@@ -1148,7 +1148,13 @@ const AddItemModal: React.FC<AddItemModalProps> = ({
               <input
                 type="number"
                 value={itemPrice}
-               onChange={(e) => setItemPrice(e.target.value)}
+                onChange={(e) => setItemPrice(e.target.value)}
+                min="0"
+                step="0.01"
+                placeholder="0.00"
+                className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 select-text"
+              />
+            </div>
             
             <div className="mb-4 select-none">
               <label className="block text-sm font-medium text-gray-700 mb-2 select-none">
@@ -1157,10 +1163,10 @@ const AddItemModal: React.FC<AddItemModalProps> = ({
               <input
                 type="number"
                 value={vatPercentage}
-               onChange={(e) => setVatPercentage(e.target.value)}
+                onChange={(e) => setVatPercentage(e.target.value)}
                 min="0"
                 max="100"
-               className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 bg-white select-text"
+                className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 bg-white select-text"
               />
               <p className="text-xs text-gray-500 mt-1 select-none">
                 Enter 0 for VAT Nil items
@@ -1171,7 +1177,13 @@ const AddItemModal: React.FC<AddItemModalProps> = ({
               <button
                 type="button"
                 onClick={onClose}
-               onChange={(e) => setVatPercentage(e.target.value)}
+                disabled={isSubmitting}
+                className="flex-1 px-4 py-2 border border-gray-300 rounded-lg text-gray-700 hover:bg-gray-50 disabled:opacity-50 select-none"
+              >
+                Cancel
+              </button>
+              <button
+                type="submit"
                 disabled={isSubmitting || !itemName.trim() || !itemPrice.trim()}
                 className="flex-1 px-4 py-2 bg-blue-500 text-white rounded-lg hover:bg-blue-600 disabled:opacity-50 select-none"
               >
