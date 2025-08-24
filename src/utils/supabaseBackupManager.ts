@@ -90,7 +90,7 @@ export class SupabaseBackupManager {
       }
 
       if (!data || !data.backup_data) {
-        return null;
+        throw new Error('No valid backup found on server. Please create a backup first by using "Export Database" → "Server Backup".');
       }
 
       // Debug logging to understand what we received
@@ -109,9 +109,24 @@ export class SupabaseBackupManager {
       // Parse the JSON string back to object
       let parsedBackupData;
       try {
-        parsedBackupData = typeof data.backup_data === 'string' 
-          ? JSON.parse(data.backup_data) 
-          : data.backup_data;
+        // Handle both string and object formats
+        if (typeof data.backup_data === 'string') {
+          parsedBackupData = JSON.parse(data.backup_data);
+        } else if (typeof data.backup_data === 'object' && data.backup_data !== null) {
+          parsedBackupData = data.backup_data;
+        } else {
+          throw new Error('Invalid backup data format');
+        }
+        
+        // Validate that the parsed data has the expected structure
+        if (!parsedBackupData || typeof parsedBackupData !== 'object') {
+          throw new Error('Backup data is not a valid object');
+        }
+        
+        // Check for required fields
+        if (!parsedBackupData.version && !parsedBackupData.appName && !parsedBackupData.priceList && !parsedBackupData.creditManagement) {
+          throw new Error('Backup data does not contain valid Golden Store data');
+        }
       } catch (parseError) {
         throw new Error(`Failed to parse backup data: ${parseError instanceof Error ? parseError.message : 'Unknown parsing error'}`);
       }
