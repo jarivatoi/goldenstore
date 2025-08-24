@@ -61,11 +61,10 @@ const CreditHeader: React.FC<CreditHeaderProps> = ({
             {!showAllClients ? <UserCheck size={20} /> : <Users size={20} />}
           </button>
           
-          {/* Mini Calculator Manager - Creates floating calculators */}
+          {/* Mini Calculator Manager */}
           <MiniCalculatorManager 
             onAddToClient={async (amount, description, label) => {
               try {
-                // Create a mock client object for the transaction
                 const mockClient = { id: 'temp', name: 'Temp Client' };
                 await onAddToClientFromMini(mockClient, description);
               } catch (error) {
