@@ -146,9 +146,9 @@ const OrderManagement: React.FC = () => {
   };
 
   // Handle edit item template
-  const handleEditItem = async (item: OrderItemTemplate, newName: string, newPrice: number, isVatNil: boolean) => {
+  const handleEditItem = async (item: OrderItemTemplate, newName: string, newPrice: number, isVatNil: boolean, newVatPercentage: number) => {
     try {
-      await updateItemTemplate(item.id, newName, newPrice, isVatNil);
+      await updateItemTemplate(item.id, newName, newPrice, isVatNil, newVatPercentage);
       setEditingItem(null);
       setShowEditItem(false);
       setEditItemName('');
@@ -728,9 +728,6 @@ const ItemTemplateCard: React.FC<ItemTemplateCardProps> = ({
   onEdit,
   onDelete
 }) => {
-  const [editName, setEditName] = useState(item.name);
-  const [editPrice, setEditPrice] = useState(item.unitPrice.toString());
-  const [editVatNil, setEditVatNil] = useState(item.isVatNil);
 
   const vatAmount = item.isVatNil ? 0 : (item.unitPrice * item.vatPercentage) / 100;
   const totalPrice = item.unitPrice + vatAmount;
@@ -742,9 +739,9 @@ const ItemTemplateCard: React.FC<ItemTemplateCardProps> = ({
           <h5 className="font-medium text-gray-800 select-none">{item.name}</h5>
           <div className="text-sm text-gray-600 select-none">
             {item.isVatNil ? (
-              <p className="select-none">Rs {item.unitPrice.toLocaleString('en-IN', { minimumFractionDigits: 2, maximumFractionDigits: 2 })} VAT Nil → Rs {item.unitPrice.toLocaleString('en-IN', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</p>
+              <p className="select-none">Rs {item.unitPrice.toLocaleString('en-IN', { minimumFractionDigits: 2, maximumFractionDigits: 2 })} VAT Nil → Rs {totalPrice.toLocaleString('en-IN', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</p>
             ) : (
-              <p className="select-none">Rs {item.unitPrice.toLocaleString('en-IN', { minimumFractionDigits: 2, maximumFractionDigits: 2 })} VAT{item.vatPercentage}%(Rs {vatAmount.toLocaleString('en-IN', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}) → Rs {totalPrice.toLocaleString('en-IN', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</p>
+              <p className="select-none">Rs {item.unitPrice.toLocaleString('en-IN', { minimumFractionDigits: 2, maximumFractionDigits: 2 })} VAT({item.vatPercentage}%)(Rs {vatAmount.toLocaleString('en-IN', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}) → Rs {totalPrice.toLocaleString('en-IN', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</p>
             )}
           </div>
         </div>
@@ -1718,6 +1715,19 @@ const EditItemModal: React.FC<EditItemModalProps> = ({
   setItemVatPercentage,
   isSubmitting
 }) => {
+  // Calculate VAT and total in real-time
+  const calculateVatAndTotal = () => {
+    const price = parseFloat(itemPrice) || 0;
+    const vatPercent = parseFloat(itemVatPercentage) || 0;
+    const isVatNil = vatPercent === 0;
+    
+    const vatAmount = isVatNil ? 0 : (price * vatPercent) / 100;
+    const totalPrice = price + vatAmount;
+    
+    return { price, vatPercent, isVatNil, vatAmount, totalPrice };
+  };
+  
+  const { price, vatPercent, isVatNil, vatAmount, totalPrice } = calculateVatAndTotal();
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     
@@ -1726,19 +1736,17 @@ const EditItemModal: React.FC<EditItemModalProps> = ({
       return;
     }
 
-    const price = parseFloat(itemPrice);
     if (isNaN(price) || price < 0) {
       alert('Please enter a valid price');
       return;
     }
 
-    const vatPercent = parseFloat(itemVatPercentage);
     if (isNaN(vatPercent) || vatPercent < 0 || vatPercent > 100) {
       alert('Please enter a valid VAT percentage (0-100)');
       return;
     }
 
-    try {
+    onSave(item, itemName.trim(), price, isVatNil, vatPercent);
       await onSave(item, itemName.trim(), price, vatPercent === 0);
     } catch (err) {
       alert(err instanceof Error ? err.message : 'Failed to update item');
@@ -1813,6 +1821,29 @@ const EditItemModal: React.FC<EditItemModalProps> = ({
                 Enter 0 for VAT Nil items
               </p>
             </div>
+            
+            {/* Real-time calculation display */}
+            {price > 0 && (
+              <div className="mb-4 p-3 bg-gray-50 rounded-lg border border-gray-200 select-none">
+                <h4 className="text-sm font-medium text-gray-700 mb-2 select-none">Price Breakdown:</h4>
+                <div className="text-sm text-gray-600 space-y-1 select-none">
+                  <div className="flex justify-between select-none">
+                    <span className="select-none">Unit Price:</span>
+                    <span className="select-none">Rs {price.toLocaleString('en-IN', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</span>
+                  </div>
+                  <div className="flex justify-between select-none">
+                    <span className="select-none">VAT ({vatPercent}%):</span>
+                    <span className="select-none">
+                      {isVatNil ? 'VAT Nil' : `Rs ${vatAmount.toLocaleString('en-IN', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`}
+                    </span>
+                  </div>
+                  <div className="flex justify-between font-medium text-gray-800 pt-1 border-t border-gray-300 select-none">
+                    <span className="select-none">Total Price:</span>
+                    <span className="select-none">Rs {totalPrice.toLocaleString('en-IN', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</span>
+                  </div>
+                </div>
+              </div>
+            )}
             
             <div className="flex gap-3 select-none">
               <button
