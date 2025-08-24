@@ -709,6 +709,9 @@ const ScrollingTabs: React.FC<ScrollingTabsProps> = ({
                           });
                           
                           return hasUnreturnedItems ? 'animate-small-debt-shake' : '';
+                          return hasUnreturnedItems ? 'animate-bounce' : '';
+                        })()
+                          return hasUnreturnedItems ? 'animate-bounce' : '';
                         })()
                   }`}
                   style={{
