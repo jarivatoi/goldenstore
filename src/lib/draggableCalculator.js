@@ -272,9 +272,9 @@ export class DraggableCalculator {
         
         // Inertia settings for momentum
         this.inertia = this.vars.inertia !== false;
-        this.throwResistance = this.vars.throwResistance || 1000;
-        this.maxDuration = this.vars.maxDuration || 3;
-        this.minDuration = this.vars.minDuration || 0.1;
+        this.throwResistance = this.vars.throwResistance || 100; // Much lower resistance = more momentum
+        this.maxDuration = this.vars.maxDuration || 8; // Longer momentum duration
+        this.minDuration = this.vars.minDuration || 0.5; // Minimum momentum time
         
         // No bounds - free movement
         this.bounds = null;
@@ -424,25 +424,25 @@ export class DraggableCalculator {
     
     _applyInertia() {
         // Calculate throw distance based on velocity and resistance (enhanced formula)
-        let velocityMultiplier = 100; // Increase momentum distance
+        let velocityMultiplier = 500; // Maximum momentum distance
         let throwX = (this.velocityX * velocityMultiplier) / this.throwResistance;
         let throwY = (this.velocityY * velocityMultiplier) / this.throwResistance;
         
         // Limit maximum throw distance to prevent calculator from flying off screen
-        let maxThrow = 300; // Maximum pixels to throw
+        let maxThrow = 800; // Much larger throw distance
         throwX = Math.max(-maxThrow, Math.min(maxThrow, throwX));
         throwY = Math.max(-maxThrow, Math.min(maxThrow, throwY));
         
         // Calculate duration based on velocity
         let maxVelocity = Math.max(Math.abs(this.velocityX), Math.abs(this.velocityY));
-        let duration = Math.max(this.minDuration, Math.min(this.maxDuration, maxVelocity / 50));
+        let duration = Math.max(this.minDuration, Math.min(this.maxDuration, maxVelocity / 20)); // Longer momentum duration
         
         // Final position after throw
         let finalX = this.x + throwX;
         let finalY = this.y + throwY;
         
         // Keep calculator within reasonable screen bounds (soft bounds - can go slightly off screen)
-        let screenPadding = 50; // Allow 50px off screen
+        let screenPadding = 200; // Allow much more off screen movement
         let maxX = window.innerWidth + screenPadding;
         let minX = -screenPadding;
         let maxY = window.innerHeight + screenPadding;
@@ -450,15 +450,15 @@ export class DraggableCalculator {
         
         // Apply soft bounds (gentle bounce back if too far off screen)
         if (finalX > maxX) {
-            finalX = maxX - (finalX - maxX) * 0.3; // Bounce back 70%
+            finalX = maxX - (finalX - maxX) * 0.1; // Minimal bounce back (90% momentum preserved)
         } else if (finalX < minX) {
-            finalX = minX - (finalX - minX) * 0.3; // Bounce back 70%
+            finalX = minX - (finalX - minX) * 0.1; // Minimal bounce back (90% momentum preserved)
         }
         
         if (finalY > maxY) {
-            finalY = maxY - (finalY - maxY) * 0.3; // Bounce back 70%
+            finalY = maxY - (finalY - maxY) * 0.1; // Minimal bounce back (90% momentum preserved)
         } else if (finalY < minY) {
-            finalY = minY - (finalY - minY) * 0.3; // Bounce back 70%
+            finalY = minY - (finalY - minY) * 0.1; // Minimal bounce back (90% momentum preserved)
         }
         
         // Apply momentum animation with bounce-back if needed
@@ -466,7 +466,7 @@ export class DraggableCalculator {
             x: finalX,
             y: finalY,
             duration: duration,
-            ease: "power3.out", // Smoother deceleration
+            ease: "power1.out", // Minimal deceleration for maximum momentum
             onComplete: () => {
                 // Reset z-index after animation
                 gsap.set(this.target, { zIndex: 9999 });
