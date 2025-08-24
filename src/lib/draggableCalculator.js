@@ -384,14 +384,13 @@ export class DraggableCalculator {
         const calcWidth = rect.width;
         const calcHeight = rect.height;
         
-        // Define screen boundaries with padding
-        const padding = 20; // Keep 20px visible on all sides
-        const minX = -(calcWidth - padding); // Left boundary (keep right edge visible)
-        const maxX = window.innerWidth - padding; // Right boundary (keep left edge visible)
-        const minY = -(calcHeight - padding); // Top boundary (keep bottom edge visible)
-        const maxY = window.innerHeight - padding; // Bottom boundary (keep top edge visible)
+        // Define strict screen boundaries - calculator must stay completely inside
+        const minX = 0; // Left boundary (calculator left edge can't go past screen left)
+        const maxX = window.innerWidth - calcWidth; // Right boundary (calculator right edge can't go past screen right)
+        const minY = 0; // Top boundary (calculator top edge can't go past screen top)
+        const maxY = window.innerHeight - calcHeight; // Bottom boundary (calculator bottom edge can't go past screen bottom)
         
-        // Apply screen boundaries during drag
+        // Apply strict screen boundaries during drag
         newX = Math.max(minX, Math.min(maxX, newX));
         newY = Math.max(minY, Math.min(maxY, newY));
         
@@ -447,8 +446,8 @@ export class DraggableCalculator {
     }
     
     _applyInertia() {
-        // Calculate throw distance based on velocity and resistance (enhanced formula)
-        let velocityMultiplier = 800; // Maximum momentum distance
+        // Calculate throw distance based on velocity and resistance
+        let velocityMultiplier = 600; // Reduced momentum distance for better control
         let throwX = (this.velocityX * velocityMultiplier) / this.throwResistance;
         let throwY = (this.velocityY * velocityMultiplier) / this.throwResistance;
         
@@ -457,31 +456,36 @@ export class DraggableCalculator {
         const calcWidth = rect.width;
         const calcHeight = rect.height;
         
-        // Define screen boundaries with padding
-        const padding = 20; // Keep 20px visible on all sides
-        const minX = -(calcWidth - padding); // Left boundary (keep right edge visible)
-        const maxX = window.innerWidth - padding; // Right boundary (keep left edge visible)
-        const minY = -(calcHeight - padding); // Top boundary (keep bottom edge visible)
-        const maxY = window.innerHeight - padding; // Bottom boundary (keep top edge visible)
+        // Define strict screen boundaries - calculator must stay completely inside
+        const minX = 0; // Left boundary
+        const maxX = window.innerWidth - calcWidth; // Right boundary
+        const minY = 0; // Top boundary
+        const maxY = window.innerHeight - calcHeight; // Bottom boundary
         
         // Calculate duration based on velocity
         let maxVelocity = Math.max(Math.abs(this.velocityX), Math.abs(this.velocityY));
-        let duration = Math.max(this.minDuration, Math.min(this.maxDuration, maxVelocity / 10)); // Longer momentum duration
+        let duration = Math.max(this.minDuration, Math.min(this.maxDuration, maxVelocity / 8)); // Adjusted momentum duration
         
         // Final position after throw
         let finalX = this.x + throwX;
         let finalY = this.y + throwY;
         
-        // Apply strict screen boundaries (calculator always stays visible)
+        // Check if final position would be out of bounds
+        let needsBounce = false;
+        if (finalX < minX || finalX > maxX || finalY < minY || finalY > maxY) {
+            needsBounce = true;
+        }
+        
+        // Apply strict screen boundaries with bounce effect
         finalX = Math.max(minX, Math.min(maxX, finalX));
         finalY = Math.max(minY, Math.min(maxY, finalY));
         
-        // Apply momentum animation with bounce-back if needed
+        // Apply momentum animation with bounce effect if hitting boundaries
         gsap.to(this.target, {
             x: finalX,
             y: finalY,
             duration: duration,
-            ease: "power2.out", // Smooth deceleration with good momentum
+            ease: needsBounce ? "bounce.out" : "power2.out", // Bounce effect when hitting boundaries
             onComplete: () => {
                 // Reset z-index after animation
                 gsap.set(this.target, { zIndex: 9999 });
