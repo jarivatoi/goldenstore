@@ -324,6 +324,22 @@ const MiniCalculator: React.FC<MiniCalculatorProps> = ({
         </div>
       </div>
 
+      {/* Minimized Amount Display */}
+      {isMinimized && (
+        <div className="px-3 py-2 bg-blue-50 border-t border-blue-200">
+          <div className="text-center">
+            <div className="text-lg font-mono font-bold text-blue-800">
+              {calculatorValue}
+            </div>
+            {calculatorMemory !== 0 && (
+              <div className="text-xs text-blue-600 font-semibold">
+                Memory: {calculatorMemory}
+              </div>
+            )}
+          </div>
+        </div>
+      )}
+
       {/* Calculator Buttons */}
       <div 
         className="bg-white overflow-hidden transition-all duration-300 ease-in-out"
