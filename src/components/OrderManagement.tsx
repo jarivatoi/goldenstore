@@ -310,14 +310,14 @@ const OrderManagement: React.FC = () => {
         ) : (
           // Category Detail View
           <div className="flex items-center justify-between select-none">
-            <div className="select-none">
+            <div className="flex items-center gap-4 select-none">
               <button
                 onClick={() => setSelectedCategory(null)}
                 className="text-purple-600 hover:text-purple-700 mb-2 select-none"
               >
                 ← Back to Categories
               </button>
-              <h2 className="text-xl font-semibold text-gray-800 select-none">{selectedCategory.name}</h2>
+              <h2 className="text-xl font-semibold text-gray-800 mb-2 select-none">{selectedCategory.name}</h2>
             </div>
             
             {/* Manage and Order buttons side by side */}
@@ -1109,7 +1109,7 @@ const AddItemModal: React.FC<AddItemModalProps> = ({
       <div className="bg-white rounded-xl shadow-lg w-full max-w-md overflow-hidden select-none">
         <div className="p-6 select-none">
           <h3 className="text-lg font-semibold text-gray-900 mb-4 select-none">
-            Add Item to {category.name}
+            <div className="text-center select-none">Add Item to {category.name}</div>
           </h3>
           
           <form onSubmit={handleSubmit} className="select-none">
