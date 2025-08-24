@@ -32,7 +32,7 @@ export class SupabaseBackupManager {
       const fileSize = new Blob([jsonString]).size;
       
       const backupData = {
-        backup_data: databaseJson,
+        backup_data: jsonString,
         backup_name: backupName || `Golden Store Backup ${new Date().toLocaleDateString('en-GB')}`,
         file_size: fileSize,
         created_at: new Date().toISOString()
@@ -109,8 +109,18 @@ export class SupabaseBackupManager {
         throw new Error(`Invalid backup data found on server. The backup_data field is ${data.backup_data === null ? 'null' : 'undefined'}. This may indicate a database storage issue or the backup was not saved properly.`);
       }
 
+      // Parse the JSON string back to object
+      let parsedBackupData;
+      try {
+        parsedBackupData = typeof data.backup_data === 'string' 
+          ? JSON.parse(data.backup_data) 
+          : data.backup_data;
+      } catch (parseError) {
+        throw new Error(`Failed to parse backup data: ${parseError instanceof Error ? parseError.message : 'Unknown parsing error'}`);
+      }
+
       console.log(`✅ Database backup loaded from Supabase (${(data.file_size / 1024).toFixed(1)} KB)`);
-      return data.backup_data;
+      return parsedBackupData;
     } catch (error) {
       console.error('❌ Supabase backup load failed:', error);
       throw error;
