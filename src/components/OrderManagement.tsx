@@ -41,7 +41,6 @@ const OrderManagement: React.FC = () => {
   const [newItemName, setNewItemName] = useState('');
   const [newItemPrice, setNewItemPrice] = useState('');
   const [newItemVatNil, setNewItemVatNil] = useState(false);
-  const [newItemVatPercentage, setNewItemVatPercentage] = useState('15');
   const [editingCategory, setEditingCategory] = useState<OrderCategory | null>(null);
   const [editingItem, setEditingItem] = useState<OrderItemTemplate | null>(null);
   const [editingOrder, setEditingOrder] = useState<Order | null>(null);
@@ -123,8 +122,6 @@ const OrderManagement: React.FC = () => {
     try {
       setIsSubmitting(true);
       await addItemTemplate(selectedCategory.id, newItemName.trim(), price, vatPercent === 0, vatPercent);
-      setNewItemName('');
-      setNewItemPrice('');
       setNewItemVatPercentage('15');
       setShowAddItem(false);
     } catch (err) {
@@ -978,20 +975,30 @@ const OrderCard: React.FC<OrderCardProps> = ({ order, itemTemplates, onDelete, o
                   type="button"
                   onClick={() => updateOrderItem(item.id, 'quantity', item.quantity + 1)}
                   className="w-6 h-6 bg-blue-500 hover:bg-blue-600 text-white rounded-full flex items-center justify-center transition-colors"
-                >
-                  <Plus size={12} />
-                </button>
+                type="number"
+                value={vatPercentage}
+                onChange={(e) => {
+                  const value = e.target.value;
+                  const numValue = parseFloat(value);
+                  if (value === '' || (!isNaN(numValue) && numValue >= 0 && numValue <= 100)) {
+                    setVatPercentage(value);
+                  }
+                }}
+                min="0"
+                max="100"
+                step="0.01"
+                placeholder="15"
+                className="w-full px-4 py-3 text-lg border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 select-text"
+                inputMode="decimal"
+                pattern="[0-9]*\.?[0-9]*"
               </div>
-              <span className={`text-xs select-none ${item.isAvailable ? '' : 'line-through text-gray-400'}`}>
-                {getItemTemplateName(item.templateId)} @{item.unitPrice.toFixed(2)} + {item.isVatNil ? 'VAT Nil' : `VAT(Rs ${item.vatAmount.toFixed(2)})`}
-              </span>
+              <p className="text-xs text-gray-500 mt-1 select-none">Enter 0 for VAT Nil items</p>
             </div>
             <div className="flex items-center gap-2 select-none">
               <span className={`text-xs select-none ${item.isAvailable ? '' : 'line-through text-gray-400'}`}>
-                Rs {item.totalPrice.toFixed(2)}
+                VAT (%)
               </span>
               <input
-                type="checkbox"
                 checked={item.isAvailable}
                 onChange={(e) => updateOrderItem(item.id, 'isAvailable', e.target.checked)}
                 className="w-4 h-4"
