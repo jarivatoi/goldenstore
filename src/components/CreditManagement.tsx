@@ -8,6 +8,7 @@ import CreditCalculator from './credit/CreditCalculator';
 import CreditHeader from './credit/CreditHeader';
 import ClientGrid from './credit/ClientGrid';
 import CreditModals from './credit/CreditModals';
+import MiniCalculatorManager from './credit/MiniCalculatorManager';
 import { Client } from '../types';
 import { processCalculatorInput, evaluateExpression } from '../utils/creditCalculatorUtils';
 import { exportCompleteDatabase, importCompleteDatabase } from '../utils/creditDataUtils';
@@ -674,6 +675,7 @@ const CreditManagement: React.FC = () => {
             onShowUnifiedDataManager={() => {
               setShowUnifiedDataManager(true);
             }}
+            onAddToClientFromMini={handleAddToClient}
             sortOption={sortOption}
             onSortChange={setSortOption}
             showSortDropdown={showSortDropdown}

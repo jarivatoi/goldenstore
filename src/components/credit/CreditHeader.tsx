@@ -16,6 +16,7 @@ interface CreditHeaderProps {
   onSortChange: (sort: 'name' | 'date' | 'debt') => void;
   showSortDropdown: boolean;
   onToggleSortDropdown: () => void;
+  onAddToClientFromMini: (client: any, description: string) => Promise<void>;
 }
 
 /**
@@ -38,6 +39,7 @@ const CreditHeader: React.FC<CreditHeaderProps> = ({
   onSortChange,
   showSortDropdown,
   onToggleSortDropdown
+  onAddToClientFromMini
 }) => {
   return (
     <div className="mb-4">
@@ -61,8 +63,9 @@ const CreditHeader: React.FC<CreditHeaderProps> = ({
           
           {/* Mini Calculator Manager */}
           <MiniCalculatorManager onAddToClient={(amount, description, label) => {
-            // This will be handled by the mini calculator for now
-            console.log('Mini calculator transaction:', { amount, description, label });
+            // For now, show alert with transaction details
+            // In future, this could open client search modal
+            alert(`Transaction from ${label}:\nAmount: Rs ${amount.toFixed(2)}\nDescription: ${description}\n\nNote: This would normally open the client search modal to select a client.`);
           }} />
           
           <div className="relative">
