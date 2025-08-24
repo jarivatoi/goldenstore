@@ -2,7 +2,7 @@ import React, { useEffect, useRef } from 'react';
 import { useCallback } from 'react';
 import { gsap } from 'gsap';
 import { Draggable } from '../../lib/draggable.js';
-import { Bot as Bottle } from 'lucide-react';
+import { Bot as Bottle, X } from 'lucide-react';
 import { Client } from '../../types';
 import ClientActionModal from '../ClientActionModal';
 import ClientDetailModal from '../ClientDetailModal';
