@@ -122,11 +122,10 @@ const OrderManagement: React.FC = () => {
     }
     try {
       setIsSubmitting(true);
-      await addItemTemplate(selectedCategory.id, newItemName.trim(), price, isVatNil, vatPercent);
+      await addItemTemplate(selectedCategory.id, newItemName.trim(), price, vatPercent === 0, vatPercent);
       setNewItemName('');
       setNewItemPrice('');
       setNewItemVatPercentage('15');
-      setNewItemVatNil(false);
       setShowAddItem(false);
     } catch (err) {
       alert(err instanceof Error ? err.message : 'Failed to add item');
@@ -1058,7 +1057,7 @@ const OrderCard: React.FC<OrderCardProps> = ({ order, itemTemplates, onDelete, o
 interface AddItemModalProps {
   category: OrderCategory;
   onClose: () => void;
-  onAdd: (e: React.FormEvent, isVatNil?: boolean) => void;
+  onAdd: (e: React.FormEvent, isVatNil?: boolean, vatPercentage?: number) => void;
   itemName: string;
   setItemName: (name: string) => void;
   itemPrice: string;
@@ -1076,7 +1075,7 @@ const AddItemModal: React.FC<AddItemModalProps> = ({
   setItemPrice,
   isSubmitting
 }) => {
-  const [isVatNil, setIsVatNil] = React.useState(false);
+  const [vatPercentage, setVatPercentage] = React.useState('15');
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
@@ -1092,8 +1091,14 @@ const AddItemModal: React.FC<AddItemModalProps> = ({
       return;
     }
 
+    const vatPercent = parseFloat(vatPercentage);
+    if (isNaN(vatPercent) || vatPercent < 0 || vatPercent > 100) {
+      alert('Please enter a valid VAT percentage (0-100)');
+      return;
+    }
+
     // Call the modified onAdd function with VAT status
-    onAdd(e, isVatNil);
+    onAdd(e, vatPercent === 0, vatPercent);
   };
 
   return (
@@ -1149,17 +1154,22 @@ const AddItemModal: React.FC<AddItemModalProps> = ({
             </div>
             
             <div className="mb-4 select-none">
-              <label className="flex items-center select-none">
-                <input
-                  type="checkbox"
-                  checked={isVatNil}
-                  onChange={(e) => setIsVatNil(e.target.checked)}
-                  className="w-4 h-4 text-blue-600 bg-gray-100 border-gray-300 rounded focus:ring-blue-500"
-                />
-                <span className="ml-2 text-sm text-gray-700 select-none">
-                  VAT Nil (Override {category.vatPercentage}% VAT)
-                </span>
+              <label className="block text-sm font-medium text-gray-700 mb-2 select-none">
+                VAT (%)
               </label>
+              <input
+                type="number"
+                value={vatPercentage}
+                onChange={(e) => setVatPercentage(e.target.value)}
+                min="0"
+                max="100"
+                step="0.01"
+                placeholder="15"
+                className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 select-text"
+              />
+              <p className="text-xs text-gray-500 mt-1 select-none">
+                Enter 0 for VAT Nil items
+              </p>
             </div>
             
             <div className="flex gap-3 select-none">
