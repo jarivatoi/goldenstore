@@ -3,6 +3,7 @@ import { Plus, Calendar, Package, Trash2, Edit2, X, ShoppingCart, FileText, Eye,
 import { useOrder } from '../context/OrderContext';
 import { OrderCategory, OrderItemTemplate, Order, OrderItem } from '../types';
 import ConfirmationModal from './ConfirmationModal';
+import ConfirmationModal from './ConfirmationModal';
 
 /**
  * ORDER MANAGEMENT COMPONENT
@@ -1207,6 +1208,11 @@ interface CreateOrderModalProps {
 const CreateOrderModal: React.FC<CreateOrderModalProps> = ({ category, itemTemplates, onClose, onAdd }) => {
   const [orderDate, setOrderDate] = useState(new Date().toISOString().split('T')[0]);
   const [orderItems, setOrderItems] = useState<OrderItem[]>([]);
+  
+  // Delete confirmation modal state
+  const [showDeleteConfirm, setShowDeleteConfirm] = useState(false);
+  const [orderToDelete, setOrderToDelete] = useState<{ id: string; categoryName: string; date: string } | null>(null);
+  const [isDeleting, setIsDeleting] = useState(false);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const { getOrdersByCategory } = useOrder();
 
