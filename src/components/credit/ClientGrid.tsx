@@ -87,7 +87,7 @@ const ClientGrid: React.FC<ClientGridProps> = ({
       
       // Calculate screen bounds relative to current position
       bounds = {
-        minX: -containerRect.left,
+        minX: -contentRect.left,
         maxX: screenWidth - containerRect.left - contentWidth
       };
     }
