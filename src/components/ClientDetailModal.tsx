@@ -199,212 +199,45 @@ const ClientDetailModal: React.FC<ClientDetailModalProps> = ({ client, onClose, 
   const getFilteredTransactions = () => {
     const allTransactions = transactions
       .sort((a, b) => b.date.getTime() - a.date.getTime())
-      .filter(transaction => transaction.amount >= 0);
+      .filter(transaction => {
+        // For debugging - log all transactions
+        console.log('Transaction:', {
+          id: transaction.id,
+          description: transaction.description,
+          amount: transaction.amount,
+          type: transaction.type,
+          date: transaction.date
+        });
+        return transaction.amount >= 0;
+      });
 
     switch (transactionFilter) {
       case 'returnable':
-        // Show only returnable items that haven't been fully returned
-        return allTransactions.filter(transaction => {
+        // Simplified returnable filter - show transactions that contain chopine or bouteille
+        const returnableTransactions = allTransactions.filter(transaction => {
           // Skip return transactions
-          if (transaction.description.toLowerCase().includes('returned')) return false;
-          
-          // Skip transactions with negative amount (but allow zero amount transactions that might have returnable items)
-          if (transaction.amount < 0) return false;
+          if (transaction.description.toLowerCase().includes('returned')) {
+            console.log('Skipping return transaction:', transaction.description);
+            return false;
+          }
           
           const description = transaction.description.toLowerCase();
           
           // Must contain returnable items
-          if (!description.includes('chopine') && !description.includes('bouteille')) return false;
+          const hasReturnableItems = description.includes('chopine') || description.includes('bouteille');
           
-          // Parse returnable items from this specific transaction
-          const transactionReturnables: {[key: string]: number} = {};
-          
-          // Parse chopine items from this transaction
-          const chopinePattern = /(\d+)\s+chopines?(?:\s+([^,]*))?/gi;
-          let chopineMatch;
-          while ((chopineMatch = chopinePattern.exec(description)) !== null) {
-            const quantity = parseInt(chopineMatch[1]);
-            const brand = chopineMatch[2]?.trim() || '';
-            const key = brand ? `Chopine ${brand}` : 'Chopine';
-            transactionReturnables[key] = (transactionReturnables[key] || 0) + quantity;
-          }
-          
-          // Parse bouteille items from this transaction
-          const bouteillePattern = /(\d+)\s+(?:(\d+(?:\.\d+)?L)\s+)?bouteilles?(?:\s+([^,]*))?/gi;
-          let bouteilleMatch;
-          while ((bouteilleMatch = bouteillePattern.exec(description)) !== null) {
-            const quantity = parseInt(bouteilleMatch[1]);
-            const size = bouteilleMatch[2]?.trim() || '';
-            const brand = bouteilleMatch[3]?.trim() || '';
-            
-            let key;
-            if (size && brand) {
-              key = `${size} ${brand}`;
-            } else if (brand) {
-              key = `Bouteille ${brand}`;
-            } else if (size) {
-              key = `${size} Bouteille`;
-            } else {
-              key = 'Bouteille';
-            }
-            transactionReturnables[key] = (transactionReturnables[key] || 0) + quantity;
-          }
-          
-          // Handle implicit quantities for this transaction
-          if (description.includes('bouteille') && !bouteillePattern.test(description)) {
-            const sizeMatch = description.match(/(\d+(?:\.\d+)?L)/i);
-            const brandMatch = description.match(/bouteilles?\s+([^,]*)/i);
-            const brand = brandMatch?.[1]?.trim() || '';
-            
-            let key;
-            if (sizeMatch && brand) {
-              key = `${sizeMatch[1]} ${brand}`;
-            } else if (brand) {
-              key = `Bouteille ${brand}`;
-            } else if (sizeMatch) {
-              key = `${sizeMatch[1]} Bouteille`;
-            } else {
-              key = 'Bouteille';
-            }
-            transactionReturnables[key] = (transactionReturnables[key] || 0) + 1;
-          }
-          
-          if (description.includes('chopine') && !chopinePattern.test(description)) {
-            const brandMatch = description.match(/chopines?\s+([^,]*)/i);
-            const brand = brandMatch?.[1]?.trim() || '';
-            const key = brand ? `Chopine ${brand}` : 'Chopine';
-            transactionReturnables[key] = (transactionReturnables[key] || 0) + 1;
-          }
-          
-          // Calculate global returned quantities for all item types
-          const globalReturnedQuantities: {[key: string]: number} = {};
-          allTransactions
-            .filter(t => t.description.toLowerCase().includes('returned'))
-            .forEach(t => {
-              const desc = t.description.toLowerCase();
-              
-              // Parse returned chopines
-              const returnedChopinePattern = /returned:\s*(\d+)\s+chopines?(?:\s+([^,\-]*))?/gi;
-              let returnedChopineMatch;
-              while ((returnedChopineMatch = returnedChopinePattern.exec(desc)) !== null) {
-                const quantity = parseInt(returnedChopineMatch[1]);
-                const brand = returnedChopineMatch[2]?.trim() || '';
-                const key = brand ? `Chopine ${brand}` : 'Chopine';
-                globalReturnedQuantities[key] = (globalReturnedQuantities[key] || 0) + quantity;
-              }
-              
-              // Parse returned bouteilles
-              const returnedBouteillePattern = /returned:\s*(\d+)\s+(?:(\d+(?:\.\d+)?L)\s+)?bouteilles?(?:\s+([^,\-]*))?/gi;
-              let returnedBouteilleMatch;
-              while ((returnedBouteilleMatch = returnedBouteillePattern.exec(desc)) !== null) {
-                const quantity = parseInt(returnedBouteilleMatch[1]);
-                const size = returnedBouteilleMatch[2]?.trim() || '';
-                const brand = returnedBouteilleMatch[3]?.trim() || '';
-                
-                let key;
-                if (size && brand) {
-                  key = `${size} ${brand}`;
-                } else if (brand) {
-                  key = `Bouteille ${brand}`;
-                } else if (size) {
-                  key = `${size} Bouteille`;
-                } else {
-                  key = 'Bouteille';
-                }
-                globalReturnedQuantities[key] = (globalReturnedQuantities[key] || 0) + quantity;
-              }
-            });
-          
-          // Check if any items from this transaction are still unreturned
-          return Object.keys(transactionReturnables).some(itemType => {
-            const takenInThisTransaction = transactionReturnables[itemType];
-            if (!takenInThisTransaction || takenInThisTransaction <= 0) return false;
-            
-            const totalReturned = globalReturnedQuantities[itemType] || 0;
-            
-            // Calculate how much of this item type is still unreturned globally
-            const globalTakenQuantity = allTransactions
-              .filter(t => !t.description.toLowerCase().includes('returned') && t.amount > 0 && t.type === 'debt')
-              .reduce((total, t) => {
-                const desc = t.description.toLowerCase();
-                let transactionQuantity = 0;
-                
-                if (itemType.includes('Chopine')) {
-                  const pattern = /(\d+)\s+chopines?(?:\s+([^,]*))?/gi;
-                  let match;
-                  while ((match = pattern.exec(desc)) !== null) {
-                    const brand = match[2]?.trim() || '';
-                    const key = brand ? `Chopine ${brand}` : 'Chopine';
-                    if (key === itemType) {
-                      transactionQuantity += parseInt(match[1]);
-                    }
-                  }
-                  
-                  // Handle implicit chopines
-                  if (desc.includes('chopine') && !pattern.test(desc)) {
-                    const brandMatch = desc.match(/chopines?\s+([^,]*)/i);
-                    const brand = brandMatch?.[1]?.trim() || '';
-                    const key = brand ? `Chopine ${brand}` : 'Chopine';
-                    if (key === itemType) {
-                      transactionQuantity += 1;
-                    }
-                  }
-                } else {
-                  // Handle bouteille items
-                  const pattern = /(\d+)\s+(?:(\d+(?:\.\d+)?L)\s+)?bouteilles?(?:\s+([^,]*))?/gi;
-                  let match;
-                  while ((match = pattern.exec(desc)) !== null) {
-                    const quantity = parseInt(match[1]);
-                    const size = match[2]?.trim() || '';
-                    const brand = match[3]?.trim() || '';
-                    
-                    let key;
-                    if (size && brand) {
-                      key = `${size} ${brand}`;
-                    } else if (brand) {
-                      key = `Bouteille ${brand}`;
-                    } else if (size) {
-                      key = `${size} Bouteille`;
-                    } else {
-                      key = 'Bouteille';
-                    }
-                    
-                    if (key === itemType) {
-                      transactionQuantity += quantity;
-                    }
-                  }
-                  
-                  // Handle implicit bouteilles
-                  if (desc.includes('bouteille') && !pattern.test(desc)) {
-                    const sizeMatch = desc.match(/(\d+(?:\.\d+)?L)/i);
-                    const brandMatch = desc.match(/bouteilles?\s+([^,]*)/i);
-                    const brand = brandMatch?.[1]?.trim() || '';
-                    
-                    let key;
-                    if (sizeMatch && brand) {
-                      key = `${sizeMatch[1]} ${brand}`;
-                    } else if (brand) {
-                      key = `Bouteille ${brand}`;
-                    } else if (sizeMatch) {
-                      key = `${sizeMatch[1]} Bouteille`;
-                    } else {
-                      key = 'Bouteille';
-                    }
-                    
-                    if (key === itemType) {
-                      transactionQuantity += 1;
-                    }
-                  }
-                }
-                
-                return total + transactionQuantity;
-              }, 0);
-            
-            const netUnreturned = Math.max(0, globalTakenQuantity - totalReturned);
-            console.log(`Item type: ${itemType}, Global taken: ${globalTakenQuantity}, Total returned: ${totalReturned}, Net unreturned: ${netUnreturned}`);
-            return netUnreturned > 0;
+          console.log('Transaction returnable check:', {
+            description: transaction.description,
+            amount: transaction.amount,
+            hasReturnableItems,
+            willShow: hasReturnableItems
           });
+          
+          return hasReturnableItems;
         });
+        
+        console.log('Returnable transactions found:', returnableTransactions.length);
+        return returnableTransactions;
       
       case 'taken':
         return allTransactions.filter(transaction => 
@@ -586,18 +419,13 @@ const ClientDetailModal: React.FC<ClientDetailModalProps> = ({ client, onClose, 
             </div>
             
             {filteredTransactions.length === 0 ? (
-              <p className="text-gray-500 text-center py-4">No transactions found</p>
+              <div className="text-center py-4">
+                <p className="text-gray-500">No transactions found</p>
+                <p className="text-xs text-gray-400 mt-1">Filter: {transactionFilter} | Total transactions: {transactions.length}</p>
+              </div>
             ) : (
               <div className="space-y-3">
                 {filteredTransactions
-                  .filter(transaction => {
-                    // For returnable filter, show all transactions (including zero amount)
-                    // For other filters, exclude negative amounts
-                    if (transactionFilter === 'returnable') {
-                      return true; // Show all transactions that passed the returnable filter
-                    }
-                    return transaction.amount >= 0; // For other filters, exclude negative amounts
-                  })
                   .map((transaction) => (
                   <div key={transaction.id} className="bg-gray-50 rounded-lg p-4">
                     <div className={`${transaction.amount > 0 ? 'flex justify-between items-start' : ''} mb-2`}>
