@@ -84,10 +84,10 @@ const ClientGrid: React.FC<ClientGridProps> = ({
       const screenWidth = window.innerWidth;
       const contentRect = content.getBoundingClientRect();
       
-      // Calculate screen bounds relative to current position
+      // Use full screen boundaries - no container constraints
       bounds = {
-        minX: -contentRect.left,
-        maxX: screenWidth - contentRect.left - contentWidth
+        minX: -contentRect.left, // Left edge of screen
+        maxX: screenWidth - contentRect.left - contentWidth // Right edge of screen
       };
     }
     
@@ -95,10 +95,10 @@ const ClientGrid: React.FC<ClientGridProps> = ({
     draggableRef.current = Draggable.create(content, {
       type: "x",
       bounds: bounds,
-      edgeResistance: hasOverflow ? 0.5 : 0.1, // Less resistance for free movement
+      edgeResistance: hasOverflow ? 0.5 : 0, // No resistance for free movement
       inertia: true,
       snap: hasOverflow ? false : false, // No snapping for either case
-      dragResistance: 0.1,
+      dragResistance: hasOverflow ? 0.1 : 0, // No drag resistance for free movement
       throwResistance: hasOverflow ? 0.005 : 0.001, // More momentum for free movement
       maxDuration: 2,
       minDuration: 0.02,
