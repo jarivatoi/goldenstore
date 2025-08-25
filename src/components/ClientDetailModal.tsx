@@ -200,15 +200,6 @@ const ClientDetailModal: React.FC<ClientDetailModalProps> = ({ client, onClose, 
     const allTransactions = transactions
       .sort((a, b) => b.date.getTime() - a.date.getTime())
       .filter(transaction => {
-        // For debugging - log all transactions
-        console.log('Transaction:', {
-          id: transaction.id,
-          description: transaction.description,
-          amount: transaction.amount,
-          type: transaction.type,
-          date: transaction.date
-        });
-        
         // For returnable filter, allow zero amount transactions if they have returnable items
         if (transactionFilter === 'returnable') {
           const description = transaction.description.toLowerCase();
@@ -227,7 +218,6 @@ const ClientDetailModal: React.FC<ClientDetailModalProps> = ({ client, onClose, 
         const returnableTransactions = allTransactions.filter(transaction => {
           // Skip return transactions
           if (transaction.description.toLowerCase().includes('returned')) {
-            console.log('Skipping return transaction:', transaction.description);
             return false;
           }
           
@@ -236,17 +226,9 @@ const ClientDetailModal: React.FC<ClientDetailModalProps> = ({ client, onClose, 
           // Must contain returnable items
           const hasReturnableItems = description.includes('chopine') || description.includes('bouteille');
           
-          console.log('Transaction returnable check:', {
-            description: transaction.description,
-            amount: transaction.amount,
-            hasReturnableItems,
-            willShow: hasReturnableItems
-          });
-          
           return hasReturnableItems;
         });
         
-        console.log('Returnable transactions found:', returnableTransactions.length);
         return returnableTransactions;
       
       case 'taken':
@@ -431,7 +413,6 @@ const ClientDetailModal: React.FC<ClientDetailModalProps> = ({ client, onClose, 
             {filteredTransactions.length === 0 ? (
               <div className="text-center py-4">
                 <p className="text-gray-500">No transactions found</p>
-                <p className="text-xs text-gray-400 mt-1">Filter: {transactionFilter} | Total transactions: {transactions.length}</p>
               </div>
             ) : (
               <div className="space-y-3">
