@@ -208,13 +208,9 @@ const ScrollingTabs: React.FC<ScrollingTabsProps> = ({
         });
     } else {
       timelineRef.current
-        .set(content, { x: containerWidth }) // Jump to right edge instantly
-        .to(content, {
-          x: -contentWidth,
-          repeat: -1, // Infinite repeat of full cycle
           duration: fullCycleDuration,
-          ease: "none"
-        })
+        minX: -window.innerWidth, // Allow movement beyond left screen edge
+        maxX: window.innerWidth // Allow movement beyond right screen edge
         .call(() => {
           // Clear saved position when starting fresh infinite loop
           pausedPositionRef.current = null;
