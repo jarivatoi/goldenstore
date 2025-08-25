@@ -56,7 +56,7 @@ import { automaticBackupManager } from './utils/automaticBackupManager';
 function MainAppContent() {
   const [activeTab, setActiveTab] = useState<'Over' | 'PriceList' | 'Order' | 'Credit'>(() => {
     const savedTab = localStorage.getItem('activeTab');
-    return (savedTab as 'Over' | 'PriceList' | 'Order' | 'Credit') || 'PriceList';
+    return (savedTab as 'Over' | 'PriceList' | 'Order' | 'Credit') || 'Credit';
   });
   const { signOut } = useAuth();
 
