@@ -86,8 +86,8 @@ const ClientGrid: React.FC<ClientGridProps> = ({
       
       // Use full screen boundaries - no container constraints
       bounds = {
-        minX: -contentRect.left, // Left edge of screen
-        maxX: screenWidth - contentRect.left - contentWidth // Right edge of screen
+        minX: -screenWidth, // Allow movement beyond left screen edge
+        maxX: screenWidth // Allow movement beyond right screen edge
       };
     }
     
