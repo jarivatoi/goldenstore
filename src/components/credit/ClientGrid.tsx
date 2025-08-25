@@ -217,36 +217,17 @@ const ClientGrid: React.FC<ClientGridProps> = ({
       <div className="p-3">
         <div 
           ref={containerRef}
-          className={`overflow-y-visible relative z-10 py-4 ${
-            clients.length <= 1 ? 'fixed inset-0 pointer-events-none' : 'overflow-x-auto'
-          }`}
+          className="overflow-x-auto overflow-y-visible relative z-10 py-4"
           style={{ 
-            ...(clients.length <= 1 ? {
-              width: '100vw',
-              height: '100vh',
-              left: 0,
-              top: 0,
-              zIndex: 1000,
-              pointerEvents: 'none'
-            } : {
-              scrollbarWidth: 'none',
-              msOverflowStyle: 'none',
-              WebkitOverflowScrolling: 'touch'
-            })
+            scrollbarWidth: 'none',
+            msOverflowStyle: 'none',
+            WebkitOverflowScrolling: 'touch'
           }}
         >
           <div 
             ref={contentRef}
-            className={`flex gap-3 whitespace-nowrap py-2 ${
-              clients.length <= 1 ? 'pointer-events-auto' : ''
-            }`}
-            style={{ 
-              minWidth: 'max-content',
-              ...(clients.length <= 1 && {
-                position: 'relative',
-                zIndex: 1001
-              })
-            }}
+            className="flex gap-3 whitespace-nowrap py-2"
+            style={{ minWidth: 'max-content' }}
           >
             {clients.length === 0 ? (
               <div className="flex items-center justify-center w-full h-32 text-gray-500">
