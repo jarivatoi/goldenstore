@@ -60,6 +60,10 @@ const OrderManagement: React.FC = () => {
   const [showDeleteItemModal, setShowDeleteItemModal] = useState(false);
   const [itemToDelete, setItemToDelete] = useState<OrderItemTemplate | null>(null);
   
+  // Success modal state
+  const [showSuccessModal, setShowSuccessModal] = useState(false);
+  const [successMessage, setSuccessMessage] = useState('');
+  
   React.useEffect(() => {
     const handleDuplicateOrderEvent = (event: CustomEvent) => {
       setDuplicateOrderInfo(event.detail);
@@ -131,8 +135,19 @@ const OrderManagement: React.FC = () => {
       setNewItemPrice('');
       setNewItemVatPercentage('15');
       setShowAddItem(false);
+      
+      // Show success modal instead of browser alert
+      setSuccessMessage(`"${newItemName.trim()}" has been added to your shopping list!`);
+      setShowSuccessModal(true);
     } catch (err) {
-      alert(err instanceof Error ? err.message : 'Failed to add item');
+      const errorMessage = err instanceof Error ? err.message : 'Unknown error';
+      
+      // Don't show alerts for validation errors (they're shown in the form)
+      // Only show modals for unexpected system errors
+      if (!errorMessage.includes('enter') && !errorMessage.includes('already') && !errorMessage.includes('required')) {
+        setSuccessMessage(`System error: ${errorMessage}`);
+        setShowSuccessModal(true);
+      }
     } finally {
       setIsSubmitting(false);
     }
@@ -596,6 +611,17 @@ const OrderManagement: React.FC = () => {
           setShowDuplicateOrderModal(false);
           setDuplicateOrderInfo(null);
         }}
+      />
+
+      {/* Success Modal */}
+      <ConfirmationModal
+        isOpen={showSuccessModal}
+        title="Success"
+        message={successMessage}
+        confirmText="OK"
+        type="info"
+        onConfirm={() => setShowSuccessModal(false)}
+        onCancel={() => setShowSuccessModal(false)}
       />
 
     </div>
