@@ -818,10 +818,10 @@ const ScrollingTabs: React.FC<ScrollingTabsProps> = ({
           }}
           onQuickAdd={(client) => {
             console.log('🔗 ScrollingTabs: onQuickAdd called with client:', client.name);
+            console.log('🔗 ScrollingTabs: Calling parent onQuickAdd');
             onQuickAdd(client);
-            // Close the modal after linking
-            setSelectedClientForAction(null);
-            setClickedTabId(null);
+            console.log('🔗 ScrollingTabs: Parent onQuickAdd called, closing modal');
+            // Don't close modal here - let ClientActionModal handle it
           }}
           onResetCalculator={() => {
             // Don't reset calculator when closing modal - only reset when explicitly requested

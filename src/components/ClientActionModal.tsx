@@ -385,12 +385,19 @@ const ClientActionModal: React.FC<ClientActionModalProps> = ({ client, onClose, 
               
               {/* Link to Calculator Button */}
               <button
-                onClick={() => {
+                onClick={(e) => {
+                  e.preventDefault();
+                  e.stopPropagation();
+                  console.log('🔗 ClientActionModal: Link to Calculator clicked for client:', client.name);
+                  console.log('🔗 ClientActionModal: onQuickAdd function exists:', !!onQuickAdd);
                   if (onQuickAdd) {
+                    console.log('🔗 ClientActionModal: Calling onQuickAdd with client:', client.name);
                     onQuickAdd(client);
+                    console.log('🔗 ClientActionModal: onQuickAdd called, closing modal');
+                    onClose();
+                  } else {
+                    console.error('🔗 ClientActionModal: onQuickAdd function not provided!');
                   }
-                  // Don't close modal immediately - let the parent handle it
-                  // The onQuickAdd should trigger the linking and then close the modal
                 }}
                 disabled={isProcessing}
                 className="w-full flex items-center gap-4 p-4 bg-purple-50 hover:bg-purple-100 rounded-lg border border-purple-200 transition-colors disabled:opacity-50"
