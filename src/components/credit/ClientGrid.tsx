@@ -130,38 +130,7 @@ const ClientGrid: React.FC<ClientGridProps> = ({
         // Only apply snapping logic if content overflows container
         if (hasOverflow) {
           const maxDrag = Math.max(0, contentWidth - containerWidth);
-          let shouldSnap = false;
-          let snapTo = currentX;
-          
-          const edgeThreshold = 50;
-          const highVelocityThreshold = 1000;
-          
-          if (Math.abs(velocity) > highVelocityThreshold) {
-            if (velocity > 0 && currentX > -edgeThreshold) {
-              shouldSnap = true;
-              snapTo = 0;
-            } else if (velocity < 0 && currentX < -(maxDrag - edgeThreshold)) {
-              shouldSnap = true;
-              snapTo = -maxDrag;
-            }
-          } else {
-            if (currentX > -edgeThreshold && dragDirection !== 'left') {
-              shouldSnap = true;
-              snapTo = 0;
-            } else if (currentX < -(maxDrag - edgeThreshold) && dragDirection !== 'right') {
-              shouldSnap = true;
-              snapTo = -maxDrag;
-            }
-          }
-          
-          if (shouldSnap && Math.abs(currentX - snapTo) > 5) {
-            gsap.to(content, {
-              x: snapTo,
-              duration: 0.8,
-              ease: "power2.out",
-              force3D: true
-            });
-          }
+          // No snapping - let it stay where dragged within bounds
         }
         // For non-overflowing content, absolutely no snapping - complete free movement
         // The card stays exactly where the user dragged it
