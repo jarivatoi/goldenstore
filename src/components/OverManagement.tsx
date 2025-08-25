@@ -2,6 +2,7 @@ import React, { useState } from 'react';
 import { Plus, Search, Check, X, ShoppingCart, Package, Trash2 } from 'lucide-react';
 import { useOver } from '../context/OverContext';
 import { OverItem } from '../types';
+import ConfirmationModal from './ConfirmationModal';
 
 /**
  * OVER MANAGEMENT COMPONENT
@@ -25,6 +26,13 @@ const OverManagement: React.FC = () => {
   const [showAddForm, setShowAddForm] = useState(false);
   const [newItemName, setNewItemName] = useState('');
   const [isSubmitting, setIsSubmitting] = useState(false);
+  
+  // Modal states
+  const [showDeleteConfirm, setShowDeleteConfirm] = useState(false);
+  const [itemToDelete, setItemToDelete] = useState<{ id: string; name: string } | null>(null);
+  const [showClearAllPendingConfirm, setShowClearAllPendingConfirm] = useState(false);
+  const [showClearAllCompletedConfirm, setShowClearAllCompletedConfirm] = useState(false);
+  const [isDeleting, setIsDeleting] = useState(false);
 
   // Get filtered and sorted items
   const filteredItems = searchItems(searchQuery);
@@ -71,13 +79,23 @@ const OverManagement: React.FC = () => {
 
   // Handle delete item
   const handleDeleteItem = async (id: string, itemName: string) => {
-    const confirmed = window.confirm(`Are you sure you want to delete "${itemName}"?`);
-    if (confirmed) {
-      try {
-        await deleteItem(id);
-      } catch (err) {
-        alert('Failed to delete item');
-      }
+    setItemToDelete({ id, name: itemName });
+    setShowDeleteConfirm(true);
+  };
+
+  // Confirm delete item
+  const confirmDeleteItem = async () => {
+    if (!itemToDelete) return;
+    
+    try {
+      setIsDeleting(true);
+      await deleteItem(itemToDelete.id);
+      setShowDeleteConfirm(false);
+      setItemToDelete(null);
+    } catch (err) {
+      alert('Failed to delete item');
+    } finally {
+      setIsDeleting(false);
     }
   };
 
@@ -85,18 +103,21 @@ const OverManagement: React.FC = () => {
   const handleClearAllPending = async () => {
     if (pendingItems.length === 0) return;
     
-    const confirmed = window.confirm(
-      `Are you sure you want to clear all ${pendingItems.length} items from "Need to Buy"? This action cannot be undone.`
-    );
-    
-    if (confirmed) {
-      try {
-        for (const item of pendingItems) {
-          await deleteItem(item.id);
-        }
-      } catch (err) {
-        alert('Failed to clear items');
+    setShowClearAllPendingConfirm(true);
+  };
+
+  // Confirm clear all pending
+  const confirmClearAllPending = async () => {
+    try {
+      setIsDeleting(true);
+      for (const item of pendingItems) {
+        await deleteItem(item.id);
       }
+      setShowClearAllPendingConfirm(false);
+    } catch (err) {
+      alert('Failed to clear items');
+    } finally {
+      setIsDeleting(false);
     }
   };
 
@@ -104,20 +125,24 @@ const OverManagement: React.FC = () => {
   const handleClearAllCompleted = async () => {
     if (completedItems.length === 0) return;
     
-    const confirmed = window.confirm(
-      `Are you sure you want to clear all ${completedItems.length} bought items? This action cannot be undone.`
-    );
-    
-    if (confirmed) {
-      try {
-        for (const item of completedItems) {
-          await deleteItem(item.id);
-        }
-      } catch (err) {
-        alert('Failed to clear items');
+    setShowClearAllCompletedConfirm(true);
+  };
+
+  // Confirm clear all completed
+  const confirmClearAllCompleted = async () => {
+    try {
+      setIsDeleting(true);
+      for (const item of completedItems) {
+        await deleteItem(item.id);
       }
+      setShowClearAllCompletedConfirm(false);
+    } catch (err) {
+      alert('Failed to clear items');
+    } finally {
+      setIsDeleting(false);
     }
   };
+
   if (isLoading) {
     return (
       <div className="flex-1 flex items-center justify-center select-none">
@@ -299,6 +324,45 @@ const OverManagement: React.FC = () => {
           </div>
         )}
       </div>
+
+      {/* Delete Item Confirmation Modal */}
+      <ConfirmationModal
+        isOpen={showDeleteConfirm}
+        title="Delete Item"
+        message={`Are you sure you want to delete "${itemToDelete?.name}"?`}
+        confirmText={isDeleting ? "Deleting..." : "Delete"}
+        cancelText="Cancel"
+        type="danger"
+        onConfirm={confirmDeleteItem}
+        onCancel={() => {
+          setShowDeleteConfirm(false);
+          setItemToDelete(null);
+        }}
+      />
+
+      {/* Clear All Pending Confirmation Modal */}
+      <ConfirmationModal
+        isOpen={showClearAllPendingConfirm}
+        title="Clear All Items"
+        message={`Are you sure you want to clear all ${pendingItems.length} items from "Need to Buy"? This action cannot be undone.`}
+        confirmText={isDeleting ? "Clearing..." : "Clear All"}
+        cancelText="Cancel"
+        type="danger"
+        onConfirm={confirmClearAllPending}
+        onCancel={() => setShowClearAllPendingConfirm(false)}
+      />
+
+      {/* Clear All Completed Confirmation Modal */}
+      <ConfirmationModal
+        isOpen={showClearAllCompletedConfirm}
+        title="Clear All Bought Items"
+        message={`Are you sure you want to clear all ${completedItems.length} bought items? This action cannot be undone.`}
+        confirmText={isDeleting ? "Clearing..." : "Clear All"}
+        cancelText="Cancel"
+        type="danger"
+        onConfirm={confirmClearAllCompleted}
+        onCancel={() => setShowClearAllCompletedConfirm(false)}
+      />
     </div>
   );
 };
