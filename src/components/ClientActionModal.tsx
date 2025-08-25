@@ -388,15 +388,9 @@ const ClientActionModal: React.FC<ClientActionModalProps> = ({ client, onClose, 
                 onClick={(e) => {
                   e.preventDefault();
                   e.stopPropagation();
-                  console.log('🔗 ClientActionModal: Link to Calculator clicked for client:', client.name);
-                  console.log('🔗 ClientActionModal: onQuickAdd function exists:', !!onQuickAdd);
                   if (onQuickAdd) {
-                    console.log('🔗 ClientActionModal: Calling onQuickAdd with client:', client.name);
                     onQuickAdd(client);
-                    console.log('🔗 ClientActionModal: onQuickAdd called, closing modal');
                     onClose();
-                  } else {
-                    console.error('🔗 ClientActionModal: onQuickAdd function not provided!');
                   }
                 }}
                 disabled={isProcessing}

@@ -22,8 +22,6 @@ const MiniCalculatorManager: React.FC<MiniCalculatorManagerProps> = ({ onAddToCl
   const [calculators, setCalculators] = useState<MiniCalculatorInstance[]>([]);
 
   const createNewCalculator = () => {
-    console.log('🧮 Creating new mini calculator...');
-    
     // Calculate position for new calculator (staggered)
     const baseX = 100;
     const baseY = 150;
@@ -38,20 +36,15 @@ const MiniCalculatorManager: React.FC<MiniCalculatorManagerProps> = ({ onAddToCl
       }
     };
 
-    console.log('🧮 New calculator created:', newCalculator);
     setCalculators(prev => {
       const updated = [...prev, newCalculator];
-      console.log('🧮 Updated calculators array length:', updated.length);
       return updated;
     });
   };
 
   const closeCalculator = (id: string) => {
-    console.log('🧮 Closing calculator:', id);
     setCalculators(prev => prev.filter(calc => calc.id !== id));
   };
-
-  console.log('🧮 MiniCalculatorManager render - calculators count:', calculators.length);
 
   return (
     <>
@@ -66,7 +59,6 @@ const MiniCalculatorManager: React.FC<MiniCalculatorManagerProps> = ({ onAddToCl
 
       {/* Render all mini calculators */}
       {calculators.map((calc) => {
-        console.log('🧮 Rendering calculator:', calc.id);
         return (
           <MiniCalculator
             key={calc.id}

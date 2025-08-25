@@ -817,10 +817,7 @@ const ScrollingTabs: React.FC<ScrollingTabsProps> = ({
             }, 100);
           }}
           onQuickAdd={(client) => {
-            console.log('🔗 ScrollingTabs: onQuickAdd called with client:', client.name);
-            console.log('🔗 ScrollingTabs: Calling parent onQuickAdd');
             onQuickAdd(client);
-            console.log('🔗 ScrollingTabs: Parent onQuickAdd called, closing modal');
             // Don't close modal here - let ClientActionModal handle it
           }}
           onResetCalculator={() => {
