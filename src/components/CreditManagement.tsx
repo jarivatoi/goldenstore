@@ -597,7 +597,7 @@ const CreditManagement: React.FC = () => {
 
   const handleMiniCalculatorTransaction = async (amount: number, description: string, label: string) => {
     // For now, just show an alert - in future this could open client search
-    alert(`Transaction from ${label}:\nAmount: Rs ${amount.toFixed(2)}\nDescription: ${description}\n\nNote: This would normally open the client search modal to select a client.`);
+    console.log(`Transaction from ${label}: Amount: Rs ${amount.toFixed(2)}, Description: ${description}`);
   };
 
   const handleAddToClient = async (client: Client, description: string) => {

@@ -61,7 +61,7 @@ const OverManagement: React.FC = () => {
       // iPhone PWA: Don't show alerts for validation errors (they're shown in the form)
       // Only show alerts for unexpected system errors
       if (!errorMessage.includes('enter') && !errorMessage.includes('already') && !errorMessage.includes('required')) {
-        alert(`System error: ${errorMessage}`);
+        console.error('System error:', errorMessage);
       }
     } finally {
       setIsSubmitting(false);
@@ -73,7 +73,7 @@ const OverManagement: React.FC = () => {
     try {
       await toggleItem(id);
     } catch (err) {
-      alert('Failed to update item');
+      console.error('Failed to update item:', err);
     }
   };
 
@@ -93,7 +93,7 @@ const OverManagement: React.FC = () => {
       setShowDeleteConfirm(false);
       setItemToDelete(null);
     } catch (err) {
-      alert('Failed to delete item');
+      console.error('Failed to delete item:', err);
     } finally {
       setIsDeleting(false);
     }
@@ -115,7 +115,7 @@ const OverManagement: React.FC = () => {
       }
       setShowClearAllPendingConfirm(false);
     } catch (err) {
-      alert('Failed to clear items');
+      console.error('Failed to clear items:', err);
     } finally {
       setIsDeleting(false);
     }
@@ -137,7 +137,7 @@ const OverManagement: React.FC = () => {
       }
       setShowClearAllCompletedConfirm(false);
     } catch (err) {
-      alert('Failed to clear items');
+      console.error('Failed to clear items:', err);
     } finally {
       setIsDeleting(false);
     }
