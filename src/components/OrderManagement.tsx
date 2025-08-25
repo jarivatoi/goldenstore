@@ -202,6 +202,15 @@ const OrderManagement: React.FC = () => {
 
   // Handle delete order
   const handleDeleteOrder = async (order: Order) => {
+    setOrderToDelete(order);
+    setShowDeleteOrderModal(true);
+  };
+
+  const confirmDeleteOrder = async () => {
+    if (!orderToDelete) return;
+    
+    try {
+      await deleteOrder(orderToDelete.id);
       setShowDeleteOrderModal(false);
       setOrderToDelete(null);
     } catch (error) {
