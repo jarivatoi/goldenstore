@@ -422,7 +422,9 @@ export const OrderProvider: React.FC<{ children: React.ReactNode }> = ({ childre
 
   // Item Template management
   const getItemTemplatesByCategory = (categoryId: string): OrderItemTemplate[] => {
-    return itemTemplates.filter(temp => temp.categoryId === categoryId);
+    return itemTemplates
+      .filter(temp => temp.categoryId === categoryId)
+      .sort((a, b) => a.name.localeCompare(b.name));
   };
 
   const addItemTemplate = async (categoryId: string, name: string, unitPrice: number, isVatNil: boolean = false): Promise<OrderItemTemplate> => {
