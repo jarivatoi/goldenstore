@@ -208,8 +208,8 @@ const ClientDetailModal: React.FC<ClientDetailModalProps> = ({ client, onClose, 
           // Skip return transactions
           if (transaction.description.toLowerCase().includes('returned')) return false;
           
-          // Skip transactions with no amount or negative amount
-          if (transaction.amount <= 0) return false;
+          // Skip transactions with negative amount (but allow zero amount transactions that might have returnable items)
+          if (transaction.amount < 0) return false;
           
           const description = transaction.description.toLowerCase();
           
