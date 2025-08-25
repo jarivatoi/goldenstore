@@ -83,12 +83,11 @@ const ClientGrid: React.FC<ClientGridProps> = ({
       // Content fits in container - use screen bounds, no snapping
       const screenWidth = window.innerWidth;
       const contentRect = content.getBoundingClientRect();
-      const containerRect = container.getBoundingClientRect();
       
       // Calculate screen bounds relative to current position
       bounds = {
         minX: -contentRect.left,
-        maxX: screenWidth - containerRect.left - contentWidth
+        maxX: screenWidth - contentRect.left - contentWidth
       };
     }
     
