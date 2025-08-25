@@ -3,7 +3,6 @@ import { Plus, Calendar, Package, Trash2, Edit2, X, ShoppingCart, FileText, Eye,
 import { useOrder } from '../context/OrderContext';
 import { OrderCategory, OrderItemTemplate, Order, OrderItem } from '../types';
 import ConfirmationModal from './ConfirmationModal';
-import ConfirmationModal from './ConfirmationModal';
 
 /**
  * ORDER MANAGEMENT COMPONENT
