@@ -205,8 +205,15 @@ const ClientDetailModal: React.FC<ClientDetailModalProps> = ({ client, onClose, 
       case 'returnable':
         // Show only returnable items that haven't been fully returned
         return allTransactions.filter(transaction => {
+          // Skip return transactions
           if (transaction.description.toLowerCase().includes('returned')) return false;
+          
+          // Skip transactions with no amount or negative amount
+          if (transaction.amount <= 0) return false;
+          
           const description = transaction.description.toLowerCase();
+          
+          // Must contain returnable items
           if (!description.includes('chopine') && !description.includes('bouteille')) return false;
           
           // Parse returnable items from this specific transaction
@@ -311,11 +318,13 @@ const ClientDetailModal: React.FC<ClientDetailModalProps> = ({ client, onClose, 
           // Check if any items from this transaction are still unreturned
           return Object.keys(transactionReturnables).some(itemType => {
             const takenInThisTransaction = transactionReturnables[itemType];
+            if (!takenInThisTransaction || takenInThisTransaction <= 0) return false;
+            
             const totalReturned = globalReturnedQuantities[itemType] || 0;
             
             // Calculate how much of this item type is still unreturned globally
             const globalTakenQuantity = allTransactions
-              .filter(t => !t.description.toLowerCase().includes('returned') && t.amount > 0)
+              .filter(t => !t.description.toLowerCase().includes('returned') && t.amount > 0 && t.type === 'debt')
               .reduce((total, t) => {
                 const desc = t.description.toLowerCase();
                 let transactionQuantity = 0;
@@ -392,6 +401,7 @@ const ClientDetailModal: React.FC<ClientDetailModalProps> = ({ client, onClose, 
               }, 0);
             
             const netUnreturned = Math.max(0, globalTakenQuantity - totalReturned);
+            console.log(`Item type: ${itemType}, Global taken: ${globalTakenQuantity}, Total returned: ${totalReturned}, Net unreturned: ${netUnreturned}`);
             return netUnreturned > 0;
           });
         });
