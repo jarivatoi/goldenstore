@@ -208,14 +208,18 @@ const ScrollingTabs: React.FC<ScrollingTabsProps> = ({
         });
     } else {
       timelineRef.current
-        .set(content, { x: containerWidth }) // Jump to right edge instantly
-        .to(content, {
-          x: -contentWidth,
-          repeat: -1, // Infinite repeat of full cycle
-          duration: fullCycleDuration,
-          ease: "none"
-        })
-        .call(() => {
+      // Content fits in container - constrain to screen edges
+      const containerRect = container.getBoundingClientRect();
+      const contentRect = content.getBoundingClientRect();
+      
+      // Calculate how far content can move while staying on screen
+      const leftLimit = -containerRect.left; // Don't go past left screen edge
+      const rightLimit = window.innerWidth - containerRect.right; // Don't go past right screen edge
+      
+      bounds = {
+        minX: leftLimit,
+        maxX: rightLimit
+      };
           // Clear saved position when starting fresh infinite loop
           pausedPositionRef.current = null;
         });
