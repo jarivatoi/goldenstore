@@ -482,6 +482,7 @@ const ClientCard: React.FC<ClientCardProps> = ({ client, onLongPress, onQuickAdd
         <ClientActionModal
           client={client}
           onClose={() => setShowActions(false)}
+          onQuickAdd={onQuickAdd}
           onResetCalculator={onResetCalculator}
         />
       )}
