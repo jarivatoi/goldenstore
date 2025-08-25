@@ -69,7 +69,10 @@ const ScrollingTabs: React.FC<ScrollingTabsProps> = ({
       }, 100);
     };
 
-    window.addEventListener('creditDataChanged', handleCreditDataChanged);
+    // Handle long press to show client details
+    const handleLongPress = (client: Client) => {
+      setSelectedClientForDetail(client);
+    };
     
     return () => {
       window.removeEventListener('creditDataChanged', handleCreditDataChanged);
@@ -813,7 +816,13 @@ const ScrollingTabs: React.FC<ScrollingTabsProps> = ({
               }
             }, 100);
           }}
-          onQuickAdd={onQuickAdd}
+          onQuickAdd={(client) => {
+            console.log('🔗 ScrollingTabs: onQuickAdd called with client:', client.name);
+            onQuickAdd(client);
+            // Close the modal after linking
+            setSelectedClientForAction(null);
+            setClickedTabId(null);
+          }}
           onResetCalculator={() => {
             // Don't reset calculator when closing modal - only reset when explicitly requested
           }}
@@ -828,7 +837,10 @@ const ScrollingTabs: React.FC<ScrollingTabsProps> = ({
           onClose={() => {
             setSelectedClientForDetail(null);
           }}
-          onQuickAdd={onQuickAdd}
+          onQuickAdd={(client) => {
+            console.log('🔗 ScrollingTabs: onQuickAdd from detail modal called with client:', client.name);
+            onQuickAdd(client);
+          }}
         />
       )}
 

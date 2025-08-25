@@ -548,9 +548,10 @@ const CreditManagement: React.FC = () => {
   };
 
   const handleQuickAdd = (client: Client) => {
+    console.log('🔗 CreditManagement: handleQuickAdd called with client:', client.name);
+    console.log('🔗 CreditManagement: Setting linkedClient to:', client.name);
     setLinkedClient(client);
-    // Close any open modals after linking
-    setSelectedClient(null);
+    console.log('🔗 CreditManagement: linkedClient state should now be:', client.name);
   };
 
   const handleCalculatorCancel = () => {
