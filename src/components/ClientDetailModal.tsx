@@ -1,6 +1,6 @@
 import React from 'react';
 import { createPortal } from 'react-dom';
-import { X, Calendar, Receipt, CreditCard, Plus, Edit2, Minus, Filter } from 'lucide-react';
+import { X, Calendar, Receipt, CreditCard, Plus, Edit2, Minus, Filter, CheckCircle, AlertTriangle } from 'lucide-react';
 import { Client } from '../types';
 import { useCredit } from '../context/CreditContext';
 
@@ -22,6 +22,13 @@ const ClientDetailModal: React.FC<ClientDetailModalProps> = ({ client, onClose, 
   const [editedName, setEditedName] = React.useState(client.name);
   const [isSaving, setIsSaving] = React.useState(false);
   const [transactionFilter, setTransactionFilter] = React.useState<'all' | 'returnable' | 'taken' | 'returned'>('all');
+  const [modal, setModal] = React.useState<{
+    type: 'success' | 'error' | 'confirm' | null;
+    title: string;
+    message: string;
+    onConfirm?: () => void;
+    onCancel?: () => void;
+  }>({ type: null, title: '', message: '' });
   
   const transactions = getClientTransactions(client.id);
   const payments = getClientPayments(client.id);
@@ -312,6 +319,61 @@ const ClientDetailModal: React.FC<ClientDetailModalProps> = ({ client, onClose, 
           </div>
         </div>
 
+
+      {/* Modal for confirmations */}
+      {modal.type && createPortal(
+        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center p-4 z-[9999] overflow-hidden select-none" style={{ height: '100vh' }}>
+          <div className="bg-white rounded-xl shadow-lg w-full max-w-md overflow-hidden select-none">
+            
+            {/* Header */}
+            <div className="flex justify-between items-center p-6 border-b border-gray-200 select-none">
+              <div className="flex items-center gap-3 select-none">
+                <div className={`p-2 rounded-full select-none ${
+                  modal.type === 'success' ? 'bg-green-100' :
+                  modal.type === 'error' ? 'bg-red-100' :
+                  'bg-yellow-100'
+                }`}>
+                  {modal.type === 'success' ? (
+                    <CheckCircle size={20} className="text-green-600" />
+                  ) : modal.type === 'error' ? (
+                    <X size={20} className="text-red-600" />
+                  ) : (
+                    <AlertTriangle size={20} className="text-yellow-600" />
+                  )}
+                </div>
+                <h2 className="text-xl font-semibold text-gray-900 select-none">{modal.title}</h2>
+              </div>
+            </div>
+
+            {/* Content */}
+            <div className="p-6 select-none">
+              <p className="text-gray-700 whitespace-pre-line select-none">{modal.message}</p>
+              
+              <div className="flex gap-3 mt-6 select-none">
+                {modal.type === 'confirm' && modal.onCancel && (
+                  <button
+                    onClick={modal.onCancel}
+                    className="flex-1 px-4 py-2 bg-gray-200 text-gray-800 rounded-lg hover:bg-gray-300 transition-colors select-none"
+                  >
+                    Cancel
+                  </button>
+                )}
+                <button
+                  onClick={modal.onConfirm}
+                  className={`${modal.type === 'confirm' ? 'flex-1' : 'w-full'} px-4 py-2 rounded-lg transition-colors select-none ${
+                    modal.type === 'success' ? 'bg-green-500 hover:bg-green-600 text-white' :
+                    modal.type === 'error' ? 'bg-red-500 hover:bg-red-600 text-white' :
+                    'bg-blue-500 hover:bg-blue-600 text-white'
+                  }`}
+                >
+                  {modal.type === 'confirm' ? 'Continue' : 'OK'}
+                </button>
+              </div>
+            </div>
+          </div>
+        </div>,
+        document.body
+      )}
         {/* Content */}
         <div className="p-6 overflow-y-auto select-none" style={{ maxHeight: 'calc(80vh - 160px)' }}>
           
@@ -332,22 +394,32 @@ const ClientDetailModal: React.FC<ClientDetailModalProps> = ({ client, onClose, 
                   <h3 className="text-lg font-semibold text-orange-800">Returnable Items</h3>
                   <button
                     onClick={async () => {
-                      const confirmed = window.confirm(
-                        `Clear all returnable items for ${client.name}? This will mark all Chopine and Bouteille items as returned.`
-                      );
-                      if (confirmed) {
-                        try {
-                          // Process returns for all items
-                          for (const [itemType, quantity] of Object.entries(returnableItems)) {
-                            const returnDescription = `Returned: ${quantity} ${itemType}${quantity > 1 ? 's' : ''}`;
-                            await addTransaction(client, returnDescription, 0);
+                      // Show confirmation modal instead of window.confirm
+                      setModal({
+                        type: 'confirm',
+                        title: 'Clear All Returnable Items',
+                        message: `Clear all returnable items for ${client.name}? This will mark all Chopine and Bouteille items as returned.`,
+                        onConfirm: async () => {
+                          try {
+                            setModal({ type: null, title: '', message: '' });
+                            // Process returns for all items
+                            for (const [itemType, quantity] of Object.entries(returnableItems)) {
+                              const returnDescription = `Returned: ${quantity} ${itemType}${quantity > 1 ? 's' : ''}`;
+                              await addTransaction(client, returnDescription, 0);
+                            }
+                            // Close modal after clearing
+                            onClose();
+                          } catch (error) {
+                            setModal({
+                              type: 'error',
+                              title: 'Error',
+                              message: 'Failed to clear returnable items',
+                              onConfirm: () => setModal({ type: null, title: '', message: '' })
+                            });
                           }
-                          // Close modal after clearing
-                          onClose();
-                        } catch (error) {
-                          alert('Failed to clear returnable items');
-                        }
-                      }
+                        },
+                        onCancel: () => setModal({ type: null, title: '', message: '' })
+                      });
                     }}
                     className="px-3 py-1 text-sm bg-red-500 hover:bg-red-600 text-white rounded-md transition-colors"
                   >

@@ -81,7 +81,7 @@ const ClientActionModal: React.FC<ClientActionModalProps> = ({ client, onClose, 
       }
     } catch (error) {
       console.error('Error settling client:', error);
-      alert('Failed to settle client');
+      // Error handling without alert - could add error state here
     } finally {
       setIsProcessing(false);
     }
