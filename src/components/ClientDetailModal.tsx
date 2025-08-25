@@ -209,91 +209,7 @@ const ClientDetailModal: React.FC<ClientDetailModalProps> = ({ client, onClose, 
           const description = transaction.description.toLowerCase();
           if (!description.includes('chopine') && !description.includes('bouteille')) return false;
           
-          // Get all returnable items with proper return calculation
-          const allReturnableItems: {[key: string]: number} = {};
-          const allReturnedItems: {[key: string]: number} = {};
-          
-          // Calculate total taken items
-          allTransactions
-            .filter(t => !t.description.toLowerCase().includes('returned') && t.amount > 0)
-            .forEach(t => {
-              const desc = t.description.toLowerCase();
-              if (!desc.includes('chopine') && !desc.includes('bouteille')) return;
-              
-              // Parse chopine items
-              const chopinePattern = /(\d+)\s+chopines?(?:\s+([^,]*))?/gi;
-              let chopineMatch;
-              while ((chopineMatch = chopinePattern.exec(desc)) !== null) {
-                const quantity = parseInt(chopineMatch[1]);
-                const brand = chopineMatch[2]?.trim() || '';
-                const key = brand ? `Chopine ${brand}` : 'Chopine';
-                allReturnableItems[key] = (allReturnableItems[key] || 0) + quantity;
-              }
-              
-              // Parse bouteille items
-              const bouteillePattern = /(\d+)\s+(?:(\d+(?:\.\d+)?L)\s+)?bouteilles?(?:\s+([^,]*))?/gi;
-              let bouteilleMatch;
-              while ((bouteilleMatch = bouteillePattern.exec(desc)) !== null) {
-                const quantity = parseInt(bouteilleMatch[1]);
-                const size = bouteilleMatch[2]?.trim() || '';
-                const brand = bouteilleMatch[3]?.trim() || '';
-                
-                let key;
-                if (size && brand) {
-                  key = `${size} ${brand}`;
-                } else if (brand) {
-                  key = `Bouteille ${brand}`;
-                } else if (size) {
-                  key = `${size} Bouteille`;
-                } else {
-                  key = 'Bouteille';
-                }
-                allReturnableItems[key] = (allReturnableItems[key] || 0) + quantity;
-              }
-              
-              // Handle implicit quantities
-              if (desc.includes('bouteille') && !bouteillePattern.test(desc)) {
-                const sizeMatch = desc.match(/(\d+(?:\.\d+)?L)/i);
-                const brandMatch = desc.match(/bouteilles?\s+([^,]*)/i);
-                const brand = brandMatch?.[1]?.trim() || '';
-                
-                let key;
-                if (sizeMatch && brand) {
-                  key = `${sizeMatch[1]} ${brand}`;
-                } else if (brand) {
-                  key = `Bouteille ${brand}`;
-                } else if (sizeMatch) {
-                  key = `${sizeMatch[1]} Bouteille`;
-                } else {
-                  key = 'Bouteille';
-                }
-                allReturnableItems[key] = (allReturnableItems[key] || 0) + 1;
-              }
-              
-              if (desc.includes('chopine') && !chopinePattern.test(desc)) {
-                const brandMatch = desc.match(/chopines?\s+([^,]*)/i);
-                const brand = brandMatch?.[1]?.trim() || '';
-                const key = brand ? `Chopine ${brand}` : 'Chopine';
-                allReturnableItems[key] = (allReturnableItems[key] || 0) + 1;
-              }
-            });
-          
-          // Calculate total returned items
-          allTransactions
-            .filter(t => t.description.toLowerCase().includes('returned'))
-            .forEach(t => {
-              const desc = t.description.toLowerCase();
-              Object.keys(allReturnableItems).forEach(itemType => {
-                if (desc.includes(itemType.toLowerCase())) {
-                  const match = desc.match(/returned:\s*(\d+)\s+/);
-                  if (match) {
-                    allReturnedItems[itemType] = (allReturnedItems[itemType] || 0) + parseInt(match[1]);
-                  }
-                }
-              });
-            });
-          
-          // Parse this specific transaction's returnable items
+          // Parse returnable items from this specific transaction
           const transactionReturnables: {[key: string]: number} = {};
           
           // Parse chopine items from this transaction
@@ -353,12 +269,130 @@ const ClientDetailModal: React.FC<ClientDetailModalProps> = ({ client, onClose, 
             transactionReturnables[key] = (transactionReturnables[key] || 0) + 1;
           }
           
+          // Calculate global returned quantities for all item types
+          const globalReturnedQuantities: {[key: string]: number} = {};
+          allTransactions
+            .filter(t => t.description.toLowerCase().includes('returned'))
+            .forEach(t => {
+              const desc = t.description.toLowerCase();
+              
+              // Parse returned chopines
+              const returnedChopinePattern = /returned:\s*(\d+)\s+chopines?(?:\s+([^,\-]*))?/gi;
+              let returnedChopineMatch;
+              while ((returnedChopineMatch = returnedChopinePattern.exec(desc)) !== null) {
+                const quantity = parseInt(returnedChopineMatch[1]);
+                const brand = returnedChopineMatch[2]?.trim() || '';
+                const key = brand ? `Chopine ${brand}` : 'Chopine';
+                globalReturnedQuantities[key] = (globalReturnedQuantities[key] || 0) + quantity;
+              }
+              
+              // Parse returned bouteilles
+              const returnedBouteillePattern = /returned:\s*(\d+)\s+(?:(\d+(?:\.\d+)?L)\s+)?bouteilles?(?:\s+([^,\-]*))?/gi;
+              let returnedBouteilleMatch;
+              while ((returnedBouteilleMatch = returnedBouteillePattern.exec(desc)) !== null) {
+                const quantity = parseInt(returnedBouteilleMatch[1]);
+                const size = returnedBouteilleMatch[2]?.trim() || '';
+                const brand = returnedBouteilleMatch[3]?.trim() || '';
+                
+                let key;
+                if (size && brand) {
+                  key = `${size} ${brand}`;
+                } else if (brand) {
+                  key = `Bouteille ${brand}`;
+                } else if (size) {
+                  key = `${size} Bouteille`;
+                } else {
+                  key = 'Bouteille';
+                }
+                globalReturnedQuantities[key] = (globalReturnedQuantities[key] || 0) + quantity;
+              }
+            });
+          
           // Check if any items from this transaction are still unreturned
           return Object.keys(transactionReturnables).some(itemType => {
-            const totalTaken = allReturnableItems[itemType] || 0;
-            const totalReturned = allReturnedItems[itemType] || 0;
-            const netReturnable = Math.max(0, totalTaken - totalReturned);
-            return netReturnable > 0;
+            const takenInThisTransaction = transactionReturnables[itemType];
+            const totalReturned = globalReturnedQuantities[itemType] || 0;
+            
+            // Calculate how much of this item type is still unreturned globally
+            const globalTakenQuantity = allTransactions
+              .filter(t => !t.description.toLowerCase().includes('returned') && t.amount > 0)
+              .reduce((total, t) => {
+                const desc = t.description.toLowerCase();
+                let transactionQuantity = 0;
+                
+                if (itemType.includes('Chopine')) {
+                  const pattern = /(\d+)\s+chopines?(?:\s+([^,]*))?/gi;
+                  let match;
+                  while ((match = pattern.exec(desc)) !== null) {
+                    const brand = match[2]?.trim() || '';
+                    const key = brand ? `Chopine ${brand}` : 'Chopine';
+                    if (key === itemType) {
+                      transactionQuantity += parseInt(match[1]);
+                    }
+                  }
+                  
+                  // Handle implicit chopines
+                  if (desc.includes('chopine') && !pattern.test(desc)) {
+                    const brandMatch = desc.match(/chopines?\s+([^,]*)/i);
+                    const brand = brandMatch?.[1]?.trim() || '';
+                    const key = brand ? `Chopine ${brand}` : 'Chopine';
+                    if (key === itemType) {
+                      transactionQuantity += 1;
+                    }
+                  }
+                } else {
+                  // Handle bouteille items
+                  const pattern = /(\d+)\s+(?:(\d+(?:\.\d+)?L)\s+)?bouteilles?(?:\s+([^,]*))?/gi;
+                  let match;
+                  while ((match = pattern.exec(desc)) !== null) {
+                    const quantity = parseInt(match[1]);
+                    const size = match[2]?.trim() || '';
+                    const brand = match[3]?.trim() || '';
+                    
+                    let key;
+                    if (size && brand) {
+                      key = `${size} ${brand}`;
+                    } else if (brand) {
+                      key = `Bouteille ${brand}`;
+                    } else if (size) {
+                      key = `${size} Bouteille`;
+                    } else {
+                      key = 'Bouteille';
+                    }
+                    
+                    if (key === itemType) {
+                      transactionQuantity += quantity;
+                    }
+                  }
+                  
+                  // Handle implicit bouteilles
+                  if (desc.includes('bouteille') && !pattern.test(desc)) {
+                    const sizeMatch = desc.match(/(\d+(?:\.\d+)?L)/i);
+                    const brandMatch = desc.match(/bouteilles?\s+([^,]*)/i);
+                    const brand = brandMatch?.[1]?.trim() || '';
+                    
+                    let key;
+                    if (sizeMatch && brand) {
+                      key = `${sizeMatch[1]} ${brand}`;
+                    } else if (brand) {
+                      key = `Bouteille ${brand}`;
+                    } else if (sizeMatch) {
+                      key = `${sizeMatch[1]} Bouteille`;
+                    } else {
+                      key = 'Bouteille';
+                    }
+                    
+                    if (key === itemType) {
+                      transactionQuantity += 1;
+                    }
+                  }
+                }
+                
+                return total + transactionQuantity;
+              }, 0);
+            
+            const netUnreturned = Math.max(0, globalTakenQuantity - totalReturned);
+            return netUnreturned > 0;
           });
         });
       
