@@ -137,7 +137,7 @@ const OrderManagement: React.FC = () => {
       setShowAddItem(false);
       
       // Show success modal instead of browser alert
-      setSuccessMessage(`"${newItemName.trim()}" has been successfully added`);
+      setSuccessMessage(`"${newItemName.trim()}" has been successfully added to the list`);
       setShowSuccessModal(true);
     } catch (err) {
       const errorMessage = err instanceof Error ? err.message : 'Unknown error';
