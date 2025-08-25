@@ -208,6 +208,16 @@ const ClientDetailModal: React.FC<ClientDetailModalProps> = ({ client, onClose, 
           type: transaction.type,
           date: transaction.date
         });
+        
+        // For returnable filter, allow zero amount transactions if they have returnable items
+        if (transactionFilter === 'returnable') {
+          const description = transaction.description.toLowerCase();
+          const hasReturnableItems = description.includes('chopine') || description.includes('bouteille');
+          const isReturnTransaction = description.includes('returned');
+          return transaction.amount >= 0 && hasReturnableItems && !isReturnTransaction;
+        }
+        
+        // For other filters, exclude zero amount transactions
         return transaction.amount >= 0;
       });
 
