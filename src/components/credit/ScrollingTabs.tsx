@@ -200,12 +200,12 @@ const ScrollingTabs: React.FC<ScrollingTabsProps> = ({
           x: -contentWidth,
           repeat: -1, // Infinite repeat of full cycle
           duration: fullCycleDuration,
-      // Content overflows container - use unlimited screen bounds (same as small cards)
-      const screenWidth = window.innerWidth;
-      bounds = {
-        minX: -screenWidth, // Allow movement beyond left screen edge
-        maxX: screenWidth // Allow movement beyond right screen edge
-      };
+          ease: "none"
+        })
+        .call(() => {
+          // Clear saved position when starting fresh infinite loop
+          pausedPositionRef.current = null;
+        });
     } else {
       timelineRef.current
         .set(content, { x: containerWidth }) // Jump to right edge instantly
