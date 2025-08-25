@@ -549,7 +549,8 @@ const CreditManagement: React.FC = () => {
 
   const handleQuickAdd = (client: Client) => {
     setLinkedClient(client);
-    // Don't open modal immediately, just link the client to calculator
+    // Close any open modals after linking
+    setSelectedClient(null);
   };
 
   const handleCalculatorCancel = () => {

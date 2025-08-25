@@ -386,12 +386,11 @@ const ClientActionModal: React.FC<ClientActionModalProps> = ({ client, onClose, 
               {/* Link to Calculator Button */}
               <button
                 onClick={() => {
-                  // Link client to calculator and close modal
                   if (onQuickAdd) {
                     onQuickAdd(client);
                   }
-                  // Close modal immediately - linking should work instantly
-                  onClose();
+                  // Don't close modal immediately - let the parent handle it
+                  // The onQuickAdd should trigger the linking and then close the modal
                 }}
                 disabled={isProcessing}
                 className="w-full flex items-center gap-4 p-4 bg-purple-50 hover:bg-purple-100 rounded-lg border border-purple-200 transition-colors disabled:opacity-50"
