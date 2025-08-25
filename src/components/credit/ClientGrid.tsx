@@ -163,7 +163,8 @@ const ClientGrid: React.FC<ClientGridProps> = ({
             });
           }
         }
-        // For non-overflowing content, no snapping - let it stay where dragged
+        // For non-overflowing content, absolutely no snapping - complete free movement
+        // The card stays exactly where the user dragged it
         
         dragDirectionRef.current = null;
       }
