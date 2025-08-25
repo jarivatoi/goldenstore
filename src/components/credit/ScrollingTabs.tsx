@@ -208,12 +208,14 @@ const ScrollingTabs: React.FC<ScrollingTabsProps> = ({
         });
     } else {
       // Content fits in container - use screen edge bounds for big card
+      timelineRef.current
         .set(content, { x: containerWidth }) // Jump to right edge instantly
+        .to(content, {
           x: -contentWidth,
-      // Use screen edge boundaries - constrain to visible screen area
+          repeat: -1, // Infinite repeat of full cycle
           duration: fullCycleDuration,
-        minX: 0, // Left edge of screen
-        maxX: Math.max(0, screenWidth - contentWidth) // Right edge minus content width
+          ease: "none"
+        })
         .call(() => {
           // Clear saved position when starting fresh infinite loop
           pausedPositionRef.current = null;
