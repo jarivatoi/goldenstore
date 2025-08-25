@@ -202,19 +202,6 @@ const OrderManagement: React.FC = () => {
 
   // Handle delete order
   const handleDeleteOrder = async (order: Order) => {
-    setOrderToDelete(order);
-    setShowDeleteOrderModal(true);
-  };
-
-  const confirmDeleteOrder = async () => {
-    if (!orderToDelete) return;
-    
-    const category = categories.find(c => c.id === orderToDelete.categoryId);
-    const categoryName = category?.name || 'Unknown';
-    
-    try {
-      await deleteOrder(orderToDelete.id);
-      alert(`Order for "${categoryName}" has been deleted successfully.`);
       setShowDeleteOrderModal(false);
       setOrderToDelete(null);
     } catch (error) {
