@@ -589,7 +589,16 @@ const ClientDetailModal: React.FC<ClientDetailModalProps> = ({ client, onClose, 
               <p className="text-gray-500 text-center py-4">No transactions found</p>
             ) : (
               <div className="space-y-3">
-                {filteredTransactions.map((transaction) => (
+                {filteredTransactions
+                  .filter(transaction => {
+                    // For returnable filter, show all transactions (including zero amount)
+                    // For other filters, exclude negative amounts
+                    if (transactionFilter === 'returnable') {
+                      return true; // Show all transactions that passed the returnable filter
+                    }
+                    return transaction.amount >= 0; // For other filters, exclude negative amounts
+                  })
+                  .map((transaction) => (
                   <div key={transaction.id} className="bg-gray-50 rounded-lg p-4">
                     <div className={`${transaction.amount > 0 ? 'flex justify-between items-start' : ''} mb-2`}>
                       <h4 className="font-medium text-gray-800">{transaction.description}</h4>
