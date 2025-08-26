@@ -281,6 +281,10 @@ const ScrollingTabs: React.FC<ScrollingTabsProps> = ({
           // Resume timeline after throw completes
           if (timelineRef.current) {
             timelineRef.current.resume();
+            console.log('✅ Timeline resumed after throw complete');
+          } else {
+            console.log('❌ No timeline after throw complete, creating new one...');
+            setupContinuousScroll();
           }
         }
       });
