@@ -44,7 +44,7 @@ const ScrollingTabs: React.FC<ScrollingTabsProps> = ({
   const draggableRef = useRef<Draggable[] | null>(null);
   const [selectedClientForAction, setSelectedClientForAction] = React.useState<Client | null>(null);
   const [selectedClientForDetail, setSelectedClientForDetail] = React.useState<Client | null>(null);
- const dragStartPositionRef = useRef(0);
+  const dragStartPositionRef = useRef(0);
   const [isDragging, setIsDragging] = React.useState(false);
   const pausedPositionRef = useRef<number | null>(null);
   const [clickedTabId, setClickedTabId] = React.useState<string | null>(null);
@@ -373,30 +373,30 @@ const ScrollingTabs: React.FC<ScrollingTabsProps> = ({
         force3D: true,
         lockAxis: true, // Lock to horizontal axis only
         onDragStart: function() {
-         // Store initial position and kill timeline
-         const currentX = gsap.getProperty(content, "x") as number;
-         dragStartPositionRef.current = currentX;
-         dragDirectionRef.current = null;
+          // Store initial position and kill timeline
+          const currentX = gsap.getProperty(content, "x") as number;
+          dragStartPositionRef.current = currentX;
+          dragDirectionRef.current = null;
          
           if (timelineRef.current) {
             timelineRef.current.kill();
             timelineRef.current = null; // Set to null after killing
           }
         },
-       onDrag: function() {
-         // Track drag direction based on movement
-         const currentX = gsap.getProperty(content, "x") as number;
-         const deltaX = currentX - dragStartPositionRef.current;
+        onDrag: function() {
+          // Track drag direction based on movement
+          const currentX = gsap.getProperty(content, "x") as number;
+          const deltaX = currentX - dragStartPositionRef.current;
          
-         // Determine direction based on significant movement (>20px)
-         if (Math.abs(deltaX) > 20) {
-           if (deltaX > 0) {
-             dragDirectionRef.current = 'right'; // Content moving right
-           } else {
-             dragDirectionRef.current = 'left'; // Content moving left
-           }
-         }
-       },
+          // Determine direction based on significant movement (>20px)
+          if (Math.abs(deltaX) > 20) {
+            if (deltaX > 0) {
+              dragDirectionRef.current = 'right'; // Content moving right
+            } else {
+              dragDirectionRef.current = 'left'; // Content moving left
+            }
+          }
+        },
         onDragEnd: function() {
           // Kill any existing timeline when user finishes dragging
           if (timelineRef.current) {
@@ -409,7 +409,7 @@ const ScrollingTabs: React.FC<ScrollingTabsProps> = ({
           if (dragDirectionRef.current) {
             setupContinuousScrollDirection(dragDirectionRef.current);
           } else {
-           // Default to left direction if no direction was detected
+            // Default to left direction if no direction was detected
             setupContinuousScrollDirection('left');
           }
           
@@ -471,6 +471,16 @@ const ScrollingTabs: React.FC<ScrollingTabsProps> = ({
     
     // Store the EXACT current position - no normalization
     pausedPositionRef.current = currentX;
+    
+    // Kill timeline and show modal
+    if (timelineRef.current) {
+      timelineRef.current.kill();
+      timelineRef.current = null;
+    }
+    
+    // Show action modal
+    setSelectedClientForAction(client);
+  };
   // Handle long press to show client details
 
   return (
