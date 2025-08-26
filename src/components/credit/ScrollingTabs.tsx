@@ -466,20 +466,11 @@ const ScrollingTabs: React.FC<ScrollingTabsProps> = ({
     // Add click animation immediately
     setClickedTabId(client.id);
     
-    // Get current position and pause timeline at that exact position
+    // Get exact current position from GSAP - don't normalize it
     const currentX = gsap.getProperty(contentRef.current, "x") as number;
     
-    // Store the exact current position - don't normalize it
+    // Store the EXACT current position - no normalization
     pausedPositionRef.current = currentX;
-    
-    // Pause timeline when opening modal
-    if (timelineRef.current) {
-      timelineRef.current.pause();
-    }
-    
-    setSelectedClientForAction(client);
-  };
-
   // Handle long press to show client details
 
   return (
