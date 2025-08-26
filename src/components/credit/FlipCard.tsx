@@ -37,13 +37,30 @@ const FlipCard: React.FC<FlipCardProps> = ({
     const front = frontRef.current;
     const back = backRef.current;
 
+    // Check if parent has CSS animations that might interfere
+    const parentElement = card.parentElement;
+    const hasParentAnimation = parentElement && (
+      parentElement.classList.contains('animate-bounce') ||
+      parentElement.classList.contains('animate-subtle-shake') ||
+      parentElement.classList.contains('animate-pulse') ||
+      parentElement.classList.contains('animate-wobble') ||
+      parentElement.classList.contains('animate-high-debt-bounce') ||
+      parentElement.classList.contains('animate-returnables-shake')
+    );
+
     // Set initial 3D perspective and positioning
     gsap.set(card, {
       transformStyle: "preserve-3d",
       perspective: 1000,
       // iOS Safari specific fixes
       WebkitTransformStyle: "preserve-3d",
-      WebkitPerspective: 1000
+      WebkitPerspective: 1000,
+      // Override any parent transforms that might interfere
+      position: "relative",
+      isolation: "isolate", // Create new stacking context
+      // Force hardware acceleration for iPhone 7
+      transform: "translateZ(0)",
+      WebkitTransform: "translateZ(0)"
     });
 
     gsap.set(front, {
@@ -53,7 +70,12 @@ const FlipCard: React.FC<FlipCardProps> = ({
       WebkitBackfaceVisibility: "hidden",
       WebkitTransformStyle: "preserve-3d",
       position: "relative",
-      zIndex: 2
+      zIndex: 2,
+      // iPhone 7 specific fixes
+      transform: "rotateY(0deg) translateZ(1px)",
+      WebkitTransform: "rotateY(0deg) translateZ(1px)",
+      transformOrigin: "center center",
+      WebkitTransformOrigin: "center center"
     });
 
     gsap.set(back, {
@@ -68,7 +90,11 @@ const FlipCard: React.FC<FlipCardProps> = ({
       width: "100%",
       height: "100%",
       transformOrigin: "center center",
-      zIndex: 1
+      WebkitTransformOrigin: "center center",
+      zIndex: 1,
+      // iPhone 7 specific fixes
+      transform: "rotateY(180deg) translateZ(1px)",
+      WebkitTransform: "rotateY(180deg) translateZ(1px)"
     });
 
     // Create flip animation timeline
@@ -77,21 +103,32 @@ const FlipCard: React.FC<FlipCardProps> = ({
         timelineRef.current.kill();
       }
 
+      // Use different animation approach for cards with parent animations
+      const animationDuration = hasParentAnimation ? flipDuration * 0.8 : flipDuration;
+      const animationEase = hasParentAnimation ? "power2.inOut" : "power1.inOut";
+
       timelineRef.current = gsap.timeline({ 
         repeat: shouldFlip ? -1 : 0,
         delay: flipDelay,
         yoyo: true,
-        repeatDelay: flipDelay
+        repeatDelay: flipDelay,
+        // Override any parent timeline interference
+        overwrite: "auto"
       });
 
       timelineRef.current
         .to([front, back], {
           rotationY: "+=180",
-          duration: flipDuration,
-          ease: "power1.inOut", // Smoother easing for older devices
+          duration: animationDuration,
+          ease: animationEase,
           transformOrigin: "50% 50%", // More explicit transform origin
+          WebkitTransformOrigin: "50% 50%",
           force3D: true, // Force hardware acceleration
-          WebkitTransform: "rotateY(+=180deg)", // Explicit WebKit transform
+          // More explicit transform for iPhone 7
+          transform: "rotateY(+=180deg) translateZ(1px)",
+          WebkitTransform: "rotateY(+=180deg) translateZ(1px)",
+          // Override any conflicting animations
+          overwrite: "auto",
           onComplete: () => setIsFlipped(prev => !prev)
         });
 
@@ -105,12 +142,14 @@ const FlipCard: React.FC<FlipCardProps> = ({
       gsap.set([front, back], { 
         rotationY: 0,
         force3D: true,
-        WebkitTransform: "rotateY(0deg)"
+        transform: "rotateY(0deg) translateZ(1px)",
+        WebkitTransform: "rotateY(0deg) translateZ(1px)"
       });
       gsap.set(back, { 
         rotationY: 180,
         force3D: true,
-        WebkitTransform: "rotateY(180deg)"
+        transform: "rotateY(180deg) translateZ(1px)",
+        WebkitTransform: "rotateY(180deg) translateZ(1px)"
       });
       setIsFlipped(false);
     }
