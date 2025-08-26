@@ -263,25 +263,35 @@ const ScrollingTabs: React.FC<ScrollingTabsProps> = ({
         force3D: true,
         lockAxis: true, // Lock to horizontal axis only
         onDragStart: function() {
-          // Pause timeline during drag
-          if (timelineRef.current) {
+          console.log('🎯 Drag started - pausing timeline');
+          if (timelineRef.current && !timelineRef.current.paused()) {
             timelineRef.current.pause();
+            console.log('⏸️ Timeline paused for drag');
           }
         },
         onDrag: function() {
           // No need to track direction - just let user drag
         },
         onDragEnd: function() {
-          // Resume timeline after drag ends
-          if (timelineRef.current) {
+          console.log('🎯 Drag ended - checking timeline state');
+          if (timelineRef.current && timelineRef.current.paused()) {
             timelineRef.current.resume();
+            console.log('▶️ Timeline resumed after drag end');
           }
         },
         onThrowComplete: function() {
-        }
-      });
-    });
-  }, [sortedClients.length]); // Remove function dependencies to prevent recreation
+          console.log('🎯 Throw completed - ensuring timeline is running');
+          if (timelineRef.current) {
+            if (timelineRef.current.paused()) {
+              timelineRef.current.resume();
+              console.log('▶️ Timeline resumed after throw complete');
+            } else {
+              console.log('✅ Timeline already running after throw');
+            }
+          } else {
+            console.log('❌ No timeline after throw - recreating...');
+            setupContinuousScroll();
+          }
 
   // Setup animation when clients change
   useEffect(() => {
