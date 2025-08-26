@@ -805,6 +805,40 @@ const ScrollingTabs: React.FC<ScrollingTabsProps> = ({
                   paused: timelineRef.current?.paused(),
                   progress: timelineRef.current?.progress()
                 });
+                
+                // Add detailed position debugging
+                const content = contentRef.current;
+                const container = containerRef.current;
+                if (content) {
+                  const currentX = gsap.getProperty(content, "x") as number;
+                  const containerWidth = container?.offsetWidth || 0;
+                  const contentWidth = content.scrollWidth || 0;
+                  
+                  console.log('📍 Element position details:', {
+                    currentX: currentX,
+                    containerWidth: containerWidth,
+                    contentWidth: contentWidth,
+                    totalDistance: contentWidth + containerWidth,
+                    expectedDuration: (contentWidth + containerWidth) / 200
+                  });
+                  
+                  // Test if element is actually moving
+                  setTimeout(() => {
+                    const newX = gsap.getProperty(content, "x") as number;
+                    const movement = Math.abs(newX - currentX);
+                    console.log('🏃‍♂️ Movement test:', {
+                      oldX: currentX,
+                      newX: newX,
+                      movement: movement,
+                      isMoving: movement > 0.1
+                    });
+                    
+                    if (movement < 0.1) {
+                      console.log('❌ Timeline not moving! Recreating...');
+                      setupContinuousScroll();
+                    }
+                  }, 1000);
+                }
               }, 1000);
             } else {
               console.log('❌ No timeline to resume, creating new one...');
