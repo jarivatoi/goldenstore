@@ -44,6 +44,7 @@ const ScrollingTabs: React.FC<ScrollingTabsProps> = ({
   const draggableRef = useRef<Draggable[] | null>(null);
   const [selectedClientForAction, setSelectedClientForAction] = React.useState<Client | null>(null);
   const [selectedClientForDetail, setSelectedClientForDetail] = React.useState<Client | null>(null);
+ const dragStartPositionRef = useRef(0);
   const [isDragging, setIsDragging] = React.useState(false);
   const pausedPositionRef = useRef<number | null>(null);
   const [clickedTabId, setClickedTabId] = React.useState<string | null>(null);
@@ -364,12 +365,30 @@ const ScrollingTabs: React.FC<ScrollingTabsProps> = ({
         force3D: true,
         lockAxis: true, // Lock to horizontal axis only
         onDragStart: function() {
-          // Kill the timeline on drag start but don't store position yet
+         // Store initial position and kill timeline
+         const currentX = gsap.getProperty(content, "x") as number;
+         dragStartPositionRef.current = currentX;
+         dragDirectionRef.current = null;
+         
           if (timelineRef.current) {
             timelineRef.current.kill();
             timelineRef.current = null; // Set to null after killing
           }
         },
+       onDrag: function() {
+         // Track drag direction based on movement
+         const currentX = gsap.getProperty(content, "x") as number;
+         const deltaX = currentX - dragStartPositionRef.current;
+         
+         // Determine direction based on significant movement (>20px)
+         if (Math.abs(deltaX) > 20) {
+           if (deltaX > 0) {
+             dragDirectionRef.current = 'right'; // Content moving right
+           } else {
+             dragDirectionRef.current = 'left'; // Content moving left
+           }
+         }
+       },
         onDragEnd: function() {
           // Kill any existing timeline when user finishes dragging
           if (timelineRef.current) {
@@ -378,14 +397,11 @@ const ScrollingTabs: React.FC<ScrollingTabsProps> = ({
           }
         },
         onThrowComplete: function() {
-          // Always resume timeline after throw completes
-          const currentX = gsap.getProperty(contentRef.current, "x") as number;
-          
           // Continue scrolling in the direction the user swiped
           if (dragDirectionRef.current) {
             setupContinuousScrollDirection(dragDirectionRef.current);
           } else {
-            // Default to left if no direction detected
+           // Default to left direction if no direction was detected
             setupContinuousScrollDirection('left');
           }
           
