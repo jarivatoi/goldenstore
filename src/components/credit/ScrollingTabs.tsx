@@ -265,7 +265,7 @@ const ScrollingTabs: React.FC<ScrollingTabsProps> = ({
       });
       
       if (direction === 'right') {
-        // Scrolling right: move from current position to right edge, then loop
+        // User swiped right, so continue moving content to the right (revealing cards from left)
         timelineRef.current
           .to(content, {
             x: containerWidth,
@@ -280,7 +280,7 @@ const ScrollingTabs: React.FC<ScrollingTabsProps> = ({
             ease: "none"
           });
       } else {
-        // Scrolling left: move from current position to left edge, then loop
+        // User swiped left, so continue moving content to the left (revealing cards from right)
         timelineRef.current
           .to(content, {
             x: -contentWidth,
@@ -380,11 +380,16 @@ const ScrollingTabs: React.FC<ScrollingTabsProps> = ({
         onThrowComplete: function() {
           // Always resume timeline after throw completes
           const currentX = gsap.getProperty(contentRef.current, "x") as number;
-          restartTimelineFromPosition(currentX);
-          pausedPositionRef.current = null; // Clear any stored position
-            // If user swiped right (positive delta), continue scrolling right
-            // If user swiped left (negative delta), continue scrolling left
+          
+          // Continue scrolling in the direction the user swiped
+          if (dragDirectionRef.current) {
             setupContinuousScrollDirection(dragDirectionRef.current);
+          } else {
+            // Default to left if no direction detected
+            setupContinuousScrollDirection('left');
+          }
+          
+          pausedPositionRef.current = null; // Clear any stored position
         }
       });
     });
