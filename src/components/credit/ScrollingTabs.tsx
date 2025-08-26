@@ -466,30 +466,11 @@ const ScrollingTabs: React.FC<ScrollingTabsProps> = ({
     // Add click animation immediately
     setClickedTabId(client.id);
     
-    // Pause timeline instead of killing it when opening modal
+    // Get current position and pause timeline at that exact position
     const currentX = gsap.getProperty(contentRef.current, "x") as number;
     
-    // Normalize position to visible range for seamless restart
-    const container = containerRef.current;
-    const content = contentRef.current;
-    
-    if (container && content) {
-      const containerWidth = container.offsetWidth;
-      const contentWidth = content.scrollWidth;
-      
-      // If position is beyond visible range (after loop), normalize it
-      let normalizedPosition = currentX;
-      if (currentX < -contentWidth) {
-        // Card has looped, calculate equivalent visible position
-        const totalCycleDistance = contentWidth + containerWidth;
-        const cycleProgress = Math.abs(currentX + contentWidth) % totalCycleDistance;
-        normalizedPosition = containerWidth - cycleProgress;
-      }
-      
-      pausedPositionRef.current = normalizedPosition;
-    } else {
-      pausedPositionRef.current = currentX;
-    }
+    // Store the exact current position - don't normalize it
+    pausedPositionRef.current = currentX;
     
     // Pause timeline when opening modal
     if (timelineRef.current) {
