@@ -771,17 +771,18 @@ const ScrollingTabs: React.FC<ScrollingTabsProps> = ({
         <ClientActionModal
           client={selectedClientForAction}
           onClose={() => {
-            // Clear modal and clicked state immediately
             setSelectedClientForAction(null);
             setClickedTabId(null);
             
-            // Simply resume the paused timeline
+            // Resume timeline when modal closes
             if (timelineRef.current) {
               timelineRef.current.resume();
             }
           }}
           onQuickAdd={(client) => {
-            // Resume timeline when quick adding
+            // Clear modal state and resume timeline
+            setSelectedClientForAction(null);
+            setClickedTabId(null);
             if (timelineRef.current) {
               timelineRef.current.resume();
             }
@@ -789,7 +790,10 @@ const ScrollingTabs: React.FC<ScrollingTabsProps> = ({
             onQuickAdd(client);
           }}
           onResetCalculator={() => {
-            // Reset calculator if needed
+            // Resume timeline when resetting calculator
+            if (timelineRef.current) {
+              timelineRef.current.resume();
+            }
           }}
           onViewDetails={setSelectedClientForDetail}
         />
@@ -801,9 +805,19 @@ const ScrollingTabs: React.FC<ScrollingTabsProps> = ({
           client={selectedClientForDetail}
           onClose={() => {
             setSelectedClientForDetail(null);
+            
+            // Resume timeline when detail modal closes
+            if (timelineRef.current) {
+              timelineRef.current.resume();
+            }
           }}
           onQuickAdd={(client) => {
-            console.log('🔗 ScrollingTabs: onQuickAdd from detail modal called with client:', client.name);
+            // Clear modal state and resume timeline
+            setSelectedClientForDetail(null);
+            if (timelineRef.current) {
+              timelineRef.current.resume();
+            }
+            
             onQuickAdd(client);
           }}
         />
