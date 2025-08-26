@@ -160,7 +160,7 @@ const ScrollingTabs: React.FC<ScrollingTabsProps> = ({
         timelineRef.current
           .to(content, {
             x: containerWidth,
-            duration: Math.abs(containerWidth - currentX) / 60, // Time based on distance
+            duration: Math.abs(containerWidth - currentX) / 80, // Time based on distance
             ease: "none"
           })
           .set(content, { x: -contentWidth }) // Jump to left edge
@@ -175,7 +175,7 @@ const ScrollingTabs: React.FC<ScrollingTabsProps> = ({
         timelineRef.current
           .to(content, {
             x: -contentWidth,
-            duration: Math.abs(-contentWidth - currentX) / 200, // Time based on distance
+            duration: Math.abs(-contentWidth - currentX) / 80, // Time based on distance
             ease: "none"
           })
           .set(content, { x: containerWidth }) // Jump to right edge
@@ -214,7 +214,7 @@ const ScrollingTabs: React.FC<ScrollingTabsProps> = ({
       
       // Calculate total distance including container width gap
       const totalDistance = contentWidth + containerWidth;
-      const duration = totalDistance / 200; // 200px per second for much faster, visible speed
+      const duration = totalDistance / 80; // 80px per second for comfortable viewing speed
       
       
       // Create truly seamless infinite timeline
@@ -819,7 +819,7 @@ const ScrollingTabs: React.FC<ScrollingTabsProps> = ({
                     containerWidth: containerWidth,
                     contentWidth: contentWidth,
                     totalDistance: contentWidth + containerWidth,
-                    expectedDuration: (contentWidth + containerWidth) / 200
+                    expectedDuration: (contentWidth + containerWidth) / 80
                   });
                   
                   // Test if element is actually moving
