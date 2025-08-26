@@ -251,10 +251,19 @@ export const CreditProvider: React.FC<CreditProviderProps> = ({ children }) => {
   const searchClients = (query: string): Client[] => {
     if (!query.trim()) return clients;
     
-    const lowercaseQuery = query.toLowerCase();
+    // Normalize function to remove accents and special characters
+    const normalize = (str: string): string => {
+      return str
+        .toLowerCase()
+        .normalize('NFD') // Decompose accented characters
+        .replace(/[\u0300-\u036f]/g, '') // Remove accent marks
+        .replace(/[^\w\s]/g, ''); // Remove other special characters except word chars and spaces
+    };
+    
+    const normalizedQuery = normalize(query);
     return clients.filter(client => 
-      client.name.toLowerCase().includes(lowercaseQuery) ||
-      client.id.toLowerCase().includes(lowercaseQuery)
+      normalize(client.name).includes(normalizedQuery) ||
+      client.id.toLowerCase().includes(query.toLowerCase())
     );
   };
 
