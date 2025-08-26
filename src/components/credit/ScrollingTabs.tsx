@@ -9,7 +9,6 @@ import ClientDetailModal from '../ClientDetailModal';
 import { useCredit } from '../../context/CreditContext';
 import AlternatingText from '../AlternatingText';
 import FlipCard from './FlipCard';
-onThrowComplete: function()
 // Register GSAP plugins
 gsap.registerPlugin(Draggable);
 
