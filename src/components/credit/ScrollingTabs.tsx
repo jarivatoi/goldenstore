@@ -466,16 +466,9 @@ const ScrollingTabs: React.FC<ScrollingTabsProps> = ({
     // Add click animation immediately
     setClickedTabId(client.id);
     
-    // Get exact current position from GSAP - don't normalize it
-    const currentX = gsap.getProperty(contentRef.current, "x") as number;
-    
-    // Store the EXACT current position - no normalization
-    pausedPositionRef.current = currentX;
-    
-    // Kill timeline and show modal
+    // Simply pause the timeline - no position calculations needed
     if (timelineRef.current) {
-      timelineRef.current.kill();
-      timelineRef.current = null;
+      timelineRef.current.pause();
     }
     
     // Show action modal
@@ -917,35 +910,21 @@ const ScrollingTabs: React.FC<ScrollingTabsProps> = ({
             setSelectedClientForAction(null);
             setClickedTabId(null);
             
-            setTimeout(() => {
-              if (!timelineRef.current || !timelineRef.current.isActive()) {
-                if (pausedPositionRef.current !== null) {
-                  restartTimelineFromPosition(pausedPositionRef.current);
-                } else {
-                  setupContinuousScroll();
-                }
-              }
-            }, 100);
+            // Simply resume the paused timeline
+            if (timelineRef.current) {
+              timelineRef.current.resume();
+            }
           }}
           onQuickAdd={(client) => {
-            // Resume timeline instead of restarting
-            if (timelineRef.current && timelineRef.current.paused()) {
+            // Resume timeline when quick adding
+            if (timelineRef.current) {
               timelineRef.current.resume();
-            } else if (!timelineRef.current) {
-              // Only restart if timeline was actually killed
-              if (pausedPositionRef.current !== null) {
-                restartTimelineFromPosition(pausedPositionRef.current);
-                pausedPositionRef.current = null;
-              } else {
-                setupContinuousScroll();
-              }
             }
             
             onQuickAdd(client);
-            // Don't close modal here - let ClientActionModal handle it
           }}
           onResetCalculator={() => {
-            // Don't reset calculator when closing modal - only reset when explicitly requested
+            // Reset calculator if needed
           }}
           onViewDetails={setSelectedClientForDetail}
         />
