@@ -383,7 +383,7 @@ const ScrollingTabs: React.FC<ScrollingTabsProps> = ({
           pausedPositionRef.current = null; // Clear any stored position
             // If user swiped right (positive delta), continue scrolling right
             // If user swiped left (negative delta), continue scrolling left
-            setupContinuousScrollDirection(dragDirection);
+            setupContinuousScrollDirection(dragDirectionRef.current);
         }
       });
     });
