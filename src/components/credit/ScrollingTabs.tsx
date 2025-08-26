@@ -278,10 +278,6 @@ const ScrollingTabs: React.FC<ScrollingTabsProps> = ({
           }
         },
         onThrowComplete: function() {
-          // Resume timeline after throw completes
-          if (timelineRef.current) {
-            timelineRef.current.resume();
-          }
         }
       });
     });
