@@ -344,7 +344,21 @@ const ScrollingTabs: React.FC<ScrollingTabsProps> = ({
             duration: duration,
             ease: "none",
             overwrite: false // Prevent external interference
-          });
+          })
+        .call(() => {
+          // Kill and reset timeline when loop completes (cards resurface)
+          if (timelineRef.current) {
+            timelineRef.current.kill();
+            timelineRef.current = null;
+          }
+          
+          // Restart fresh timeline after brief delay
+          setTimeout(() => {
+            if (!timelineRef.current) {
+              setupContinuousScroll();
+            }
+          }, 100);
+        });
       
       // Create draggable instance with updated bounds
       draggableRef.current = Draggable.create(content, {
