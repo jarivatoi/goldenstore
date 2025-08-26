@@ -327,7 +327,7 @@ const ScrollingTabs: React.FC<ScrollingTabsProps> = ({
       const duration = totalDistance / 60; // 60px per second for faster speed
       
       
-      // Create seamless infinite timeline with protection against external interference
+      // Create truly seamless infinite timeline
       timelineRef.current = gsap.timeline({ 
         repeat: -1, 
         ease: "none",
@@ -345,22 +345,13 @@ const ScrollingTabs: React.FC<ScrollingTabsProps> = ({
             ease: "none",
             overwrite: false // Prevent external interference
           })
-        .call(() => {
-          // Kill and reset timeline when loop completes (cards resurface)
-          if (timelineRef.current) {
-            timelineRef.current.kill();
-            timelineRef.current = null;
-          }
-          
-          // Clear saved position when starting fresh infinite loop
-          pausedPositionRef.current = null;
-          
-          // Restart fresh timeline after brief delay
-          setTimeout(() => {
-            if (!timelineRef.current) {
-              setupContinuousScroll();
-            }
-          }, 100);
+        .set(content, { x: containerWidth }) // Instantly jump back to start
+        .to(content, {
+          x: -contentWidth,
+          duration: duration,
+          ease: "none",
+          repeat: -1, // Infinite seamless loop
+          overwrite: false
         });
       
       // Create draggable instance with updated bounds
