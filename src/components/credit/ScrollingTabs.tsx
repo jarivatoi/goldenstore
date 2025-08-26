@@ -939,6 +939,13 @@ const ScrollingTabs: React.FC<ScrollingTabsProps> = ({
               if (!timelineRef.current || !timelineRef.current.isActive()) {
                 if (pausedPositionRef.current !== null) {
                   restartTimelineFromPosition(pausedPositionRef.current);
+                } else {
+                  setupContinuousScroll();
+                }
+              }
+            }, 100);
+          }}
+          onQuickAdd={(client) => {
             // Resume timeline instead of restarting
             if (timelineRef.current && timelineRef.current.paused()) {
               timelineRef.current.resume();
@@ -950,7 +957,8 @@ const ScrollingTabs: React.FC<ScrollingTabsProps> = ({
               } else {
                 setupContinuousScroll();
               }
-          onQuickAdd={(client) => {
+            }
+            
             onQuickAdd(client);
             // Don't close modal here - let ClientActionModal handle it
           }}
