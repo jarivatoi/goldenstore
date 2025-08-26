@@ -43,6 +43,7 @@ const ScrollingTabs: React.FC<ScrollingTabsProps> = ({
   const timelineRef = useRef<gsap.core.Timeline | null>(null);
   const draggableRef = useRef<Draggable[] | null>(null);
   const [selectedClientForDetail, setSelectedClientForDetail] = React.useState<Client | null>(null);
+  const [selectedClientForAction, setSelectedClientForAction] = React.useState<Client | null>(null);
   const dragStartPositionRef = useRef(0);
   const pausedPositionRef = useRef<number | null>(null);
   const [clickedTabId, setClickedTabId] = React.useState<string | null>(null);
@@ -50,6 +51,7 @@ const ScrollingTabs: React.FC<ScrollingTabsProps> = ({
   const dragHasExceededThreshold = useRef(false);
   const [forceUpdate, setForceUpdate] = React.useState(0);
   const dragDirectionRef = useRef<'left' | 'right'>('left');
+  const [isDragging, setIsDragging] = React.useState(false);
   
   // Listen for credit data changes to force re-render
   React.useEffect(() => {
@@ -301,6 +303,31 @@ const ScrollingTabs: React.FC<ScrollingTabsProps> = ({
   }, [sortedClients.length]); // Remove setupContinuousScroll dependency to prevent re-triggering
 
   // Cleanup on unmount
+  useEffect(() => {
+    return () => {
+      if (timelineRef.current) {
+        timelineRef.current.kill();
+      }
+      if (draggableRef.current) {
+        draggableRef.current.forEach(d => d.kill());
+      }
+    };
+  }, []);
+
+  const getFilterLabel = () => {
+    switch (clientFilter) {
+      case 'returnables':
+        return 'Clients with Returnables';
+      case 'overdue':
+        return 'Overdue Clients';
+      case 'overlimit':
+        return 'Over Limit Clients';
+      default:
+        return 'All Clients';
+    }
+  };
+
+  const handleTabClick = (client: Client) => {
     // Simply pause the timeline - no position calculations needed
     if (timelineRef.current) {
       timelineRef.current.pause();
@@ -743,6 +770,12 @@ const ScrollingTabs: React.FC<ScrollingTabsProps> = ({
       {selectedClientForAction && (
         <ClientActionModal
           client={selectedClientForAction}
+          onClose={() => {
+            setSelectedClientForAction(null);
+            setClickedTabId(null);
+            
+            // Resume timeline when closing modal
+            if (timelineRef.current) {
               timelineRef.current.resume();
             }
           }}
