@@ -264,7 +264,7 @@ const ScrollingTabs: React.FC<ScrollingTabsProps> = ({
       });
       
       if (direction === 'right') {
-        // Scrolling right: move from current position to right edge, then loop
+        // User swiped right, so continue moving content to the right (revealing left content)
         timelineRef.current
           .to(content, {
             x: containerWidth,
@@ -279,7 +279,7 @@ const ScrollingTabs: React.FC<ScrollingTabsProps> = ({
             ease: "none"
           });
       } else {
-        // Scrolling left: move from current position to left edge, then loop
+        // User swiped left, so continue moving content to the left (revealing right content)
         timelineRef.current
           .to(content, {
             x: -contentWidth,
@@ -381,7 +381,9 @@ const ScrollingTabs: React.FC<ScrollingTabsProps> = ({
           const currentX = gsap.getProperty(contentRef.current, "x") as number;
           restartTimelineFromPosition(currentX);
           pausedPositionRef.current = null; // Clear any stored position
-        }
+            // If user swiped right (positive delta), continue scrolling right
+            // If user swiped left (negative delta), continue scrolling left
+            setupContinuousScrollDirection(dragDirection);
       });
     });
   }, [sortedClients.length]); // Remove function dependencies to prevent recreation
