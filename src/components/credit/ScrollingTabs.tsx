@@ -50,6 +50,7 @@ const ScrollingTabs: React.FC<ScrollingTabsProps> = ({
   const { getClientTransactions } = useCredit();
   const dragHasExceededThreshold = useRef(false);
   const [forceUpdate, setForceUpdate] = React.useState(0);
+  const dragDirectionRef = useRef<'left' | 'right'>('left');
   
   // Listen for credit data changes to force re-render
   React.useEffect(() => {
