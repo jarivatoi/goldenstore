@@ -328,9 +328,20 @@ const ScrollingTabs: React.FC<ScrollingTabsProps> = ({
   };
 
   const handleTabClick = (client: Client) => {
-    // Simply pause the timeline - no position calculations needed
+    console.log('🎯 Tab clicked for client:', client.name);
+    console.log('📊 Timeline state before pause:', {
+      exists: !!timelineRef.current,
+      isActive: timelineRef.current?.isActive(),
+      paused: timelineRef.current?.paused(),
+      progress: timelineRef.current?.progress()
+    });
+    
+    // Pause the timeline
     if (timelineRef.current) {
       timelineRef.current.pause();
+      console.log('⏸️ Timeline paused successfully');
+    } else {
+      console.log('❌ No timeline to pause');
     }
     
     // Add click animation
