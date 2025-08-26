@@ -466,7 +466,7 @@ const ScrollingTabs: React.FC<ScrollingTabsProps> = ({
     // Add click animation immediately
     setClickedTabId(client.id);
     
-    // Pause timeline instead of killing it when opening modal
+    // Always store current position and kill timeline when opening modal
     const currentX = gsap.getProperty(contentRef.current, "x") as number;
     
     // Normalize position to visible range for seamless restart
@@ -491,9 +491,10 @@ const ScrollingTabs: React.FC<ScrollingTabsProps> = ({
       pausedPositionRef.current = currentX;
     }
     
-    // Pause timeline when opening modal
+    // Kill timeline when opening modal
     if (timelineRef.current) {
-      timelineRef.current.pause();
+      timelineRef.current.kill();
+      timelineRef.current = null;
     }
     
     setSelectedClientForAction(client);
@@ -939,26 +940,15 @@ const ScrollingTabs: React.FC<ScrollingTabsProps> = ({
               if (!timelineRef.current || !timelineRef.current.isActive()) {
                 if (pausedPositionRef.current !== null) {
                   restartTimelineFromPosition(pausedPositionRef.current);
+                  pausedPositionRef.current = null;
                 } else {
                   setupContinuousScroll();
                 }
+              } else {
               }
             }, 100);
           }}
           onQuickAdd={(client) => {
-            // Resume timeline instead of restarting
-            if (timelineRef.current && timelineRef.current.paused()) {
-              timelineRef.current.resume();
-            } else if (!timelineRef.current) {
-              // Only restart if timeline was actually killed
-              if (pausedPositionRef.current !== null) {
-                restartTimelineFromPosition(pausedPositionRef.current);
-                pausedPositionRef.current = null;
-              } else {
-                setupContinuousScroll();
-              }
-            }
-            
             onQuickAdd(client);
             // Don't close modal here - let ClientActionModal handle it
           }}
