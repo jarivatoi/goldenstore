@@ -406,6 +406,19 @@ const ScrollingTabs: React.FC<ScrollingTabsProps> = ({
           }
           
           pausedPositionRef.current = null; // Clear any stored position
+        },
+        snap: false, // Disable snapping completely
+        bounds: {
+          minX: -contentWidth - containerWidth, // Allow extra space beyond content
+          maxX: containerWidth * 2, // Allow extra space before content
+        },
+        edgeResistance: 0.1, // Minimal resistance at edges
+        allowEventDefault: true, // Allow normal event handling
+        onClick: function(e) {
+          // Prevent click events during or right after dragging
+          e.stopPropagation();
+          e.preventDefault();
+          return false;
         }
       });
     });
