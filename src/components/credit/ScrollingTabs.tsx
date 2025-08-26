@@ -466,7 +466,7 @@ const ScrollingTabs: React.FC<ScrollingTabsProps> = ({
     // Add click animation immediately
     setClickedTabId(client.id);
     
-    // Always store current position and kill timeline when opening modal
+    // Pause timeline instead of killing it when opening modal
     const currentX = gsap.getProperty(contentRef.current, "x") as number;
     
     // Normalize position to visible range for seamless restart
@@ -491,10 +491,9 @@ const ScrollingTabs: React.FC<ScrollingTabsProps> = ({
       pausedPositionRef.current = currentX;
     }
     
-    // Kill timeline when opening modal
+    // Pause timeline when opening modal
     if (timelineRef.current) {
-      timelineRef.current.kill();
-      timelineRef.current = null;
+      timelineRef.current.pause();
     }
     
     setSelectedClientForAction(client);
@@ -940,14 +939,17 @@ const ScrollingTabs: React.FC<ScrollingTabsProps> = ({
               if (!timelineRef.current || !timelineRef.current.isActive()) {
                 if (pausedPositionRef.current !== null) {
                   restartTimelineFromPosition(pausedPositionRef.current);
-                  pausedPositionRef.current = null;
-                } else {
-                  setupContinuousScroll();
-                }
+            // Resume timeline instead of restarting
+            if (timelineRef.current && timelineRef.current.paused()) {
+              timelineRef.current.resume();
+            } else if (!timelineRef.current) {
+              // Only restart if timeline was actually killed
+              if (pausedPositionRef.current !== null) {
+                restartTimelineFromPosition(pausedPositionRef.current);
+                pausedPositionRef.current = null;
               } else {
+                setupContinuousScroll();
               }
-            }, 100);
-          }}
           onQuickAdd={(client) => {
             onQuickAdd(client);
             // Don't close modal here - let ClientActionModal handle it
