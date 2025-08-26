@@ -384,6 +384,7 @@ const ScrollingTabs: React.FC<ScrollingTabsProps> = ({
             // If user swiped right (positive delta), continue scrolling right
             // If user swiped left (negative delta), continue scrolling left
             setupContinuousScrollDirection(dragDirection);
+        }
       });
     });
   }, [sortedClients.length]); // Remove function dependencies to prevent recreation
