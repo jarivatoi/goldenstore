@@ -771,10 +771,11 @@ const ScrollingTabs: React.FC<ScrollingTabsProps> = ({
         <ClientActionModal
           client={selectedClientForAction}
           onClose={() => {
+            // Clear modal and clicked state immediately
             setSelectedClientForAction(null);
             setClickedTabId(null);
             
-            // Resume timeline when closing modal
+            // Simply resume the paused timeline
             if (timelineRef.current) {
               timelineRef.current.resume();
             }
