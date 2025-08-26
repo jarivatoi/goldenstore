@@ -483,6 +483,10 @@ const ScrollingTabs: React.FC<ScrollingTabsProps> = ({
       // Kill timeline when opening modal
       timelineRef.current.kill();
       timelineRef.current = null;
+    } else {
+      // If no active timeline, store current position anyway
+      const currentX = gsap.getProperty(contentRef.current, "x") as number;
+      pausedPositionRef.current = currentX;
     }
     
     setSelectedClientForAction(client);
