@@ -782,29 +782,40 @@ const ScrollingTabs: React.FC<ScrollingTabsProps> = ({
         <ClientActionModal
           client={selectedClientForAction}
           onClose={() => {
+            console.log('🔄 Action Modal closing...');
             setSelectedClientForAction(null);
             setClickedTabId(null);
             
-            // Resume timeline when modal closes
-            console.log('🔄 Action Modal closing, resuming timeline...');
+            console.log('📊 Timeline state before resume:', {
+              exists: !!timelineRef.current,
+              isActive: timelineRef.current?.isActive(),
+              paused: timelineRef.current?.paused(),
+              progress: timelineRef.current?.progress()
+            });
+            
             if (timelineRef.current) {
-              console.log('📊 Timeline exists, current state:', {
-                isActive: timelineRef.current.isActive(),
-                paused: timelineRef.current.paused(),
-                progress: timelineRef.current.progress()
-              });
               timelineRef.current.resume();
-              console.log('✅ Timeline resumed');
+              console.log('✅ Timeline resumed after Action Modal close');
+              
+              // Verify timeline is actually running
+              setTimeout(() => {
+                console.log('📊 Timeline state after resume (1s later):', {
+                  exists: !!timelineRef.current,
+                  isActive: timelineRef.current?.isActive(),
+                  paused: timelineRef.current?.paused(),
+                  progress: timelineRef.current?.progress()
+                });
+              }, 1000);
             } else {
               console.log('❌ No timeline to resume, creating new one...');
               setupContinuousScroll();
             }
           }}
           onQuickAdd={(client) => {
+            console.log('🚀 Quick Add from Action Modal');
             // Clear modal state and resume timeline
             setSelectedClientForAction(null);
             setClickedTabId(null);
-            console.log('🔄 Quick Add action, resuming timeline...');
             if (timelineRef.current) {
               timelineRef.current.resume();
               console.log('✅ Timeline resumed after Quick Add');
@@ -816,7 +827,7 @@ const ScrollingTabs: React.FC<ScrollingTabsProps> = ({
             onQuickAdd(client);
           }}
           onResetCalculator={() => {
-            console.log('🔄 Reset Calculator, resuming timeline...');
+            console.log('🔄 Reset Calculator from Action Modal');
             if (timelineRef.current) {
               timelineRef.current.resume();
               console.log('✅ Timeline resumed after Reset Calculator');
@@ -834,26 +845,38 @@ const ScrollingTabs: React.FC<ScrollingTabsProps> = ({
         <ClientDetailModal
           client={selectedClientForDetail}
           onClose={() => {
+            console.log('🔄 Detail Modal closing...');
             setSelectedClientForDetail(null);
             
-            console.log('🔄 Detail Modal closing, resuming timeline...');
+            console.log('📊 Timeline state before resume:', {
+              exists: !!timelineRef.current,
+              isActive: timelineRef.current?.isActive(),
+              paused: timelineRef.current?.paused(),
+              progress: timelineRef.current?.progress()
+            });
+            
             if (timelineRef.current) {
-              console.log('📊 Timeline exists, current state:', {
-                isActive: timelineRef.current.isActive(),
-                paused: timelineRef.current.paused(),
-                progress: timelineRef.current.progress()
-              });
               timelineRef.current.resume();
-              console.log('✅ Timeline resumed');
+              console.log('✅ Timeline resumed after Detail Modal close');
+              
+              // Verify timeline is actually running
+              setTimeout(() => {
+                console.log('📊 Timeline state after resume (1s later):', {
+                  exists: !!timelineRef.current,
+                  isActive: timelineRef.current?.isActive(),
+                  paused: timelineRef.current?.paused(),
+                  progress: timelineRef.current?.progress()
+                });
+              }, 1000);
             } else {
               console.log('❌ No timeline to resume, creating new one...');
               setupContinuousScroll();
             }
           }}
           onQuickAdd={(client) => {
+            console.log('🚀 Quick Add from Detail Modal');
             // Clear modal state and resume timeline
             setSelectedClientForDetail(null);
-            console.log('🔄 Detail Modal Quick Add, resuming timeline...');
             if (timelineRef.current) {
               timelineRef.current.resume();
               console.log('✅ Timeline resumed after Detail Quick Add');
