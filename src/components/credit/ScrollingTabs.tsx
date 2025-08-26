@@ -267,17 +267,15 @@ const ScrollingTabs: React.FC<ScrollingTabsProps> = ({
           if (timelineRef.current) {
             timelineRef.current.pause();
           }
-          setIsDragging(true);
         },
         onDrag: function() {
           // No need to track direction - just let user drag
         },
         onDragEnd: function() {
-          setIsDragging(false);
-          // Always recreate timeline after drag to ensure it works properly
-          setTimeout(() => {
-            setupContinuousScroll();
-          }, 100);
+          // Resume timeline after drag ends
+          if (timelineRef.current) {
+            timelineRef.current.resume();
+          }
         },
         onThrowComplete: function() {
           // Resume timeline after throw completes
@@ -285,10 +283,10 @@ const ScrollingTabs: React.FC<ScrollingTabsProps> = ({
             timelineRef.current.resume();
             console.log('✅ Timeline resumed after throw complete');
           } else {
-            console.log('❌ No timeline to resume after throw, creating new one...');
+            console.log('❌ No timeline after throw complete, creating new one...');
             setupContinuousScroll();
           }
-        },
+        }
       });
     });
   }, [sortedClients.length]); // Remove function dependencies to prevent recreation
