@@ -338,6 +338,7 @@ const ClientActionModal: React.FC<ClientActionModalProps> = ({ client, onClose, 
         <div className="flex items-center justify-between p-6 border-b border-gray-200 select-none">
           <div>
             <h2 className="text-xl font-semibold text-gray-900 select-none">{client.name}</h2>
+            <p className="text-gray-600 select-none">ID: {client.id}</p>
             <div className="text-gray-600 select-none">
               <p className="select-none">Outstanding: Rs {totalDebt.toLocaleString('en-IN', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</p>
               {Object.values(bottlesOwed).some(count => count > 0) && (
