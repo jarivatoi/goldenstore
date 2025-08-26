@@ -264,7 +264,7 @@ const ScrollingTabs: React.FC<ScrollingTabsProps> = ({
       });
       
       if (direction === 'right') {
-        // User swiped right, so continue moving content to the right (revealing left content)
+        // Scrolling right: move from current position to right edge, then loop
         timelineRef.current
           .to(content, {
             x: containerWidth,
@@ -279,7 +279,7 @@ const ScrollingTabs: React.FC<ScrollingTabsProps> = ({
             ease: "none"
           });
       } else {
-        // User swiped left, so continue moving content to the left (revealing right content)
+        // Scrolling left: move from current position to left edge, then loop
         timelineRef.current
           .to(content, {
             x: -contentWidth,
