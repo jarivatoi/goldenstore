@@ -40,25 +40,35 @@ const FlipCard: React.FC<FlipCardProps> = ({
     // Set initial 3D perspective and positioning
     gsap.set(card, {
       transformStyle: "preserve-3d",
-      perspective: 1000
+      perspective: 1000,
+      // iOS Safari specific fixes
+      WebkitTransformStyle: "preserve-3d",
+      WebkitPerspective: 1000
     });
 
     gsap.set(front, {
       rotationY: 0,
       backfaceVisibility: "hidden",
       transformStyle: "preserve-3d",
+      WebkitBackfaceVisibility: "hidden",
+      WebkitTransformStyle: "preserve-3d",
+      position: "relative",
+      zIndex: 2
     });
 
     gsap.set(back, {
       rotationY: 180,
       backfaceVisibility: "hidden",
       transformStyle: "preserve-3d",
+      WebkitBackfaceVisibility: "hidden",
+      WebkitTransformStyle: "preserve-3d",
       position: "absolute",
       top: 0,
       left: 0,
       width: "100%",
       height: "100%",
-      transformOrigin: "center center"
+      transformOrigin: "center center",
+      zIndex: 1
     });
 
     // Create flip animation timeline
@@ -78,8 +88,10 @@ const FlipCard: React.FC<FlipCardProps> = ({
         .to([front, back], {
           rotationY: "+=180",
           duration: flipDuration,
-          ease: "power2.inOut",
-          transformOrigin: "center center",
+          ease: "power1.inOut", // Smoother easing for older devices
+          transformOrigin: "50% 50%", // More explicit transform origin
+          force3D: true, // Force hardware acceleration
+          WebkitTransform: "rotateY(+=180deg)", // Explicit WebKit transform
           onComplete: () => setIsFlipped(prev => !prev)
         });
 
@@ -90,8 +102,16 @@ const FlipCard: React.FC<FlipCardProps> = ({
       createFlipTimeline();
     } else {
       // Reset to front if flip is disabled
-      gsap.set([front, back], { rotationY: 0 });
-      gsap.set(back, { rotationY: 180 });
+      gsap.set([front, back], { 
+        rotationY: 0,
+        force3D: true,
+        WebkitTransform: "rotateY(0deg)"
+      });
+      gsap.set(back, { 
+        rotationY: 180,
+        force3D: true,
+        WebkitTransform: "rotateY(180deg)"
+      });
       setIsFlipped(false);
     }
 
@@ -108,10 +128,16 @@ const FlipCard: React.FC<FlipCardProps> = ({
       className={`relative inline-flex items-center justify-center ${className}`}
       style={{
         transformStyle: "preserve-3d",
+        WebkitTransformStyle: "preserve-3d",
         textAlign: "center",
         display: "inline-flex",
         alignItems: "center",
-        justifyContent: "center"
+        justifyContent: "center",
+        // iPhone 7 specific optimizations
+        WebkitPerspective: "1000px",
+        perspective: "1000px",
+        WebkitBackfaceVisibility: "hidden",
+        backfaceVisibility: "hidden"
       }}
     >
       {/* Front Side */}
@@ -121,8 +147,12 @@ const FlipCard: React.FC<FlipCardProps> = ({
         style={{
           backfaceVisibility: "hidden",
           transformStyle: "preserve-3d",
+          WebkitBackfaceVisibility: "hidden",
+          WebkitTransformStyle: "preserve-3d",
           width: "100%",
-          height: "100%"
+          height: "100%",
+          position: "relative",
+          zIndex: 2
         }}
       >
         {frontContent}
@@ -135,12 +165,16 @@ const FlipCard: React.FC<FlipCardProps> = ({
         style={{
           backfaceVisibility: "hidden",
           transformStyle: "preserve-3d",
+          WebkitBackfaceVisibility: "hidden",
+          WebkitTransformStyle: "preserve-3d",
           position: "absolute",
           top: 0,
           left: 0,
           width: "100%",
           height: "100%",
-          rotateY: "180deg"
+          transform: "rotateY(180deg)",
+          WebkitTransform: "rotateY(180deg)",
+          zIndex: 1
         }}
       >
         {backContent}
