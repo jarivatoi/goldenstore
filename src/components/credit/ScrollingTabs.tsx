@@ -42,10 +42,8 @@ const ScrollingTabs: React.FC<ScrollingTabsProps> = ({
   const containerRef = useRef<HTMLDivElement>(null);
   const timelineRef = useRef<gsap.core.Timeline | null>(null);
   const draggableRef = useRef<Draggable[] | null>(null);
-  const [selectedClientForAction, setSelectedClientForAction] = React.useState<Client | null>(null);
   const [selectedClientForDetail, setSelectedClientForDetail] = React.useState<Client | null>(null);
   const dragStartPositionRef = useRef(0);
-  const [isDragging, setIsDragging] = React.useState(false);
   const pausedPositionRef = useRef<number | null>(null);
   const [clickedTabId, setClickedTabId] = React.useState<string | null>(null);
   const { getClientTransactions } = useCredit();
@@ -61,11 +59,6 @@ const ScrollingTabs: React.FC<ScrollingTabsProps> = ({
       
       // Restart timeline to reflect updated data
       setTimeout(() => {
-        if (timelineRef.current) {
-          timelineRef.current.kill();
-          timelineRef.current = null;
-        }
-        
         // Restart timeline with fresh data
         setupContinuousScroll();
       }, 100);
@@ -122,111 +115,6 @@ const ScrollingTabs: React.FC<ScrollingTabsProps> = ({
   };
   
   // Helper function to calculate timeline progress from current position
-  const calculateTimelineProgress = useCallback(() => {
-    if (!contentRef.current || !containerRef.current) return 0;
-    
-    const container = containerRef.current;
-    const content = contentRef.current;
-    const containerWidth = container.offsetWidth;
-    const contentWidth = content.scrollWidth;
-    
-    // Get current X position of the content
-    const currentX = gsap.getProperty(content, "x") as number;
-    
-    // Timeline animates from containerWidth to -contentWidth
-    const startPosition = containerWidth;
-    const endPosition = -contentWidth;
-    const totalDistance = startPosition - endPosition; // Total animation distance
-    
-    // Calculate how far we've moved from start position
-    const distanceMoved = startPosition - currentX;
-    
-    // Calculate progress (0 to 1)
-    const progress = Math.max(0, Math.min(1, distanceMoved / totalDistance));
-    
-    return progress;
-  }, []);
-
-  // Add this helper function to restart the timeline from a specific position
-  const restartTimelineFromPosition = useCallback((startPosition: number) => {
-    // Prevent multiple timeline creation
-    if (timelineRef.current && timelineRef.current.isActive()) {
-      return;
-    }
-    
-    const container = containerRef.current;
-    const content = contentRef.current;
-    
-    if (!container || !content) {
-      return;
-    }
-    
-    const containerWidth = container.offsetWidth;
-    const contentWidth = content.scrollWidth;
-    
-    // Only reset position if it's completely off-screen (beyond content boundaries)
-    let adjustedPosition = startPosition;
-    if (startPosition > containerWidth + 100) {
-      adjustedPosition = containerWidth; // Start from right edge
-    } else if (startPosition < -contentWidth - 100) {
-      adjustedPosition = -contentWidth; // Start from left boundary
-    }
-    
-    // Kill any existing timeline
-    if (timelineRef.current) {
-      timelineRef.current.kill();
-      timelineRef.current = null;
-    }
-    
-    // Calculate total distance for full cycle
-    const totalDistance = contentWidth + containerWidth;
-    const fullCycleDuration = totalDistance / 60; // 60px per second
-    
-    // Create new infinite timeline that matches setupContinuousScroll
-    timelineRef.current = gsap.timeline({ repeat: -1, ease: "none" });
-    
-    // Set initial position
-    gsap.set(content, { x: adjustedPosition });
-    
-    // Calculate remaining distance from current position to end
-    const remainingDistance = Math.abs(adjustedPosition - (-contentWidth));
-    const remainingDuration = (remainingDistance / (contentWidth + containerWidth)) * fullCycleDuration; // Proportional to full cycle
-    
-    // Continue from current position to end, then start infinite loop
-    if (remainingDuration > 0) {
-      timelineRef.current
-        .to(content, { 
-          x: -contentWidth,
-          duration: remainingDuration,
-          ease: "none"
-        })
-        .set(content, { x: containerWidth }) // Jump to right edge instantly
-        .to(content, {
-          x: -contentWidth,
-          repeat: -1, // Infinite repeat of full cycle
-          duration: fullCycleDuration,
-          ease: "none"
-        })
-        .call(() => {
-          // Clear saved position when starting fresh infinite loop
-          pausedPositionRef.current = null;
-        });
-    } else {
-      timelineRef.current
-        .set(content, { x: containerWidth }) // Jump to right edge instantly
-        .to(content, {
-          x: -contentWidth,
-          repeat: -1, // Infinite repeat of full cycle
-          duration: fullCycleDuration,
-          ease: "none"
-        })
-        .call(() => {
-          // Clear saved position when starting fresh infinite loop
-          pausedPositionRef.current = null;
-        });
-    }
-  }, [sortedClients.length]); // Remove function dependencies to prevent recreation
-
   // Setup continuous scroll in specific direction
   const setupContinuousScrollDirection = useCallback((direction: 'left' | 'right') => {
     const content = contentRef.current;
@@ -373,47 +261,25 @@ const ScrollingTabs: React.FC<ScrollingTabsProps> = ({
         force3D: true,
         lockAxis: true, // Lock to horizontal axis only
         onDragStart: function() {
-          // Store initial position and kill timeline
-          const currentX = gsap.getProperty(content, "x") as number;
-          dragStartPositionRef.current = currentX;
-          dragDirectionRef.current = null;
-         
+          // Pause timeline during drag
           if (timelineRef.current) {
-            timelineRef.current.kill();
-            timelineRef.current = null; // Set to null after killing
+            timelineRef.current.pause();
           }
         },
         onDrag: function() {
-          // Track drag direction based on movement
-          const currentX = gsap.getProperty(content, "x") as number;
-          const deltaX = currentX - dragStartPositionRef.current;
-         
-          // Determine direction based on significant movement (>20px)
-          if (Math.abs(deltaX) > 20) {
-            if (deltaX > 0) {
-              dragDirectionRef.current = 'right'; // Content moving right
-            } else {
-              dragDirectionRef.current = 'left'; // Content moving left
-            }
-          }
+          // No need to track direction - just let user drag
         },
         onDragEnd: function() {
-          // Kill any existing timeline when user finishes dragging
+          // Resume timeline after drag ends
           if (timelineRef.current) {
-            timelineRef.current.kill();
-            timelineRef.current = null;
+            timelineRef.current.resume();
           }
         },
         onThrowComplete: function() {
-          // Continue scrolling in the direction the user swiped
-          if (dragDirectionRef.current) {
-            setupContinuousScrollDirection(dragDirectionRef.current);
-          } else {
-            // Default to left direction if no direction was detected
-            setupContinuousScrollDirection('left');
+          // Resume timeline after throw completes
+          if (timelineRef.current) {
+            timelineRef.current.resume();
           }
-          
-          pausedPositionRef.current = null; // Clear any stored position
         }
       });
     });
@@ -435,41 +301,13 @@ const ScrollingTabs: React.FC<ScrollingTabsProps> = ({
   }, [sortedClients.length]); // Remove setupContinuousScroll dependency to prevent re-triggering
 
   // Cleanup on unmount
-  useEffect(() => {
-    return () => {
-      if (timelineRef.current) {
-        timelineRef.current.kill();
-      }
-      if (draggableRef.current) {
-        draggableRef.current.forEach(d => d.kill());
-      }
-    };
-  }, []);
-
-  // Prevent timeline interference from linkedClient changes
-  useEffect(() => {
-    // Don't let linkedClient changes affect the timeline
-    // The timeline should run independently of calculator state
-  }, [linkedClient]);
-
-  const getFilterLabel = () => {
-    switch (clientFilter) {
-      case 'returnables': return 'Returnable Items';
-      case 'overdue': return 'Overdue Clients';
-      case 'overlimit': return 'Over Limit';
-      default: return 'Active Clients';
-    }
-  };
-
-  // Handle tab click - pause timeline and show modal
-  const handleTabClick = (client: Client) => {
-    // Add click animation immediately
-    setClickedTabId(client.id);
-    
     // Simply pause the timeline - no position calculations needed
     if (timelineRef.current) {
       timelineRef.current.pause();
     }
+    
+    // Add click animation
+    setClickedTabId(client.id);
     
     // Show action modal
     setSelectedClientForAction(client);
@@ -905,13 +743,6 @@ const ScrollingTabs: React.FC<ScrollingTabsProps> = ({
       {selectedClientForAction && (
         <ClientActionModal
           client={selectedClientForAction}
-          onClose={() => {
-            // Clear modal and clicked state immediately
-            setSelectedClientForAction(null);
-            setClickedTabId(null);
-            
-            // Simply resume the paused timeline
-            if (timelineRef.current) {
               timelineRef.current.resume();
             }
           }}
