@@ -352,6 +352,9 @@ const ScrollingTabs: React.FC<ScrollingTabsProps> = ({
             timelineRef.current = null;
           }
           
+          // Clear saved position when starting fresh infinite loop
+          pausedPositionRef.current = null;
+          
           // Restart fresh timeline after brief delay
           setTimeout(() => {
             if (!timelineRef.current) {
