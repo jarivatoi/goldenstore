@@ -225,6 +225,78 @@ const ScrollingTabs: React.FC<ScrollingTabsProps> = ({
     }
   }, [sortedClients.length]); // Remove function dependencies to prevent recreation
 
+  // Setup continuous scroll in specific direction
+  const setupContinuousScrollDirection = useCallback((direction: 'left' | 'right') => {
+    const content = contentRef.current;
+    const container = containerRef.current;
+    
+    if (!container || !content) {
+      return;
+    }
+    
+    // Prevent multiple timeline creation
+    if (timelineRef.current && timelineRef.current.isActive()) {
+      return;
+    }
+    
+    // Kill any existing timeline before creating new one
+    if (timelineRef.current) {
+      timelineRef.current.kill();
+      timelineRef.current = null;
+    }
+    
+    requestAnimationFrame(() => {
+      const containerWidth = container.offsetWidth;
+      const contentWidth = content.scrollWidth;
+      const currentX = gsap.getProperty(content, "x") as number;
+      
+      // Calculate total distance including container width gap
+      const totalDistance = contentWidth + containerWidth;
+      const duration = totalDistance / 60; // 60px per second for consistent speed
+      
+      // Create timeline based on direction
+      timelineRef.current = gsap.timeline({ 
+        repeat: -1, 
+        ease: "none",
+        paused: false,
+        immediateRender: true,
+        overwrite: false
+      });
+      
+      if (direction === 'right') {
+        // Scrolling right: move from current position to right edge, then loop
+        timelineRef.current
+          .to(content, {
+            x: containerWidth,
+            duration: Math.abs(containerWidth - currentX) / 60, // Time based on distance
+            ease: "none"
+          })
+          .set(content, { x: -contentWidth }) // Jump to left edge
+          .to(content, {
+            x: containerWidth,
+            repeat: -1,
+            duration: duration,
+            ease: "none"
+          });
+      } else {
+        // Scrolling left: move from current position to left edge, then loop
+        timelineRef.current
+          .to(content, {
+            x: -contentWidth,
+            duration: Math.abs(-contentWidth - currentX) / 60, // Time based on distance
+            ease: "none"
+          })
+          .set(content, { x: containerWidth }) // Jump to right edge
+          .to(content, {
+            x: -contentWidth,
+            repeat: -1,
+            duration: duration,
+            ease: "none"
+          });
+      }
+    });
+  }, [sortedClients.length]);
+
   const setupContinuousScroll = useCallback(() => {
     const content = contentRef.current;
     const container = containerRef.current;
@@ -285,12 +357,38 @@ const ScrollingTabs: React.FC<ScrollingTabsProps> = ({
         inertia: true,
         dragResistance: 0.5, // Normal resistance for dragging
         throwResistance: 1000, // Lower value = more throw, higher = less throw
-        maxDuration: 2, // Shorter inertia duration
+        throwResistance: 0.001, // Much more momentum for natural feel
         minDuration: 0.1,
         overshootTolerance: 0, // No overshooting
+          // Kill any existing timeline when user finishes dragging
+          if (timelineRef.current) {
+            timelineRef.current.kill();
+            timelineRef.current = null;
+          }
+          
+          // Get final position and velocity
         force3D: true,
         lockAxis: true, // Lock to horizontal axis only
-        minimumMovement: 3, // Require minimum movement to start drag
+          
+          // After inertia completes, restart timeline in the direction of the swipe
+          const originalOnComplete = this.vars.onComplete;
+          this.vars.onComplete = function() {
+            if (originalOnComplete) originalOnComplete.call(this);
+            
+            // Restart timeline based on drag direction
+            setTimeout(() => {
+              if (dragDirection === 'right') {
+                // User swiped right, continue scrolling right (positive direction)
+                setupContinuousScrollDirection('right');
+              } else if (dragDirection === 'left') {
+                // User swiped left, continue scrolling left (negative direction)  
+                setupContinuousScrollDirection('left');
+              } else {
+                // No clear direction, use default
+                setupContinuousScroll();
+              }
+            }, 100);
+          };
         onDragStart: function() {
           // Kill the timeline on drag start but don't store position yet
           if (timelineRef.current) {
