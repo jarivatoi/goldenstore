@@ -267,21 +267,13 @@ const ScrollingTabs: React.FC<ScrollingTabsProps> = ({
       
       if (direction === 'right') {
         // User swiped right, so continue moving content to the right (revealing cards from left)
-        // Calculate seamless position for right direction
-        const seamlessPosition = currentX + containerWidth;
-        if (seamlessPosition > containerWidth) {
-          // If we would go beyond right edge, wrap to left seamlessly
-          const wrappedPosition = seamlessPosition - (containerWidth + contentWidth);
-          gsap.set(content, { x: wrappedPosition });
-        }
-        
         timelineRef.current
           .to(content, {
             x: containerWidth,
-            duration: Math.abs(containerWidth - gsap.getProperty(content, "x")) / 60,
+            duration: Math.abs(containerWidth - currentX) / 60, // Time based on distance
             ease: "none"
           })
-          .set(content, { x: -contentWidth }) // Seamless jump
+          .set(content, { x: -contentWidth }) // Jump to left edge
           .to(content, {
             x: containerWidth,
             repeat: -1,
@@ -290,21 +282,13 @@ const ScrollingTabs: React.FC<ScrollingTabsProps> = ({
           });
       } else {
         // User swiped left, so continue moving content to the left (revealing cards from right)
-        // Calculate seamless position for left direction
-        const seamlessPosition = currentX - containerWidth;
-        if (seamlessPosition < -contentWidth) {
-          // If we would go beyond left edge, wrap to right seamlessly
-          const wrappedPosition = seamlessPosition + (containerWidth + contentWidth);
-          gsap.set(content, { x: wrappedPosition });
-        }
-        
         timelineRef.current
           .to(content, {
             x: -contentWidth,
-            duration: Math.abs(-contentWidth - gsap.getProperty(content, "x")) / 60,
+            duration: Math.abs(-contentWidth - currentX) / 60, // Time based on distance
             ease: "none"
           })
-          .set(content, { x: containerWidth }) // Seamless jump
+          .set(content, { x: containerWidth }) // Jump to right edge
           .to(content, {
             x: -contentWidth,
             repeat: -1,
@@ -352,26 +336,15 @@ const ScrollingTabs: React.FC<ScrollingTabsProps> = ({
         overwrite: false // Don't let other animations overwrite this
       });
       
-      // Start from current position or default right edge
-      const currentX = gsap.getProperty(content, "x") as number;
-      const startX = (currentX === 0) ? containerWidth : currentX;
-      
       timelineRef.current
-        .set(content, { x: startX }) // Start from calculated position
-        .to(content, { 
-          x: -contentWidth, // Move to left edge
-          duration: duration,
-          ease: "none",
-          overwrite: false
-        })
-        .set(content, { x: containerWidth }) // Seamless jump to right edge
-        .to(content, {
-          x: -contentWidth, // Continue infinite loop
-          repeat: -1,
-          duration: duration,
-          ease: "none",
-          overwrite: false
-        });
+        .fromTo(content, 
+          { x: containerWidth }, // Enter from right
+          { 
+            x: -contentWidth, // Exit to left
+            duration: duration,
+            ease: "none",
+            overwrite: false // Prevent external interference
+          });
       
       // Create draggable instance with updated bounds
       draggableRef.current = Draggable.create(content, {
