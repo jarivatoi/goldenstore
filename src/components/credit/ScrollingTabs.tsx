@@ -190,7 +190,7 @@ const ScrollingTabs: React.FC<ScrollingTabsProps> = ({
   }, [sortedClients.length]);
 
   const setupContinuousScroll = useCallback(() => {
-            duration: Math.abs(containerWidth - currentX) / 200, // Time based on distance
+    const content = contentRef.current;
     const container = containerRef.current;
     
     if (!container || !content) {
