@@ -279,8 +279,6 @@ const ScrollingTabs: React.FC<ScrollingTabsProps> = ({
           if (timelineRef.current) {
             timelineRef.current.timeScale(timelineRef.current.timeScale() || 0.001).resume();
           }
-            timelineRef.current.timeScale(timelineRef.current.timeScale() || 0.001).resume();
-          }
           console.log('▶️ Timeline resumed after throw complete');
         }
       });
@@ -813,7 +811,7 @@ const ScrollingTabs: React.FC<ScrollingTabsProps> = ({
               });
               
               if (timelineRef.current && timelineRef.current.paused()) {
-                // Resume with proper timeScale management to prevent jumps
+                // Properly resume with timeScale management to avoid jumps
                 timelineRef.current.timeScale(timelineRef.current.timeScale() || 0.001).resume();
                 console.log('✅ Timeline resumed after Detail Modal close');
                 
