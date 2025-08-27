@@ -885,7 +885,10 @@ const CreditManagement: React.FC = () => {
                   const currentIndex = calculationSteps.findIndex(step => 
                     step.expression === calculatorValue || step.result.toString() === calculatorValue
                   );
-                  return `Step ${currentIndex + 1}/${calculationSteps.length}`;
+                  const stepInfo = currentIndex >= 0 ? calculationSteps[currentIndex] : null;
+                  return stepInfo ? 
+                    `Step ${stepInfo.stepNumber}/${calculationSteps.length} (${stepInfo.operationType})` : 
+                    `Step ${currentIndex + 1}/${calculationSteps.length}`;
                 })() : 'Electronic Calculator'}
               </div>
             </div>

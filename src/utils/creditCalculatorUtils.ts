@@ -25,6 +25,8 @@ interface CalculationStep {
   expression: string;
   result: number;
   timestamp: number;
+  stepNumber: number;
+  operationType: 'number' | 'operation' | 'result';
 }
 
 /**
@@ -361,17 +363,21 @@ export const processCalculatorInput = (
     // If there's a pending operation, execute it first
     if (newLastOperation && newLastOperand !== null && !newIsNewNumber) {
       let result = 0;
+      let operationExpression = '';
       
       switch (newLastOperation) {
         case '+':
           result = newLastOperand + currentNum;
+          operationExpression = `${newLastOperand} + ${currentNum}`;
           break;
         case '-':
           result = newLastOperand - currentNum;
+          operationExpression = `${newLastOperand} - ${currentNum}`;
           break;
         case '*':
         case '×':
           result = newLastOperand * currentNum;
+          operationExpression = `${newLastOperand} × ${currentNum}`;
           break;
         case '/':
         case '÷':
@@ -385,17 +391,41 @@ export const processCalculatorInput = (
               lastOperand: null,
               isNewNumber: true,
               isActive: true
+              transactionHistory: newTransactionHistory,
+              calculationSteps: newCalculationSteps,
+              autoReplayActive: false
             };
           }
           result = newLastOperand / currentNum;
+          operationExpression = `${newLastOperand} ÷ ${currentNum}`;
           break;
         default:
           result = currentNum;
+          operationExpression = currentNum.toString();
       }
+      
+      // Add the intermediate calculation step
+      newCalculationSteps.push({
+        expression: operationExpression,
+        result: result,
+        timestamp: Date.now(),
+        stepNumber: newCalculationSteps.length + 1,
+        operationType: 'operation'
+      });
       
       newValue = result.toString();
       newLastOperand = result;
     } else {
+      // Save the current number as a step when starting a new operation
+      if (!newIsNewNumber) {
+        newCalculationSteps.push({
+          expression: currentNum.toString(),
+          result: currentNum,
+          timestamp: Date.now(),
+          stepNumber: newCalculationSteps.length + 1,
+          operationType: 'number'
+        });
+      }
       newLastOperand = currentNum;
     }
     
