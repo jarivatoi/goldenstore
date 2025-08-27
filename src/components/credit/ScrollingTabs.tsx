@@ -172,6 +172,77 @@ const ScrollingTabs: React.FC<ScrollingTabsProps> = ({
     });
   }, [sortedClients.length]);
 
+  // Force scroll methods
+  const forceScrollToPosition = (progress: number) => {
+    if (timelineRef.current) {
+      // Clamp progress between 0 and 1
+      const clampedProgress = Math.max(0, Math.min(1, progress));
+      timelineRef.current.progress(clampedProgress);
+      console.log(`🎯 Forced timeline to ${(clampedProgress * 100).toFixed(1)}% progress`);
+    }
+  };
+
+  const forceScrollByAmount = (pixels: number) => {
+    if (timelineRef.current && contentRef.current && containerRef.current) {
+      const containerWidth = containerRef.current.offsetWidth;
+      const contentWidth = contentRef.current.scrollWidth;
+      const totalDistance = contentWidth + containerWidth;
+      
+      // Calculate current position
+      const currentX = gsap.getProperty(contentRef.current, "x") as number;
+      const newX = currentX - pixels; // Negative pixels scroll left, positive scroll right
+      
+      // Convert position to progress
+      const progress = Math.abs(newX - containerWidth) / totalDistance;
+      const clampedProgress = Math.max(0, Math.min(1, progress));
+      
+      timelineRef.current.progress(clampedProgress);
+      console.log(`🎯 Forced scroll by ${pixels}px to ${(clampedProgress * 100).toFixed(1)}% progress`);
+    }
+  };
+
+  const forceScrollToClient = (clientId: string) => {
+    if (!timelineRef.current || !contentRef.current || !containerRef.current) return;
+    
+    // Find the client element
+    const clientElements = contentRef.current.querySelectorAll('[data-client-id]');
+    let targetElement: Element | null = null;
+    
+    clientElements.forEach(el => {
+      if (el.getAttribute('data-client-id') === clientId) {
+        targetElement = el;
+      }
+    });
+    
+    if (targetElement) {
+      const containerWidth = containerRef.current.offsetWidth;
+      const contentWidth = contentRef.current.scrollWidth;
+      const totalDistance = contentWidth + containerWidth;
+      
+      // Get element position relative to content
+      const elementRect = targetElement.getBoundingClientRect();
+      const contentRect = contentRef.current.getBoundingClientRect();
+      const relativePosition = elementRect.left - contentRect.left;
+      
+      // Calculate target X position to center the element
+      const targetX = containerWidth / 2 - relativePosition;
+      
+      // Convert to timeline progress
+      const progress = Math.abs(targetX - containerWidth) / totalDistance;
+      const clampedProgress = Math.max(0, Math.min(1, progress));
+      
+      timelineRef.current.progress(clampedProgress);
+      console.log(`🎯 Scrolled to client ${clientId} at ${(clampedProgress * 100).toFixed(1)}% progress`);
+    }
+  };
+
+  const forceScrollSpeed = (speed: number) => {
+    if (timelineRef.current) {
+      // Speed: 1 = normal, 2 = double speed, 0.5 = half speed
+      timelineRef.current.timeScale(speed);
+      console.log(`🎯 Timeline speed set to ${speed}x`);
+    }
+  };
   const getFilterLabel = () => {
     switch (clientFilter) {
       case 'returnables':
@@ -494,6 +565,7 @@ const ScrollingTabs: React.FC<ScrollingTabsProps> = ({
                 return (
                   <div
                     key={client.id}
+                    data-client-id={client.id}
                     className={`flex-shrink-0 px-4 py-2 rounded-lg border cursor-pointer h-25 min-w-fit flex items-center ${
                       isDragging 
                         ? 'transition-none'
