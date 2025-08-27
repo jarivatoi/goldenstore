@@ -370,8 +370,7 @@ export const processCalculatorInput = (
         // Add to transaction history
         newTransactionHistory.push(result);
         
-        // Increment article count when = is pressed
-        newArticleCount++;
+        // Don't increment here - article count tracks operands, not results
         
         newValue = result.toString();
         newLastOperation = null;
@@ -380,6 +379,20 @@ export const processCalculatorInput = (
       } else {
         // No pending operation, add current number to grand total
         const currentNum = getCurrentNumber();
+        
+        // If this is the first number and no steps exist, create the first step
+        if (newCalculationSteps.length === 0) {
+          newCalculationSteps.push({
+            expression: currentNum.toString(),
+            result: currentNum,
+            timestamp: Date.now(),
+            stepNumber: 1,
+            operationType: 'number',
+            displayValue: currentNum.toString()
+          });
+          newArticleCount = 1;
+        }
+        
         newCalculationSteps.push({
           expression: currentNum.toString(),
           result: currentNum,
@@ -390,8 +403,7 @@ export const processCalculatorInput = (
         });
         newGrandTotal += currentNum;
         
-        // Increment article count when = is pressed
-        newArticleCount++;
+        // Don't increment here - article count tracks operands during entry
         
         // Add to transaction history
         newTransactionHistory.push(currentNum);
@@ -458,17 +470,14 @@ export const processCalculatorInput = (
         timestamp: Date.now(),
         stepNumber: newCalculationSteps.length + 1,
         operationType: 'operation',
-        displayValue: result.toString()
+        displayValue: `${input}${currentNum}`
       });
       
       newValue = result.toString();
       newLastOperand = result;
     } else {
-      // Save the current number as a step when starting a new operation
-      if (!newIsNewNumber) {
-        // Increment article count when starting a new operation (+ pressed)
-        newArticleCount++;
-        
+      // First number entry - save as step
+      if (!newIsNewNumber && newCalculationSteps.length === 0) {
         newCalculationSteps.push({
           expression: currentNum.toString(),
           result: currentNum,
@@ -477,6 +486,7 @@ export const processCalculatorInput = (
           operationType: 'number',
           displayValue: currentNum.toString()
         });
+        newArticleCount = 1; // First article
       }
       newLastOperand = currentNum;
     }
@@ -497,9 +507,16 @@ export const processCalculatorInput = (
   } else if (['0', '00', '000', '1', '2', '3', '4', '5', '6', '7', '8', '9'].includes(input)) {
     // Number input
     if (newIsNewNumber || currentValue === '0') {
-      // Starting a new number entry - increment article count if this is the first digit
-      if (newIsNewNumber && newArticleCount === 0) {
-        newArticleCount = 1; // First article
+      // Starting a new number entry
+      if (newIsNewNumber) {
+        // If this is the very first number (no steps yet), start article count
+        if (newCalculationSteps.length === 0) {
+          newArticleCount = 1;
+        }
+        // If we're starting a new number after an operation, increment article count
+        else if (newLastOperation) {
+          newArticleCount++;
+        }
       }
       newValue = input;
       newIsNewNumber = false;
