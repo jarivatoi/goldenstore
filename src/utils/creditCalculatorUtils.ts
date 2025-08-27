@@ -457,7 +457,7 @@ export const processCalculatorInput = (
             timestamp: Date.now(),
             stepNumber: 1,
             operationType: 'number',
-            displayValue: currentNum.toString()
+            displayValue: `+${currentNum}`
           });
           newArticleCount = 1; // First article
         }
