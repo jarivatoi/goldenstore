@@ -152,23 +152,21 @@ const ScrollingTabs: React.FC<ScrollingTabsProps> = ({
         overwrite: "auto"
       });
       
-      // Start timeline from current position instead of container width
+      // Create proper scrolling animation from current position
       timelineRef.current
-        .fromTo(content, 
-          { x: currentX },
-          { 
-            x: -contentWidth,
-            duration: duration * ((currentX + contentWidth) / totalDistance), // Adjust duration based on remaining distance
-            ease: "none",
-            immediateRender: false
-          })
-        .set(content, { x: containerWidth }, ">")
+        .to(content, {
+          x: -contentWidth,
+          duration: duration * ((currentX + contentWidth) / totalDistance), // Adjust duration based on remaining distance
+          ease: "none",
+          immediateRender: false
+        })
+        .set(content, { x: containerWidth })
         .to(content, {
           x: -contentWidth,
           duration: duration,
           ease: "none",
           repeat: -1
-        }, ">");
+        });
       
       // Now resume the timeline after it's fully configured
       timelineRef.current.timeScale(1).resume();
