@@ -48,6 +48,7 @@ const ScrollingTabs: React.FC<ScrollingTabsProps> = ({
   const { getClientTransactions } = useCredit();
   const [forceUpdate, setForceUpdate] = React.useState(0);
   const [isDragging, setIsDragging] = React.useState(false);
+  const pausedPositionRef = useRef<number>(0);
   
   // Listen for credit data changes to force re-render
   React.useEffect(() => {
@@ -260,23 +261,15 @@ const ScrollingTabs: React.FC<ScrollingTabsProps> = ({
     console.log('🎯 Tab clicked for client:', client.name);
     console.log('📊 Timeline state before pause:', {
       exists: !!timelineRef.current,
-      isActive: timelineRef.current?.isActive(),
-      paused: timelineRef.current?.paused(),
-      progress: timelineRef.current?.progress()
     });
-    
-    // Pause the timeline
-    if (timelineRef.current && !timelineRef.current.paused()) {
-      timelineRef.current.pause();
-      console.log('⏸️ Timeline paused successfully');
-    } else {
-      console.log('⏸️ Timeline already paused or no timeline');
-    }
+    // Store the EXACT current position - no normalization
+    const currentX = gsap.getProperty(contentRef.current, "x") as number;
+    pausedPositionRef.current = currentX;
     
     // Add click animation
     setClickedTabId(client.id);
     
-    // Show action modal
+    // Get exact current position from GSAP - don't normalize it
     setSelectedClientForAction(client);
   };
 
