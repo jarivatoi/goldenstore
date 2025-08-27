@@ -332,30 +332,36 @@ const ScrollingTabs: React.FC<ScrollingTabsProps> = ({
         lockAxis: true, // Lock to horizontal axis only
         onDragStart: function() {
           console.log('🎯 Drag started - pausing timeline');
-          if (timelineRef.current) {
+          if (timelineRef.current && !timelineRef.current.paused()) {
             timelineRef.current.pause();
             console.log('⏸️ Timeline paused for drag');
           } else {
-            console.log('❌ No timeline to pause during drag start');
+            console.log('⏸️ Timeline already paused or no timeline during drag start');
           }
         },
         onDrag: function() {
-          // No need to track direction - just let user drag
+          // Timeline should remain paused during drag - don't modify it here
+          console.log('🎯 Dragging... timeline state:', {
+            exists: !!timelineRef.current,
+            paused: timelineRef.current?.paused()
+          });
         },
         onDragEnd: function() {
           console.log('🎯 Drag ended - checking timeline state');
-          if (timelineRef.current) {
+          if (timelineRef.current && timelineRef.current.paused()) {
             timelineRef.current.resume();
             console.log('▶️ Timeline resumed after drag end');
           } else {
-            console.log('❌ No timeline to resume after drag end');
+            console.log('▶️ Timeline not paused or missing after drag end');
           }
         },
         onThrowComplete: function() {
           console.log('🎯 Throw completed - ensuring timeline is running');
-          if (timelineRef.current) {
+          if (timelineRef.current && timelineRef.current.paused()) {
             timelineRef.current.resume();
             console.log('▶️ Timeline resumed after throw complete');
+          } else if (timelineRef.current && !timelineRef.current.paused()) {
+            console.log('✅ Timeline already running after throw');
           } else {
             console.log('❌ No timeline after throw - recreating...');
             setupContinuousScroll();
