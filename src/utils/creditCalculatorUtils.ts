@@ -390,7 +390,7 @@ export const processCalculatorInput = (
               lastOperation: null,
               lastOperand: null,
               isNewNumber: true,
-              isActive: true
+              isActive: true,
               transactionHistory: newTransactionHistory,
               calculationSteps: newCalculationSteps,
               autoReplayActive: false
