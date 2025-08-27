@@ -199,10 +199,18 @@ const ScrollingTabs: React.FC<ScrollingTabsProps> = ({
       progress: timelineRef.current?.progress()
     });
     
-    // Pause the timeline
+    // Pause the timeline and store current state
     if (timelineRef.current && !timelineRef.current.paused()) {
+      // Store current progress and timeScale before pausing
+      const currentProgress = timelineRef.current.progress();
+      const currentTimeScale = timelineRef.current.timeScale();
+      
       timelineRef.current.pause();
       console.log('⏸️ Timeline paused successfully');
+      
+      // Store state for proper resume
+      timelineRef.current._storedProgress = currentProgress;
+      timelineRef.current._storedTimeScale = currentTimeScale;
     } else {
       console.log('⏸️ Timeline already paused or no timeline');
     }
@@ -731,8 +739,17 @@ const ScrollingTabs: React.FC<ScrollingTabsProps> = ({
               });
               
               if (timelineRef.current && timelineRef.current.paused()) {
+                // Get stored state or current state
+                const storedProgress = timelineRef.current._storedProgress;
+                const storedTimeScale = timelineRef.current._storedTimeScale || timelineRef.current.timeScale() || 1;
+                
+                // If we have stored progress, restore it before resuming
+                if (storedProgress !== undefined) {
+                  timelineRef.current.progress(storedProgress);
+                }
+                
                 // Resume with proper timeScale management to prevent jumps
-                timelineRef.current.timeScale(timelineRef.current.timeScale() || 0.001).resume();
+                timelineRef.current.timeScale(storedTimeScale).resume();
                 console.log('✅ Timeline resumed after Action Modal close');
                 
                 setTimeout(() => {
@@ -824,8 +841,17 @@ const ScrollingTabs: React.FC<ScrollingTabsProps> = ({
               });
               
               if (timelineRef.current && timelineRef.current.paused()) {
+                // Get stored state or current state
+                const storedProgress = timelineRef.current._storedProgress;
+                const storedTimeScale = timelineRef.current._storedTimeScale || timelineRef.current.timeScale() || 1;
+                
+                // If we have stored progress, restore it before resuming
+                if (storedProgress !== undefined) {
+                  timelineRef.current.progress(storedProgress);
+                }
+                
                 // Resume with proper timeScale management to prevent jumps
-                timelineRef.current.timeScale(timelineRef.current.timeScale() || 0.001).resume();
+                timelineRef.current.timeScale(storedTimeScale).resume();
                 console.log('✅ Timeline resumed after Detail Modal close');
                 
                 setTimeout(() => {
