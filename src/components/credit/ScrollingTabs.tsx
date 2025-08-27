@@ -306,22 +306,36 @@ const ScrollingTabs: React.FC<ScrollingTabsProps> = ({
         }
       });
     });
-  }, [sortedClients.length]); // Remove function dependencies to prevent recreation
+  }, []); // Remove all dependencies to prevent recreation
 
   // Setup animation when clients change
   useEffect(() => {
-    // Only setup once when clients are first loaded
-    if (!timelineRef.current && sortedClients.length > 0) {
-      // Remove timeout to prevent timing issues
-      setupContinuousScroll();
+    // Kill existing timeline and recreate immediately when client list changes
+    if (timelineRef.current) {
+      timelineRef.current.kill();
+      timelineRef.current = null;
     }
     
-    // Only clean up if clients are truly gone for a longer period
-    if (sortedClients.length === 0) {
-      // Don't kill timeline immediately - let it continue running
-      // Only kill if clients are gone for a very long time
+    // Only setup if we have clients
+    if (sortedClients.length > 0) {
+      // Small delay to ensure DOM has updated with new client list
+      setTimeout(() => {
+        setupContinuousScroll();
+      }, 50);
     }
-  }, [sortedClients.length]); // Remove setupContinuousScroll dependency to prevent re-triggering
+  }, [sortedClients.length, setupContinuousScroll]); // React to client list changes
+
+  // Additional effect to handle filter changes that might not change length
+  useEffect(() => {
+    // Force timeline restart when clients array reference changes (filter changes)
+    if (timelineRef.current && sortedClients.length > 0) {
+      timelineRef.current.kill();
+      timelineRef.current = null;
+      
+      // Immediate restart for filter changes
+      setupContinuousScroll();
+    }
+  }, [sortedClients]); // React to actual client array changes
 
   // Cleanup on unmount
   useEffect(() => {
