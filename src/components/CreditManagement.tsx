@@ -898,16 +898,16 @@ const CreditManagement: React.FC = () => {
               <button
                 onClick={() => handleCalculatorInput('CHECK←')}
                 disabled={calculationSteps.length === 0}
-                className="bg-purple-400 hover:bg-purple-500 disabled:bg-gray-300 disabled:text-gray-500 text-white p-2 rounded-lg font-bold text-sm shadow-md border border-purple-500"
+                className="bg-purple-400 hover:bg-purple-500 disabled:bg-gray-300 disabled:text-gray-500 text-white p-2 rounded-lg font-bold text-xl shadow-md border border-purple-500"
               >
-                CHECK←
+                ← CHECK
               </button>
               <button
                 onClick={() => handleCalculatorInput('CHECK→')}
                 disabled={calculationSteps.length === 0}
-                className="bg-purple-400 hover:bg-purple-500 disabled:bg-gray-300 disabled:text-gray-500 text-white p-2 rounded-lg font-bold text-sm shadow-md border border-purple-500"
+                className="bg-purple-400 hover:bg-purple-500 disabled:bg-gray-300 disabled:text-gray-500 text-white p-2 rounded-lg font-bold text-xl shadow-md border border-purple-500"
               >
-                CHECK→
+                CHECK →
               </button>
             </div>
 
