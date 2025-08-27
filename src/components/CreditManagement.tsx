@@ -33,6 +33,10 @@ const CreditManagement: React.FC = () => {
   const [showAllClients, setShowAllClients] = useState(false);
   const [calculatorValue, setCalculatorValue] = useState('0');
   const [calculatorMemory, setCalculatorMemory] = useState(0);
+  const [calculatorGrandTotal, setCalculatorGrandTotal] = useState(0);
+  const [lastOperation, setLastOperation] = useState<string | null>(null);
+  const [lastOperand, setLastOperand] = useState<number | null>(null);
+  const [isNewNumber, setIsNewNumber] = useState(true);
   const [selectedClient, setSelectedClient] = useState<Client | null>(null);
   const [showClientSearch, setShowClientSearch] = useState(false);
   const [isCalculatorActive, setIsCalculatorActive] = useState(false);
@@ -541,9 +545,21 @@ const CreditManagement: React.FC = () => {
    * ===================
    */
   const handleCalculatorInput = (value: string) => {
-    const result = processCalculatorInput(calculatorValue, value, calculatorMemory);
+    const result = processCalculatorInput(
+      calculatorValue, 
+      value, 
+      calculatorMemory,
+      calculatorGrandTotal,
+      lastOperation,
+      lastOperand,
+      isNewNumber
+    );
     setCalculatorValue(result.value);
     setCalculatorMemory(result.memory);
+    setCalculatorGrandTotal(result.grandTotal);
+    setLastOperation(result.lastOperation);
+    setLastOperand(result.lastOperand);
+    setIsNewNumber(result.isNewNumber);
     setIsCalculatorActive(result.isActive);
   };
 
@@ -554,11 +570,21 @@ const CreditManagement: React.FC = () => {
   const handleCalculatorCancel = () => {
     setLinkedClient(null);
     setCalculatorValue('0');
+    setCalculatorMemory(0);
+    setCalculatorGrandTotal(0);
+    setLastOperation(null);
+    setLastOperand(null);
+    setIsNewNumber(true);
     setIsCalculatorActive(false);
   };
 
   const handleResetCalculator = () => {
     setCalculatorValue('0');
+    setCalculatorMemory(0);
+    setCalculatorGrandTotal(0);
+    setLastOperation(null);
+    setLastOperand(null);
+    setIsNewNumber(true);
     setIsCalculatorActive(false);
     setLinkedClient(null);
     setShowClientSearch(false);
@@ -566,6 +592,11 @@ const CreditManagement: React.FC = () => {
 
   const handleResetCalculatorAndDescription = () => {
     setCalculatorValue('0');
+    setCalculatorMemory(0);
+    setCalculatorGrandTotal(0);
+    setLastOperation(null);
+    setLastOperand(null);
+    setIsNewNumber(true);
     setIsCalculatorActive(false);
     setShowClientSearch(false);
   };
@@ -621,6 +652,11 @@ const CreditManagement: React.FC = () => {
       
       // Reset calculator state
       setCalculatorValue('0');
+      setCalculatorMemory(0);
+      setCalculatorGrandTotal(0);
+      setLastOperation(null);
+      setLastOperand(null);
+      setIsNewNumber(true);
       setIsCalculatorActive(false);
       setShowClientSearch(false);
       setLinkedClient(null);
@@ -783,7 +819,29 @@ const CreditManagement: React.FC = () => {
 
           {/* Calculator Display */}
           <div className="mb-6">
-            <div className="bg-gray-900 rounded-lg p-6 text-right relative border-2 border-gray-300 shadow-inner">
+            <div className="bg-gray-800 rounded-lg p-4 text-right relative border-2 border-gray-400 shadow-inner">
+              {/* LCD Header */}
+              <div className="text-center mb-2">
+                <div className="text-xs text-gray-400 font-mono">GOLDEN STORE JS-705</div>
+                <div className="text-xs text-gray-400 font-mono">112 STEPS CHECK</div>
+              </div>
+              
+              {/* Status Indicators */}
+              <div className="flex justify-between items-center mb-2 text-xs">
+                <div className="flex gap-2">
+                  {calculatorMemory !== 0 && (
+                    <span className="text-green-400 font-bold">M</span>
+                  )}
+                  {calculatorGrandTotal !== 0 && (
+                    <span className="text-green-400 font-bold">GT</span>
+                  )}
+                </div>
+                <div className="text-gray-400 font-mono">
+                  {lastOperation && <span>OP: {lastOperation === '*' ? '×' : lastOperation === '/' ? '÷' : lastOperation}</span>}
+                </div>
+              </div>
+              
+              {/* Main Display */}
               {calculatorMemory !== 0 && (
                 <div className="absolute top-2 left-3 text-xs text-green-400 font-bold">
                   M
@@ -793,6 +851,11 @@ const CreditManagement: React.FC = () => {
                 <div className="truncate max-w-full" title={calculatorValue}>
                   {calculatorValue}
                 </div>
+              </div>
+              
+              {/* Secondary Display */}
+              <div className="text-xs text-gray-400 font-mono mt-1 text-center">
+                Electronic Calculator
               </div>
             </div>
           </div>

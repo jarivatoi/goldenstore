@@ -6,6 +6,32 @@
  */
 
 /**
+ * Calculator state interface
+ */
+interface CalculatorState {
+  display: string;
+  memory: number;
+  grandTotal: number;
+  lastOperation: string | null;
+  lastOperand: number | null;
+  isNewNumber: boolean;
+  isError: boolean;
+}
+
+/**
+ * Initialize calculator state
+ */
+export const initCalculatorState = (): CalculatorState => ({
+  display: '0',
+  memory: 0,
+  grandTotal: 0,
+  lastOperation: null,
+  lastOperand: null,
+  isNewNumber: true,
+  isError: false
+});
+
+/**
  * Safely evaluates a calculator expression
  */
 export const evaluateExpression = (expression: string): number => {
@@ -34,137 +60,277 @@ export const evaluateExpression = (expression: string): number => {
 };
 
 /**
- * Processes calculator input and returns new calculator state
+ * Enhanced calculator input processor with all JOINIUS functions
  */
 export const processCalculatorInput = (
   currentValue: string,
   input: string,
-  memory: number
-): { value: string; memory: number; isActive: boolean } => {
+  memory: number,
+  grandTotal: number = 0,
+  lastOperation: string | null = null,
+  lastOperand: number | null = null,
+  isNewNumber: boolean = false
+): { 
+  value: string; 
+  memory: number; 
+  grandTotal: number;
+  lastOperation: string | null;
+  lastOperand: number | null;
+  isNewNumber: boolean;
+  isActive: boolean;
+} => {
   let newValue = currentValue;
   let newMemory = memory;
+  let newGrandTotal = grandTotal;
+  let newLastOperation = lastOperation;
+  let newLastOperand = lastOperand;
+  let newIsNewNumber = isNewNumber;
   let isActive = true;
 
-  if (input === 'C') {
+  // Handle error state
+  if (currentValue === 'Error' && !['ON/C', 'AC', 'C'].includes(input)) {
+    return {
+      value: 'Error',
+      memory: newMemory,
+      grandTotal: newGrandTotal,
+      lastOperation: newLastOperation,
+      lastOperand: newLastOperand,
+      isNewNumber: newIsNewNumber,
+      isActive: true
+    };
+  }
+
+  // Get current numeric value
+  const getCurrentNumber = (): number => {
+    const num = parseFloat(currentValue);
+    return isNaN(num) ? 0 : num;
+  };
+
+  // Handle different input types
+  if (input === 'ON/C' || input === 'C') {
+    // Clear everything
     newValue = '0';
+    newMemory = 0;
+    newGrandTotal = 0;
+    newLastOperation = null;
+    newLastOperand = null;
+    newIsNewNumber = true;
     isActive = false;
-  } else if (input === '=') {
-    try {
-      // Replace display symbols with JavaScript operators for evaluation
-      const expression = currentValue.replace(/×/g, '*').replace(/÷/g, '/');
-      
-      // Remove trailing operators before evaluation
-      const cleanExpression = expression.replace(/[+\-*/÷×]+$/, '');
-      
-      // If expression is empty after cleaning, keep current value
-      if (!cleanExpression || cleanExpression === '') {
-        return { value: currentValue, memory, isActive };
-      }
-      
-      const result = eval(cleanExpression);
-      
-      // Check for invalid results
-      if (!isFinite(result)) {
-        newValue = 'Error';
-      } else {
-        newValue = result.toString();
-      }
-    } catch {
-      newValue = 'Error';
-    }
+  } else if (input === 'AC') {
+    // All Clear - same as ON/C
+    newValue = '0';
+    newMemory = 0;
+    newGrandTotal = 0;
+    newLastOperation = null;
+    newLastOperand = null;
+    newIsNewNumber = true;
+    isActive = false;
   } else if (input === 'CE') {
-    // Clear Entry - removes the last operand only
-    const operators = ['+', '-', '*', '/'];
-    let lastOperatorIndex = -1;
-    
-    // Find the last operator from the end
-    for (let i = currentValue.length - 1; i >= 0; i--) {
-      if (operators.includes(currentValue[i])) {
-        lastOperatorIndex = i;
-        break;
-      }
-    }
-    
-    if (lastOperatorIndex >= 0) {
-      // Keep everything up to but NOT including the last operator
-      newValue = currentValue.substring(0, lastOperatorIndex);
-    } else {
-      // No operator found, clear everything to 0
-      newValue = '0';
-      isActive = false;
-    }
-  } else if (input === '⌫') {
-    if (currentValue.length > 1) {
+    // Clear Entry - only clear display
+    newValue = '0';
+    newIsNewNumber = true;
+  } else if (input === '→') {
+    // Backspace
+    if (currentValue.length > 1 && currentValue !== '0') {
       newValue = currentValue.slice(0, -1);
     } else {
       newValue = '0';
+      newIsNewNumber = true;
     }
+  } else if (input === 'MU') {
+    // Mark Up - add current number to memory
+    const currentNum = getCurrentNumber();
+    newMemory += currentNum;
+  } else if (input === 'MRC') {
+    // Memory Recall/Clear - first press recalls, second press clears
+    if (memory === 0) {
+      // Nothing in memory, do nothing
+    } else if (currentValue === memory.toString()) {
+      // If displaying memory value, clear memory
+      newMemory = 0;
+    } else {
+      // Recall memory value
+      newValue = memory.toString();
+      newIsNewNumber = true;
+    }
+  } else if (input === 'M-') {
+    // Memory Minus
+    const currentNum = getCurrentNumber();
+    newMemory -= currentNum;
   } else if (input === 'M+') {
+    // Memory Plus
+    const currentNum = getCurrentNumber();
+    newMemory += currentNum;
+  } else if (input === 'GT') {
+    // Grand Total - show accumulated grand total
+    newValue = newGrandTotal.toString();
+    newIsNewNumber = true;
+  } else if (input === 'AUTO') {
+    // Auto mode - for now, just show current value
+    // In real calculators, this affects decimal point behavior
+    newValue = currentValue;
+  } else if (input === '%') {
+    // Percentage calculation
+    const currentNum = getCurrentNumber();
+    if (newLastOperation && newLastOperand !== null) {
+      // Calculate percentage of last operand
+      const percentValue = (newLastOperand * currentNum) / 100;
+      newValue = percentValue.toString();
+    } else {
+      // Simple percentage
+      newValue = (currentNum / 100).toString();
+    }
+    newIsNewNumber = true;
+  } else if (input === '√') {
+    // Square root
+    const currentNum = getCurrentNumber();
+    if (currentNum < 0) {
+      newValue = 'Error';
+    } else {
+      newValue = Math.sqrt(currentNum).toString();
+    }
+    newIsNewNumber = true;
+  } else if (input === '=' || input === 'ENTER') {
     try {
-      const currentAmount = evaluateExpression(currentValue);
-      if (isFinite(currentAmount)) {
-        newMemory = memory + currentAmount;
+      if (newLastOperation && newLastOperand !== null) {
+        const currentNum = getCurrentNumber();
+        let result = 0;
+        
+        switch (newLastOperation) {
+          case '+':
+            result = newLastOperand + currentNum;
+            break;
+          case '-':
+            result = newLastOperand - currentNum;
+            break;
+          case '*':
+          case '×':
+            result = newLastOperand * currentNum;
+            break;
+          case '/':
+          case '÷':
+            if (currentNum === 0) {
+              newValue = 'Error';
+              return {
+                value: newValue,
+                memory: newMemory,
+                grandTotal: newGrandTotal,
+                lastOperation: null,
+                lastOperand: null,
+                isNewNumber: true,
+                isActive: true
+              };
+            }
+            result = newLastOperand / currentNum;
+            break;
+          default:
+            result = currentNum;
+        }
+        
+        // Add to grand total
+        newGrandTotal += result;
+        newValue = result.toString();
+        newLastOperation = null;
+        newLastOperand = null;
+        newIsNewNumber = true;
+      } else {
+        // No pending operation, add current number to grand total
+        const currentNum = getCurrentNumber();
+        newGrandTotal += currentNum;
       }
     } catch {
-      // Do nothing if calculation error
+      newValue = 'Error';
+      newLastOperation = null;
+      newLastOperand = null;
+      newIsNewNumber = true;
     }
-  } else if (input === 'MR') {
-    newValue = memory.toString();
-    isActive = true;
-  } else if (input === 'MC') {
-    newMemory = 0;
-  } else if (input === '*') {
-    // Display multiplication as ×
-    if (currentValue === '0' || currentValue === 'Error' || currentValue === 'Infinity') {
-      newValue = '0×';
-    } else if (currentValue.match(/[+\-×÷]$/)) {
-      // Replace last operator with ×
-      newValue = currentValue.slice(0, -1) + '×';
+  } else if (['+', '-', '*', '×', '/', '÷'].includes(input)) {
+    // Arithmetic operations
+    const currentNum = getCurrentNumber();
+    
+    // If there's a pending operation, execute it first
+    if (newLastOperation && newLastOperand !== null && !newIsNewNumber) {
+      let result = 0;
+      
+      switch (newLastOperation) {
+        case '+':
+          result = newLastOperand + currentNum;
+          break;
+        case '-':
+          result = newLastOperand - currentNum;
+          break;
+        case '*':
+        case '×':
+          result = newLastOperand * currentNum;
+          break;
+        case '/':
+        case '÷':
+          if (currentNum === 0) {
+            newValue = 'Error';
+            return {
+              value: newValue,
+              memory: newMemory,
+              grandTotal: newGrandTotal,
+              lastOperation: null,
+              lastOperand: null,
+              isNewNumber: true,
+              isActive: true
+            };
+          }
+          result = newLastOperand / currentNum;
+          break;
+        default:
+          result = currentNum;
+      }
+      
+      newValue = result.toString();
+      newLastOperand = result;
     } else {
-      newValue = currentValue + '×';
+      newLastOperand = currentNum;
+    }
+    
+    // Set new operation
+    newLastOperation = input === '×' ? '*' : input === '÷' ? '/' : input;
+    newIsNewNumber = true;
+    isActive = true;
+  } else if (input === '.') {
+    // Decimal point
+    if (newIsNewNumber) {
+      newValue = '0.';
+      newIsNewNumber = false;
+    } else if (!currentValue.includes('.')) {
+      newValue = currentValue + '.';
     }
     isActive = true;
-  } else if (input === '/') {
-    // Display division as ÷
-    if (currentValue === '0' || currentValue === 'Error' || currentValue === 'Infinity') {
-      newValue = '0÷';
-    } else if (currentValue.match(/[+\-×÷]$/)) {
-      // Replace last operator with ÷
-      newValue = currentValue.slice(0, -1) + '÷';
-    } else {
-      newValue = currentValue + '÷';
-    }
-    isActive = true;
-  } else if (input === '+') {
-    if (currentValue === '0' || currentValue === 'Error' || currentValue === 'Infinity') {
-      newValue = '0+';
-    } else if (currentValue.match(/[+\-×÷]$/)) {
-      // Replace last operator with +
-      newValue = currentValue.slice(0, -1) + '+';
-    } else {
-      newValue = currentValue + '+';
-    }
-    isActive = true;
-  } else if (input === '-') {
-    if (currentValue === '0' || currentValue === 'Error' || currentValue === 'Infinity') {
-      newValue = '0-';
-    } else if (currentValue.match(/[+\-×÷]$/)) {
-      // Replace last operator with -
-      newValue = currentValue.slice(0, -1) + '-';
-    } else {
-      newValue = currentValue + '-';
-    }
-    isActive = true;
-  } else {
-    // Handle numbers and decimal point
-    if ((currentValue === '0' || currentValue === 'Error' || currentValue === 'Infinity') && !isNaN(Number(input))) {
-      // Clear error/infinity state when typing new number
+  } else if (['0', '00', '000', '1', '2', '3', '4', '5', '6', '7', '8', '9'].includes(input)) {
+    // Number input
+    if (newIsNewNumber || currentValue === '0') {
       newValue = input;
+      newIsNewNumber = false;
     } else {
       newValue = currentValue + input;
     }
     isActive = true;
   }
 
-  return { value: newValue, memory: newMemory, isActive };
+  // Format display value
+  if (newValue !== 'Error' && !isNaN(parseFloat(newValue))) {
+    const num = parseFloat(newValue);
+    if (num.toString().length > 12) {
+      // Scientific notation for very large numbers
+      newValue = num.toExponential(6);
+    } else {
+      newValue = num.toString();
+    }
+  }
+
+  return { 
+    value: newValue, 
+    memory: newMemory, 
+    grandTotal: newGrandTotal,
+    lastOperation: newLastOperation,
+    lastOperand: newLastOperand,
+    isNewNumber: newIsNewNumber,
+    isActive 
+  };
 };
