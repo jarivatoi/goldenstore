@@ -275,10 +275,18 @@ const ScrollingTabs: React.FC<ScrollingTabsProps> = ({
         },
         onThrowComplete: function() {
           console.log('🎯 Throw completed - ensuring timeline is running');
-          // Use proper timeScale management to prevent abrupt jumps
+          
+          // Kill existing timeline
           if (timelineRef.current) {
-            timelineRef.current.timeScale(timelineRef.current.timeScale() || 0.001).resume();
+            timelineRef.current.kill();
+            timelineRef.current = null;
+            console.log('💀 Timeline killed');
           }
+          
+          // Recreate timeline at current position
+          setupContinuousScroll();
+          console.log('🔄 New timeline created at current position');
+          
           console.log('▶️ Timeline resumed after throw complete');
         }
       });
