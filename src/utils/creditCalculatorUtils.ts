@@ -155,6 +155,8 @@ export const processCalculatorInput = (
     newCalculationSteps = [];
     newArticleCount = 0;
     isActive = false;
+    // Clear check navigation index
+    localStorage.removeItem('currentCheckIndex');
   } else if (input === 'AC') {
     // All Clear - same as ON/C
     newValue = '0';
@@ -167,6 +169,8 @@ export const processCalculatorInput = (
     newCalculationSteps = [];
     newArticleCount = 0;
     isActive = false;
+    // Clear check navigation index
+    localStorage.removeItem('currentCheckIndex');
   } else if (input === 'CE') {
     // Clear Entry - only clear display
     newValue = '0';
@@ -211,7 +215,8 @@ export const processCalculatorInput = (
     // AUTO REPLAY - replay transaction history one by one
     if (newCalculationSteps.length > 0) {
       autoReplayActive = true;
-      // Start auto-replay sequence
+      // Reset check index and start auto-replay sequence
+      localStorage.setItem('currentCheckIndex', '0');
       newValue = newCalculationSteps[0].displayValue;
       newIsNewNumber = true;
       
@@ -226,38 +231,34 @@ export const processCalculatorInput = (
   } else if (input === 'CHECK→') {
     // Check forward - move to next transaction in history
     if (newCalculationSteps.length > 0) {
-      // Find current step by display value
-      let currentIndex = newCalculationSteps.findIndex(step => 
-        step.displayValue === currentValue || step.result.toString() === currentValue
-      );
+      // Get current step index from stored state or start from beginning
+      let currentStepIndex = parseInt(localStorage.getItem('currentCheckIndex') || '-1');
       
-      // If not found, start from beginning
-      if (currentIndex === -1) currentIndex = -1;
+      // Move to next step
+      currentStepIndex = Math.min(currentStepIndex + 1, newCalculationSteps.length - 1);
       
-      const nextIndex = (currentIndex + 1) % newCalculationSteps.length;
-      const nextStep = newCalculationSteps[nextIndex];
+      // Store current index
+      localStorage.setItem('currentCheckIndex', currentStepIndex.toString());
       
-      // Show the individual operand or operation
-      newValue = nextStep.displayValue;
+      const currentStep = newCalculationSteps[currentStepIndex];
+      newValue = currentStep.displayValue;
       newIsNewNumber = true;
       autoReplayActive = true;
     }
   } else if (input === 'CHECK←') {
     // Check backward - move to previous transaction in history
     if (newCalculationSteps.length > 0) {
-      // Find current step by display value
-      let currentIndex = newCalculationSteps.findIndex(step => 
-        step.displayValue === currentValue || step.result.toString() === currentValue
-      );
+      // Get current step index from stored state or start from end
+      let currentStepIndex = parseInt(localStorage.getItem('currentCheckIndex') || newCalculationSteps.length.toString());
       
-      // If not found, start from end
-      if (currentIndex === -1) currentIndex = newCalculationSteps.length;
+      // Move to previous step (don't go below 0)
+      currentStepIndex = Math.max(currentStepIndex - 1, 0);
       
-      const prevIndex = currentIndex <= 0 ? newCalculationSteps.length - 1 : currentIndex - 1;
-      const prevStep = newCalculationSteps[prevIndex];
+      // Store current index
+      localStorage.setItem('currentCheckIndex', currentStepIndex.toString());
       
-      // Show the individual operand or operation
-      newValue = prevStep.displayValue;
+      const currentStep = newCalculationSteps[currentStepIndex];
+      newValue = currentStep.displayValue;
       newIsNewNumber = true;
       autoReplayActive = true;
     }
@@ -537,31 +538,34 @@ export const processCalculatorInput = (
 /**
  * Auto-replay sequence function
  */
-const startAutoReplaySequence = (steps: CalculationStep[]): void => {
+const startAutoReplaySequence = (steps: CalculationStep[]) => {
   let currentStepIndex = 0;
   
   const showNextStep = () => {
-    if (currentStepIndex >= steps.length) {
+    if (currentStepIndex < steps.length) {
+      const step = steps[currentStepIndex];
+      
+      // Update calculator display
+      window.dispatchEvent(new CustomEvent('autoReplayStep', {
+        detail: {
+          displayValue: step.displayValue,
+          stepIndex: currentStepIndex,
+          totalSteps: steps.length
+        }
+      }));
+      
+      // Store current index for CHECK navigation
+      localStorage.setItem('currentCheckIndex', currentStepIndex.toString());
+      
+      currentStepIndex++;
+      
+      // Schedule next step after 1 second
+      setTimeout(showNextStep, 1000);
+    } else {
       // Restart from beginning
       currentStepIndex = 0;
+      setTimeout(showNextStep, 1000);
     }
-    
-    const step = steps[currentStepIndex];
-    
-    // Update calculator display (this would need to be handled by the component)
-    // For now, we'll dispatch a custom event that the component can listen to
-    window.dispatchEvent(new CustomEvent('autoReplayStep', {
-      detail: {
-        step: step,
-        stepIndex: currentStepIndex,
-        totalSteps: steps.length
-      }
-    }));
-    
-    currentStepIndex++;
-    
-    // Schedule next step after 1 second
-    setTimeout(showNextStep, 1000);
   };
   
   // Start the sequence

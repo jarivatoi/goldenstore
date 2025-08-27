@@ -86,8 +86,8 @@ const CreditManagement: React.FC = () => {
       if (linkedClient && !newTabClients.find(c => c.id === linkedClient.id)) {
         setLinkedClient(null);
         setCalculationSteps([]);
-        setCalculatorValue('0');
-        setIsCalculatorActive(false);
+      const { displayValue, stepIndex, totalSteps } = event.detail;
+      setCalculatorValue(displayValue);
       }
     };
 
