@@ -293,37 +293,13 @@ export const processCalculatorInput = (
         switch (newLastOperation) {
           case '+':
             result = newLastOperand + currentNum;
-            newCalculationSteps.push({
-              expression: `${newLastOperand} + ${currentNum}`,
-              result: result,
-              timestamp: Date.now(),
-              stepNumber: newCalculationSteps.length + 1,
-              operationType: 'operation',
-              displayValue: `+${currentNum}`
-            });
             break;
           case '-':
             result = newLastOperand - currentNum;
-            newCalculationSteps.push({
-              expression: `${newLastOperand} - ${currentNum}`,
-              result: result,
-              timestamp: Date.now(),
-              stepNumber: newCalculationSteps.length + 1,
-              operationType: 'operation',
-              displayValue: `-${currentNum}`
-            });
             break;
           case '*':
           case '×':
             result = newLastOperand * currentNum;
-            newCalculationSteps.push({
-              expression: `${newLastOperand} × ${currentNum}`,
-              result: result,
-              timestamp: Date.now(),
-              stepNumber: newCalculationSteps.length + 1,
-              operationType: 'operation',
-              displayValue: `×${currentNum}`
-            });
             break;
           case '/':
           case '÷':
@@ -344,26 +320,34 @@ export const processCalculatorInput = (
               };
             }
             result = newLastOperand / currentNum;
-            newCalculationSteps.push({
-              expression: `${newLastOperand} ÷ ${currentNum}`,
-              result: result,
-              timestamp: Date.now(),
-              stepNumber: newCalculationSteps.length + 1,
-              operationType: 'operation',
-              displayValue: `÷${currentNum}`
-            });
             break;
           default:
             result = currentNum;
-            newCalculationSteps.push({
-              expression: currentNum.toString(),
-              result: result,
-              timestamp: Date.now(),
-              stepNumber: newCalculationSteps.length + 1,
-              operationType: 'number',
-              displayValue: currentNum.toString()
-            });
         }
+        
+        // Add the final operand if not already added
+        if (!newIsNewNumber) {
+          const operatorSymbol = newLastOperation === '*' ? '×' : newLastOperation === '/' ? '÷' : newLastOperation;
+          newCalculationSteps.push({
+            expression: `${currentNum}`,
+            result: currentNum,
+            timestamp: Date.now(),
+            stepNumber: newCalculationSteps.length + 1,
+            operationType: 'operation',
+            displayValue: `${operatorSymbol}${currentNum}`
+          });
+          newArticleCount++;
+        }
+        
+        // Add result step
+        newCalculationSteps.push({
+          expression: `= ${result}`,
+          result: result,
+          timestamp: Date.now(),
+          stepNumber: newCalculationSteps.length + 1,
+          operationType: 'result',
+          displayValue: result.toString()
+        });
         
         // Add to grand total
         newGrandTotal += result;
@@ -371,18 +355,16 @@ export const processCalculatorInput = (
         // Add to transaction history
         newTransactionHistory.push(result);
         
-        // Don't increment here - article count tracks operands, not results
-        
         newValue = result.toString();
         newLastOperation = null;
         newLastOperand = null;
         newIsNewNumber = true;
       } else {
-        // No pending operation, add current number to grand total
+        // No pending operation - just add current number
         const currentNum = getCurrentNumber();
         
-        // If this is the first number and no steps exist, create the first step
         if (newCalculationSteps.length === 0) {
+          // First number in calculation
           newCalculationSteps.push({
             expression: currentNum.toString(),
             result: currentNum,
@@ -394,19 +376,17 @@ export const processCalculatorInput = (
           newArticleCount = 1;
         }
         
+        // Add result step
         newCalculationSteps.push({
-          expression: currentNum.toString(),
+          expression: `= ${currentNum}`,
           result: currentNum,
           timestamp: Date.now(),
           stepNumber: newCalculationSteps.length + 1,
-          operationType: 'number',
+          operationType: 'result',
           displayValue: currentNum.toString()
         });
+        
         newGrandTotal += currentNum;
-        
-        // Don't increment here - article count tracks operands during entry
-        
-        // Add to transaction history
         newTransactionHistory.push(currentNum);
       }
     } catch {
@@ -458,21 +438,46 @@ export const processCalculatorInput = (
           result = currentNum;
       }
       
-      // Update the last step to show the compound expression
-      if (newCalculationSteps.length > 0) {
-        const lastStep = newCalculationSteps[newCalculationSteps.length - 1];
-        // Build compound expression like "3×5"
-        const operatorSymbol = newLastOperation === '*' ? '×' : newLastOperation === '/' ? '÷' : newLastOperation;
-        lastStep.displayValue = `${lastStep.displayValue.replace(/^[+\-×÷]/, '')}${operatorSymbol}${currentNum}`;
-        lastStep.result = result;
-      }
+      // Add the current number as a separate step
+      const operatorSymbol = newLastOperation === '*' ? '×' : newLastOperation === '/' ? '÷' : newLastOperation;
+      newCalculationSteps.push({
+        expression: `${currentNum}`,
+        result: currentNum,
+        timestamp: Date.now(),
+        stepNumber: newCalculationSteps.length + 1,
+        operationType: 'operation',
+        displayValue: `${operatorSymbol}${currentNum}`
+      });
+      
+      // Increment article count for the current number
+      newArticleCount++;
       
       newValue = result.toString();
       newLastOperand = result;
     } else {
-      // Starting a new operand - create step for current number
+      // First operand or starting new calculation
       if (!newIsNewNumber) {
-        const operatorSymbol = input === '*' ? '×' : input === '/' ? '÷' : input;
+        // This is the first number being entered
+        if (newCalculationSteps.length === 0) {
+          // Very first number in calculation
+          newCalculationSteps.push({
+            expression: `${currentNum}`,
+            result: currentNum,
+            timestamp: Date.now(),
+            stepNumber: 1,
+            operationType: 'number',
+            displayValue: currentNum.toString()
+          });
+          newArticleCount = 1; // First article
+        }
+      }
+      newLastOperand = currentNum;
+    }
+    
+    // Set new operation
+    newLastOperation = input === '×' ? '*' : input === '÷' ? '/' : input;
+    newIsNewNumber = true;
+    isActive = true;
         newCalculationSteps.push({
           expression: `${currentNum}`,
           result: currentNum,
