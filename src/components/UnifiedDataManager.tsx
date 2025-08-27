@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { createPortal } from 'react-dom';
 import { Download, Upload, Database, X, AlertTriangle, Cloud, HardDrive } from 'lucide-react';
 import { usePriceList } from '../context/PriceListContext';
