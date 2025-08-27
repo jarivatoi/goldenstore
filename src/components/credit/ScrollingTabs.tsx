@@ -245,6 +245,7 @@ const ScrollingTabs: React.FC<ScrollingTabsProps> = ({
         onDragStart: function() {
           console.log('🎯 Drag started - pausing timeline');
           if (timelineRef.current && !timelineRef.current.paused()) {
+            // Properly pause timeline and store timeScale
             timelineRef.current.pause();
             console.log('⏸️ Timeline paused for drag');
           } else {
@@ -261,7 +262,8 @@ const ScrollingTabs: React.FC<ScrollingTabsProps> = ({
         onDragEnd: function() {
           console.log('🎯 Drag ended - checking timeline state');
           if (timelineRef.current && timelineRef.current.paused()) {
-            timelineRef.current.resume();
+            // Properly resume with timeScale management
+            timelineRef.current.timeScale(timelineRef.current.timeScale() || 0.001).resume();
             console.log('▶️ Timeline resumed after drag end');
           } else {
             console.log('▶️ Timeline not paused or missing after drag end');
@@ -270,7 +272,10 @@ const ScrollingTabs: React.FC<ScrollingTabsProps> = ({
         },
         onThrowComplete: function() {
           console.log('🎯 Throw completed - ensuring timeline is running');
-          timelineRef.current?.resume();
+          // Ensure smooth resume with timeScale management
+          if (timelineRef.current) {
+            timelineRef.current.timeScale(timelineRef.current.timeScale() || 0.001).resume();
+          }
           console.log('▶️ Timeline resumed after throw complete');
         }
       });
@@ -710,7 +715,8 @@ const ScrollingTabs: React.FC<ScrollingTabsProps> = ({
               });
               
               if (timelineRef.current && timelineRef.current.paused()) {
-                timelineRef.current.resume();
+                // Properly resume with timeScale management to avoid jumps
+                timelineRef.current.timeScale(timelineRef.current.timeScale() || 0.001).resume();
                 console.log('✅ Timeline resumed after Action Modal close');
                 
                 setTimeout(() => {
@@ -802,7 +808,8 @@ const ScrollingTabs: React.FC<ScrollingTabsProps> = ({
               });
               
               if (timelineRef.current && timelineRef.current.paused()) {
-                timelineRef.current.resume();
+                // Properly resume with timeScale management to avoid jumps
+                timelineRef.current.timeScale(timelineRef.current.timeScale() || 0.001).resume();
                 console.log('✅ Timeline resumed after Detail Modal close');
                 
                 setTimeout(() => {
