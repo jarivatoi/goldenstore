@@ -248,6 +248,16 @@ const ScrollingTabs: React.FC<ScrollingTabsProps> = ({
       const containerWidth = container.offsetWidth;
       const contentWidth = content.scrollWidth;
       
+      // Determine starting position based on content size
+      let startPosition;
+      if (contentWidth <= containerWidth) {
+        // Content fits in container - start centered
+        startPosition = (containerWidth - contentWidth) / 2;
+      } else {
+        // Content overflows - start from right edge for scrolling
+        startPosition = containerWidth;
+      }
+      
       // Calculate total distance including container width gap
       const totalDistance = contentWidth + containerWidth;
       const duration = totalDistance / 60; // 60px per second for faster speed
@@ -264,10 +274,10 @@ const ScrollingTabs: React.FC<ScrollingTabsProps> = ({
       
       timelineRef.current
         .fromTo(content, 
-          { x: containerWidth }, // Enter from right
+          { x: startPosition }, // Start from calculated position
           { 
-            x: -contentWidth, // Exit to left
-            duration: duration,
+            x: contentWidth <= containerWidth ? startPosition : -contentWidth, // End position based on content size
+            duration: contentWidth <= containerWidth ? 0 : duration, // No animation if content fits
             ease: "none",
             overwrite: false // Prevent external interference
           });
@@ -278,8 +288,8 @@ const ScrollingTabs: React.FC<ScrollingTabsProps> = ({
         allowEventDefault: false, // Prevent interference with other events
         allowNativeTouchScrolling: false, // Prevent scroll interference
         bounds: {
-          minX: -contentWidth,
-          maxX: containerWidth,
+          minX: contentWidth <= containerWidth ? startPosition : -contentWidth,
+          maxX: contentWidth <= containerWidth ? startPosition : containerWidth,
         },
         edgeResistance: 0.8, // Increased resistance for better control
         inertia: true,
