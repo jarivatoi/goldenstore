@@ -139,7 +139,7 @@ const ScrollingTabs: React.FC<ScrollingTabsProps> = ({
         containerWidth,
         contentWidth,
         totalDistance,
-        duration
+        duration,
         currentX
       });
       
