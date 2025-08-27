@@ -131,7 +131,8 @@ export const processCalculatorInput = (
       isActive: true,
       transactionHistory: newTransactionHistory,
       calculationSteps: newCalculationSteps,
-      autoReplayActive: false
+      autoReplayActive: false,
+      articleCount: newArticleCount
     };
   }
 
@@ -334,10 +335,10 @@ export const processCalculatorInput = (
                 lastOperand: null,
                 isNewNumber: true,
                 isActive: true,
-                calculationSteps: newCalculationSteps,
                 transactionHistory: newTransactionHistory,
                 calculationSteps: newCalculationSteps,
-                autoReplayActive: false
+                autoReplayActive: false,
+                articleCount: newArticleCount
               };
             }
             result = newLastOperand / currentNum;
@@ -358,9 +359,7 @@ export const processCalculatorInput = (
               timestamp: Date.now(),
               stepNumber: newCalculationSteps.length + 1,
               operationType: 'number',
-            autoReplayActive: false,
-            autoReplayActive: false,
-            articleCount: newArticleCount
+              displayValue: currentNum.toString()
             });
         }
         
@@ -439,7 +438,8 @@ export const processCalculatorInput = (
               isActive: true,
               transactionHistory: newTransactionHistory,
               calculationSteps: newCalculationSteps,
-              autoReplayActive: false
+              autoReplayActive: false,
+              articleCount: newArticleCount
             };
           }
           result = newLastOperand / currentNum;
@@ -456,7 +456,8 @@ export const processCalculatorInput = (
         result: result,
         timestamp: Date.now(),
         stepNumber: newCalculationSteps.length + 1,
-        operationType: 'operation'
+        operationType: 'operation',
+        displayValue: result.toString()
       });
       
       newValue = result.toString();
@@ -529,7 +530,6 @@ export const processCalculatorInput = (
     transactionHistory: newTransactionHistory,
     calculationSteps: newCalculationSteps,
     autoReplayActive,
-    articleCount: newArticleCount
     articleCount: newArticleCount
   };
 };
