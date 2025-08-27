@@ -260,11 +260,25 @@ export const CreditProvider: React.FC<CreditProviderProps> = ({ children }) => {
         .replace(/[^\w\s]/g, ''); // Remove other special characters except word chars and spaces
     };
     
-    const normalizedQuery = normalize(query);
-    return clients.filter(client => 
-      normalize(client.name).includes(normalizedQuery) ||
-      client.id.toLowerCase().includes(query.toLowerCase())
-    );
+    // Check if query is numeric (for ID search)
+    const isNumericQuery = /^\d+$/.test(query.trim());
+    
+    if (isNumericQuery) {
+      // For numeric queries, format as G-prefix ID and do exact match
+      const paddedNumber = query.trim().padStart(3, '0');
+      const formattedId = `G${paddedNumber}`;
+      
+      return clients.filter(client => 
+        client.id === formattedId
+      );
+    } else {
+      // For text queries, search by name or exact ID match
+      const normalizedQuery = normalize(query);
+      return clients.filter(client => 
+        normalize(client.name).includes(normalizedQuery) ||
+        client.id.toLowerCase() === query.toLowerCase()
+      );
+    }
   };
 
   // Get client total debt
