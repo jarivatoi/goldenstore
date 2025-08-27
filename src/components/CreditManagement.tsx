@@ -782,14 +782,14 @@ const CreditManagement: React.FC = () => {
           </div>
 
           {/* Calculator Display */}
-          <div className="mb-4">
-            <div className="bg-gray-100 rounded-lg p-4 text-right relative">
+          <div className="mb-6">
+            <div className="bg-gray-900 rounded-lg p-6 text-right relative border-2 border-gray-300 shadow-inner">
               {calculatorMemory !== 0 && (
-                <div className="absolute top-2 left-3 text-xs text-blue-600 font-semibold">
+                <div className="absolute top-2 left-3 text-xs text-green-400 font-bold">
                   M
                 </div>
               )}
-              <div className="text-xl sm:text-2xl font-mono text-gray-800 min-h-[2rem] flex items-center justify-end overflow-hidden">
+              <div className="text-2xl sm:text-3xl font-mono text-green-400 min-h-[3rem] flex items-center justify-end overflow-hidden bg-black rounded px-3 py-2">
                 <div className="truncate max-w-full" title={calculatorValue}>
                   {calculatorValue}
                 </div>
@@ -798,149 +798,184 @@ const CreditManagement: React.FC = () => {
           </div>
 
           {/* Calculator Buttons */}
-          <div className="grid grid-cols-5 gap-2 mb-4">
+          <div className="grid grid-cols-6 gap-2 mb-6 p-4 bg-gray-100 rounded-lg border-2 border-gray-300">
             {/* Row 0 - Memory Functions */}
             <button
+              onClick={() => handleCalculatorInput('MU')}
+              className="bg-blue-400 hover:bg-blue-500 text-white p-3 rounded-lg font-bold text-sm shadow-md border border-blue-500"
+            >
+              MU
+            </button>
+            <button
+              onClick={() => handleCalculatorInput('MRC')}
+              className="bg-blue-400 hover:bg-blue-500 text-white p-3 rounded-lg font-bold text-sm shadow-md border border-blue-500"
+            >
+              MRC
+            </button>
+            <button
+              onClick={() => handleCalculatorInput('M-')}
+              className="bg-blue-400 hover:bg-blue-500 text-white p-3 rounded-lg font-bold text-sm shadow-md border border-blue-500"
+            >
+              M-
+            </button>
+            <button
               onClick={() => handleCalculatorInput('M+')}
-              className="bg-purple-500 hover:bg-purple-600 text-white p-3 rounded-lg font-semibold text-sm"
+              className="bg-blue-400 hover:bg-blue-500 text-white p-3 rounded-lg font-bold text-sm shadow-md border border-blue-500"
             >
               M+
             </button>
             <button
-              onClick={() => handleCalculatorInput('MR')}
-              className="bg-purple-500 hover:bg-purple-600 text-white p-3 rounded-lg font-semibold text-sm"
+              onClick={() => handleCalculatorInput('ON/C')}
+              className="bg-gray-400 hover:bg-gray-500 text-white p-3 rounded-lg font-bold text-sm shadow-md border border-gray-500"
             >
-              MR
+              ON/C
             </button>
             <button
-              onClick={() => handleCalculatorInput('MC')}
-              className="bg-purple-500 hover:bg-purple-600 text-white p-3 rounded-lg font-semibold text-sm"
+              onClick={() => handleCalculatorInput('AUTO')}
+              className="bg-gray-400 hover:bg-gray-500 text-white p-3 rounded-lg font-bold text-sm shadow-md border border-gray-500"
             >
-              MC
-            </button>
-            <button
-              onClick={() => handleCalculatorInput('CE')}
-              className="bg-orange-500 hover:bg-orange-600 text-white p-3 rounded-lg font-semibold text-sm"
-            >
-              CE
-            </button>
-            <button
-              onClick={() => handleCalculatorInput('C')}
-              className="bg-red-500 hover:bg-red-600 text-white p-3 rounded-lg font-semibold text-sm"
-            >
-              C
+              AUTO
             </button>
 
-            {/* Row 1 */}
+            {/* Row 1 - Function Keys */}
+            <button
+              onClick={() => handleCalculatorInput('%')}
+              className="bg-blue-400 hover:bg-blue-500 text-white p-3 rounded-lg font-bold text-lg shadow-md border border-blue-500"
+            >
+              %
+            </button>
             <button
               onClick={() => handleCalculatorInput('7')}
-              className="bg-gray-200 hover:bg-gray-300 text-gray-800 p-4 rounded-lg font-semibold text-lg"
+              className="bg-gray-800 hover:bg-gray-900 text-white p-3 rounded-lg font-bold text-xl shadow-md border border-gray-600"
             >
               7
             </button>
             <button
               onClick={() => handleCalculatorInput('8')}
-              className="bg-gray-200 hover:bg-gray-300 text-gray-800 p-3 rounded-lg font-semibold"
+              className="bg-gray-800 hover:bg-gray-900 text-white p-3 rounded-lg font-bold text-xl shadow-md border border-gray-600"
             >
               8
             </button>
             <button
               onClick={() => handleCalculatorInput('9')}
-              className="bg-gray-200 hover:bg-gray-300 text-gray-800 p-3 rounded-lg font-semibold"
+              className="bg-gray-800 hover:bg-gray-900 text-white p-3 rounded-lg font-bold text-xl shadow-md border border-gray-600"
             >
               9
             </button>
             <button
-              onClick={() => handleCalculatorInput('/')}
-              className="bg-blue-500 hover:bg-blue-600 text-white p-3 rounded-lg font-semibold"
+              onClick={() => handleCalculatorInput('GT')}
+              className="bg-blue-400 hover:bg-blue-500 text-white p-3 rounded-lg font-bold text-sm shadow-md border border-blue-500"
             >
-              ÷
+              GT
             </button>
             <button
-              onClick={() => handleCalculatorInput('⌫')}
-              className="bg-gray-500 hover:bg-gray-600 text-white p-3 rounded-lg font-semibold"
+              onClick={() => handleCalculatorInput('√')}
+              className="bg-blue-400 hover:bg-blue-500 text-white p-3 rounded-lg font-bold text-lg shadow-md border border-blue-500"
             >
-              ⌫
+              √
             </button>
 
             {/* Row 2 */}
             <button
+              onClick={() => handleCalculatorInput('→')}
+              className="bg-blue-400 hover:bg-blue-500 text-white p-3 rounded-lg font-bold text-lg shadow-md border border-blue-500"
+            >
+              →
+            </button>
+            <button
               onClick={() => handleCalculatorInput('4')}
-              className="bg-gray-200 hover:bg-gray-300 text-gray-800 p-3 rounded-lg font-semibold"
+              className="bg-gray-800 hover:bg-gray-900 text-white p-3 rounded-lg font-bold text-xl shadow-md border border-gray-600"
             >
               4
             </button>
             <button
               onClick={() => handleCalculatorInput('5')}
-              className="bg-gray-200 hover:bg-gray-300 text-gray-800 p-3 rounded-lg font-semibold"
+              className="bg-gray-800 hover:bg-gray-900 text-white p-3 rounded-lg font-bold text-xl shadow-md border border-gray-600"
             >
               5
             </button>
             <button
               onClick={() => handleCalculatorInput('6')}
-              className="bg-gray-200 hover:bg-gray-300 text-gray-800 p-3 rounded-lg font-semibold"
+              className="bg-gray-800 hover:bg-gray-900 text-white p-3 rounded-lg font-bold text-xl shadow-md border border-gray-600"
             >
               6
             </button>
             <button
               onClick={() => handleCalculatorInput('*')}
-              className="bg-blue-500 hover:bg-blue-600 text-white p-3 rounded-lg font-semibold"
+              className="bg-blue-400 hover:bg-blue-500 text-white p-3 rounded-lg font-bold text-xl shadow-md border border-blue-500"
             >
               ×
             </button>
             <button
-              onClick={() => handleCalculatorInput('-')}
-              className="bg-blue-500 hover:bg-blue-600 text-white p-3 rounded-lg font-semibold row-span-2"
+              onClick={() => handleCalculatorInput('÷')}
+              className="bg-blue-400 hover:bg-blue-500 text-white p-3 rounded-lg font-bold text-xl shadow-md border border-blue-500"
             >
-              −
+              ÷
             </button>
 
             {/* Row 3 */}
             <button
+              onClick={() => handleCalculatorInput('AC')}
+              className="bg-red-500 hover:bg-red-600 text-white p-3 rounded-lg font-bold text-sm shadow-md border border-red-600"
+            >
+              AC
+            </button>
+            <button
               onClick={() => handleCalculatorInput('1')}
-              className="bg-gray-200 hover:bg-gray-300 text-gray-800 p-3 rounded-lg font-semibold"
+              className="bg-gray-800 hover:bg-gray-900 text-white p-3 rounded-lg font-bold text-xl shadow-md border border-gray-600"
             >
               1
             </button>
             <button
               onClick={() => handleCalculatorInput('2')}
-              className="bg-gray-200 hover:bg-gray-300 text-gray-800 p-3 rounded-lg font-semibold"
+              className="bg-gray-800 hover:bg-gray-900 text-white p-3 rounded-lg font-bold text-xl shadow-md border border-gray-600"
             >
               2
             </button>
             <button
               onClick={() => handleCalculatorInput('3')}
-              className="bg-gray-200 hover:bg-gray-300 text-gray-800 p-3 rounded-lg font-semibold"
+              className="bg-gray-800 hover:bg-gray-900 text-white p-3 rounded-lg font-bold text-xl shadow-md border border-gray-600"
             >
               3
             </button>
             <button
               onClick={() => handleCalculatorInput('+')}
-              className="bg-blue-500 hover:bg-blue-600 text-white p-3 rounded-lg font-semibold row-span-2"
+              className="bg-blue-400 hover:bg-blue-500 text-white p-3 rounded-lg font-bold text-xl shadow-md border border-blue-500 row-span-2"
             >
               +
+            </button>
+            <button
+              onClick={() => handleCalculatorInput('-')}
+              className="bg-blue-400 hover:bg-blue-500 text-white p-3 rounded-lg font-bold text-xl shadow-md border border-blue-500"
+            >
+              −
             </button>
 
             {/* Row 4 */}
             <button
               onClick={() => handleCalculatorInput('0')}
-              className="bg-gray-200 hover:bg-gray-300 text-gray-800 p-3 rounded-lg font-semibold col-span-2"
+              className="bg-gray-800 hover:bg-gray-900 text-white p-3 rounded-lg font-bold text-xl shadow-md border border-gray-600 col-span-2"
             >
               0
             </button>
             <button
-              onClick={() => handleCalculatorInput('.')}
-              className="bg-gray-200 hover:bg-gray-300 text-gray-800 p-3 rounded-lg font-semibold"
+              onClick={() => handleCalculatorInput('00')}
+              className="bg-gray-800 hover:bg-gray-900 text-white p-3 rounded-lg font-bold text-lg shadow-md border border-gray-600"
             >
-              .
+              00
             </button>
             <button
-              onClick={() => handleCalculatorInput('=')}
-              className="bg-green-500 hover:bg-green-600 text-white p-3 rounded-lg font-semibold"
+              onClick={() => handleCalculatorInput('000')}
+              className="bg-gray-800 hover:bg-gray-900 text-white p-3 rounded-lg font-bold text-sm shadow-md border border-gray-600"
             >
-              =
+              000
             </button>
-          </div>
+            <button
+              onClick={() => handleCalculatorInput('.')}
+              className="bg-gray-800 hover:bg-gray-900 text-white p-3 rounded-lg font-bold text-xl shadow-md border border-gray-600"
+            >
+              •
+            </button>
 
           {/* Add Button */}
           <button
