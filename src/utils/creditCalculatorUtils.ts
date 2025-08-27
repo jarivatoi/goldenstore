@@ -118,6 +118,7 @@ export const processCalculatorInput = (
   let newCalculationSteps = [...calculationSteps];
   let autoReplayActive = false;
   let newArticleCount = articleCount;
+  let pendingOperandExpression = ''; // Track compound expressions like "3×5"
 
   // Handle error state
   if (currentValue === 'Error' && !['ON/C', 'AC', 'C'].includes(input)) {
@@ -421,21 +422,17 @@ export const processCalculatorInput = (
     // If there's a pending operation, execute it first
     if (newLastOperation && newLastOperand !== null && !newIsNewNumber) {
       let result = 0;
-      let operationExpression = '';
       
       switch (newLastOperation) {
         case '+':
           result = newLastOperand + currentNum;
-          operationExpression = `${newLastOperand} + ${currentNum}`;
           break;
         case '-':
           result = newLastOperand - currentNum;
-          operationExpression = `${newLastOperand} - ${currentNum}`;
           break;
         case '*':
         case '×':
           result = newLastOperand * currentNum;
-          operationExpression = `${newLastOperand} × ${currentNum}`;
           break;
         case '/':
         case '÷':
@@ -456,37 +453,41 @@ export const processCalculatorInput = (
             };
           }
           result = newLastOperand / currentNum;
-          operationExpression = `${newLastOperand} ÷ ${currentNum}`;
           break;
         default:
           result = currentNum;
-          operationExpression = currentNum.toString();
       }
       
-      // Add the intermediate calculation step
-      newCalculationSteps.push({
-        expression: operationExpression,
-        result: result,
-        timestamp: Date.now(),
-        stepNumber: newCalculationSteps.length + 1,
-        operationType: 'operation',
-        displayValue: `${input}${currentNum}`
-      });
+      // Update the last step to show the compound expression
+      if (newCalculationSteps.length > 0) {
+        const lastStep = newCalculationSteps[newCalculationSteps.length - 1];
+        // Build compound expression like "3×5"
+        const operatorSymbol = newLastOperation === '*' ? '×' : newLastOperation === '/' ? '÷' : newLastOperation;
+        lastStep.displayValue = `${lastStep.displayValue.replace(/^[+\-×÷]/, '')}${operatorSymbol}${currentNum}`;
+        lastStep.result = result;
+      }
       
       newValue = result.toString();
       newLastOperand = result;
     } else {
-      // First number entry - save as step
-      if (!newIsNewNumber && newCalculationSteps.length === 0) {
+      // Starting a new operand - create step for current number
+      if (!newIsNewNumber) {
+        const operatorSymbol = input === '*' ? '×' : input === '/' ? '÷' : input;
         newCalculationSteps.push({
-          expression: currentNum.toString(),
+          expression: `${currentNum}`,
           result: currentNum,
           timestamp: Date.now(),
           stepNumber: newCalculationSteps.length + 1,
-          operationType: 'number',
-          displayValue: currentNum.toString()
+          operationType: newCalculationSteps.length === 0 ? 'number' : 'operation',
+          displayValue: newCalculationSteps.length === 0 ? currentNum.toString() : `${operatorSymbol}${currentNum}`
         });
-        newArticleCount = 1; // First article
+        
+        // Increment article count for new operand
+        if (newCalculationSteps.length === 1) {
+          newArticleCount = 1; // First article
+        } else {
+          newArticleCount++; // New article for each new operand
+        }
       }
       newLastOperand = currentNum;
     }
@@ -507,17 +508,8 @@ export const processCalculatorInput = (
   } else if (['0', '00', '000', '1', '2', '3', '4', '5', '6', '7', '8', '9'].includes(input)) {
     // Number input
     if (newIsNewNumber || currentValue === '0') {
-      // Starting a new number entry
-      if (newIsNewNumber) {
-        // If this is the very first number (no steps yet), start article count
-        if (newCalculationSteps.length === 0) {
-          newArticleCount = 1;
-        }
-        // If we're starting a new number after an operation, increment article count
-        else if (newLastOperation) {
-          newArticleCount++;
-        }
-      }
+      // Starting a new number - don't increment article count here
+      // Article count is handled in operation logic
       newValue = input;
       newIsNewNumber = false;
     } else {
