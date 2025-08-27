@@ -128,6 +128,9 @@ const ScrollingTabs: React.FC<ScrollingTabsProps> = ({
         return;
       }
       
+      // Get current position of the content
+      const currentX = gsap.getProperty(content, "x") as number;
+      
       // Calculate total distance including container width gap
       const totalDistance = contentWidth + containerWidth;
       const duration = totalDistance / 60; // 60px per second for comfortable viewing speed
@@ -137,6 +140,7 @@ const ScrollingTabs: React.FC<ScrollingTabsProps> = ({
         contentWidth,
         totalDistance,
         duration
+        currentX
       });
       
       // Create timeline and pause it before draggable setup
@@ -148,12 +152,13 @@ const ScrollingTabs: React.FC<ScrollingTabsProps> = ({
         overwrite: "auto"
       });
       
+      // Start timeline from current position instead of container width
       timelineRef.current
         .fromTo(content, 
-          { x: containerWidth },
+          { x: currentX },
           { 
             x: -contentWidth,
-            duration: duration,
+            duration: duration * ((currentX + contentWidth) / totalDistance), // Adjust duration based on remaining distance
             ease: "none",
             immediateRender: false
           })
@@ -285,7 +290,7 @@ const ScrollingTabs: React.FC<ScrollingTabsProps> = ({
           
           // Recreate timeline at current position
           setupContinuousScroll();
-          console.log('🔄 New timeline created at current position');
+          console.log('🔄 New timeline created from current drag position');
           
           console.log('▶️ Timeline resumed after throw complete');
         }
