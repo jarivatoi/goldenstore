@@ -69,7 +69,8 @@ export const processCalculatorInput = (
   grandTotal: number = 0,
   lastOperation: string | null = null,
   lastOperand: number | null = null,
-  isNewNumber: boolean = false
+  isNewNumber: boolean = false,
+  transactionHistory: number[] = []
 ): { 
   value: string; 
   memory: number; 
@@ -78,6 +79,8 @@ export const processCalculatorInput = (
   lastOperand: number | null;
   isNewNumber: boolean;
   isActive: boolean;
+  transactionHistory: number[];
+  autoReplayActive: boolean;
 } => {
   let newValue = currentValue;
   let newMemory = memory;
@@ -86,6 +89,8 @@ export const processCalculatorInput = (
   let newLastOperand = lastOperand;
   let newIsNewNumber = isNewNumber;
   let isActive = true;
+  let newTransactionHistory = [...transactionHistory];
+  let autoReplayActive = false;
 
   // Handle error state
   if (currentValue === 'Error' && !['ON/C', 'AC', 'C'].includes(input)) {
@@ -96,7 +101,9 @@ export const processCalculatorInput = (
       lastOperation: newLastOperation,
       lastOperand: newLastOperand,
       isNewNumber: newIsNewNumber,
-      isActive: true
+      isActive: true,
+      transactionHistory: newTransactionHistory,
+      autoReplayActive: false
     };
   }
 
@@ -115,6 +122,7 @@ export const processCalculatorInput = (
     newLastOperation = null;
     newLastOperand = null;
     newIsNewNumber = true;
+    newTransactionHistory = [];
     isActive = false;
   } else if (input === 'AC') {
     // All Clear - same as ON/C
@@ -124,6 +132,7 @@ export const processCalculatorInput = (
     newLastOperation = null;
     newLastOperand = null;
     newIsNewNumber = true;
+    newTransactionHistory = [];
     isActive = false;
   } else if (input === 'CE') {
     // Clear Entry - only clear display
@@ -166,9 +175,34 @@ export const processCalculatorInput = (
     newValue = newGrandTotal.toString();
     newIsNewNumber = true;
   } else if (input === 'AUTO') {
-    // Auto mode - for now, just show current value
-    // In real calculators, this affects decimal point behavior
-    newValue = currentValue;
+    // AUTO REPLAY - replay transaction history one by one
+    if (newTransactionHistory.length > 0) {
+      autoReplayActive = true;
+      // Start replay from first transaction
+      newValue = newTransactionHistory[0].toString();
+      newIsNewNumber = true;
+    } else {
+      // No history to replay
+      newValue = currentValue;
+    }
+  } else if (input === 'CHECK→') {
+    // Check forward - move to next transaction in history
+    if (newTransactionHistory.length > 0) {
+      const currentIndex = newTransactionHistory.findIndex(val => val.toString() === currentValue);
+      const nextIndex = (currentIndex + 1) % newTransactionHistory.length;
+      newValue = newTransactionHistory[nextIndex].toString();
+      newIsNewNumber = true;
+      autoReplayActive = true;
+    }
+  } else if (input === 'CHECK←') {
+    // Check backward - move to previous transaction in history
+    if (newTransactionHistory.length > 0) {
+      const currentIndex = newTransactionHistory.findIndex(val => val.toString() === currentValue);
+      const prevIndex = currentIndex <= 0 ? newTransactionHistory.length - 1 : currentIndex - 1;
+      newValue = newTransactionHistory[prevIndex].toString();
+      newIsNewNumber = true;
+      autoReplayActive = true;
+    }
   } else if (input === '%') {
     // Percentage calculation
     const currentNum = getCurrentNumber();
@@ -218,7 +252,9 @@ export const processCalculatorInput = (
                 lastOperation: null,
                 lastOperand: null,
                 isNewNumber: true,
-                isActive: true
+                isActive: true,
+                transactionHistory: newTransactionHistory,
+                autoReplayActive: false
               };
             }
             result = newLastOperand / currentNum;
@@ -229,6 +265,10 @@ export const processCalculatorInput = (
         
         // Add to grand total
         newGrandTotal += result;
+        
+        // Add to transaction history
+        newTransactionHistory.push(result);
+        
         newValue = result.toString();
         newLastOperation = null;
         newLastOperand = null;
@@ -237,6 +277,9 @@ export const processCalculatorInput = (
         // No pending operation, add current number to grand total
         const currentNum = getCurrentNumber();
         newGrandTotal += currentNum;
+        
+        // Add to transaction history
+        newTransactionHistory.push(currentNum);
       }
     } catch {
       newValue = 'Error';
@@ -331,6 +374,8 @@ export const processCalculatorInput = (
     lastOperation: newLastOperation,
     lastOperand: newLastOperand,
     isNewNumber: newIsNewNumber,
-    isActive 
+    isActive,
+    transactionHistory: newTransactionHistory,
+    autoReplayActive
   };
 };

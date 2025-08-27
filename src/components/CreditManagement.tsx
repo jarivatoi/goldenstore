@@ -37,6 +37,8 @@ const CreditManagement: React.FC = () => {
   const [lastOperation, setLastOperation] = useState<string | null>(null);
   const [lastOperand, setLastOperand] = useState<number | null>(null);
   const [isNewNumber, setIsNewNumber] = useState(true);
+  const [transactionHistory, setTransactionHistory] = useState<number[]>([]);
+  const [autoReplayActive, setAutoReplayActive] = useState(false);
   const [selectedClient, setSelectedClient] = useState<Client | null>(null);
   const [showClientSearch, setShowClientSearch] = useState(false);
   const [isCalculatorActive, setIsCalculatorActive] = useState(false);
@@ -552,7 +554,8 @@ const CreditManagement: React.FC = () => {
       calculatorGrandTotal,
       lastOperation,
       lastOperand,
-      isNewNumber
+      isNewNumber,
+      transactionHistory
     );
     setCalculatorValue(result.value);
     setCalculatorMemory(result.memory);
@@ -560,6 +563,8 @@ const CreditManagement: React.FC = () => {
     setLastOperation(result.lastOperation);
     setLastOperand(result.lastOperand);
     setIsNewNumber(result.isNewNumber);
+    setTransactionHistory(result.transactionHistory);
+    setAutoReplayActive(result.autoReplayActive);
     setIsCalculatorActive(result.isActive);
   };
 
@@ -575,6 +580,8 @@ const CreditManagement: React.FC = () => {
     setLastOperation(null);
     setLastOperand(null);
     setIsNewNumber(true);
+    setTransactionHistory([]);
+    setAutoReplayActive(false);
     setIsCalculatorActive(false);
   };
 
@@ -585,6 +592,8 @@ const CreditManagement: React.FC = () => {
     setLastOperation(null);
     setLastOperand(null);
     setIsNewNumber(true);
+    setTransactionHistory([]);
+    setAutoReplayActive(false);
     setIsCalculatorActive(false);
     setLinkedClient(null);
     setShowClientSearch(false);
@@ -597,6 +606,8 @@ const CreditManagement: React.FC = () => {
     setLastOperation(null);
     setLastOperand(null);
     setIsNewNumber(true);
+    setTransactionHistory([]);
+    setAutoReplayActive(false);
     setIsCalculatorActive(false);
     setShowClientSearch(false);
   };
@@ -657,6 +668,8 @@ const CreditManagement: React.FC = () => {
       setLastOperation(null);
       setLastOperand(null);
       setIsNewNumber(true);
+      setTransactionHistory([]);
+      setAutoReplayActive(false);
       setIsCalculatorActive(false);
       setShowClientSearch(false);
       setLinkedClient(null);
@@ -835,6 +848,12 @@ const CreditManagement: React.FC = () => {
                   {calculatorGrandTotal !== 0 && (
                     <span className="text-green-400 font-bold">GT</span>
                   )}
+                  {autoReplayActive && (
+                    <span className="text-yellow-400 font-bold">AUTO</span>
+                  )}
+                  {transactionHistory.length > 0 && (
+                    <span className="text-blue-400 font-bold">HIST</span>
+                  )}
                 </div>
                 <div className="text-gray-400 font-mono">
                   {lastOperation && <span>OP: {lastOperation === '*' ? '×' : lastOperation === '/' ? '÷' : lastOperation}</span>}
@@ -855,13 +874,31 @@ const CreditManagement: React.FC = () => {
               
               {/* Secondary Display */}
               <div className="text-xs text-gray-400 font-mono mt-1 text-center">
-                Electronic Calculator
+                {autoReplayActive ? `Transaction ${transactionHistory.findIndex(val => val.toString() === calculatorValue) + 1}/${transactionHistory.length}` : 'Electronic Calculator'}
               </div>
             </div>
           </div>
 
           {/* Calculator Buttons */}
-          <div className="grid grid-cols-6 gap-2 mb-6 p-4 bg-gray-100 rounded-lg border-2 border-gray-300">
+          <div className="grid grid-cols-6 gap-2 mb-6 p-4 bg-gray-200 rounded-lg border-2 border-gray-400 shadow-inner">
+            {/* Row 0 - Top row: CHECK←, CHECK→ */}
+            <div className="col-span-6 grid grid-cols-2 gap-2 mb-2">
+              <button
+                onClick={() => handleCalculatorInput('CHECK←')}
+                disabled={transactionHistory.length === 0}
+                className="bg-purple-400 hover:bg-purple-500 disabled:bg-gray-300 disabled:text-gray-500 text-white p-2 rounded-lg font-bold text-sm shadow-md border border-purple-500"
+              >
+                CHECK←
+              </button>
+              <button
+                onClick={() => handleCalculatorInput('CHECK→')}
+                disabled={transactionHistory.length === 0}
+                className="bg-purple-400 hover:bg-purple-500 disabled:bg-gray-300 disabled:text-gray-500 text-white p-2 rounded-lg font-bold text-sm shadow-md border border-purple-500"
+              >
+                CHECK→
+              </button>
+            </div>
+
             {/* Row 1 - Top row: MU, MRC, M-, M+, ON/C, AUTO */}
             <button
               onClick={() => handleCalculatorInput('MU')}
