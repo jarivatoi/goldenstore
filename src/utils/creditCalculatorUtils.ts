@@ -474,6 +474,6 @@ export const processCalculatorInput = (
     isActive,
     transactionHistory: newTransactionHistory,
     calculationSteps: newCalculationSteps,
-    autoReplayActive
+            isActive: true,
   };
 };
