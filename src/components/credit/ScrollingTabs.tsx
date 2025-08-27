@@ -139,11 +139,11 @@ const ScrollingTabs: React.FC<ScrollingTabsProps> = ({
         duration
       });
       
-      // Create truly seamless infinite timeline
+      // Create timeline and pause it before draggable setup
       timelineRef.current = gsap.timeline({ 
         repeat: -1, 
         ease: "none",
-        paused: false,
+        paused: true, // Start paused to prevent draggable interference
         immediateRender: true,
         overwrite: "auto"
       });
@@ -164,6 +164,9 @@ const ScrollingTabs: React.FC<ScrollingTabsProps> = ({
           ease: "none",
           repeat: -1
         }, ">");
+      
+      // Now resume the timeline after it's fully configured
+      timelineRef.current.timeScale(1).resume();
       
       console.log('✅ Timeline created and should be running');
     });
@@ -245,7 +248,7 @@ const ScrollingTabs: React.FC<ScrollingTabsProps> = ({
         onDragStart: function() {
           console.log('🎯 Drag started - pausing timeline');
           if (timelineRef.current && !timelineRef.current.paused()) {
-            // Properly pause timeline and store timeScale
+            // Pause timeline properly before drag
             timelineRef.current.pause();
             console.log('⏸️ Timeline paused for drag');
           } else {
@@ -262,7 +265,7 @@ const ScrollingTabs: React.FC<ScrollingTabsProps> = ({
         onDragEnd: function() {
           console.log('🎯 Drag ended - checking timeline state');
           if (timelineRef.current && timelineRef.current.paused()) {
-            // Properly resume with timeScale management
+            // Resume timeline with proper timeScale management to prevent jumps
             timelineRef.current.timeScale(timelineRef.current.timeScale() || 0.001).resume();
             console.log('▶️ Timeline resumed after drag end');
           } else {
@@ -272,8 +275,10 @@ const ScrollingTabs: React.FC<ScrollingTabsProps> = ({
         },
         onThrowComplete: function() {
           console.log('🎯 Throw completed - ensuring timeline is running');
-          // Ensure smooth resume with timeScale management
+          // Use proper timeScale management to prevent abrupt jumps
           if (timelineRef.current) {
+            timelineRef.current.timeScale(timelineRef.current.timeScale() || 0.001).resume();
+          }
             timelineRef.current.timeScale(timelineRef.current.timeScale() || 0.001).resume();
           }
           console.log('▶️ Timeline resumed after throw complete');
@@ -715,7 +720,7 @@ const ScrollingTabs: React.FC<ScrollingTabsProps> = ({
               });
               
               if (timelineRef.current && timelineRef.current.paused()) {
-                // Properly resume with timeScale management to avoid jumps
+                // Resume with proper timeScale management to prevent jumps
                 timelineRef.current.timeScale(timelineRef.current.timeScale() || 0.001).resume();
                 console.log('✅ Timeline resumed after Action Modal close');
                 
@@ -808,7 +813,7 @@ const ScrollingTabs: React.FC<ScrollingTabsProps> = ({
               });
               
               if (timelineRef.current && timelineRef.current.paused()) {
-                // Properly resume with timeScale management to avoid jumps
+                // Resume with proper timeScale management to prevent jumps
                 timelineRef.current.timeScale(timelineRef.current.timeScale() || 0.001).resume();
                 console.log('✅ Timeline resumed after Detail Modal close');
                 
