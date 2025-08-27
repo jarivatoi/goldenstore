@@ -347,6 +347,8 @@ const ScrollingTabs: React.FC<ScrollingTabsProps> = ({
         onThrowComplete: function() {
           console.log('🎯 Throw completed - ensuring timeline is running');
           // Use proper timeScale management to prevent abrupt jumps
+          // Force normal scroll speed after throw
+          forceScrollSpeed(1);
           if (timelineRef.current) {
             timelineRef.current.timeScale(timelineRef.current.timeScale() || 0.001).resume();
           }
