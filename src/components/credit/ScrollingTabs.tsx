@@ -270,15 +270,8 @@ const ScrollingTabs: React.FC<ScrollingTabsProps> = ({
         },
         onThrowComplete: function() {
           console.log('🎯 Throw completed - ensuring timeline is running');
-          if (timelineRef.current && timelineRef.current.paused()) {
-            timelineRef.current.resume();
-            console.log('▶️ Timeline resumed after throw complete');
-          } else if (timelineRef.current && !timelineRef.current.paused()) {
-            console.log('✅ Timeline already running after throw');
-          } else {
-            console.log('❌ No timeline after throw - recreating...');
-            setupContinuousScroll();
-          }
+          timelineRef.current?.resume();
+          console.log('▶️ Timeline resumed after throw complete');
         }
       });
     });
