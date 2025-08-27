@@ -19,6 +19,15 @@ interface CalculatorState {
 }
 
 /**
+ * Calculation step interface for tracking intermediate steps
+ */
+interface CalculationStep {
+  expression: string;
+  result: number;
+  timestamp: number;
+}
+
+/**
  * Initialize calculator state
  */
 export const initCalculatorState = (): CalculatorState => ({
@@ -70,7 +79,8 @@ export const processCalculatorInput = (
   lastOperation: string | null = null,
   lastOperand: number | null = null,
   isNewNumber: boolean = false,
-  transactionHistory: number[] = []
+  transactionHistory: number[] = [],
+  calculationSteps: CalculationStep[] = []
 ): { 
   value: string; 
   memory: number; 
@@ -80,6 +90,7 @@ export const processCalculatorInput = (
   isNewNumber: boolean;
   isActive: boolean;
   transactionHistory: number[];
+  calculationSteps: CalculationStep[];
   autoReplayActive: boolean;
 } => {
   let newValue = currentValue;
@@ -90,6 +101,7 @@ export const processCalculatorInput = (
   let newIsNewNumber = isNewNumber;
   let isActive = true;
   let newTransactionHistory = [...transactionHistory];
+  let newCalculationSteps = [...calculationSteps];
   let autoReplayActive = false;
 
   // Handle error state
@@ -103,6 +115,7 @@ export const processCalculatorInput = (
       isNewNumber: newIsNewNumber,
       isActive: true,
       transactionHistory: newTransactionHistory,
+      calculationSteps: newCalculationSteps,
       autoReplayActive: false
     };
   }
@@ -123,6 +136,7 @@ export const processCalculatorInput = (
     newLastOperand = null;
     newIsNewNumber = true;
     newTransactionHistory = [];
+    newCalculationSteps = [];
     isActive = false;
   } else if (input === 'AC') {
     // All Clear - same as ON/C
@@ -133,6 +147,7 @@ export const processCalculatorInput = (
     newLastOperand = null;
     newIsNewNumber = true;
     newTransactionHistory = [];
+    newCalculationSteps = [];
     isActive = false;
   } else if (input === 'CE') {
     // Clear Entry - only clear display
@@ -176,10 +191,10 @@ export const processCalculatorInput = (
     newIsNewNumber = true;
   } else if (input === 'AUTO') {
     // AUTO REPLAY - replay transaction history one by one
-    if (newTransactionHistory.length > 0) {
+    if (newCalculationSteps.length > 0) {
       autoReplayActive = true;
-      // Start replay from first transaction
-      newValue = newTransactionHistory[0].toString();
+      // Start replay from first calculation step
+      newValue = newCalculationSteps[0].expression;
       newIsNewNumber = true;
     } else {
       // No history to replay
@@ -187,19 +202,39 @@ export const processCalculatorInput = (
     }
   } else if (input === 'CHECK→') {
     // Check forward - move to next transaction in history
-    if (newTransactionHistory.length > 0) {
-      const currentIndex = newTransactionHistory.findIndex(val => val.toString() === currentValue);
-      const nextIndex = (currentIndex + 1) % newTransactionHistory.length;
-      newValue = newTransactionHistory[nextIndex].toString();
+    if (newCalculationSteps.length > 0) {
+      // Find current step by expression or result
+      let currentIndex = newCalculationSteps.findIndex(step => 
+        step.expression === currentValue || step.result.toString() === currentValue
+      );
+      
+      // If not found, start from beginning
+      if (currentIndex === -1) currentIndex = -1;
+      
+      const nextIndex = (currentIndex + 1) % newCalculationSteps.length;
+      const nextStep = newCalculationSteps[nextIndex];
+      
+      // Show the calculation expression, not just the result
+      newValue = nextStep.expression;
       newIsNewNumber = true;
       autoReplayActive = true;
     }
   } else if (input === 'CHECK←') {
     // Check backward - move to previous transaction in history
-    if (newTransactionHistory.length > 0) {
-      const currentIndex = newTransactionHistory.findIndex(val => val.toString() === currentValue);
-      const prevIndex = currentIndex <= 0 ? newTransactionHistory.length - 1 : currentIndex - 1;
-      newValue = newTransactionHistory[prevIndex].toString();
+    if (newCalculationSteps.length > 0) {
+      // Find current step by expression or result
+      let currentIndex = newCalculationSteps.findIndex(step => 
+        step.expression === currentValue || step.result.toString() === currentValue
+      );
+      
+      // If not found, start from end
+      if (currentIndex === -1) currentIndex = newCalculationSteps.length;
+      
+      const prevIndex = currentIndex <= 0 ? newCalculationSteps.length - 1 : currentIndex - 1;
+      const prevStep = newCalculationSteps[prevIndex];
+      
+      // Show the calculation expression, not just the result
+      newValue = prevStep.expression;
       newIsNewNumber = true;
       autoReplayActive = true;
     }
@@ -233,13 +268,28 @@ export const processCalculatorInput = (
         switch (newLastOperation) {
           case '+':
             result = newLastOperand + currentNum;
+            newCalculationSteps.push({
+              expression: `${newLastOperand} + ${currentNum}`,
+              result: result,
+              timestamp: Date.now()
+            });
             break;
           case '-':
             result = newLastOperand - currentNum;
+            newCalculationSteps.push({
+              expression: `${newLastOperand} - ${currentNum}`,
+              result: result,
+              timestamp: Date.now()
+            });
             break;
           case '*':
           case '×':
             result = newLastOperand * currentNum;
+            newCalculationSteps.push({
+              expression: `${newLastOperand} × ${currentNum}`,
+              result: result,
+              timestamp: Date.now()
+            });
             break;
           case '/':
           case '÷':
@@ -253,14 +303,26 @@ export const processCalculatorInput = (
                 lastOperand: null,
                 isNewNumber: true,
                 isActive: true,
+                calculationSteps: newCalculationSteps,
                 transactionHistory: newTransactionHistory,
+                calculationSteps: newCalculationSteps,
                 autoReplayActive: false
               };
             }
             result = newLastOperand / currentNum;
+            newCalculationSteps.push({
+              expression: `${newLastOperand} ÷ ${currentNum}`,
+              result: result,
+              timestamp: Date.now()
+            });
             break;
           default:
             result = currentNum;
+            newCalculationSteps.push({
+              expression: currentNum.toString(),
+              result: result,
+              timestamp: Date.now()
+            });
         }
         
         // Add to grand total
@@ -276,6 +338,11 @@ export const processCalculatorInput = (
       } else {
         // No pending operation, add current number to grand total
         const currentNum = getCurrentNumber();
+        newCalculationSteps.push({
+          expression: currentNum.toString(),
+          result: currentNum,
+          timestamp: Date.now()
+        });
         newGrandTotal += currentNum;
         
         // Add to transaction history
@@ -376,6 +443,7 @@ export const processCalculatorInput = (
     isNewNumber: newIsNewNumber,
     isActive,
     transactionHistory: newTransactionHistory,
+    calculationSteps: newCalculationSteps,
     autoReplayActive
   };
 };

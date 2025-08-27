@@ -38,6 +38,7 @@ const CreditManagement: React.FC = () => {
   const [lastOperand, setLastOperand] = useState<number | null>(null);
   const [isNewNumber, setIsNewNumber] = useState(true);
   const [transactionHistory, setTransactionHistory] = useState<number[]>([]);
+  const [calculationSteps, setCalculationSteps] = useState<Array<{expression: string, result: number, timestamp: number}>>([]);
   const [autoReplayActive, setAutoReplayActive] = useState(false);
   const [selectedClient, setSelectedClient] = useState<Client | null>(null);
   const [showClientSearch, setShowClientSearch] = useState(false);
@@ -83,6 +84,7 @@ const CreditManagement: React.FC = () => {
       // If the current linked client no longer meets the filter condition, unlink it
       if (linkedClient && !newTabClients.find(c => c.id === linkedClient.id)) {
         setLinkedClient(null);
+        setCalculationSteps([]);
         setCalculatorValue('0');
         setIsCalculatorActive(false);
       }
@@ -555,7 +557,8 @@ const CreditManagement: React.FC = () => {
       lastOperation,
       lastOperand,
       isNewNumber,
-      transactionHistory
+      transactionHistory,
+      calculationSteps
     );
     setCalculatorValue(result.value);
     setCalculatorMemory(result.memory);
@@ -564,6 +567,7 @@ const CreditManagement: React.FC = () => {
     setLastOperand(result.lastOperand);
     setIsNewNumber(result.isNewNumber);
     setTransactionHistory(result.transactionHistory);
+    setCalculationSteps(result.calculationSteps);
     setAutoReplayActive(result.autoReplayActive);
     setIsCalculatorActive(result.isActive);
   };
@@ -581,6 +585,7 @@ const CreditManagement: React.FC = () => {
     setLastOperand(null);
     setIsNewNumber(true);
     setTransactionHistory([]);
+    setCalculationSteps([]);
     setAutoReplayActive(false);
     setIsCalculatorActive(false);
   };
@@ -593,6 +598,7 @@ const CreditManagement: React.FC = () => {
     setLastOperand(null);
     setIsNewNumber(true);
     setTransactionHistory([]);
+    setCalculationSteps([]);
     setAutoReplayActive(false);
     setIsCalculatorActive(false);
     setLinkedClient(null);
@@ -607,6 +613,7 @@ const CreditManagement: React.FC = () => {
     setLastOperand(null);
     setIsNewNumber(true);
     setTransactionHistory([]);
+    setCalculationSteps([]);
     setAutoReplayActive(false);
     setIsCalculatorActive(false);
     setShowClientSearch(false);
@@ -851,7 +858,7 @@ const CreditManagement: React.FC = () => {
                   {autoReplayActive && (
                     <span className="text-yellow-400 font-bold">AUTO</span>
                   )}
-                  {transactionHistory.length > 0 && (
+                  {calculationSteps.length > 0 && (
                     <span className="text-blue-400 font-bold">HIST</span>
                   )}
                 </div>
@@ -874,7 +881,12 @@ const CreditManagement: React.FC = () => {
               
               {/* Secondary Display */}
               <div className="text-xs text-gray-400 font-mono mt-1 text-center">
-                {autoReplayActive ? `Transaction ${transactionHistory.findIndex(val => val.toString() === calculatorValue) + 1}/${transactionHistory.length}` : 'Electronic Calculator'}
+                {autoReplayActive ? (() => {
+                  const currentIndex = calculationSteps.findIndex(step => 
+                    step.expression === calculatorValue || step.result.toString() === calculatorValue
+                  );
+                  return `Step ${currentIndex + 1}/${calculationSteps.length}`;
+                })() : 'Electronic Calculator'}
               </div>
             </div>
           </div>
@@ -885,14 +897,14 @@ const CreditManagement: React.FC = () => {
             <div className="col-span-6 grid grid-cols-2 gap-2 mb-2">
               <button
                 onClick={() => handleCalculatorInput('CHECK←')}
-                disabled={transactionHistory.length === 0}
+                disabled={calculationSteps.length === 0}
                 className="bg-purple-400 hover:bg-purple-500 disabled:bg-gray-300 disabled:text-gray-500 text-white p-2 rounded-lg font-bold text-sm shadow-md border border-purple-500"
               >
                 CHECK←
               </button>
               <button
                 onClick={() => handleCalculatorInput('CHECK→')}
-                disabled={transactionHistory.length === 0}
+                disabled={calculationSteps.length === 0}
                 className="bg-purple-400 hover:bg-purple-500 disabled:bg-gray-300 disabled:text-gray-500 text-white p-2 rounded-lg font-bold text-sm shadow-md border border-purple-500"
               >
                 CHECK→
