@@ -469,29 +469,20 @@ export const processCalculatorInput = (
             displayValue: currentNum.toString()
           });
           newArticleCount = 1; // First article
-        }
-      }
-      newLastOperand = currentNum;
-    }
-    
-    // Set new operation
-    newLastOperation = input === '×' ? '*' : input === '÷' ? '/' : input;
-    newIsNewNumber = true;
-    isActive = true;
-        newCalculationSteps.push({
-          expression: `${currentNum}`,
-          result: currentNum,
-          timestamp: Date.now(),
-          stepNumber: newCalculationSteps.length + 1,
-          operationType: newCalculationSteps.length === 0 ? 'number' : 'operation',
-          displayValue: newCalculationSteps.length === 0 ? currentNum.toString() : `${operatorSymbol}${currentNum}`
-        });
-        
-        // Increment article count for new operand
-        if (newCalculationSteps.length === 1) {
-          newArticleCount = 1; // First article
         } else {
-          newArticleCount++; // New article for each new operand
+          // Add current number as operation step
+          const operatorSymbol = input === '*' ? '×' : input === '/' ? '÷' : input;
+          newCalculationSteps.push({
+            expression: `${currentNum}`,
+            result: currentNum,
+            timestamp: Date.now(),
+            stepNumber: newCalculationSteps.length + 1,
+            operationType: 'operation',
+            displayValue: `${operatorSymbol}${currentNum}`
+          });
+          
+          // Increment article count for new operand
+          newArticleCount++;
         }
       }
       newLastOperand = currentNum;
