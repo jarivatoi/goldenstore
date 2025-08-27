@@ -147,6 +147,9 @@ export class AutomaticBackupManager {
       // Clear any pending offline backups
       this.clearOfflineBackupQueue();
       
+      // Clear any previous errors since backup was successful
+      this.clearLastError();
+      
       console.log('✅ Automatic backup completed successfully');
       
     } catch (error) {
@@ -376,6 +379,17 @@ export class AutomaticBackupManager {
       localStorage.setItem('lastBackupError', error);
     } catch (err) {
       console.warn('Failed to save backup error:', err);
+    }
+  }
+
+  /**
+   * Clear last error
+   */
+  private clearLastError(): void {
+    try {
+      localStorage.removeItem('lastBackupError');
+    } catch (err) {
+      console.warn('Failed to clear backup error:', err);
     }
   }
 
