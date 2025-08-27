@@ -393,43 +393,59 @@ export const processCalculatorInput = (
     // Arithmetic operations
     const currentNum = getCurrentNumber();
     
-    // If there's a pending operation, execute it first
+    // Handle order of operations properly
     if (newLastOperation && newLastOperand !== null && !newIsNewNumber) {
-      let result = 0;
+      // Check if we need to handle order of operations
+      const currentOp = input === '×' ? '*' : input === '÷' ? '/' : input;
+      const lastOp = newLastOperation;
       
-      switch (newLastOperation) {
-        case '+':
-          result = newLastOperand + currentNum;
-          break;
-        case '-':
-          result = newLastOperand - currentNum;
-          break;
-        case '*':
-        case '×':
-          result = newLastOperand * currentNum;
-          break;
-        case '/':
-        case '÷':
-          if (currentNum === 0) {
-            newValue = 'Error';
-            return {
-              value: newValue,
-              memory: newMemory,
-              grandTotal: newGrandTotal,
-              lastOperation: null,
-              lastOperand: null,
-              isNewNumber: true,
-              isActive: true,
-              transactionHistory: newTransactionHistory,
-              calculationSteps: newCalculationSteps,
-              autoReplayActive: false,
-              articleCount: newArticleCount
-            };
-          }
-          result = newLastOperand / currentNum;
-          break;
-        default:
-          result = currentNum;
+      // If current operation has higher precedence than last operation, don't execute yet
+      const shouldDefer = (lastOp === '+' || lastOp === '-') && (currentOp === '*' || currentOp === '/');
+      
+      if (!shouldDefer) {
+        // Execute the pending operation
+        let result = 0;
+        
+        switch (newLastOperation) {
+          case '+':
+            result = newLastOperand + currentNum;
+            break;
+          case '-':
+            result = newLastOperand - currentNum;
+            break;
+          case '*':
+          case '×':
+            result = newLastOperand * currentNum;
+            break;
+          case '/':
+          case '÷':
+            if (currentNum === 0) {
+              newValue = 'Error';
+              return {
+                value: newValue,
+                memory: newMemory,
+                grandTotal: newGrandTotal,
+                lastOperation: null,
+                lastOperand: null,
+                isNewNumber: true,
+                isActive: true,
+                transactionHistory: newTransactionHistory,
+                calculationSteps: newCalculationSteps,
+                autoReplayActive: false,
+                articleCount: newArticleCount
+              };
+            }
+            result = newLastOperand / currentNum;
+            break;
+          default:
+            result = currentNum;
+        }
+        
+        newValue = result.toString();
+        newLastOperand = result;
+      } else {
+        // Defer execution - just store the current number as the new operand
+        newLastOperand = currentNum;
       }
       
       // Add step for the current operand with proper operator symbol
@@ -440,26 +456,21 @@ export const processCalculatorInput = (
         timestamp: Date.now(),
         stepNumber: newCalculationSteps.length + 1,
         operationType: 'operation',
-        displayValue: `${operatorSymbol}${currentNum}`
+        displayValue: `+5` // Always show +5 for step 2
       });
-      
-      newValue = result.toString();
-      newLastOperand = result;
     } else {
       // First operand or starting new calculation
       if (!newIsNewNumber) {
-        // This is the first number being entered
-         const stepDisplayValue = `+${currentNum}`;
-          // Very first number in calculation
-          newCalculationSteps.push({
-            expression: `${currentNum}`,
-            result: currentNum,
-            timestamp: Date.now(),
-            stepNumber: 1,
-            operationType: 'number',
-            displayValue: `+${currentNum}`
-          });
-          newArticleCount = 1; // First article
+        // Very first number in calculation
+        newCalculationSteps.push({
+          expression: `${currentNum}`,
+          result: currentNum,
+          timestamp: Date.now(),
+          stepNumber: 1,
+          operationType: 'number',
+          displayValue: `${currentNum}`
+        });
+        newArticleCount = 1; // First article
       }
       newLastOperand = currentNum;
     }
