@@ -9,6 +9,7 @@ import ClientDetailModal from '../ClientDetailModal';
 import { useCredit } from '../../context/CreditContext';
 import AlternatingText from '../AlternatingText';
 import FlipCard from './FlipCard';
+
 // Register GSAP plugins
 gsap.registerPlugin(Draggable);
 
@@ -243,6 +244,61 @@ const ScrollingTabs: React.FC<ScrollingTabsProps> = ({
           overwrite: false
         });
       
+    });
+  }, []);
+
+  const getFilterLabel = () => {
+    switch (clientFilter) {
+      case 'returnables':
+        return 'Clients with Returnables';
+      case 'overdue':
+        return 'Overdue Clients';
+      case 'overlimit':
+        return 'Over Limit Clients';
+      default:
+        return 'All Clients';
+    }
+  };
+
+  const handleTabClick = (client: Client) => {
+    console.log('🎯 Tab clicked for client:', client.name);
+    console.log('📊 Timeline state before pause:', {
+      exists: !!timelineRef.current,
+      isActive: timelineRef.current?.isActive(),
+      paused: timelineRef.current?.paused(),
+      progress: timelineRef.current?.progress()
+    });
+    
+    // Pause the timeline
+    if (timelineRef.current) {
+      timelineRef.current.pause();
+      console.log('⏸️ Timeline paused successfully');
+    } else {
+      console.log('❌ No timeline to pause');
+    }
+    
+    // Add click animation
+    setClickedTabId(client.id);
+    
+    // Show action modal
+    setSelectedClientForAction(client);
+  };
+  // Handle long press to show client details
+
+  return (
+    <>
+    <div className="bg-white rounded-lg shadow-sm border border-gray-200">
+      {/* Header */}
+      <div className="p-3 border-b border-gray-200">
+        <div className="flex items-center justify-between">
+          <h3 className="text-sm font-medium text-gray-700">
+            {getFilterLabel()}
+          </h3>
+          <span className="text-xs text-gray-500 bg-gray-100 px-2 py-1 rounded-full">
+            {sortedClients.length} client{sortedClients.length !== 1 ? 's' : ''}
+          </span>
+        </div>
+      </div>
       // Create draggable instance with updated bounds
       draggableRef.current = Draggable.create(content, {
         type: "x",
@@ -291,6 +347,10 @@ const ScrollingTabs: React.FC<ScrollingTabsProps> = ({
             console.log('❌ No timeline after throw - recreating...');
             setupContinuousScroll();
           }
+        }
+      });
+    });
+  }, [sortedClients.length]);
 
   // Setup animation when clients change
   useEffect(() => {
