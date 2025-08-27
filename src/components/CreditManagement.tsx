@@ -40,6 +40,7 @@ const CreditManagement: React.FC = () => {
   const [transactionHistory, setTransactionHistory] = useState<number[]>([]);
   const [calculationSteps, setCalculationSteps] = useState<Array<{expression: string, result: number, timestamp: number}>>([]);
   const [autoReplayActive, setAutoReplayActive] = useState(false);
+  const [articleCount, setArticleCount] = useState(0);
   const [selectedClient, setSelectedClient] = useState<Client | null>(null);
   const [showClientSearch, setShowClientSearch] = useState(false);
   const [isCalculatorActive, setIsCalculatorActive] = useState(false);
@@ -558,7 +559,8 @@ const CreditManagement: React.FC = () => {
       lastOperand,
       isNewNumber,
       transactionHistory,
-      calculationSteps
+      calculationSteps,
+      articleCount
     );
     setCalculatorValue(result.value);
     setCalculatorMemory(result.memory);
@@ -569,6 +571,7 @@ const CreditManagement: React.FC = () => {
     setTransactionHistory(result.transactionHistory);
     setCalculationSteps(result.calculationSteps);
     setAutoReplayActive(result.autoReplayActive);
+    setArticleCount(result.articleCount);
     setIsCalculatorActive(result.isActive);
   };
 
@@ -587,6 +590,7 @@ const CreditManagement: React.FC = () => {
     setTransactionHistory([]);
     setCalculationSteps([]);
     setAutoReplayActive(false);
+    setArticleCount(0);
     setIsCalculatorActive(false);
   };
 
@@ -600,6 +604,7 @@ const CreditManagement: React.FC = () => {
     setTransactionHistory([]);
     setCalculationSteps([]);
     setAutoReplayActive(false);
+    setArticleCount(0);
     setIsCalculatorActive(false);
     setLinkedClient(null);
     setShowClientSearch(false);
@@ -615,6 +620,7 @@ const CreditManagement: React.FC = () => {
     setTransactionHistory([]);
     setCalculationSteps([]);
     setAutoReplayActive(false);
+    setArticleCount(0);
     setIsCalculatorActive(false);
     setShowClientSearch(false);
   };
@@ -677,6 +683,7 @@ const CreditManagement: React.FC = () => {
       setIsNewNumber(true);
       setTransactionHistory([]);
       setAutoReplayActive(false);
+      setArticleCount(0);
       setIsCalculatorActive(false);
       setShowClientSearch(false);
       setLinkedClient(null);
@@ -849,6 +856,12 @@ const CreditManagement: React.FC = () => {
               {/* Status Indicators */}
               <div className="flex justify-between items-center mb-2 text-xs">
                 <div className="flex gap-2">
+                  {/* Article Count Circle */}
+                  {articleCount > 0 && (
+                    <div className="bg-blue-500 text-white rounded-full w-6 h-6 flex items-center justify-center text-xs font-bold">
+                      {articleCount}
+                    </div>
+                  )}
                   {calculatorMemory !== 0 && (
                     <span className="text-green-400 font-bold">M</span>
                   )}

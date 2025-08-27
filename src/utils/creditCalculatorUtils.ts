@@ -31,16 +31,25 @@ interface CalculationStep {
 }
 
 /**
+ * Article count state interface
+ */
+interface ArticleCountState {
+  count: number;
+  hasCurrentArticle: boolean;
+}
+
+/**
  * Initialize calculator state
  */
-export const initCalculatorState = (): CalculatorState => ({
+export const initCalculatorState = (): CalculatorState & { articleCount: number } => ({
   display: '0',
   memory: 0,
   grandTotal: 0,
   lastOperation: null,
   lastOperand: null,
   isNewNumber: true,
-  isError: false
+  isError: false,
+  articleCount: 0
 });
 
 /**
@@ -83,7 +92,8 @@ export const processCalculatorInput = (
   lastOperand: number | null = null,
   isNewNumber: boolean = false,
   transactionHistory: number[] = [],
-  calculationSteps: CalculationStep[] = []
+  calculationSteps: CalculationStep[] = [],
+  articleCount: number = 0
 ): { 
   value: string; 
   memory: number; 
@@ -95,6 +105,7 @@ export const processCalculatorInput = (
   transactionHistory: number[];
   calculationSteps: CalculationStep[];
   autoReplayActive: boolean;
+  articleCount: number;
 } => {
   let newValue = currentValue;
   let newMemory = memory;
@@ -106,6 +117,7 @@ export const processCalculatorInput = (
   let newTransactionHistory = [...transactionHistory];
   let newCalculationSteps = [...calculationSteps];
   let autoReplayActive = false;
+  let newArticleCount = articleCount;
 
   // Handle error state
   if (currentValue === 'Error' && !['ON/C', 'AC', 'C'].includes(input)) {
@@ -140,6 +152,7 @@ export const processCalculatorInput = (
     newIsNewNumber = true;
     newTransactionHistory = [];
     newCalculationSteps = [];
+    newArticleCount = 0;
     isActive = false;
   } else if (input === 'AC') {
     // All Clear - same as ON/C
@@ -151,6 +164,7 @@ export const processCalculatorInput = (
     newIsNewNumber = true;
     newTransactionHistory = [];
     newCalculationSteps = [];
+    newArticleCount = 0;
     isActive = false;
   } else if (input === 'CE') {
     // Clear Entry - only clear display
@@ -344,7 +358,9 @@ export const processCalculatorInput = (
               timestamp: Date.now(),
               stepNumber: newCalculationSteps.length + 1,
               operationType: 'number',
-              displayValue: currentNum.toString()
+            autoReplayActive: false,
+            autoReplayActive: false,
+            articleCount: newArticleCount
             });
         }
         
@@ -353,6 +369,9 @@ export const processCalculatorInput = (
         
         // Add to transaction history
         newTransactionHistory.push(result);
+        
+        // Increment article count when = is pressed
+        newArticleCount++;
         
         newValue = result.toString();
         newLastOperation = null;
@@ -370,6 +389,9 @@ export const processCalculatorInput = (
           displayValue: currentNum.toString()
         });
         newGrandTotal += currentNum;
+        
+        // Increment article count when = is pressed
+        newArticleCount++;
         
         // Add to transaction history
         newTransactionHistory.push(currentNum);
@@ -442,6 +464,9 @@ export const processCalculatorInput = (
     } else {
       // Save the current number as a step when starting a new operation
       if (!newIsNewNumber) {
+        // Increment article count when starting a new operation (+ pressed)
+        newArticleCount++;
+        
         newCalculationSteps.push({
           expression: currentNum.toString(),
           result: currentNum,
@@ -470,6 +495,10 @@ export const processCalculatorInput = (
   } else if (['0', '00', '000', '1', '2', '3', '4', '5', '6', '7', '8', '9'].includes(input)) {
     // Number input
     if (newIsNewNumber || currentValue === '0') {
+      // Starting a new number entry - increment article count if this is the first digit
+      if (newIsNewNumber && newArticleCount === 0) {
+        newArticleCount = 1; // First article
+      }
       newValue = input;
       newIsNewNumber = false;
     } else {
@@ -499,7 +528,9 @@ export const processCalculatorInput = (
     isActive,
     transactionHistory: newTransactionHistory,
     calculationSteps: newCalculationSteps,
-            isActive: true,
+    autoReplayActive,
+    articleCount: newArticleCount
+    articleCount: newArticleCount
   };
 };
 
