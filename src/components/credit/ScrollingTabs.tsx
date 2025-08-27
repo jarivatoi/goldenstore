@@ -197,11 +197,6 @@ const ScrollingTabs: React.FC<ScrollingTabsProps> = ({
       return;
     }
     
-    // Prevent multiple timeline creation
-    if (timelineRef.current && timelineRef.current.isActive()) {
-      return;
-    }
-    
     // Kill any existing timeline before creating new one
     if (timelineRef.current) {
       timelineRef.current.kill();
@@ -212,18 +207,30 @@ const ScrollingTabs: React.FC<ScrollingTabsProps> = ({
       const containerWidth = container.offsetWidth;
       const contentWidth = content.scrollWidth;
       
+      // Only create timeline if content is wider than container
+      if (contentWidth <= containerWidth) {
+        console.log('📏 Content fits in container, no scrolling needed');
+        return;
+      }
+      
       // Calculate total distance including container width gap
       const totalDistance = contentWidth + containerWidth;
-      const duration = totalDistance / 80; // 80px per second for comfortable viewing speed
+      const duration = totalDistance / 60; // 60px per second for comfortable viewing speed
       
+      console.log('🎬 Creating new timeline:', {
+        containerWidth,
+        contentWidth,
+        totalDistance,
+        duration
+      });
       
       // Create truly seamless infinite timeline
       timelineRef.current = gsap.timeline({ 
         repeat: -1, 
         ease: "none",
-        paused: false,
+        paused: false, // Start immediately
         immediateRender: true,
-        overwrite: false // Don't let other animations overwrite this
+        overwrite: "auto" // Allow proper overwriting
       });
       
       timelineRef.current
@@ -233,19 +240,20 @@ const ScrollingTabs: React.FC<ScrollingTabsProps> = ({
             x: -contentWidth, // Exit to left
             duration: duration,
             ease: "none",
-            overwrite: false // Prevent external interference
+            immediateRender: false
           })
-        .set(content, { x: containerWidth }) // Instantly jump back to start
+        .set(content, { x: containerWidth }, ">") // Instantly jump back to start
         .to(content, {
           x: -contentWidth,
           duration: duration,
           ease: "none",
-          repeat: -1, // Infinite seamless loop
-          overwrite: false
-        });
+          repeat: -1 // Infinite seamless loop
+        }, ">");
+      
+      console.log('✅ Timeline created and should be running');
       
     });
-  }, []);
+  }, [sortedClients.length]);
 
   const getFilterLabel = () => {
     switch (clientFilter) {
@@ -324,9 +332,11 @@ const ScrollingTabs: React.FC<ScrollingTabsProps> = ({
         lockAxis: true, // Lock to horizontal axis only
         onDragStart: function() {
           console.log('🎯 Drag started - pausing timeline');
-          if (timelineRef.current && !timelineRef.current.paused()) {
+          if (timelineRef.current) {
             timelineRef.current.pause();
             console.log('⏸️ Timeline paused for drag');
+          } else {
+            console.log('❌ No timeline to pause during drag start');
           }
         },
         onDrag: function() {
@@ -334,20 +344,18 @@ const ScrollingTabs: React.FC<ScrollingTabsProps> = ({
         },
         onDragEnd: function() {
           console.log('🎯 Drag ended - checking timeline state');
-          if (timelineRef.current && timelineRef.current.paused()) {
+          if (timelineRef.current) {
             timelineRef.current.resume();
             console.log('▶️ Timeline resumed after drag end');
+          } else {
+            console.log('❌ No timeline to resume after drag end');
           }
         },
         onThrowComplete: function() {
           console.log('🎯 Throw completed - ensuring timeline is running');
           if (timelineRef.current) {
-            if (timelineRef.current.paused()) {
-              timelineRef.current.resume();
-              console.log('▶️ Timeline resumed after throw complete');
-            } else {
-              console.log('✅ Timeline already running after throw');
-            }
+            timelineRef.current.resume();
+            console.log('▶️ Timeline resumed after throw complete');
           } else {
             console.log('❌ No timeline after throw - recreating...');
             setupContinuousScroll();
@@ -359,18 +367,18 @@ const ScrollingTabs: React.FC<ScrollingTabsProps> = ({
 
   // Setup animation when clients change
   useEffect(() => {
-    // Only setup once when clients are first loaded
-    if (!timelineRef.current && sortedClients.length > 0) {
-      // Remove timeout to prevent timing issues
+    // Setup timeline when clients change
+    if (sortedClients.length > 0) {
+      console.log('👥 Clients changed, setting up timeline');
       setupContinuousScroll();
+    } else {
+      console.log('👥 No clients, killing timeline');
+      if (timelineRef.current) {
+        timelineRef.current.kill();
+        timelineRef.current = null;
+      }
     }
-    
-    // Only clean up if clients are truly gone for a longer period
-    if (sortedClients.length === 0) {
-      // Don't kill timeline immediately - let it continue running
-      // Only kill if clients are gone for a very long time
-    }
-  }, [sortedClients.length]); // Remove setupContinuousScroll dependency to prevent re-triggering
+  }, [sortedClients.length, setupContinuousScroll]);
 
   // Cleanup on unmount
   useEffect(() => {
