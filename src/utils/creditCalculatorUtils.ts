@@ -460,7 +460,6 @@ export const processCalculatorInput = (
             displayValue: `+${currentNum}`
           });
           newArticleCount = 1; // First article
-        }
       }
       newLastOperand = currentNum;
     }
