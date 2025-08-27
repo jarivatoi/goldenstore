@@ -317,7 +317,7 @@ const ScrollingTabs: React.FC<ScrollingTabsProps> = ({
         inertia: true,
         dragResistance: 0.5, // Normal resistance for dragging
         throwResistance: 1000, // Lower value = more throw, higher = less throw
-        throwResistance: 0.001, // Much more momentum for natural feel
+        throwResistance: 300, // Balanced momentum - not too much, not too little
         minDuration: 0.1,
         overshootTolerance: 0, // No overshooting
         force3D: true,
