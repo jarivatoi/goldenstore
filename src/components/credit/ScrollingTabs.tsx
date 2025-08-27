@@ -260,18 +260,30 @@ const ScrollingTabs: React.FC<ScrollingTabsProps> = ({
         },
         onDragEnd: function() {
           console.log('🎯 Drag ended - checking timeline state');
-          if (timelineRef.current && timelineRef.current.paused()) {
-            timelineRef.current.resume();
-            console.log('▶️ Timeline resumed after drag end');
-          } else {
-            console.log('▶️ Timeline not paused or missing after drag end');
+          // Reset position and recreate timeline since drag displaced it
+          const content = contentRef.current;
+          if (content && timelineRef.current) {
+            gsap.set(content, { x: containerRef.current?.offsetWidth || 0 });
+            timelineRef.current.kill();
+            timelineRef.current = null;
+            setupContinuousScroll();
+            console.log('🔄 Timeline reset and recreated after drag');
           }
           setIsDragging(false);
         },
         onThrowComplete: function() {
           console.log('🎯 Throw completed - ensuring timeline is running');
-          timelineRef.current?.resume();
-          console.log('▶️ Timeline resumed after throw complete');
+          // Reset position and recreate timeline after throw
+          const content = contentRef.current;
+          if (content) {
+            gsap.set(content, { x: containerRef.current?.offsetWidth || 0 });
+            if (timelineRef.current) {
+              timelineRef.current.kill();
+              timelineRef.current = null;
+            }
+            setupContinuousScroll();
+            console.log('🔄 Timeline reset and recreated after throw');
+          }
         }
       });
     });
