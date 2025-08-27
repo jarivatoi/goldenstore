@@ -143,20 +143,34 @@ const ScrollingTabs: React.FC<ScrollingTabsProps> = ({
         currentX
       });
       
-      // Create timeline and pause it before draggable setup
+      // Create timeline with onRepeat callback to kill and recreate
       timelineRef.current = gsap.timeline({ 
         repeat: -1, 
         ease: "none",
-        paused: true, // Start paused to prevent draggable interference
+        paused: true,
         immediateRender: true,
-        overwrite: "auto"
+        overwrite: "auto",
+        onRepeat: () => {
+          console.log('🔄 Timeline loop detected - killing and recreating');
+          
+          // Kill current timeline
+          if (timelineRef.current) {
+            timelineRef.current.kill();
+            timelineRef.current = null;
+          }
+          
+          // Recreate timeline from container width (start of loop)
+          setTimeout(() => {
+            setupContinuousScroll();
+          }, 50);
+        }
       });
       
-      // Create proper scrolling animation from current position
+      // Create scrolling animation from current position
       timelineRef.current
         .to(content, {
           x: -contentWidth,
-          duration: duration * ((currentX + contentWidth) / totalDistance), // Adjust duration based on remaining distance
+          duration: duration * ((currentX + contentWidth) / totalDistance),
           ease: "none",
           immediateRender: false
         })
@@ -164,11 +178,10 @@ const ScrollingTabs: React.FC<ScrollingTabsProps> = ({
         .to(content, {
           x: -contentWidth,
           duration: duration,
-          ease: "none",
-          repeat: -1
+          ease: "none"
         });
       
-      // Now resume the timeline after it's fully configured
+      // Resume timeline
       timelineRef.current.timeScale(1).resume();
       
       console.log('✅ Timeline created and should be running');
