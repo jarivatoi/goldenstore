@@ -449,7 +449,7 @@ export const processCalculatorInput = (
       // First operand or starting new calculation
       if (!newIsNewNumber) {
         // This is the first number being entered
-        if (newCalculationSteps.length === 0) {
+         const stepDisplayValue = `+${currentNum}`;
           // Very first number in calculation
           newCalculationSteps.push({
             expression: `${currentNum}`,
