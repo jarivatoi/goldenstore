@@ -976,6 +976,7 @@ const CreditManagement: React.FC = () => {
             >
               •
             </button>
+          </div>
 
           {/* Add Button */}
           <button
