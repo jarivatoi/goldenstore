@@ -27,6 +27,7 @@ interface CalculationStep {
   timestamp: number;
   stepNumber: number;
   operationType: 'number' | 'operation' | 'result';
+  displayValue: string; // What should be shown in display during CHECK
 }
 
 /**
@@ -195,9 +196,14 @@ export const processCalculatorInput = (
     // AUTO REPLAY - replay transaction history one by one
     if (newCalculationSteps.length > 0) {
       autoReplayActive = true;
-      // Start replay from first calculation step
-      newValue = newCalculationSteps[0].expression;
+      // Start auto-replay sequence
+      newValue = newCalculationSteps[0].displayValue;
       newIsNewNumber = true;
+      
+      // Start the auto-replay sequence with timing
+      setTimeout(() => {
+        startAutoReplaySequence(newCalculationSteps);
+      }, 100);
     } else {
       // No history to replay
       newValue = currentValue;
@@ -205,9 +211,9 @@ export const processCalculatorInput = (
   } else if (input === 'CHECK→') {
     // Check forward - move to next transaction in history
     if (newCalculationSteps.length > 0) {
-      // Find current step by expression or result
+      // Find current step by display value
       let currentIndex = newCalculationSteps.findIndex(step => 
-        step.expression === currentValue || step.result.toString() === currentValue
+        step.displayValue === currentValue || step.result.toString() === currentValue
       );
       
       // If not found, start from beginning
@@ -216,17 +222,17 @@ export const processCalculatorInput = (
       const nextIndex = (currentIndex + 1) % newCalculationSteps.length;
       const nextStep = newCalculationSteps[nextIndex];
       
-      // Show the calculation expression, not just the result
-      newValue = nextStep.expression;
+      // Show the individual operand or operation
+      newValue = nextStep.displayValue;
       newIsNewNumber = true;
       autoReplayActive = true;
     }
   } else if (input === 'CHECK←') {
     // Check backward - move to previous transaction in history
     if (newCalculationSteps.length > 0) {
-      // Find current step by expression or result
+      // Find current step by display value
       let currentIndex = newCalculationSteps.findIndex(step => 
-        step.expression === currentValue || step.result.toString() === currentValue
+        step.displayValue === currentValue || step.result.toString() === currentValue
       );
       
       // If not found, start from end
@@ -235,8 +241,8 @@ export const processCalculatorInput = (
       const prevIndex = currentIndex <= 0 ? newCalculationSteps.length - 1 : currentIndex - 1;
       const prevStep = newCalculationSteps[prevIndex];
       
-      // Show the calculation expression, not just the result
-      newValue = prevStep.expression;
+      // Show the individual operand or operation
+      newValue = prevStep.displayValue;
       newIsNewNumber = true;
       autoReplayActive = true;
     }
@@ -273,7 +279,10 @@ export const processCalculatorInput = (
             newCalculationSteps.push({
               expression: `${newLastOperand} + ${currentNum}`,
               result: result,
-              timestamp: Date.now()
+              timestamp: Date.now(),
+              stepNumber: newCalculationSteps.length + 1,
+              operationType: 'operation',
+              displayValue: `+${currentNum}`
             });
             break;
           case '-':
@@ -281,7 +290,10 @@ export const processCalculatorInput = (
             newCalculationSteps.push({
               expression: `${newLastOperand} - ${currentNum}`,
               result: result,
-              timestamp: Date.now()
+              timestamp: Date.now(),
+              stepNumber: newCalculationSteps.length + 1,
+              operationType: 'operation',
+              displayValue: `-${currentNum}`
             });
             break;
           case '*':
@@ -290,7 +302,10 @@ export const processCalculatorInput = (
             newCalculationSteps.push({
               expression: `${newLastOperand} × ${currentNum}`,
               result: result,
-              timestamp: Date.now()
+              timestamp: Date.now(),
+              stepNumber: newCalculationSteps.length + 1,
+              operationType: 'operation',
+              displayValue: `×${currentNum}`
             });
             break;
           case '/':
@@ -315,7 +330,10 @@ export const processCalculatorInput = (
             newCalculationSteps.push({
               expression: `${newLastOperand} ÷ ${currentNum}`,
               result: result,
-              timestamp: Date.now()
+              timestamp: Date.now(),
+              stepNumber: newCalculationSteps.length + 1,
+              operationType: 'operation',
+              displayValue: `÷${currentNum}`
             });
             break;
           default:
@@ -323,7 +341,10 @@ export const processCalculatorInput = (
             newCalculationSteps.push({
               expression: currentNum.toString(),
               result: result,
-              timestamp: Date.now()
+              timestamp: Date.now(),
+              stepNumber: newCalculationSteps.length + 1,
+              operationType: 'number',
+              displayValue: currentNum.toString()
             });
         }
         
@@ -343,7 +364,10 @@ export const processCalculatorInput = (
         newCalculationSteps.push({
           expression: currentNum.toString(),
           result: currentNum,
-          timestamp: Date.now()
+          timestamp: Date.now(),
+          stepNumber: newCalculationSteps.length + 1,
+          operationType: 'number',
+          displayValue: currentNum.toString()
         });
         newGrandTotal += currentNum;
         
@@ -423,7 +447,8 @@ export const processCalculatorInput = (
           result: currentNum,
           timestamp: Date.now(),
           stepNumber: newCalculationSteps.length + 1,
-          operationType: 'number'
+          operationType: 'number',
+          displayValue: currentNum.toString()
         });
       }
       newLastOperand = currentNum;
@@ -476,4 +501,38 @@ export const processCalculatorInput = (
     calculationSteps: newCalculationSteps,
             isActive: true,
   };
+};
+
+/**
+ * Auto-replay sequence function
+ */
+const startAutoReplaySequence = (steps: CalculationStep[]): void => {
+  let currentStepIndex = 0;
+  
+  const showNextStep = () => {
+    if (currentStepIndex >= steps.length) {
+      // Restart from beginning
+      currentStepIndex = 0;
+    }
+    
+    const step = steps[currentStepIndex];
+    
+    // Update calculator display (this would need to be handled by the component)
+    // For now, we'll dispatch a custom event that the component can listen to
+    window.dispatchEvent(new CustomEvent('autoReplayStep', {
+      detail: {
+        step: step,
+        stepIndex: currentStepIndex,
+        totalSteps: steps.length
+      }
+    }));
+    
+    currentStepIndex++;
+    
+    // Schedule next step after 1 second
+    setTimeout(showNextStep, 1000);
+  };
+  
+  // Start the sequence
+  showNextStep();
 };
