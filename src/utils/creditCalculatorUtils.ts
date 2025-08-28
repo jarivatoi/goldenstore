@@ -315,6 +315,23 @@ export const processCalculatorInput = (
       localStorage.setItem('currentCheckIndex', currentStepIndex.toString());
       
       const currentStep = newCalculationSteps[currentStepIndex];
+      console.log('🔍 CHECK→ DETAILED DEBUG:', {
+        currentStepIndex,
+        totalSteps: newCalculationSteps.length,
+        currentStep: {
+          expression: currentStep.expression,
+          displayValue: currentStep.displayValue,
+          operationType: currentStep.operationType,
+          stepNumber: currentStep.stepNumber
+        },
+        allSteps: newCalculationSteps.map((step, idx) => ({
+          index: idx,
+          expression: step.expression,
+          displayValue: step.displayValue,
+          operationType: step.operationType
+        })),
+        willDisplay: currentStep.displayValue
+      });
       console.log('🔍 CHECK→ DEBUG:', {
         currentStepIndex,
         totalSteps: newCalculationSteps.length,
@@ -342,6 +359,23 @@ export const processCalculatorInput = (
       localStorage.setItem('currentCheckIndex', currentStepIndex.toString());
       
       const currentStep = newCalculationSteps[currentStepIndex];
+      console.log('🔍 CHECK← DETAILED DEBUG:', {
+        currentStepIndex,
+        totalSteps: newCalculationSteps.length,
+        currentStep: {
+          expression: currentStep.expression,
+          displayValue: currentStep.displayValue,
+          operationType: currentStep.operationType,
+          stepNumber: currentStep.stepNumber
+        },
+        allSteps: newCalculationSteps.map((step, idx) => ({
+          index: idx,
+          expression: step.expression,
+          displayValue: step.displayValue,
+          operationType: step.operationType
+        })),
+        willDisplay: currentStep.displayValue
+      });
       console.log('🔍 CHECK← DEBUG:', {
         currentStepIndex,
         totalSteps: newCalculationSteps.length,
