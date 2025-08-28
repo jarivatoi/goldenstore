@@ -386,16 +386,7 @@ export const processCalculatorInput = (
         })),
         willDisplay: currentStep.displayValue
       });
-      console.log('🔍 CHECK← DEBUG:', {
-        currentStepIndex,
-        totalSteps: newCalculationSteps.length,
-        currentStep: {
-          expression: currentStep.expression,
-          displayValue: currentStep.displayValue,
-          operationType: currentStep.operationType
-        },
-        willDisplay: currentStep.displayValue
-      });
+      console.log('🔍 CHECK← SETTING newValue to:', currentStep.displayValue);
       newValue = currentStep.displayValue; // Show the proper display value with operator
       newIsNewNumber = true;
       autoReplayActive = true;
