@@ -323,11 +323,12 @@ export const processCalculatorInput = (
       let currentStepIndex;
       
       if (storedIndex === null || storedIndex === '-1') {
-        // First time - start at index 0 (step 1/4)
+        // Very first CHECK→ after calculation - start at index 0 (step 1/4)
         currentStepIndex = 0;
       } else {
-        // Subsequent times - increment from current position
-        currentStepIndex = (parseInt(storedIndex) + 1) % newCalculationSteps.length;
+        // Subsequent CHECK→ presses - increment from current position
+        const currentIndex = parseInt(storedIndex);
+        currentStepIndex = (currentIndex + 1) % newCalculationSteps.length;
       }
       
       // Store current index
@@ -498,6 +499,9 @@ export const processCalculatorInput = (
       newLastOperation = null;
       newLastOperand = null;
       newIsNewNumber = true;
+      
+      // Clear check navigation index when calculation completes
+      localStorage.setItem('currentCheckIndex', '-1');
     } catch {
       newValue = 'Error';
       newLastOperation = null;
