@@ -357,11 +357,19 @@ export const processCalculatorInput = (
       // Update article count based on current step
       // Don't increment for result steps (those with '=')
       if (currentStep.operationType === 'result') {
-        // For result steps, keep the count from the previous operation step
-        newArticleCount = Math.max(1, currentStepIndex);
+        // For result steps, show the total count (don't increment)
+        const transactionSteps = newCalculationSteps.filter(step => 
+          step.operationType === 'operation' && 
+          (step.expression.startsWith('+') || step.expression.startsWith('-'))
+        );
+        newArticleCount = Math.max(1, transactionSteps.length + 1); // +1 for the first number
       } else {
-        // For number and operation steps, use step index + 1
-        newArticleCount = currentStepIndex + 1;
+        // Count only transaction operators (+ and -) up to current step
+        const transactionStepsUpToCurrent = newCalculationSteps.slice(0, currentStepIndex + 1).filter(step => 
+          step.operationType === 'operation' && 
+          (step.expression.startsWith('+') || step.expression.startsWith('-'))
+        );
+        newArticleCount = transactionStepsUpToCurrent.length + 1; // +1 for the first number
       }
       
       // Skip all number formatting for CHECK navigation
@@ -432,11 +440,19 @@ export const processCalculatorInput = (
       // Update article count based on current step
       // Don't increment for result steps (those with '=')
       if (currentStep.operationType === 'result') {
-        // For result steps, keep the count from the previous operation step
-        newArticleCount = Math.max(1, currentStepIndex);
+        // For result steps, show the total count (don't increment)
+        const transactionSteps = newCalculationSteps.filter(step => 
+          step.operationType === 'operation' && 
+          (step.expression.startsWith('+') || step.expression.startsWith('-'))
+        );
+        newArticleCount = Math.max(1, transactionSteps.length + 1); // +1 for the first number
       } else {
-        // For number and operation steps, use step index + 1
-        newArticleCount = currentStepIndex + 1;
+        // Count only transaction operators (+ and -) up to current step
+        const transactionStepsUpToCurrent = newCalculationSteps.slice(0, currentStepIndex + 1).filter(step => 
+          step.operationType === 'operation' && 
+          (step.expression.startsWith('+') || step.expression.startsWith('-'))
+        );
+        newArticleCount = transactionStepsUpToCurrent.length + 1; // +1 for the first number
       }
       
       // Skip all number formatting for CHECK navigation
