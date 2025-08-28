@@ -895,14 +895,11 @@ const CreditManagement: React.FC = () => {
               {/* Secondary Display */}
               <div className="text-xs text-gray-400 font-mono mt-1 text-center">
                 {autoReplayActive ? (() => {
-                  const currentStep = calculationSteps.find(step => 
-                    step.displayValue === calculatorValue
-                  );
-                  if (currentStep) {
-                    return `Step ${currentStep.stepNumber}/${calculationSteps.length} (${currentStep.operationType})`;
-                  } else {
-                    return `Step 1/${calculationSteps.length}`;
-                  }
+                  const currentStepIndex = parseInt(localStorage.getItem('currentCheckIndex') || '0');
+                  const actualStepNumber = currentStepIndex + 1; // Convert 0-based index to 1-based display
+                  const totalSteps = calculationSteps.length;
+                  const currentStep = calculationSteps[currentStepIndex];
+                  return `Step ${actualStepNumber}/${totalSteps} (${currentStep?.operationType || 'unknown'})`;
                 })() : 'Electronic Calculator'}
               </div>
             </div>

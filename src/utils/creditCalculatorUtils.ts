@@ -315,7 +315,7 @@ export const processCalculatorInput = (
       localStorage.setItem('currentCheckIndex', currentStepIndex.toString());
       
       const currentStep = newCalculationSteps[currentStepIndex];
-      newValue = currentStep.expression; // Show the actual expression, not just the number
+      newValue = currentStep.displayValue; // Show the proper display value with operator
       newIsNewNumber = true;
       autoReplayActive = true;
     }
@@ -332,7 +332,7 @@ export const processCalculatorInput = (
       localStorage.setItem('currentCheckIndex', currentStepIndex.toString());
       
       const currentStep = newCalculationSteps[currentStepIndex];
-      newValue = currentStep.expression; // Show the actual expression, not just the number
+      newValue = currentStep.displayValue; // Show the proper display value with operator
       newIsNewNumber = true;
       autoReplayActive = true;
     }
