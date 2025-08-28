@@ -376,7 +376,8 @@ export const processCalculatorInput = (
       let currentStepIndex = parseInt(localStorage.getItem('currentCheckIndex') || '0');
       
       // If no stored index (first CHECK← after calculation), start from the last step
-      if (currentStepIndex === -1) {
+      const storedIndex = localStorage.getItem('currentCheckIndex');
+      if (storedIndex === null || storedIndex === '-1') {
         currentStepIndex = newCalculationSteps.length - 1;
       } else {
         // Move to previous step (don't go below 0)
