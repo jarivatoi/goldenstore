@@ -888,24 +888,9 @@ const CreditManagement: React.FC = () => {
                   {calculatorGrandTotal !== 0 && (
                     <span className="text-green-400 font-bold">GT</span>
                   )}
-                  {autoReplayActive && (
-                    <span className="text-yellow-400 font-bold">AUTO</span>
-                  )}
-                  {calculationSteps.length > 0 && (
-                    <span className="text-blue-400 font-bold">HIST</span>
-                  )}
                 </div>
                 <div className="text-gray-400 font-mono">
                   {lastOperation && <span>OP: {lastOperation === '*' ? '×' : lastOperation === '/' ? '÷' : lastOperation}</span>}
-                </div>
-              </div>
-              
-              {/* Main Display */}
-              {calculatorMemory !== 0 && (
-                <div className="absolute top-2 left-3 text-xs text-green-400 font-bold">
-                  M
-                </div>
-              )}
               <div className="text-2xl sm:text-3xl font-mono text-green-400 min-h-[3rem] flex items-center justify-end overflow-hidden bg-black rounded px-3 py-2">
                 <div className="truncate max-w-full" title={calculatorValue}>
                   {calculatorValue}
@@ -918,9 +903,16 @@ const CreditManagement: React.FC = () => {
                   const currentStepIndex = parseInt(localStorage.getItem('currentCheckIndex') || '0');
                   const actualStepNumber = currentStepIndex + 1; // Convert 0-based index to 1-based display
                   const totalSteps = calculationSteps.length;
-                  const currentStep = calculationSteps[currentStepIndex];
-                  return `AUTO REPLAY - Step ${actualStepNumber}/${totalSteps}`;
-                })() : 'Electronic Calculator'}
+            <div className="text-2xl sm:text-3xl font-mono text-green-400 min-h-[3rem] flex items-center justify-between overflow-hidden bg-black rounded px-3 py-2">
+              {/* Article Count Circle - Left side */}
+              {articleCount > 0 && (
+                <div className="bg-blue-500 text-white rounded-full w-8 h-8 flex items-center justify-center text-sm font-bold flex-shrink-0">
+                  {articleCount}
+                </div>
+              )}
+              {/* Calculator Value - Right side */}
+              <div className="truncate max-w-full text-right flex-1" title={calculatorValue}>
+                {calculatorValue}
               </div>
             </div>
           </div>
