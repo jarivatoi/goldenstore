@@ -341,6 +341,7 @@ export const processCalculatorInput = (
         actualStepContent: JSON.stringify(currentStep)
       });
       newValue = currentStep.displayValue; // Show the proper display value with operator
+      console.log('🔍 CHECK→ SETTING newValue to:', newValue);
       newIsNewNumber = true;
       autoReplayActive = true;
     }

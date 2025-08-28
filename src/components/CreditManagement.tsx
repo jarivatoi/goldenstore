@@ -562,6 +562,12 @@ const CreditManagement: React.FC = () => {
       calculationSteps,
       articleCount
     );
+    console.log('🧮 Calculator input result:', {
+      input: value,
+      oldValue: calculatorValue,
+      newValue: result.value,
+      isCheckNavigation: value.includes('CHECK')
+    });
     setCalculatorValue(result.value);
     setCalculatorMemory(result.memory);
     setCalculatorGrandTotal(result.grandTotal);
