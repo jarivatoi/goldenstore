@@ -412,12 +412,20 @@ export const processCalculatorInput = (
     }
   } else if (['+', '-', '*', '×', '/', '÷'].includes(input)) {
     // Arithmetic operations
+    console.log('🔧 OPERATOR INPUT DEBUG:', {
+      input,
+      currentValue: newValue,
+      stepsLength: newCalculationSteps.length,
+      currentSteps: newCalculationSteps.map(s => ({ expression: s.expression, type: s.operationType }))
+    });
+    
     // When we get an operator, we need to:
     // 1. If this is the first operator, store the current value as the first operand
     // 2. Store the operator for the next number
     
     if (newCalculationSteps.length === 0) {
       // First number in calculation
+      console.log('🔧 Creating FIRST number step for operator:', newValue);
       newCalculationSteps.push({
         expression: newValue,
         result: parseFloat(newValue),
@@ -430,6 +438,11 @@ export const processCalculatorInput = (
     
     // Store the operator (convert display symbols to JS operators)
     newLastOperation = input === '×' ? '*' : input === '÷' ? '/' : input;
+    console.log('🔧 SET lastOperation:', {
+      input,
+      newLastOperation,
+      willWaitForNextNumber: true
+    });
     
     newIsNewNumber = true;
     isActive = true;
@@ -444,10 +457,20 @@ export const processCalculatorInput = (
     isActive = true;
   } else if (['0', '00', '000', '1', '2', '3', '4', '5', '6', '7', '8', '9'].includes(input)) {
     // Number input
+    console.log('🔢 NUMBER INPUT DEBUG:', {
+      input,
+      currentValue: newValue,
+      isNewNumber: newIsNewNumber,
+      lastOperation: newLastOperation,
+      stepsLength: newCalculationSteps.length,
+      currentSteps: newCalculationSteps.map(s => ({ expression: s.expression, type: s.operationType }))
+    });
+    
     if (newIsNewNumber || currentValue === '0') {
       // Starting a new number
       if (newCalculationSteps.length === 0) {
         // Very first number in calculation
+        console.log('🔢 Creating FIRST step:', input);
         newArticleCount = 1;
         newCalculationSteps.push({
           expression: input,
@@ -459,6 +482,11 @@ export const processCalculatorInput = (
         });
       } else if (newLastOperation && newIsNewNumber) {
         // New number after an operation - increment article count
+        console.log('🔢 Creating OPERATOR step:', {
+          lastOperation: newLastOperation,
+          input,
+          willCreate: `${newLastOperation === '*' ? '×' : newLastOperation === '/' ? '÷' : newLastOperation}${input}`
+        });
         newArticleCount++;
         // Create step for this number with the pending operation (display format)
         const displayOperator = newLastOperation === '*' ? '×' : 
@@ -476,28 +504,50 @@ export const processCalculatorInput = (
           displayValue: stepExpression
         });
         
-        console.log('🔢 Created operator step:', stepExpression);
+        console.log('🔢 CREATED operator step:', {
+          stepExpression,
+          stepNumber: newCalculationSteps.length,
+          operationType: 'operation',
+          allSteps: newCalculationSteps.map(s => s.expression)
+        });
       }
       newValue = input;
       newIsNewNumber = false;
     } else {
       // Continuing to build the same number
+      console.log('🔢 CONTINUING number build:', {
+        currentValue,
+        input,
+        willBecome: currentValue + input
+      });
       newValue = currentValue + input;
       
       // Update the last step's display value if we're building a multi-digit number
       if (newCalculationSteps.length > 0 && !newIsNewNumber) {
         const lastStep = newCalculationSteps[newCalculationSteps.length - 1];
+        console.log('🔢 UPDATING last step:', {
+          before: lastStep.displayValue,
+          operationType: lastStep.operationType,
+          newValue
+        });
         // Only update if this step has an operator (not the first step)
         if (lastStep.operationType === 'operation' && lastStep.displayValue.match(/^[+\-×÷]/)) {
           const operatorSymbol = lastStep.displayValue.charAt(0);
           lastStep.displayValue = `${operatorSymbol}${newValue}`;
           lastStep.expression = `${operatorSymbol}${newValue}`;
-          console.log('🔢 Updated multi-digit step:', lastStep.displayValue);
+          console.log('🔢 UPDATED multi-digit operator step:', {
+            operatorSymbol,
+            newDisplayValue: lastStep.displayValue,
+            newExpression: lastStep.expression
+          });
         } else {
           // First step - just update the number
           lastStep.displayValue = newValue;
           lastStep.expression = newValue;
-          console.log('🔢 Updated first step:', lastStep.displayValue);
+          console.log('🔢 UPDATED first step:', {
+            newDisplayValue: lastStep.displayValue,
+            newExpression: lastStep.expression
+          });
         }
       }
     }
