@@ -655,9 +655,8 @@ export const processCalculatorInput = (
       currentSteps: newCalculationSteps.map(s => ({ expression: s.expression, type: s.operationType }))
     });
     
-    // When we get an operator, we need to:
-    // 1. If this is the first operator, store the current value as the first operand
-    // 2. Store the operator for the next number
+    // Only + and - operators should increment article count (create new transactions)
+    const isTransactionOperator = input === '+' || input === '-';
     
     if (newCalculationSteps.length === 0) {
       // First number in calculation
@@ -665,7 +664,7 @@ export const processCalculatorInput = (
       newCalculationSteps.push({
         expression: newValue,
         result: parseFloat(newValue), // Store the complete number (1000)
-        result: parseFloat(newValue), // Use newValue instead of input to get full number
+        timestamp: Date.now(),
         stepNumber: 1,
         operationType: 'number',
         displayValue: newValue // This should be "1000"
@@ -723,13 +722,21 @@ export const processCalculatorInput = (
           displayValue: input
         });
       } else if (newLastOperation && newIsNewNumber) {
-        // New number after an operation - increment article count
+        // New number after an operation - only increment for + and - operators
+        const isTransactionOperator = newLastOperation === '+' || newLastOperation === '-';
+        
         console.log('🔢 Creating OPERATOR step:', {
           lastOperation: newLastOperation,
           input,
+          isTransactionOperator,
           willCreate: `${newLastOperation === '*' ? '×' : newLastOperation === '/' ? '÷' : newLastOperation}${input}`
         });
-        newArticleCount++;
+        
+        // Only increment article count for transaction operators (+ and -)
+        if (isTransactionOperator) {
+          newArticleCount++;
+        }
+        
         // Create step for this number with the pending operation (display format)
         const displayOperator = newLastOperation === '*' ? '×' : 
                                newLastOperation === '/' ? '÷' : 
