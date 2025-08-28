@@ -489,8 +489,17 @@ export const processCalculatorInput = (
         
         if (newLastOperation === '*' || newLastOperation === '/') {
           // This is a compound operation like 25 + 5 × 3
-          // We need to replace step 2 with the compound multiplication result
-          const multiplicationOperand = secondStep.result; // This should be 5
+          // Extract the operand from the addition step (the number after +)
+          let multiplicationOperand = secondStep.result; // This should be 5
+          
+          // If the second step is an addition like "+5", extract just the 5
+          if (secondStep.expression.startsWith('+') || secondStep.expression.startsWith('-')) {
+            const operandMatch = secondStep.expression.match(/[+-](\d+(?:\.\d+)?)/);
+            if (operandMatch) {
+              multiplicationOperand = parseFloat(operandMatch[1]);
+            }
+          }
+          
           const displayOperator = newLastOperation === '*' ? '×' : '÷';
           const multiplicationResult = newLastOperation === '*' 
             ? multiplicationOperand * currentNumber 
