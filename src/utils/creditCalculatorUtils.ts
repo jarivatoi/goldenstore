@@ -82,7 +82,7 @@ export const evaluateExpression = (expression: string): number => {
     return result;
   } catch {
     console.error('🧮 Expression evaluation failed for:', expression);
-    return 0;
+    setTimeout(showNextStep, 1000);
   }
 };
 
@@ -832,7 +832,7 @@ const startAutoReplaySequence = (steps: CalculationStep[]) => {
       
       // Schedule next step after 0.5 seconds
       if (currentStepIndex < steps.length) {
-        setTimeout(showNextStep, 500);
+        setTimeout(showNextStep, 1000);
       } else {
         // Replay complete - stop here
         console.log('🎬 AUTO replay completed');
