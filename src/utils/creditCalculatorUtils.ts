@@ -393,11 +393,66 @@ export const processCalculatorInput = (
     // Arithmetic operations
     const currentNum = getCurrentNumber();
     
-    // Store the current number as operand
-    newLastOperand = currentNum;
+    // Handle order of operations
+    if (newLastOperation && newLastOperand !== null) {
+      const currentOp = input === '×' ? '*' : input === '÷' ? '/' : input;
+      const lastOp = newLastOperation;
+      
+      // Check operator precedence
+      const currentPrecedence = (currentOp === '*' || currentOp === '/') ? 2 : 1;
+      const lastPrecedence = (lastOp === '*' || lastOp === '/') ? 2 : 1;
+      
+      if (lastPrecedence >= currentPrecedence) {
+        // Execute the previous operation first
+        let result = 0;
+        switch (lastOp) {
+          case '+':
+            result = newLastOperand + currentNum;
+            break;
+          case '-':
+            result = newLastOperand - currentNum;
+            break;
+          case '*':
+            result = newLastOperand * currentNum;
+            break;
+          case '/':
+            if (currentNum === 0) {
+              newValue = 'Error';
+              return {
+                value: newValue,
+                memory: newMemory,
+                grandTotal: newGrandTotal,
+                lastOperation: null,
+                lastOperand: null,
+                isNewNumber: true,
+                isActive: true,
+                transactionHistory: newTransactionHistory,
+                calculationSteps: newCalculationSteps,
+                autoReplayActive: false,
+                articleCount: newArticleCount
+              };
+            }
+            result = newLastOperand / currentNum;
+            break;
+          default:
+            result = currentNum;
+        }
+        
+        // Update display with intermediate result
+        newValue = result.toString();
+        newLastOperand = result;
+        newLastOperation = currentOp;
+      } else {
+        // Higher precedence operation - don't execute yet, just store
+        newLastOperand = currentNum;
+        newLastOperation = currentOp;
+      }
+    } else {
+      // First operation
+      newLastOperand = currentNum;
+      newLastOperation = input === '×' ? '*' : input === '÷' ? '/' : input;
+    }
     
-    // Set new operation
-    newLastOperation = input === '×' ? '*' : input === '÷' ? '/' : input;
     newIsNewNumber = true;
     isActive = true;
   } else if (input === '.') {
