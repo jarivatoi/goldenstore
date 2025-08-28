@@ -150,8 +150,12 @@ export const processCalculatorInput = (
       expression += convertedExpr;
     }
     
-    // If we have a pending operation and current value, add it
-    if (newLastOperation && !newIsNewNumber && newValue !== '0') {
+    // DON'T add current value if we already have it in steps
+    // Only add if we have a pending operation but no step for current number yet
+    const hasCurrentNumberInSteps = newCalculationSteps.length > 0 && 
+      newCalculationSteps[newCalculationSteps.length - 1].operationType === 'operation';
+    
+    if (newLastOperation && !newIsNewNumber && newValue !== '0' && !hasCurrentNumberInSteps) {
       const jsOperator = newLastOperation === '*' ? '*' :
                         newLastOperation === 'x' ? '*' :
                         newLastOperation === '÷' ? '/' : 
