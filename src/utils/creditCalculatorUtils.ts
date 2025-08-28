@@ -576,11 +576,16 @@ export const processCalculatorInput = (
       console.log('🔧 Creating FIRST number step for operator:', newValue);
       newCalculationSteps.push({
         expression: newValue,
-        result: parseFloat(newValue),
+        result: parseFloat(newValue), // This should store 1000, not 1
         timestamp: Date.now(),
         stepNumber: 1,
         operationType: 'number',
         displayValue: newValue
+      });
+      console.log('🔧 STORED first operand:', {
+        expression: newValue,
+        result: parseFloat(newValue),
+        shouldBe1000: parseFloat(newValue) === 1000
       });
     }
     
