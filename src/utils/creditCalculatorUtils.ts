@@ -528,9 +528,25 @@ export const processCalculatorInput = (
       newValue = input;
       newIsNewNumber = false;
     } else {
+      // Continuing to build the same number
       newValue = currentValue + input;
+      
+      // Update the last step's display value if we're building a multi-digit number
+      if (newCalculationSteps.length > 0 && newLastOperation && !newIsNewNumber) {
+        const lastStep = newCalculationSteps[newCalculationSteps.length - 1];
+        const operatorSymbol = newLastOperation === '*' ? '×' : 
+                             newLastOperation === '/' ? '÷' : 
+                             newLastOperation === '+' ? '+' :
+                             newLastOperation === '-' ? '-' :
+                             newLastOperation;
+        lastStep.displayValue = `${operatorSymbol}${newValue}`;
+        lastStep.expression = `${operatorSymbol}${newValue}`;
+      }
     }
     isActive = true;
+  } else {
+    // Handle any other input types that might exist
+    console.warn('Unhandled calculator input:', input);
   }
 
   // Format display value
