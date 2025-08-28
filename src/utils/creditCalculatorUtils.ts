@@ -129,16 +129,19 @@ export const processCalculatorInput = (
   const buildExpression = (): string => {
     let expression = '';
     
+    // Filter out result steps to avoid including '=' in expressions
+    const validSteps = newCalculationSteps.filter(step => step.operationType !== 'result');
+    
     // Start with the first number
-    if (newCalculationSteps.length > 0) {
-      expression = newCalculationSteps[0].expression;
+    if (validSteps.length > 0) {
+      expression = validSteps[0].expression;
     } else {
       expression = newValue;
     }
     
     // Add subsequent operations
-    for (let i = 1; i < newCalculationSteps.length; i++) {
-      const step = newCalculationSteps[i];
+    for (let i = 1; i < validSteps.length; i++) {
+      const step = validSteps[i];
       const stepExpr = step.expression;
       
       // Convert display operators to JavaScript operators
@@ -152,8 +155,8 @@ export const processCalculatorInput = (
     
     // DON'T add current value if we already have it in steps
     // Only add if we have a pending operation but no step for current number yet
-    const hasCurrentNumberInSteps = newCalculationSteps.length > 0 && 
-      newCalculationSteps[newCalculationSteps.length - 1].operationType === 'operation';
+    const hasCurrentNumberInSteps = validSteps.length > 0 && 
+      validSteps[validSteps.length - 1].operationType === 'operation';
     
     if (newLastOperation && !newIsNewNumber && newValue !== '0' && !hasCurrentNumberInSteps) {
       const jsOperator = newLastOperation === '*' ? '*' :
