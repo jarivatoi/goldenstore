@@ -532,22 +532,52 @@ export const processCalculatorInput = (
         
         if (newLastOperation === '*' || newLastOperation === '/') {
           // This is a compound operation like 25 + 5 × 3
-          // For compound operations, use the operand from the addition step
-          const multiplicationOperand = secondStep.result; // This should be 5
-          result = evaluateExpression(fullExpression);
+          // Get the operand from the second step (should be 5 for "25+5×3")
+          let multiplicationOperand = secondStep?.result || 0;
           
-          newCalculationSteps.push({
-            expression: `${displayOperator}${currentNumber}`,
-            result: currentNumber,
+          // If result is not available, try to extract from expression
+          if (multiplicationOperand === 0 && secondStep?.expression) {
+            const match = secondStep.expression.match(/[+-](\d+(?:\.\d+)?)/);
+            if (match) {
+              multiplicationOperand = parseFloat(match[1]);
+            }
+          }
+          
+          // Validate we have a valid operand
+          if (isNaN(multiplicationOperand) || multiplicationOperand === 0) {
+            throw new Error('Invalid multiplication operand');
+          }
+          
+          const displayOperator = newLastOperation === '*' ? '×' : '÷';
+          const multiplicationResult = newLastOperation === '*' 
+            ? multiplicationOperand * currentNumber 
+            : multiplicationOperand / currentNumber;
+          
+          // Validate multiplication result
+          if (isNaN(multiplicationResult) || !isFinite(multiplicationResult)) {
+            throw new Error('Invalid multiplication result');
+          }
+          
+          // Replace the second step with the compound operation
+          newCalculationSteps[1] = {
+            expression: `(${multiplicationOperand}${displayOperator}${currentNumber})=${multiplicationResult}`,
+            result: multiplicationResult,
             timestamp: Date.now(),
-            stepNumber: newCalculationSteps.length + 1,
+            stepNumber: 2,
             operationType: 'operation',
-            displayValue: `${displayOperator}${currentNumber}`
-          });
+            displayValue: `(${multiplicationOperand}${displayOperator}${currentNumber})=${multiplicationResult}`
+          };
           
-          newArticleCount = newCalculationSteps.filter(step => 
-            step.operationType === 'operation' && (step.expression.startsWith('+') || step.expression.startsWith('-'))
-          ).length + 1;
+          // Calculate final result: first number + multiplication result
+          const firstNumber = firstStep?.result || 0;
+          result = firstNumber + multiplicationResult;
+          
+          // Validate final result
+          if (isNaN(result) || !isFinite(result)) {
+            throw new Error('Invalid final result');
+          }
+          
+          newArticleCount = 2; // Keep only 2 steps
         }
       } else if (newCalculationSteps.length > 2 && newLastOperation && newValue !== '0') {
         // Complex case with multiple operations
