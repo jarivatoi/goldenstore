@@ -315,6 +315,16 @@ export const processCalculatorInput = (
       localStorage.setItem('currentCheckIndex', currentStepIndex.toString());
       
       const currentStep = newCalculationSteps[currentStepIndex];
+      console.log('🔍 CHECK→ DEBUG:', {
+        currentStepIndex,
+        totalSteps: newCalculationSteps.length,
+        currentStep: {
+          expression: currentStep.expression,
+          displayValue: currentStep.displayValue,
+          operationType: currentStep.operationType
+        },
+        willDisplay: currentStep.displayValue
+      });
       newValue = currentStep.displayValue; // Show the proper display value with operator
       newIsNewNumber = true;
       autoReplayActive = true;
@@ -332,6 +342,16 @@ export const processCalculatorInput = (
       localStorage.setItem('currentCheckIndex', currentStepIndex.toString());
       
       const currentStep = newCalculationSteps[currentStepIndex];
+      console.log('🔍 CHECK← DEBUG:', {
+        currentStepIndex,
+        totalSteps: newCalculationSteps.length,
+        currentStep: {
+          expression: currentStep.expression,
+          displayValue: currentStep.displayValue,
+          operationType: currentStep.operationType
+        },
+        willDisplay: currentStep.displayValue
+      });
       newValue = currentStep.displayValue; // Show the proper display value with operator
       newIsNewNumber = true;
       autoReplayActive = true;
@@ -501,13 +521,14 @@ export const processCalculatorInput = (
           timestamp: Date.now(),
           stepNumber: newCalculationSteps.length + 1,
           operationType: 'operation',
-          displayValue: stepExpression
+          displayValue: stepExpression // This should be "+5", "×3", etc.
         });
         
         console.log('🔢 CREATED operator step:', {
           stepExpression,
           stepNumber: newCalculationSteps.length,
           operationType: 'operation',
+          displayValue: stepExpression,
           allSteps: newCalculationSteps.map(s => s.expression)
         });
       }
