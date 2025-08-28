@@ -128,40 +128,38 @@ export const processCalculatorInput = (
   
   // Build expression string for proper order of operations
   const buildExpression = (): string => {
-    // For building expressions, we need to be more careful about how we combine steps
-    // The issue is that we're concatenating step expressions directly
+    // Build expression from calculation steps
+    let expression = '';
     
-    // If we have pending operation and current value, build simple expression
-    if (newLastOperation && newValue !== '0' && newCalculationSteps.length > 0) {
-      const firstStep = newCalculationSteps[0];
-      const operator = newLastOperation === '*' ? '*' : newLastOperation === '/' ? '/' : newLastOperation;
-      const expression = `${firstStep.result}${operator}${newValue}`;
-      console.log('🔧 Built expression (simple):', expression);
-      return expression;
-    }
-    
-    // For complex expressions, we need to reconstruct properly
     if (newCalculationSteps.length > 0) {
-      // Start with first number
-      let expression = newCalculationSteps[0].result.toString();
+      // Start with the first number
+      expression = newCalculationSteps[0].result.toString();
       
-      // Add subsequent operations
+      // Add each operation step
       for (let i = 1; i < newCalculationSteps.length; i++) {
         const step = newCalculationSteps[i];
-        if (step.operationType === 'operation' && !step.expression.includes('=')) {
-          // This is an operation step like "+5" or "×3"
-          const operator = step.expression.charAt(0);
-          const operand = step.expression.substring(1);
-          expression += operator + operand;
+        if (step.operationType === 'operation') {
+          // Extract operator and operand from step expression
+          const stepExpr = step.expression;
+          if (stepExpr.startsWith('+') || stepExpr.startsWith('-') || stepExpr.startsWith('×') || stepExpr.startsWith('÷')) {
+            const operator = stepExpr.charAt(0) === '×' ? '*' : stepExpr.charAt(0) === '÷' ? '/' : stepExpr.charAt(0);
+            const operand = stepExpr.substring(1);
+            expression += operator + operand;
+          }
         }
       }
       
-      console.log('🔧 Built expression (complex):', expression);
-      return expression;
+      // If we have a pending operation and current value, add it
+      if (newLastOperation && newValue !== '0' && newIsNewNumber === false) {
+        const operator = newLastOperation === '*' ? '*' : newLastOperation === '/' ? '/' : newLastOperation;
+        expression += operator + newValue;
+      }
+    } else {
+      expression = newValue;
     }
     
-    console.log('🔧 Built expression (fallback):', newValue);
-    return newValue;
+    console.log('🔧 Built expression:', expression);
+    return expression;
   };
 
   // Helper function to get the current expression for display
@@ -716,26 +714,7 @@ export const processCalculatorInput = (
           stepNumber: 1,
           operationType: 'number',
           displayValue: result.toString()
-        }];
-        
-      } catch (error) {
-        console.error('🔢 Intermediate calculation error:', error);
-        newValue = 'Error';
-        return {
-          value: newValue,
-          memory: newMemory,
-          grandTotal: newGrandTotal,
-          lastOperation: newLastOperation,
-          lastOperand: newLastOperand,
-          isNewNumber: newIsNewNumber,
-          isActive,
-          transactionHistory: newTransactionHistory,
-          calculationSteps: newCalculationSteps,
-          autoReplayActive,
-          articleCount: newArticleCount
-        };
-      }
-    } else if (newCalculationSteps.length === 0) {
+    if (newCalculationSteps.length === 0) {
       // First number in calculation
       console.log('🔢 Creating FIRST step for operator:', newValue);
       newArticleCount = 1;
@@ -746,6 +725,17 @@ export const processCalculatorInput = (
         stepNumber: 1,
         operationType: 'number',
         displayValue: newValue
+      });
+    } else if (!newIsNewNumber) {
+      // We just entered a number, add it as an operation step
+      const stepNumber = newCalculationSteps.length + 1;
+      newCalculationSteps.push({
+        expression: `${displayOperator}${newValue}`,
+        result: parseFloat(newValue),
+        timestamp: Date.now(),
+        stepNumber: stepNumber,
+        operationType: 'operation',
+        displayValue: `${displayOperator}${newValue}`
       });
     }
     
