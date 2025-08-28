@@ -476,7 +476,7 @@ export const processCalculatorInput = (
         timestamp: Date.now(),
         stepNumber: newCalculationSteps.length + 1,
         operationType: 'result',
-        displayValue: result.toString()
+        displayValue: `= ${result}`
       });
       
       // Add to grand total and transaction history
