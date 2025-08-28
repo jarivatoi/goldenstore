@@ -513,8 +513,6 @@ export const processCalculatorInput = (
         newIsNewNumber = true;
         
         // Clear the pending operation since % completes it
-              newExpression: lastStep.expression,
-              newResult: lastStep.result
         newLastOperand = null;
         
         // Update the last step to show the percentage operation
