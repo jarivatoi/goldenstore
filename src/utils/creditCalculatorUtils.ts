@@ -612,21 +612,24 @@ export const processCalculatorInput = (
             }
           }
           
-          // Add current operation and number
-          fullExpression += newLastOperation + currentNumber;
+          // Only add current operation and number if we have a valid number
+          // Don't add if newValue is '0' (which indicates no number was entered after the operator)
+          if (newValue !== '0' && !isNaN(currentNumber) && currentNumber !== 0) {
+            fullExpression += newLastOperation + currentNumber;
+            
+            // Add the new operation step
+            newCalculationSteps.push({
+              expression: `${newLastOperation === '+' ? '+' : newLastOperation === '-' ? '-' : newLastOperation}${currentNumber}`,
+              result: currentNumber,
+              timestamp: Date.now(),
+              stepNumber: newCalculationSteps.length + 1,
+              operationType: 'operation',
+              displayValue: `${newLastOperation === '+' ? '+' : newLastOperation === '-' ? '-' : newLastOperation}${currentNumber}`
+            });
+          }
           
           // Calculate result
           result = evaluateExpression(fullExpression);
-          
-          // Add the new operation step
-          newCalculationSteps.push({
-            expression: `${newLastOperation === '+' ? '+' : newLastOperation === '-' ? '-' : newLastOperation}${currentNumber}`,
-            result: currentNumber,
-            timestamp: Date.now(),
-            stepNumber: newCalculationSteps.length + 1,
-            operationType: 'operation',
-            displayValue: `${newLastOperation === '+' ? '+' : newLastOperation === '-' ? '-' : newLastOperation}${currentNumber}`
-          });
           
           newArticleCount = newCalculationSteps.filter(step => 
             step.operationType === 'operation' && (step.expression.startsWith('+') || step.expression.startsWith('-'))
