@@ -292,15 +292,15 @@ export const processCalculatorInput = (
     // AUTO REPLAY - replay transaction history one by one
     if (newCalculationSteps.length > 0) {
       autoReplayActive = true;
-      // Reset check index and start auto-replay sequence
+      // Start auto-replay from step 1
       localStorage.setItem('currentCheckIndex', '0');
-      newValue = newCalculationSteps[0].expression; // Show the actual expression
+      newValue = newCalculationSteps[0].displayValue;
       newIsNewNumber = true;
       
-      // Start the auto-replay sequence with timing
+      // Start the auto-replay sequence with 0.5s delay
       setTimeout(() => {
         startAutoReplaySequence(newCalculationSteps);
-      }, 100);
+      }, 500);
     } else {
       // No history to replay
       newValue = currentValue;
@@ -819,7 +819,7 @@ const startAutoReplaySequence = (steps: CalculationStep[]) => {
       // Update calculator display
       window.dispatchEvent(new CustomEvent('autoReplayStep', {
         detail: {
-          displayValue: step.expression, // Show the actual expression
+          displayValue: step.displayValue, // Show the proper display value
           stepIndex: currentStepIndex,
           totalSteps: steps.length
         }
@@ -830,12 +830,12 @@ const startAutoReplaySequence = (steps: CalculationStep[]) => {
       
       currentStepIndex++;
       
-      // Schedule next step after 1 second
-      setTimeout(showNextStep, 1000);
+      // Schedule next step after 0.5 seconds
+      setTimeout(showNextStep, 500);
     } else {
       // Restart from beginning
       currentStepIndex = 0;
-      setTimeout(showNextStep, 1000);
+      setTimeout(showNextStep, 500);
     }
   };
   

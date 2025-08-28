@@ -86,15 +86,20 @@ const CreditManagement: React.FC = () => {
       if (linkedClient && !newTabClients.find(c => c.id === linkedClient.id)) {
         setLinkedClient(null);
         setCalculationSteps([]);
-      const { displayValue, stepIndex, totalSteps } = event.detail;
-      setCalculatorValue(displayValue);
       }
     };
 
+    const handleAutoReplayStep = (event: CustomEvent) => {
+      const { displayValue, stepIndex, totalSteps } = event.detail;
+      setCalculatorValue(displayValue);
+    };
+
     window.addEventListener('creditDataChanged', handleCreditDataChanged);
+    window.addEventListener('autoReplayStep', handleAutoReplayStep as EventListener);
     
     return () => {
       window.removeEventListener('creditDataChanged', handleCreditDataChanged);
+      window.removeEventListener('autoReplayStep', handleAutoReplayStep as EventListener);
     };
   }, []);
 
