@@ -502,45 +502,21 @@ export const processCalculatorInput = (
             result: currentNumber,
             timestamp: Date.now(),
             stepNumber: 2,
-            operationType: 'operation',
-            displayValue: `${operator === '+' ? '+' : '-'}${currentNumber}`
-          });
-          
-          newArticleCount = 2;
-        } else {
-          // For × and ÷ operations, create a compound expression
-          const displayOperator = operator === '*' ? '×' : '÷';
-          expression = `${firstNumber}${operator}${currentNumber}`;
-          result = evaluateExpression(expression);
-          
-          newCalculationSteps.push({
-            expression: `(${firstNumber}${displayOperator}${currentNumber})=${result}`,
-            result: result,
-            timestamp: Date.now(),
-            stepNumber: 2,
-            operationType: 'operation',
-            displayValue: `(${firstNumber}${displayOperator}${currentNumber})=${result}`
-          });
-          
-          newArticleCount = 2;
-        }
-      } else if (newCalculationSteps.length === 2 && newLastOperation && newValue !== '0') {
-        // Case: 25 + 5 × 3 (first number, then addition, then multiplication)
-        const firstStep = newCalculationSteps[0]; // Should be "25"
-        const secondStep = newCalculationSteps[1]; // Should be "+5"
+      } else if (newCalculationSteps.length >= 2 && newLastOperation && newValue !== '0') {
+        // Handle multiple operations
         const currentNumber = parseFloat(newValue);
+        const firstStep = newCalculationSteps[0];
+        const secondStep = newCalculationSteps[1];
         
         if (newLastOperation === '*' || newLastOperation === '/') {
           // This is a compound operation like 25 + 5 × 3
-          // Get the operand from the second step (should be 5 for "25+5×3")
-          let multiplicationOperand = secondStep?.result || 0;
+          // Extract the operand from the addition step expression
+          let multiplicationOperand = 0;
           
-          // If result is not available, try to extract from expression
-          if (multiplicationOperand === 0 && secondStep?.expression) {
-            const match = secondStep.expression.match(/[+-](\d+(?:\.\d+)?)/);
-            if (match) {
-              multiplicationOperand = parseFloat(match[1]);
-            }
+          // The operand for multiplication should be the number from the addition step
+          // For "25 + 5 × 3", we want the 5 from the "+5" expression
+          if (secondStep && secondStep.result) {
+            multiplicationOperand = secondStep.result;
           }
           
           // Validate we have a valid operand
@@ -570,6 +546,12 @@ export const processCalculatorInput = (
           
           // Calculate final result: first number + multiplication result
           const firstNumber = firstStep?.result || 0;
+          
+          // Validate final result
+          if (isNaN(firstNumber)) {
+            throw new Error('Invalid first number');
+          }
+          
           result = firstNumber + multiplicationResult;
           
           // Validate final result
@@ -578,65 +560,36 @@ export const processCalculatorInput = (
           }
           
           newArticleCount = 2; // Keep only 2 steps
-        }
-      } else if (newCalculationSteps.length > 2 && newLastOperation && newValue !== '0') {
-        // Complex case with multiple operations
-        const currentNumber = parseFloat(newValue);
-        const displayOperator = newLastOperation === '*' ? '×' : 
-                               newLastOperation === '/' ? '÷' : 
-                               newLastOperation;
-        
-        // For multiplication/division, we need to handle them first
-        if (newLastOperation === '*' || newLastOperation === '/') {
-          // Find the last number to multiply/divide with
-          let lastNumber = currentNumber;
-          let baseExpression = '';
+        } else {
+          // Sequential addition/subtraction like 20+30+10
+          // Build expression from all existing steps plus current operation
+          let fullExpression = '';
           
-          // Build the expression from steps
-          for (let i = 0; i < newCalculationSteps.length; i++) {
+          // Start with first number
+          fullExpression += firstStep.result;
+          
+          // Add all operation steps
+          for (let i = 1; i < newCalculationSteps.length; i++) {
             const step = newCalculationSteps[i];
-            if (step.operationType === 'number') {
-              baseExpression += step.result;
-            } else if (step.operationType === 'operation') {
-              if (step.expression.startsWith('+') || step.expression.startsWith('-')) {
-                baseExpression += step.expression;
-              } else {
-                // This is a compound operation, use its result
-                baseExpression = step.result.toString();
-              }
+            if (step.operationType === 'operation') {
+              fullExpression += step.expression;
             }
           }
           
-          // Add the current operation
-          const fullExpression = `(${baseExpression})${newLastOperation}${currentNumber}`;
+          // Add current operation and number
+          fullExpression += newLastOperation + currentNumber;
+          
+          // Calculate result
           result = evaluateExpression(fullExpression);
           
-          // Add the operation step
+          // Add the new operation step
           newCalculationSteps.push({
-            expression: `${displayOperator}${currentNumber}`,
+            expression: `${newLastOperation === '+' ? '+' : newLastOperation === '-' ? '-' : newLastOperation}${currentNumber}`,
             result: currentNumber,
             timestamp: Date.now(),
             stepNumber: newCalculationSteps.length + 1,
             operationType: 'operation',
-            displayValue: `${displayOperator}${currentNumber}`
-          });
-          
-          newArticleCount = newCalculationSteps.filter(step => 
-            step.operationType === 'operation' && (step.expression.startsWith('+') || step.expression.startsWith('-'))
-          ).length + 1;
-        } else {
-          // For addition/subtraction, just append to the expression
-          const fullExpression = buildExpressionFromSteps(newCalculationSteps) + newLastOperation + currentNumber;
-          result = evaluateExpression(fullExpression);
-          
-          // Add the operation step
-          newCalculationSteps.push({
-            expression: `${displayOperator}${currentNumber}`,
-            result: currentNumber,
-            timestamp: Date.now(),
-            stepNumber: newCalculationSteps.length + 1,
-            operationType: 'operation',
-            displayValue: `${displayOperator}${currentNumber}`
+            displayValue: `${newLastOperation === '+' ? '+' : newLastOperation === '-' ? '-' : newLastOperation}${currentNumber}`
           });
           
           newArticleCount = newCalculationSteps.filter(step => 
@@ -676,6 +629,7 @@ export const processCalculatorInput = (
       localStorage.setItem('currentCheckIndex', '-1');
       
     } catch (error) {
+      console.error('Calculator error:', error);
       newValue = 'Error';
       newIsNewNumber = true;
     }
