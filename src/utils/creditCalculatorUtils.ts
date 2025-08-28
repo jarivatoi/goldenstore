@@ -521,8 +521,6 @@ export const processCalculatorInput = (
             lastStep.result = parseFloat(newValue); // Update result too!
           if (lastStep.operationType === 'operation') {
             lastStep.expression = `×${currentNum}%`;
-              newExpression: lastStep.expression,
-              newResult: lastStep.result
             lastStep.result = percentValue;
           }
         }
