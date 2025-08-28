@@ -532,32 +532,8 @@ export const processCalculatorInput = (
         
         if (newLastOperation === '*' || newLastOperation === '/') {
           // This is a compound operation like 25 + 5 × 3
-          // Extract the operand from the addition step expression
-          // For compound operations, the multiplication operand is the second step's result
-          const multiplicationOperand = secondStep.result;
-          
-          const displayOperator = newLastOperation === '*' ? '×' : '÷';
-          const multiplicationResult = newLastOperation === '*' 
-            ? multiplicationOperand * currentNumber 
-            : multiplicationOperand / currentNumber;
-          
-          // Replace the second step with the compound operation
-          newCalculationSteps[1] = {
-            expression: `(${multiplicationOperand}${displayOperator}${currentNumber})=${multiplicationResult}`,
-            result: multiplicationResult,
-            timestamp: Date.now(),
-            stepNumber: 2,
-            operationType: 'operation',
-            displayValue: `(${multiplicationOperand}${displayOperator}${currentNumber})=${multiplicationResult}`
-          };
-          
-          // Calculate final result: first number + multiplication result
-          result = firstStep.result + multiplicationResult;
-          newArticleCount = 2; // Keep only 2 steps
-        } else {
-          // Regular addition/subtraction after existing steps
-          const displayOperator = newLastOperation;
-          const fullExpression = buildExpressionFromSteps(newCalculationSteps) + newLastOperation + currentNumber;
+          // For compound operations, use the operand from the addition step
+          const multiplicationOperand = secondStep.result; // This should be 5
           result = evaluateExpression(fullExpression);
           
           newCalculationSteps.push({
