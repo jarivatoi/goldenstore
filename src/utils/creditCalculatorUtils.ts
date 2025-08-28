@@ -121,23 +121,35 @@ export const processCalculatorInput = (
   
   // Build expression string for proper order of operations
   const buildExpression = (): string => {
-    if (newCalculationSteps.length === 0) return newValue;
+    if (newCalculationSteps.length === 0) {
+      return newValue;
+    }
     
-    let expression = '';
-    for (let i = 0; i < newCalculationSteps.length; i++) {
+    // Build expression from steps properly
+    let expression = newCalculationSteps[0].expression; // Start with first number
+    
+    for (let i = 1; i < newCalculationSteps.length; i++) {
       const step = newCalculationSteps[i];
-      if (step.operationType === 'number' && i === 0) {
-        expression = step.expression;
-      } else if (step.operationType === 'operation') {
-        expression += step.expression;
+      if (step.operationType === 'operation') {
+        // Extract operator and number from step expression like "+5" or "×3"
+        const stepExpr = step.expression;
+        if (stepExpr.startsWith('+') || stepExpr.startsWith('-') || stepExpr.startsWith('×') || stepExpr.startsWith('÷')) {
+          const operator = stepExpr.charAt(0);
+          const number = stepExpr.substring(1);
+          
+          // Convert display operators to JavaScript operators
+          const jsOperator = operator === '×' ? '*' : operator === '÷' ? '/' : operator;
+          expression += jsOperator + number;
+        }
       }
     }
     
-    // Add current value if we're building a number
-    if (!newIsNewNumber && newLastOperation) {
-      expression += newValue;
-    } else if (newCalculationSteps.length === 0) {
-      expression = newValue;
+    // If we're currently entering a number after an operator, add it
+    if (newLastOperation && !newIsNewNumber && newValue !== '0') {
+      const jsOperator = newLastOperation === '*' ? '*' : 
+                        newLastOperation === '÷' ? '/' : 
+                        newLastOperation;
+      expression += jsOperator + newValue;
     }
     
     return expression;
