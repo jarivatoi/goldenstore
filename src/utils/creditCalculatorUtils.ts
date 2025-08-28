@@ -82,7 +82,7 @@ export const evaluateExpression = (expression: string): number => {
     return result;
   } catch {
     console.error('🧮 Expression evaluation failed for:', expression);
-    return 0;
+    setTimeout(showNextStep, 1000);
   }
 };
 
@@ -132,38 +132,15 @@ export const processCalculatorInput = (
     // Filter out result steps to avoid including '=' in expressions
     const validSteps = newCalculationSteps.filter(step => step.operationType !== 'result');
     
-    // Start with the first number
     if (validSteps.length > 0) {
       expression = validSteps[0].expression;
+      
+      for (let i = 1; i < validSteps.length; i++) {
+        const step = validSteps[i];
+        expression += step.expression;
+      }
     } else {
       expression = newValue;
-    }
-    
-    // Add subsequent operations
-    for (let i = 1; i < validSteps.length; i++) {
-      const step = validSteps[i];
-      const stepExpr = step.expression;
-      
-      // Convert display operators to JavaScript operators
-      const convertedExpr = stepExpr
-        .replace(/×/g, '*')
-        .replace(/÷/g, '/')
-        .replace(/x/g, '*');
-      
-      expression += convertedExpr;
-    }
-    
-    // DON'T add current value if we already have it in steps
-    // Only add if we have a pending operation but no step for current number yet
-    const hasCurrentNumberInSteps = validSteps.length > 0 && 
-      validSteps[validSteps.length - 1].operationType === 'operation';
-    
-    if (newLastOperation && !newIsNewNumber && newValue !== '0' && !hasCurrentNumberInSteps) {
-      const jsOperator = newLastOperation === '*' ? '*' :
-                        newLastOperation === 'x' ? '*' :
-                        newLastOperation === '÷' ? '/' : 
-                        newLastOperation;
-      expression += jsOperator + newValue;
     }
     
     console.log('🔧 Built expression:', expression);
@@ -621,14 +598,14 @@ export const processCalculatorInput = (
             firstNumber / parseFloat(newValue);
           
           // Replace the last operation step with the compound result
-          newCalculationSteps[newCalculationSteps.length - 1] = {
+          newCalculationSteps.push({
             expression: `(${firstNumber}${displayOperator}${newValue})=${compoundResult}`,
             result: compoundResult,
             timestamp: Date.now(),
-            stepNumber: newCalculationSteps.length,
+            stepNumber: 2,
             operationType: 'operation',
             displayValue: `(${firstNumber}${displayOperator}${newValue})=${compoundResult}`
-          };
+          });
         }
       } else {
         // Build expression from existing steps
