@@ -585,51 +585,56 @@ export const processCalculatorInput = (
     // Square root
     const currentNum = getCurrentNumber();
     if (currentNum < 0) {
-      // Handle the pending operation if we have one
-      if (newLastOperation && newValue !== '0') {
-        if (newLastOperation === '*' || newLastOperation === '/') {
-          // For multiplication/division, we need to find the operands
-          // The pattern is: [first_number] + [second_number] × [current_value]
-          // We need to create a step showing (second_number × current_value) = result
-          
-          let secondOperand = 5; // Default fallback
-          let thirdOperand = parseFloat(newValue);
-          
-          // Try to extract the second operand from the sequence
-          // This is a simplified approach - in a real calculator, we'd track this better
-          if (newCalculationSteps.length >= 2) {
-            secondOperand = newCalculationSteps[1].result;
-          }
-          
-          const displayOperator = newLastOperation === '*' ? '×' : '÷';
-          const compoundResult = newLastOperation === '*' ? 
-            secondOperand * thirdOperand : 
-            secondOperand / thirdOperand;
-          
-          newCalculationSteps.push({
-            expression: `(${secondOperand}${displayOperator}${thirdOperand})=${compoundResult}`,
-            result: compoundResult,
-            timestamp: Date.now(),
-            stepNumber: newCalculationSteps.length + 1,
-            operationType: 'operation',
-            displayValue: `(${secondOperand}${displayOperator}${thirdOperand})=${compoundResult}`
-          });
-        } else {
-          // For + and -, create a simple operation step
+      newValue = 'Error';
+    } else {
+      newValue = Math.sqrt(currentNum).toString();
+    }
+    newIsNewNumber = true;
+  } else if (input === '=' || input === 'ENTER') {
+    try {
+      // For calculations like 25+5×3, we need to handle order of operations
+      let expression = '';
+      
+      if (newCalculationSteps.length === 1 && newLastOperation && newValue !== '0') {
+        // Simple case: first_number operator current_number
+        const firstNumber = newCalculationSteps[0].result;
+        const operator = newLastOperation === '*' ? '*' : newLastOperation === '/' ? '/' : newLastOperation;
+        expression = `${firstNumber}${operator}${newValue}`;
+        
+        // Create step for the operation part
+        if (newLastOperation === '+' || newLastOperation === '-') {
+          // For + and -, create a transaction step
           const displayOperator = newLastOperation === '+' ? '+' : '-';
           newCalculationSteps.push({
             expression: `${displayOperator}${newValue}`,
             result: parseFloat(newValue),
             timestamp: Date.now(),
-            stepNumber: newCalculationSteps.length + 1,
+            stepNumber: 2,
             operationType: 'operation',
             displayValue: `${displayOperator}${newValue}`
           });
-        }
+        } else {
+          // For × and ÷, create a compound expression step
+          const displayOperator = newLastOperation === '*' ? '×' : '÷';
+          const compoundResult = newLastOperation === '*' ? 
+            firstNumber * parseFloat(newValue) : 
+            firstNumber / parseFloat(newValue);
+          
+          newCalculationSteps.push({
+            expression: `(${firstNumber}${displayOperator}${newValue})=${compoundResult}`,
+            result: compoundResult,
+            timestamp: Date.now(),
+            stepNumber: 2,
+            operationType: 'operation',
+        displayValue: newValue
+      });
+    }
+      } else {
+        // Build expression from existing steps
+        expression = buildExpression();
       }
       
-      // Build and evaluate the complete expression
-      const expression = buildExpression();
+      // Evaluate the complete expression with proper order of operations
       const result = evaluateExpression(expression);
       
       console.log('🧮 Final result:', result);
