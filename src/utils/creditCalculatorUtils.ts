@@ -447,13 +447,23 @@ export const processCalculatorInput = (
     
     // Check if we have a pending multiplication operation
     if (newLastOperation === '*') {
-      // Find the most recent number step before the current operation
-      // Look backwards through steps to find the operand for this multiplication
+      // For percentage calculation, we need the number BEFORE the multiplication operator
+      // In sequence: 1000 (step 0) × (operator) 10 (step 2) %
+      // We want the first number (1000), not the current number (10)
       let firstOperand = 0;
-      for (let i = newCalculationSteps.length - 1; i >= 0; i--) {
+      
+      // Find the first step that is a number (this should be our base value like 1000)
+      for (let i = 0; i < newCalculationSteps.length; i++) {
         const step = newCalculationSteps[i];
+        console.log('🔍 Checking step', i, ':', {
+          expression: step.expression,
+          result: step.result,
+          operationType: step.operationType
+        });
+        
         if (step.operationType === 'number') {
           firstOperand = step.result;
+          console.log('🎯 Found first operand:', firstOperand);
           break;
         }
       }
