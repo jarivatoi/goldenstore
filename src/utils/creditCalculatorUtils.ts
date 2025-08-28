@@ -823,7 +823,7 @@ const startAutoReplaySequence = (steps: CalculationStep[]) => {
           stepIndex: currentStepIndex,
           totalSteps: steps.length,
           currentStep: currentStepIndex + 1, // 1-based step number for display
-          articleCount: currentStepIndex + 1 // Update article count to match current step
+          articleCount: step.operationType === 'result' ? currentStepIndex : currentStepIndex + 1 // Don't increment for result step
         }
       }));
       
