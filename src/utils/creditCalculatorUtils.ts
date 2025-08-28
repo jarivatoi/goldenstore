@@ -464,14 +464,19 @@ export const processCalculatorInput = (
         const displayOperator = newLastOperation === '*' ? '×' : 
                                newLastOperation === '/' ? '÷' : 
                                newLastOperation;
+        
+        // Create step with operator and number
+        const stepExpression = `${displayOperator}${input}`;
         newCalculationSteps.push({
-          expression: `${displayOperator}${input}`,
+          expression: stepExpression,
           result: parseFloat(input),
           timestamp: Date.now(),
           stepNumber: newCalculationSteps.length + 1,
           operationType: 'operation',
-          displayValue: `${displayOperator}${input}`
+          displayValue: stepExpression
         });
+        
+        console.log('🔢 Created operator step:', stepExpression);
       }
       newValue = input;
       newIsNewNumber = false;
@@ -483,14 +488,16 @@ export const processCalculatorInput = (
       if (newCalculationSteps.length > 0 && !newIsNewNumber) {
         const lastStep = newCalculationSteps[newCalculationSteps.length - 1];
         // Only update if this step has an operator (not the first step)
-        if (lastStep.displayValue.match(/^[+\-×÷]/)) {
+        if (lastStep.operationType === 'operation' && lastStep.displayValue.match(/^[+\-×÷]/)) {
           const operatorSymbol = lastStep.displayValue.charAt(0);
           lastStep.displayValue = `${operatorSymbol}${newValue}`;
           lastStep.expression = `${operatorSymbol}${newValue}`;
+          console.log('🔢 Updated multi-digit step:', lastStep.displayValue);
         } else {
           // First step - just update the number
           lastStep.displayValue = newValue;
           lastStep.expression = newValue;
+          console.log('🔢 Updated first step:', lastStep.displayValue);
         }
       }
     }
