@@ -447,7 +447,7 @@ export const processCalculatorInput = (
         currentStepIndex = 0;
       } else {
         // Move to next step
-        currentStepIndex = Math.min(currentStepIndex + 1, newCalculationSteps.length - 1);
+        currentStepIndex = (currentStepIndex + 1) % newCalculationSteps.length;
       }
     }
     newIsNewNumber = true;
