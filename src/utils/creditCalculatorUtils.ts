@@ -492,20 +492,29 @@ export const processCalculatorInput = (
           // Extract the operand from the addition step expression
           let multiplicationOperand = 0;
           
-          // Parse the second step expression to get the actual number
+          // Debug: Log what we're working with
+          console.log('🔍 Compound operation debug:', {
+            firstStep: firstStep,
+            secondStep: secondStep,
+            secondStepExpression: secondStep.expression,
+            secondStepResult: secondStep.result,
+            newLastOperation: newLastOperation,
+            currentValue: newValue
+          });
+          
+          // The operand for multiplication should be the number from the addition step
+          // For "25 + 5 × 3", we want the 5 from the "+5" expression
           if (secondStep.expression.startsWith('+')) {
-            // For "+5", extract the 5
-            const match = secondStep.expression.match(/^\+(\d+(?:\.\d+)?)$/);
-            if (match) {
-              multiplicationOperand = parseFloat(match[1]);
-            }
+            // Extract number after the + sign
+            const numberPart = secondStep.expression.substring(1); // Remove the "+"
+            multiplicationOperand = parseFloat(numberPart);
           } else if (secondStep.expression.startsWith('-')) {
-            // For "-5", extract the 5
-            const match = secondStep.expression.match(/^-(\d+(?:\.\d+)?)$/);
-            if (match) {
-              multiplicationOperand = parseFloat(match[1]);
-            }
+            // Extract number after the - sign  
+            const numberPart = secondStep.expression.substring(1); // Remove the "-"
+            multiplicationOperand = parseFloat(numberPart);
           }
+          
+          console.log('🔍 Extracted multiplication operand:', multiplicationOperand);
           
           const displayOperator = newLastOperation === '*' ? '×' : '÷';
           const multiplicationResult = newLastOperation === '*' 
