@@ -318,15 +318,16 @@ export const processCalculatorInput = (
         detailedSteps: newCalculationSteps.map((step, idx) => `Step ${idx}: "${step.displayValue}" (${step.operationType})`)
       });
       
-      // Get current step index from stored state or start from 0
-      let currentStepIndex = parseInt(localStorage.getItem('currentCheckIndex') || '0');
-      
-      // For CHECK→: if first time (no stored index), start at 0, otherwise increment
+      // Get current step index from stored state
       const storedIndex = localStorage.getItem('currentCheckIndex');
-      if (storedIndex === null) {
-        currentStepIndex = 0; // Start at first step
+      let currentStepIndex;
+      
+      if (storedIndex === null || storedIndex === '-1') {
+        // First time - start at index 0 (step 1/4)
+        currentStepIndex = 0;
       } else {
-        currentStepIndex = (currentStepIndex + 1) % newCalculationSteps.length; // Increment with wraparound
+        // Subsequent times - increment from current position
+        currentStepIndex = (parseInt(storedIndex) + 1) % newCalculationSteps.length;
       }
       
       // Store current index
