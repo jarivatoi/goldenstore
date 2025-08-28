@@ -592,10 +592,47 @@ export const processCalculatorInput = (
     newIsNewNumber = true;
   } else if (input === '=' || input === 'ENTER') {
     try {
-      // Build the complete expression from steps
-      const expression = buildExpression();
+      // For calculations like 25+5×3, we need to handle order of operations
+      let expression = '';
       
-      console.log('🧮 Evaluating final expression:', expression);
+      if (newCalculationSteps.length === 1 && newLastOperation && newValue !== '0') {
+        // Simple case: first_number operator current_number
+        const firstNumber = newCalculationSteps[0].result;
+        const operator = newLastOperation === '*' ? '*' : newLastOperation === '/' ? '/' : newLastOperation;
+        expression = `${firstNumber}${operator}${newValue}`;
+        
+        // Create step for the operation part
+        if (newLastOperation === '+' || newLastOperation === '-') {
+          // For + and -, create a transaction step
+          const displayOperator = newLastOperation === '+' ? '+' : '-';
+          newCalculationSteps.push({
+            expression: `${displayOperator}${newValue}`,
+            result: parseFloat(newValue),
+            timestamp: Date.now(),
+            stepNumber: 2,
+            operationType: 'operation',
+            displayValue: `${displayOperator}${newValue}`
+          });
+        } else {
+          // For × and ÷, create a compound expression step
+          const displayOperator = newLastOperation === '*' ? '×' : '÷';
+          const compoundResult = newLastOperation === '*' ? 
+            parseFloat(newValue) : 
+            parseFloat(newValue);
+          
+          newCalculationSteps.push({
+            expression: `(${displayOperator}${newValue})=${compoundResult}`,
+            result: compoundResult,
+            timestamp: Date.now(),
+            stepNumber: 2,
+            operationType: 'operation',
+            displayValue: `(${displayOperator}${newValue})=${compoundResult}`
+          });
+        }
+      } else {
+        // Build expression from existing steps
+        expression = buildExpression();
+      }
       
       // Evaluate the complete expression with proper order of operations
       const result = evaluateExpression(expression);
@@ -688,28 +725,6 @@ export const processCalculatorInput = (
       });
     }
     
-    // Only create new steps for transaction operators (+ and -)
-    if (isTransactionOperator && newCalculationSteps.length > 0) {
-      // For + and -, create a new step with the operator and current number
-      const displayOperator = input === '+' ? '+' : '-';
-      newCalculationSteps.push({
-        expression: `${displayOperator}${newValue}`,
-        result: parseFloat(newValue),
-        timestamp: Date.now(),
-        stepNumber: newCalculationSteps.length + 1,
-        operationType: 'operation',
-        displayValue: `${displayOperator}${newValue}`
-      });
-      
-      console.log('🔢 CREATED transaction step:', {
-        stepExpression: `${displayOperator}${newValue}`,
-        stepNumber: newCalculationSteps.length,
-        operationType: 'operation',
-        displayValue: `${displayOperator}${newValue}`,
-        allSteps: newCalculationSteps.map(s => s.expression)
-      });
-    }
-    
     // Store the new operator (convert display symbols to JS operators)
     newLastOperation = input === '×' ? '*' : input === '÷' ? '/' : input;
     
@@ -752,43 +767,6 @@ export const processCalculatorInput = (
           operationType: 'number',
           displayValue: input
         });
-      } else if (newLastOperation && newIsNewNumber) {
-        // New number after an operation - only increment for + and - operators
-        const isTransactionOperator = newLastOperation === '+' || newLastOperation === '-';
-        
-        console.log('🔢 Creating OPERATOR step:', {
-          lastOperation: newLastOperation,
-          input,
-          isTransactionOperator,
-          willCreate: `${newLastOperation === '*' ? '×' : newLastOperation === '/' ? '÷' : newLastOperation}${input}`
-        });
-        
-        // Create step for this number with the pending operation (display format)
-        const displayOperator = newLastOperation === '*' ? '×' : 
-                               newLastOperation === '/' ? '÷' : 
-                               newLastOperation;
-        
-        // Only create steps for transaction operators (+ and -)
-        if (isTransactionOperator) {
-          // Create step with operator and number
-          const stepExpression = `${displayOperator}${input}`;
-          newCalculationSteps.push({
-            expression: stepExpression,
-            result: parseFloat(input),
-            timestamp: Date.now(),
-            stepNumber: newCalculationSteps.length + 1,
-            operationType: 'operation',
-            displayValue: stepExpression
-          });
-          
-          console.log('🔢 CREATED transaction step:', {
-            stepExpression,
-            stepNumber: newCalculationSteps.length,
-            operationType: 'operation',
-            displayValue: stepExpression,
-            allSteps: newCalculationSteps.map(s => s.expression)
-          });
-        }
       }
       newValue = input;
       newIsNewNumber = false;
@@ -801,33 +779,12 @@ export const processCalculatorInput = (
       });
       newValue = currentValue + input;
       
-      // Update the last step's display value if we're building a multi-digit number
-      if (newCalculationSteps.length > 0 && !newIsNewNumber) {
+      // Update the current step if we're building a multi-digit number
+      if (newCalculationSteps.length > 0) {
         const lastStep = newCalculationSteps[newCalculationSteps.length - 1];
-        console.log('🔢 UPDATING last step:', {
-          before: lastStep.displayValue,
-          operationType: lastStep.operationType,
-          newValue
-        });
-        // Only update if this step has an operator (not the first step)
-        if (lastStep.operationType === 'operation' && lastStep.displayValue.match(/^[+\-×÷]/)) {
-          const operatorSymbol = lastStep.displayValue.charAt(0);
-          lastStep.displayValue = `${operatorSymbol}${newValue}`;
-          lastStep.expression = `${operatorSymbol}${newValue}`;
-          console.log('🔢 UPDATED multi-digit operator step:', {
-            operatorSymbol,
-            newDisplayValue: lastStep.displayValue,
-            newExpression: lastStep.expression
-          });
-        } else {
-          // First step - just update the number
-          lastStep.displayValue = newValue;
-          lastStep.expression = newValue;
-          console.log('🔢 UPDATED first step:', {
-            newDisplayValue: lastStep.displayValue,
-            newExpression: lastStep.expression
-          });
-        }
+        lastStep.displayValue = newValue;
+        lastStep.expression = newValue;
+        lastStep.result = parseFloat(newValue);
       }
     }
     isActive = true;
