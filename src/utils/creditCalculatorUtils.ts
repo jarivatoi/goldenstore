@@ -291,7 +291,7 @@ export const processCalculatorInput = (
       autoReplayActive = true;
       // Reset check index and start auto-replay sequence
       localStorage.setItem('currentCheckIndex', '0');
-      newValue = newCalculationSteps[0].displayValue;
+      newValue = newCalculationSteps[0].expression; // Show the actual expression
       newIsNewNumber = true;
       
       // Start the auto-replay sequence with timing
@@ -315,7 +315,7 @@ export const processCalculatorInput = (
       localStorage.setItem('currentCheckIndex', currentStepIndex.toString());
       
       const currentStep = newCalculationSteps[currentStepIndex];
-      newValue = currentStep.displayValue;
+      newValue = currentStep.expression; // Show the actual expression, not just the number
       newIsNewNumber = true;
       autoReplayActive = true;
     }
@@ -332,7 +332,7 @@ export const processCalculatorInput = (
       localStorage.setItem('currentCheckIndex', currentStepIndex.toString());
       
       const currentStep = newCalculationSteps[currentStepIndex];
-      newValue = currentStep.displayValue;
+      newValue = currentStep.expression; // Show the actual expression, not just the number
       newIsNewNumber = true;
       autoReplayActive = true;
     }
@@ -596,7 +596,7 @@ const startAutoReplaySequence = (steps: CalculationStep[]) => {
       // Update calculator display
       window.dispatchEvent(new CustomEvent('autoReplayStep', {
         detail: {
-          displayValue: step.displayValue,
+          displayValue: step.expression, // Show the actual expression
           stepIndex: currentStepIndex,
           totalSteps: steps.length
         }
