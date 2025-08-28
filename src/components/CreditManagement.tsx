@@ -90,8 +90,9 @@ const CreditManagement: React.FC = () => {
     };
 
     const handleAutoReplayStep = (event: CustomEvent) => {
-      const { displayValue, stepIndex, totalSteps, currentStep } = event.detail;
+      const { displayValue, stepIndex, totalSteps, currentStep, articleCount } = event.detail;
       setCalculatorValue(displayValue);
+      setArticleCount(articleCount); // Update the article count during replay
       // Update auto replay state to show current step
       setAutoReplayActive(true);
     };
