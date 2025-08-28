@@ -451,28 +451,28 @@ export const processCalculatorInput = (
       // Add step for the current operand with proper operator symbol
       const operatorSymbol = newLastOperation === '*' ? '×' : 
                            newLastOperation === '/' ? '÷' : 
-                           newLastOperation === '+' ? '+' : 
-                           newLastOperation === '-' ? '-' : 
+                           newLastOperation === '+' ? '+' :
+                           newLastOperation === '-' ? '-' :
                            newLastOperation;
       newCalculationSteps.push({
-        expression: `${operatorSymbol}${currentNum}`,
+        expression: `${operatorSymbol}${currentNum}`, 
         result: currentNum,
         timestamp: Date.now(),
         stepNumber: newCalculationSteps.length + 1,
         operationType: 'operation',
-        displayValue: `${operatorSymbol}${currentNum}` // Show operator with the actual number
+        displayValue: `${operatorSymbol}${currentNum}`
       });
     } else {
       // First operand or starting new calculation
       if (!newIsNewNumber) {
         // Very first number in calculation
         newCalculationSteps.push({
-          expression: `${currentNum}`,
+          expression: currentNum.toString(),
           result: currentNum,
           timestamp: Date.now(),
           stepNumber: 1,
           operationType: 'number',
-          displayValue: `${currentNum}`
+          displayValue: currentNum.toString()
         });
         newArticleCount = 1; // First article
       }
@@ -499,9 +499,31 @@ export const processCalculatorInput = (
       if (newCalculationSteps.length === 0) {
         // Very first number in calculation
         newArticleCount = 1;
+        newCalculationSteps.push({
+          expression: input,
+          result: parseFloat(input),
+          timestamp: Date.now(),
+          stepNumber: 1,
+          operationType: 'number',
+          displayValue: input
+        });
       } else if (newLastOperation && newIsNewNumber) {
         // New number after an operation - increment article count
         newArticleCount++;
+        // Create step for this number with the pending operation
+        const operatorSymbol = newLastOperation === '*' ? '×' : 
+                             newLastOperation === '/' ? '÷' : 
+                             newLastOperation === '+' ? '+' :
+                             newLastOperation === '-' ? '-' :
+                             newLastOperation;
+        newCalculationSteps.push({
+          expression: `${operatorSymbol}${input}`,
+          result: parseFloat(input),
+          timestamp: Date.now(),
+          stepNumber: newCalculationSteps.length + 1,
+          operationType: 'operation',
+          displayValue: `${operatorSymbol}${input}`
+        });
       }
       newValue = input;
       newIsNewNumber = false;
