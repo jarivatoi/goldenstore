@@ -502,6 +502,10 @@ export const processCalculatorInput = (
             result: currentNumber,
             timestamp: Date.now(),
             stepNumber: 2,
+            operationType: 'operation',
+            displayValue: `${operator === '+' ? '+' : '-'}${currentNumber}`
+          });
+        }
       } else if (newCalculationSteps.length >= 2 && newLastOperation && newValue !== '0') {
         // Handle multiple operations
         const currentNumber = parseFloat(newValue);
