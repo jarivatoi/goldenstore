@@ -321,8 +321,6 @@ export const processCalculatorInput = (
       // Get current step index from stored state or start from 0
       let currentStepIndex = parseInt(localStorage.getItem('currentCheckIndex') || '0');
       
-      // Move to next step
-      currentStepIndex = Math.min(currentStepIndex + 1, newCalculationSteps.length - 1);
       
       // Store current index
       localStorage.setItem('currentCheckIndex', currentStepIndex.toString());
@@ -377,8 +375,13 @@ export const processCalculatorInput = (
       // Get current step index from stored state or start from 0
       let currentStepIndex = parseInt(localStorage.getItem('currentCheckIndex') || '0');
       
-      // Move to previous step (don't go below 0)
-      currentStepIndex = Math.max(currentStepIndex - 1, 0);
+      // If no stored index (first CHECK← after calculation), start from the last step
+      if (currentStepIndex === -1) {
+        currentStepIndex = newCalculationSteps.length - 1;
+      } else {
+        // Move to previous step (don't go below 0)
+        currentStepIndex = Math.max(currentStepIndex - 1, 0);
+      }
       
       // Store current index
       localStorage.setItem('currentCheckIndex', currentStepIndex.toString());
@@ -438,6 +441,13 @@ export const processCalculatorInput = (
       newValue = 'Error';
     } else {
       newValue = Math.sqrt(currentNum).toString();
+      // If no stored index (first CHECK→ after calculation), start from step 0
+      if (currentStepIndex === -1) {
+        currentStepIndex = 0;
+      } else {
+        // Move to next step
+        currentStepIndex = Math.min(currentStepIndex + 1, newCalculationSteps.length - 1);
+      }
     }
     newIsNewNumber = true;
   } else if (input === '=' || input === 'ENTER') {
