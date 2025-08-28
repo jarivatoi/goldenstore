@@ -831,11 +831,12 @@ const startAutoReplaySequence = (steps: CalculationStep[]) => {
       currentStepIndex++;
       
       // Schedule next step after 0.5 seconds
-      setTimeout(showNextStep, 500);
-    } else {
-      // Restart from beginning
-      currentStepIndex = 0;
-      setTimeout(showNextStep, 500);
+      if (currentStepIndex < steps.length) {
+        setTimeout(showNextStep, 500);
+      } else {
+        // Replay complete - stop here
+        console.log('🎬 AUTO replay completed');
+      }
     }
   };
   
