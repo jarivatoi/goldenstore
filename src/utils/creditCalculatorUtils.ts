@@ -662,10 +662,8 @@ export const processCalculatorInput = (
       newIsNewNumber,
       calculationSteps: newCalculationSteps.length
     });
-         previousNumber,
-         currentNum,
-   } else if (input === '=' || input === 'ENTER') {
-     try {
+  } else if (input === '=' || input === 'ENTER') {
+    try {
       // Build the complete expression step by step
       let fullExpression = '';
       
@@ -755,96 +753,15 @@ export const processCalculatorInput = (
       
       // Clear check navigation index
       localStorage.setItem('currentCheckIndex', '-1');
-        }
-      } else if (newCalculationSteps.length > 1 && newLastOperation && newValue !== '0') {
-        // Complex case: multiple operations
-        const displayOperator = newLastOperation === '*' ? '×' : 
-                               newLastOperation === '/' ? '÷' : 
-                               newLastOperation;
-        
-        newCalculationSteps.push({
-          expression: `${displayOperator}${newValue}`,
-          result: parseFloat(newValue),
-          timestamp: Date.now(),
-          stepNumber: newCalculationSteps.length + 1,
-          operationType: 'operation',
-          displayValue: `${displayOperator}${newValue}`
-        });
-        
-        // Build full expression for evaluation
-        expression = buildExpression();
-      } else if (newCalculationSteps.length > 0) {
-        // Just evaluate what we have
-        expression = buildExpression();
-      } else {
-        // No steps, just use current value
-        expression = newValue;
-      }
-      
-      console.log('🔢 EQUALS - Final expression to evaluate:', expression);
-      
-      // Evaluate the expression
-      const result = evaluateExpression(expression);
-      console.log('🔢 EQUALS - Evaluation result:', result);
-      
-      // Add result step
-      newCalculationSteps.push({
-        expression: `=${result}`,
-        result: result,
-        timestamp: Date.now(),
-        stepNumber: newCalculationSteps.length + 1,
-        operationType: 'result',
-        displayValue: `=${result}`
-      });
-      
-      // Update state
-      newValue = result.toString();
-      newGrandTotal += result;
-      newLastOperation = null;
-      newLastOperand = null;
-      newIsNewNumber = true;
-      
-      // Add to transaction history
-      newTransactionHistory.push(result);
-      
-      // Clear check navigation index when new calculation is complete
-      localStorage.setItem('currentCheckIndex', '-1');
       
     } catch (error) {
       console.error('🔢 EQUALS - Calculation error:', error);
       newValue = 'Error';
       newIsNewNumber = true;
     }
-  } else if (['+', '-', '*', '/', '×', '÷'].includes(input)) {
-    // Handle operators
-    const operator = input === '×' ? '*' : input === '÷' ? '/' : input;
-    const displayOperator = operator === '*' ? '×' : operator === '/' ? '÷' : operator;
-    
-    console.log('🔢 OPERATOR INPUT:', {
-      input,
-      operator,
-      displayOperator,
-      currentValue: newValue,
-      lastOperation: newLastOperation,
-      isNewNumber: newIsNewNumber,
-      calculationSteps: newCalculationSteps
-    });
-    
-    // If we have no steps yet, create the first step with current value
-    if (newCalculationSteps.length === 0) {
-      newCalculationSteps.push({
-        expression: newValue,
-        result: parseFloat(newValue),
-        timestamp: Date.now(),
-        stepNumber: 1,
-        operationType: 'number',
-        displayValue: newValue
-      });
-      newArticleCount = 1;
-      } else {
+  } else {
     // Handle any other input types that might exist
     console.warn('Unhandled calculator input:', input);
-  }
   }
 
   // Format display value
