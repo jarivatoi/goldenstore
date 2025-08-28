@@ -449,7 +449,11 @@ export const processCalculatorInput = (
       }
       
       // Add step for the current operand with proper operator symbol
-      const operatorSymbol = newLastOperation === '*' ? '×' : newLastOperation === '/' ? '÷' : newLastOperation;
+      const operatorSymbol = newLastOperation === '*' ? '×' : 
+                           newLastOperation === '/' ? '÷' : 
+                           newLastOperation === '+' ? '+' : 
+                           newLastOperation === '-' ? '-' : 
+                           newLastOperation;
       newCalculationSteps.push({
         expression: `${operatorSymbol}${currentNum}`,
         result: currentNum,
