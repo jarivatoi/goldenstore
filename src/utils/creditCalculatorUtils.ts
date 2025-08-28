@@ -821,7 +821,8 @@ const startAutoReplaySequence = (steps: CalculationStep[]) => {
         detail: {
           displayValue: step.displayValue, // Show the proper display value
           stepIndex: currentStepIndex,
-          totalSteps: steps.length
+          totalSteps: steps.length,
+          currentStep: currentStepIndex + 1 // 1-based step number for display
         }
       }));
       
@@ -832,10 +833,12 @@ const startAutoReplaySequence = (steps: CalculationStep[]) => {
       
       // Schedule next step after 0.5 seconds
       if (currentStepIndex < steps.length) {
-        setTimeout(showNextStep, 1000);
+        setTimeout(showNextStep, 1000); // 1 second delay
       } else {
         // Replay complete - stop here
         console.log('🎬 AUTO replay completed');
+        // Clear auto replay state when complete
+        window.dispatchEvent(new CustomEvent('autoReplayComplete'));
       }
     }
   };

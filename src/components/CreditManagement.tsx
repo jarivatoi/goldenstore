@@ -90,16 +90,24 @@ const CreditManagement: React.FC = () => {
     };
 
     const handleAutoReplayStep = (event: CustomEvent) => {
-      const { displayValue, stepIndex, totalSteps } = event.detail;
+      const { displayValue, stepIndex, totalSteps, currentStep } = event.detail;
       setCalculatorValue(displayValue);
+      // Update auto replay state to show current step
+      setAutoReplayActive(true);
+    };
+
+    const handleAutoReplayComplete = () => {
+      setAutoReplayActive(false);
     };
 
     window.addEventListener('creditDataChanged', handleCreditDataChanged);
     window.addEventListener('autoReplayStep', handleAutoReplayStep as EventListener);
+    window.addEventListener('autoReplayComplete', handleAutoReplayComplete as EventListener);
     
     return () => {
       window.removeEventListener('creditDataChanged', handleCreditDataChanged);
       window.removeEventListener('autoReplayStep', handleAutoReplayStep as EventListener);
+      window.removeEventListener('autoReplayComplete', handleAutoReplayComplete as EventListener);
     };
   }, []);
 
@@ -910,7 +918,7 @@ const CreditManagement: React.FC = () => {
                   const actualStepNumber = currentStepIndex + 1; // Convert 0-based index to 1-based display
                   const totalSteps = calculationSteps.length;
                   const currentStep = calculationSteps[currentStepIndex];
-                  return `Step ${actualStepNumber}/${totalSteps} (${currentStep?.operationType || 'unknown'})`;
+                  return `AUTO REPLAY - Step ${actualStepNumber}/${totalSteps}`;
                 })() : 'Electronic Calculator'}
               </div>
             </div>
