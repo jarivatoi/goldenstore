@@ -617,18 +617,19 @@ export const processCalculatorInput = (
           // For × and ÷, create a compound expression step
           const displayOperator = newLastOperation === '*' ? '×' : '÷';
           const compoundResult = newLastOperation === '*' ? 
-            parseFloat(newValue) : 
-            parseFloat(newValue);
+            firstNumber * parseFloat(newValue) : 
+            firstNumber / parseFloat(newValue);
           
           newCalculationSteps.push({
-            expression: `(${displayOperator}${newValue})=${compoundResult}`,
+            expression: `(${firstNumber}${displayOperator}${newValue})=${compoundResult}`,
             result: compoundResult,
             timestamp: Date.now(),
             stepNumber: 2,
             operationType: 'operation',
-            displayValue: `(${displayOperator}${newValue})=${compoundResult}`
-          });
         }
+        displayValue: newValue
+      });
+    }
       } else {
         // Build expression from existing steps
         expression = buildExpression();
@@ -706,32 +707,26 @@ export const processCalculatorInput = (
     // Only + and - operators should increment article count (create new transactions)
     const isTransactionOperator = input === '+' || input === '-';
     
-    if (newCalculationSteps.length === 0) {
-      // First number in calculation
-      console.log('🔧 Creating FIRST number step for operator:', newValue, 'parsed as:', parseFloat(newValue));
+    // For multiplication after addition: 25+5×3
+    if (input === '*' || input === '×') {
+      // We need to track that we're starting a multiplication
+      // The current value should be the second operand (5)
+      const secondOperand = parseFloat(newValue);
       newCalculationSteps.push({
-        expression: newValue,
-        result: parseFloat(newValue), // Store the complete number (1000)
+        expression: secondOperand.toString(),
+        result: secondOperand,
         timestamp: Date.now(),
-        stepNumber: 1,
+        stepNumber: 2,
         operationType: 'number',
-        displayValue: newValue // This should be "1000"
+        displayValue: secondOperand.toString()
       });
-      console.log('🔧 STORED first operand:', {
-        expression: newValue,
-        result: parseFloat(newValue),
-        shouldBe1000: parseFloat(newValue) === 1000,
-        actualParsedValue: parseFloat(newValue)
-      });
+    } else if (input === '+' || input === '-') {
+      // Only + and - operators increment article count
+      newArticleCount++;
     }
     
     // Store the new operator (convert display symbols to JS operators)
     newLastOperation = input === '×' ? '*' : input === '÷' ? '/' : input;
-    
-    // Only increment article count for transaction operators (+ and -)
-    if (isTransactionOperator) {
-      newArticleCount++;
-    }
     
     // CRITICAL: Set isNewNumber to true after operator
     newIsNewNumber = true;
