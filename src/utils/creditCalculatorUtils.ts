@@ -440,31 +440,56 @@ export const processCalculatorInput = (
       currentValue: newValue,
       lastOperation: newLastOperation,
       calculationSteps: newCalculationSteps,
-      stepsLength: newCalculationSteps.length
+      stepsLength: newCalculationSteps.length,
+      allStepsDetailed: newCalculationSteps.map((step, index) => ({
+        index,
+        expression: step.expression,
+        result: step.result,
+        operationType: step.operationType,
+        displayValue: step.displayValue,
+        stepNumber: step.stepNumber
+      }))
     });
     
     const currentNum = getCurrentNumber();
     
     // Check if we have a pending multiplication operation
     if (newLastOperation === '*') {
-      // For percentage calculation, we need the number BEFORE the multiplication operator
-      // In sequence: 1000 (step 0) × (operator) 10 (step 2) %
-      // We want the first number (1000), not the current number (10)
+      // Find the base number for percentage calculation
+      // We need to find the number that comes BEFORE the current multiplication
       let firstOperand = 0;
       
-      // Find the first step that is a number (this should be our base value like 1000)
+      // Look for the most recent number that's not part of the current operation
+      // The sequence should be: [number] × [current_number] %
+      // We want the first [number], not the [current_number]
+      
+      console.log('🔍 Searching for base operand in steps:');
       for (let i = 0; i < newCalculationSteps.length; i++) {
         const step = newCalculationSteps[i];
-        console.log('🔍 Checking step', i, ':', {
+        console.log(`Step ${i}:`, {
           expression: step.expression,
           result: step.result,
-          operationType: step.operationType
+          operationType: step.operationType,
+          displayValue: step.displayValue
         });
         
-        if (step.operationType === 'number') {
+        // Look for a step that contains just a number (like "1000")
+        // This should be our base value
+        if (step.operationType === 'number' && !step.expression.includes('×') && !step.expression.includes('+') && !step.expression.includes('-') && !step.expression.includes('÷')) {
           firstOperand = step.result;
-          console.log('🎯 Found first operand:', firstOperand);
+          console.log('🎯 Found base operand:', firstOperand, 'from step:', step);
           break;
+        }
+      }
+      
+      // If we didn't find a pure number step, try parsing the expression
+      if (firstOperand === 0 && newCalculationSteps.length > 0) {
+        const firstStep = newCalculationSteps[0];
+        console.log('🔍 Trying to parse first step expression:', firstStep.expression);
+        const parsed = parseFloat(firstStep.expression);
+        if (!isNaN(parsed)) {
+          firstOperand = parsed;
+          console.log('🎯 Parsed first operand from expression:', firstOperand);
         }
       }
       
