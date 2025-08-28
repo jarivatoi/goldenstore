@@ -707,7 +707,7 @@ const startAutoReplaySequence = (steps: CalculationStep[]) => {
           stepIndex: currentStepIndex,
           totalSteps: steps.length,
           currentStep: currentStepIndex + 1,
-          articleCount: step.operationType === 'result' ? currentStepIndex : currentStepIndex + 1
+          articleCount: step.operationType === 'result' ? 'Result' : `${currentStepIndex + 1}/${steps.filter(s => s.operationType !== 'result').length}`
         }
       }));
       
