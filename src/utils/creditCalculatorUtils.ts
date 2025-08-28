@@ -621,7 +621,7 @@ export const processCalculatorInput = (
       
       // Add final result step
       newCalculationSteps.push({
-        expression: `=${result}`,
+        expression: result.toString(),
         result: result,
         timestamp: Date.now(),
         stepNumber: newCalculationSteps.length + 1,
@@ -669,49 +669,6 @@ export const processCalculatorInput = (
     // Only + and - operators should increment article count (create new transactions)
     const isTransactionOperator = input === '+' || input === '-';
     
-    // Handle pending operation before setting new one
-    if (newLastOperation && !newIsNewNumber) {
-      // We have a pending operation and current number - evaluate it first
-      const currentNum = parseFloat(newValue);
-      
-      // Don't create intermediate steps for multiplication/division within same transaction
-      if (newLastOperation === '*' || newLastOperation === '/') {
-        // For × and ÷, update the last step to show compound result
-        if (newCalculationSteps.length > 0) {
-          const lastStep = newCalculationSteps[newCalculationSteps.length - 1];
-          const firstOperand = lastStep.result;
-          
-          let intermediateResult;
-          switch (newLastOperation) {
-            case '*':
-              intermediateResult = firstOperand * currentNum;
-              break;
-            case '/':
-              intermediateResult = firstOperand / currentNum;
-              break;
-            default:
-              intermediateResult = currentNum;
-          }
-          
-          const displayOperator = newLastOperation === '*' ? '×' : '÷';
-          const compoundExpression = `(${firstOperand}${displayOperator}${currentNum})=${intermediateResult}`;
-          
-          // Update the last step with compound result
-          newCalculationSteps[newCalculationSteps.length - 1] = {
-            expression: compoundExpression,
-            result: intermediateResult,
-            timestamp: Date.now(),
-            stepNumber: newCalculationSteps.length,
-            operationType: 'operation',
-            displayValue: compoundExpression
-          };
-          
-          // Update display to show intermediate result
-          newValue = intermediateResult.toString();
-        }
-      }
-    }
-    
     if (newCalculationSteps.length === 0) {
       // First number in calculation
       console.log('🔧 Creating FIRST number step for operator:', newValue, 'parsed as:', parseFloat(newValue));
@@ -731,60 +688,26 @@ export const processCalculatorInput = (
       });
     }
     
-    // Handle pending operation before setting new one
-    if (newLastOperation && !newIsNewNumber) {
-      // We have a pending operation and current number - evaluate it
-      const currentNum = parseFloat(newValue);
-      const lastStep = newCalculationSteps[newCalculationSteps.length - 1];
-      const firstOperand = lastStep ? lastStep.result : 0;
+    // Only create new steps for transaction operators (+ and -)
+    if (isTransactionOperator && newCalculationSteps.length > 0) {
+      // For + and -, create a new step with the operator and current number
+      const displayOperator = input === '+' ? '+' : '-';
+      newCalculationSteps.push({
+        expression: `${displayOperator}${newValue}`,
+        result: parseFloat(newValue),
+        timestamp: Date.now(),
+        stepNumber: newCalculationSteps.length + 1,
+        operationType: 'operation',
+        displayValue: `${displayOperator}${newValue}`
+      });
       
-      let intermediateResult;
-      switch (newLastOperation) {
-        case '*':
-          intermediateResult = firstOperand * currentNum;
-          break;
-        case '/':
-          intermediateResult = firstOperand / currentNum;
-          break;
-        case '+':
-          intermediateResult = firstOperand + currentNum;
-          break;
-        case '-':
-          intermediateResult = firstOperand - currentNum;
-          break;
-        default:
-          intermediateResult = currentNum;
-      }
-      
-      // For multiplication/division, create a compound step like "(5×3)=15"
-      if (newLastOperation === '*' || newLastOperation === '/') {
-        const displayOperator = newLastOperation === '*' ? '×' : '÷';
-        const compoundExpression = `(${firstOperand}${displayOperator}${currentNum})=${intermediateResult}`;
-        
-        // Replace the last step with the compound result
-        newCalculationSteps[newCalculationSteps.length - 1] = {
-          expression: compoundExpression,
-          result: intermediateResult,
-          timestamp: Date.now(),
-          stepNumber: newCalculationSteps.length,
-          operationType: 'operation',
-          displayValue: compoundExpression
-        };
-      } else {
-        // For + and -, just add the current number as a new step
-        const displayOperator = newLastOperation === '+' ? '+' : '-';
-        newCalculationSteps.push({
-          expression: `${displayOperator}${currentNum}`,
-          result: currentNum,
-          timestamp: Date.now(),
-          stepNumber: newCalculationSteps.length + 1,
-          operationType: 'operation',
-          displayValue: `${displayOperator}${currentNum}`
-        });
-      }
-      
-      // Update the display value to show the intermediate result
-      newValue = intermediateResult.toString();
+      console.log('🔢 CREATED transaction step:', {
+        stepExpression: `${displayOperator}${newValue}`,
+        stepNumber: newCalculationSteps.length,
+        operationType: 'operation',
+        displayValue: `${displayOperator}${newValue}`,
+        allSteps: newCalculationSteps.map(s => s.expression)
+      });
     }
     
     // Store the new operator (convert display symbols to JS operators)
@@ -845,24 +768,27 @@ export const processCalculatorInput = (
                                newLastOperation === '/' ? '÷' : 
                                newLastOperation;
         
-        // Create step with operator and number
-        const stepExpression = `${displayOperator}${input}`;
-        newCalculationSteps.push({
-          expression: stepExpression,
-          result: parseFloat(input),
-          timestamp: Date.now(),
-          stepNumber: newCalculationSteps.length + 1,
-          operationType: 'operation',
-          displayValue: stepExpression // This should be "+5", "×3", etc.
-        });
-        
-        console.log('🔢 CREATED operator step:', {
-          stepExpression,
-          stepNumber: newCalculationSteps.length,
-          operationType: 'operation',
-          displayValue: stepExpression,
-          allSteps: newCalculationSteps.map(s => s.expression)
-        });
+        // Only create steps for transaction operators (+ and -)
+        if (isTransactionOperator) {
+          // Create step with operator and number
+          const stepExpression = `${displayOperator}${input}`;
+          newCalculationSteps.push({
+            expression: stepExpression,
+            result: parseFloat(input),
+            timestamp: Date.now(),
+            stepNumber: newCalculationSteps.length + 1,
+            operationType: 'operation',
+            displayValue: stepExpression
+          });
+          
+          console.log('🔢 CREATED transaction step:', {
+            stepExpression,
+            stepNumber: newCalculationSteps.length,
+            operationType: 'operation',
+            displayValue: stepExpression,
+            allSteps: newCalculationSteps.map(s => s.expression)
+          });
+        }
       }
       newValue = input;
       newIsNewNumber = false;
