@@ -489,14 +489,21 @@ export const processCalculatorInput = (
         
         if (newLastOperation === '*' || newLastOperation === '/') {
           // This is a compound operation like 25 + 5 × 3
-          // Extract the operand from the addition step (the number after +)
-          let multiplicationOperand = secondStep.result; // This should be 5
+          // Extract the operand from the addition step expression
+          let multiplicationOperand = 0;
           
-          // If the second step is an addition like "+5", extract just the 5
-          if (secondStep.expression.startsWith('+') || secondStep.expression.startsWith('-')) {
-            const operandMatch = secondStep.expression.match(/[+-](\d+(?:\.\d+)?)/);
-            if (operandMatch) {
-              multiplicationOperand = parseFloat(operandMatch[1]);
+          // Parse the second step expression to get the actual number
+          if (secondStep.expression.startsWith('+')) {
+            // For "+5", extract the 5
+            const match = secondStep.expression.match(/^\+(\d+(?:\.\d+)?)$/);
+            if (match) {
+              multiplicationOperand = parseFloat(match[1]);
+            }
+          } else if (secondStep.expression.startsWith('-')) {
+            // For "-5", extract the 5
+            const match = secondStep.expression.match(/^-(\d+(?:\.\d+)?)$/);
+            if (match) {
+              multiplicationOperand = parseFloat(match[1]);
             }
           }
           
