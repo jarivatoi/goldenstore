@@ -591,9 +591,9 @@ export const processCalculatorInput = (
             expression: `(${secondOperand}${displayOperator}${thirdOperand})=${compoundResult}`,
             result: compoundResult,
             timestamp: Date.now(),
-            stepNumber: newCalculationSteps.length,
+            stepNumber: 2,
             operationType: 'operation',
-            displayValue: `(${secondOperand}${displayOperator}${thirdOperand})=${compoundResult}`
+            displayValue: `(${prevNumber}${displayOperator}${newValue})=${compoundResult}`
           };
         }
       } else {
@@ -697,8 +697,13 @@ export const processCalculatorInput = (
             timestamp: Date.now(),
             stepNumber: 2,
             operationType: 'operation',
-      const validSteps = newCalculationSteps.filter(step => step.operationType !== 'result');
       
+          const prevStep = newCalculationSteps[newCalculationSteps.length - 1];
+          const prevNumber = prevStep.expression.replace('+', ''); // Remove + to get just the number
+          
+          // Replace the addition step with the multiplication result
+          newCalculationSteps[newCalculationSteps.length - 1] = {
+            expression: `(${prevNumber}${displayOperator}${newValue})=${compoundResult}`,
       if (validSteps.length > 0) {
         expression = validSteps[0].expression;
         
