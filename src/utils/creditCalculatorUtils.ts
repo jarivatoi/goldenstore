@@ -82,7 +82,7 @@ export const evaluateExpression = (expression: string): number => {
     return result;
   } catch {
     console.error('🧮 Expression evaluation failed for:', expression);
-    setTimeout(showNextStep, 1000);
+    return 0;
   }
 };
 
@@ -622,12 +622,12 @@ export const processCalculatorInput = (
           
           // Replace the last operation step with the compound result
           newCalculationSteps[newCalculationSteps.length - 1] = {
-            expression: `(${secondOperand}${displayOperator}${thirdOperand})=${compoundResult}`,
+            expression: `(${firstNumber}${displayOperator}${newValue})=${compoundResult}`,
             result: compoundResult,
             timestamp: Date.now(),
             stepNumber: newCalculationSteps.length,
             operationType: 'operation',
-            displayValue: `(${secondOperand}${displayOperator}${thirdOperand})=${compoundResult}`
+            displayValue: `(${firstNumber}${displayOperator}${newValue})=${compoundResult}`
           };
         }
       } else {
@@ -704,110 +704,6 @@ export const processCalculatorInput = (
       currentSteps: newCalculationSteps.map(s => ({ expression: s.expression, type: s.operationType }))
     });
     
-    if (input === '+' || input === '-') {
-      // Only + and - operators increment article count
-      newArticleCount++;
-      
-      // Create operation step for + and -
-      const displayOperator = input === '+' ? '+' : '-';
-      newCalculationSteps.push({
-        expression: `${displayOperator}${newValue}`,
-        result: parseFloat(newValue),
-        timestamp: Date.now(),
-        stepNumber: newCalculationSteps.length + 1,
-        operationType: 'operation',
-        displayValue: `${displayOperator}${newValue}`
-      });
-    }
-    
-    // Store the new operator (convert display symbols to JS operators)
-    newLastOperation = input === '×' ? '*' : input === '÷' ? '/' : input;
-    
-    // CRITICAL: Set isNewNumber to true after operator
-    newIsNewNumber = true;
-          newCalculationSteps.push({
-            expression: `(${firstNumber}${displayOperator}${newValue})=${compoundResult}`,
-            result: compoundResult,
-            timestamp: Date.now(),
-            stepNumber: 2,
-            operationType: 'operation',
-      });
-            secondOperand / thirdOperand;
-    }
-      } else {
-        // Build expression from existing steps
-        expression = buildExpression();
-      }
-      
-      // Evaluate the complete expression with proper order of operations
-      const result = evaluateExpression(expression);
-      
-      console.log('🧮 Final result:', result);
-      
-      if (isNaN(result) || !isFinite(result)) {
-        newValue = 'Error';
-        return {
-          value: newValue,
-          memory: newMemory,
-          grandTotal: newGrandTotal,
-          lastOperation: null,
-          lastOperand: null,
-          isNewNumber: true,
-          isActive: true,
-          transactionHistory: newTransactionHistory,
-          calculationSteps: newCalculationSteps,
-          autoReplayActive: false,
-          articleCount: newArticleCount
-        };
-      }
-      
-      // Add final result step
-      newCalculationSteps.push({
-        expression: result.toString(),
-        result: result,
-        timestamp: Date.now(),
-        stepNumber: newCalculationSteps.length + 1,
-        operationType: 'result',
-        displayValue: `=${result}`
-      });
-      
-      // Add to grand total and transaction history
-      newGrandTotal += result;
-      newTransactionHistory.push(result);
-      
-      newValue = result.toString();
-      newLastOperation = null;
-      newLastOperand = null;
-      newIsNewNumber = true;
-      
-      // Clear check navigation index when calculation completes
-      localStorage.setItem('currentCheckIndex', '-1');
-      
-      console.log('🧮 FINAL CALCULATION STEPS:', {
-        totalSteps: newCalculationSteps.length,
-        steps: newCalculationSteps.map((step, idx) => ({
-          index: idx,
-          expression: step.expression,
-          displayValue: step.displayValue,
-          operationType: step.operationType,
-          stepNumber: step.stepNumber
-        }))
-      });
-    } catch {
-      newValue = 'Error';
-      newLastOperation = null;
-      newLastOperand = null;
-      newIsNewNumber = true;
-    }
-  } else if (['+', '-', '*', '×', '/', '÷'].includes(input)) {
-    // Arithmetic operations
-    console.log('🔧 OPERATOR INPUT DEBUG:', {
-      input,
-      currentValue: newValue,
-      stepsLength: newCalculationSteps.length,
-      currentSteps: newCalculationSteps.map(s => ({ expression: s.expression, type: s.operationType }))
-    });
-    
     // Only + and - operators should increment article count (create new transactions)
     const isTransactionOperator = input === '+' || input === '-';
     
@@ -818,6 +714,14 @@ export const processCalculatorInput = (
       const secondOperand = parseFloat(newValue);
       newCalculationSteps.push({
         expression: secondOperand.toString(),
+        result: secondOperand,
+        timestamp: Date.now(),
+        stepNumber: newCalculationSteps.length + 1,
+        operationType: 'number',
+        displayValue: secondOperand.toString()
+      });
+    }
+    
     if (input === '+' || input === '-') {
       // Only + and - operators increment article count
       newArticleCount++;
