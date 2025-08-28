@@ -640,6 +640,17 @@ export const processCalculatorInput = (
       
       // Clear check navigation index when calculation completes
       localStorage.setItem('currentCheckIndex', '-1');
+      
+      console.log('🧮 FINAL CALCULATION STEPS:', {
+        totalSteps: newCalculationSteps.length,
+        steps: newCalculationSteps.map((step, idx) => ({
+          index: idx,
+          expression: step.expression,
+          displayValue: step.displayValue,
+          operationType: step.operationType,
+          stepNumber: step.stepNumber
+        }))
+      });
     } catch {
       newValue = 'Error';
       newLastOperation = null;
