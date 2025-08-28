@@ -509,7 +509,6 @@ export const processCalculatorInput = (
           formula: `${firstOperand} × ${currentNum}% = ${percentValue}`
         });
         newValue = percentValue.toString();
-            lastStep.result = parseFloat(newValue); // Update result too!
         newIsNewNumber = true;
         
         // Clear the pending operation since % completes it
