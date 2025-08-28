@@ -481,15 +481,59 @@ export const processCalculatorInput = (
           
           newArticleCount = 2;
         }
-      } else if (newCalculationSteps.length > 1 && newLastOperation && newValue !== '0') {
-        // Complex case with multiple operations - handle order of operations
+      } else if (newCalculationSteps.length === 2 && newLastOperation && newValue !== '0') {
+        // Case: 25 + 5 × 3 (first number, then addition, then multiplication)
+        const firstStep = newCalculationSteps[0]; // Should be "25"
+        const secondStep = newCalculationSteps[1]; // Should be "+5"
+        const currentNumber = parseFloat(newValue);
+        
+        if (newLastOperation === '*' || newLastOperation === '/') {
+          // This is a compound operation like 25 + 5 × 3
+          // We need to replace step 2 with the compound multiplication result
+          const multiplicationOperand = secondStep.result; // This should be 5
+          const displayOperator = newLastOperation === '*' ? '×' : '÷';
+          const multiplicationResult = newLastOperation === '*' 
+            ? multiplicationOperand * currentNumber 
+            : multiplicationOperand / currentNumber;
+          
+          // Replace the second step with the compound operation
+          newCalculationSteps[1] = {
+            expression: `(${multiplicationOperand}${displayOperator}${currentNumber})=${multiplicationResult}`,
+            result: multiplicationResult,
+            timestamp: Date.now(),
+            stepNumber: 2,
+            operationType: 'operation',
+            displayValue: `(${multiplicationOperand}${displayOperator}${currentNumber})=${multiplicationResult}`
+          };
+          
+          // Calculate final result: first number + multiplication result
+          result = firstStep.result + multiplicationResult;
+          newArticleCount = 2; // Keep only 2 steps
+        } else {
+          // Regular addition/subtraction after existing steps
+          const displayOperator = newLastOperation;
+          const fullExpression = buildExpressionFromSteps(newCalculationSteps) + newLastOperation + currentNumber;
+          result = evaluateExpression(fullExpression);
+          
+          newCalculationSteps.push({
+            expression: `${displayOperator}${currentNumber}`,
+            result: currentNumber,
+            timestamp: Date.now(),
+            stepNumber: newCalculationSteps.length + 1,
+            operationType: 'operation',
+            displayValue: `${displayOperator}${currentNumber}`
+          });
+          
+          newArticleCount = newCalculationSteps.filter(step => 
+            step.operationType === 'operation' && (step.expression.startsWith('+') || step.expression.startsWith('-'))
+          ).length + 1;
+        }
+      } else if (newCalculationSteps.length > 2 && newLastOperation && newValue !== '0') {
+        // Complex case with multiple operations
         const currentNumber = parseFloat(newValue);
         const displayOperator = newLastOperation === '*' ? '×' : 
                                newLastOperation === '/' ? '÷' : 
                                newLastOperation;
-        
-        // Build the full expression respecting order of operations
-        let fullExpression = '';
         
         // For multiplication/division, we need to handle them first
         if (newLastOperation === '*' || newLastOperation === '/') {
@@ -513,27 +557,41 @@ export const processCalculatorInput = (
           }
           
           // Add the current operation
-          fullExpression = `(${baseExpression})${newLastOperation}${currentNumber}`;
+          const fullExpression = `(${baseExpression})${newLastOperation}${currentNumber}`;
+          result = evaluateExpression(fullExpression);
+          
+          // Add the operation step
+          newCalculationSteps.push({
+            expression: `${displayOperator}${currentNumber}`,
+            result: currentNumber,
+            timestamp: Date.now(),
+            stepNumber: newCalculationSteps.length + 1,
+            operationType: 'operation',
+            displayValue: `${displayOperator}${currentNumber}`
+          });
+          
+          newArticleCount = newCalculationSteps.filter(step => 
+            step.operationType === 'operation' && (step.expression.startsWith('+') || step.expression.startsWith('-'))
+          ).length + 1;
         } else {
           // For addition/subtraction, just append to the expression
-          fullExpression = buildExpressionFromSteps(newCalculationSteps) + newLastOperation + currentNumber;
+          const fullExpression = buildExpressionFromSteps(newCalculationSteps) + newLastOperation + currentNumber;
+          result = evaluateExpression(fullExpression);
+          
+          // Add the operation step
+          newCalculationSteps.push({
+            expression: `${displayOperator}${currentNumber}`,
+            result: currentNumber,
+            timestamp: Date.now(),
+            stepNumber: newCalculationSteps.length + 1,
+            operationType: 'operation',
+            displayValue: `${displayOperator}${currentNumber}`
+          });
+          
+          newArticleCount = newCalculationSteps.filter(step => 
+            step.operationType === 'operation' && (step.expression.startsWith('+') || step.expression.startsWith('-'))
+          ).length + 1;
         }
-        
-        result = evaluateExpression(fullExpression);
-        
-        // Add the operation step
-        newCalculationSteps.push({
-          expression: `${displayOperator}${currentNumber}`,
-          result: currentNumber,
-          timestamp: Date.now(),
-          stepNumber: newCalculationSteps.length + 1,
-          operationType: 'operation',
-          displayValue: `${displayOperator}${currentNumber}`
-        });
-        
-        newArticleCount = newCalculationSteps.filter(step => 
-          step.operationType === 'operation' && (step.expression.startsWith('+') || step.expression.startsWith('-'))
-        ).length + 1;
       } else if (newCalculationSteps.length > 0) {
         // Just evaluate what we have
         expression = buildExpressionFromSteps(newCalculationSteps);
