@@ -224,4 +224,4 @@ const CreditCalculator: React.FC<CreditCalculatorProps> = ({
   );
 };
 
-export default CreditCalculator; 
+export default CreditCalculator;
