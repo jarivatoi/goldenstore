@@ -714,6 +714,10 @@ export const processCalculatorInput = (
           stepNumber: 1,
           operationType: 'number',
           displayValue: result.toString()
+        }
+        ]
+      }
+    }
     if (newCalculationSteps.length === 0) {
       // First number in calculation
       console.log('🔢 Creating FIRST step for operator:', newValue);
