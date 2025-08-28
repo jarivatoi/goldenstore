@@ -512,17 +512,20 @@ export const processCalculatorInput = (
         newIsNewNumber = true;
         
         // Clear the pending operation since % completes it
+        newLastOperation = null;
+        
+        // Clear calculation steps and add only the result to avoid % in expressions
+        newCalculationSteps = [{
+          expression: percentValue.toString(),
+          result: percentValue,
+          timestamp: Date.now(),
+          stepNumber: 1,
+          operationType: 'number',
+          displayValue: percentValue.toString()
+        }];
+        
         newLastOperand = null;
         
-        // Update the last step to show the percentage operation
-        if (newCalculationSteps.length > 0) {
-          const lastStep = newCalculationSteps[newCalculationSteps.length - 1];
-            lastStep.result = parseFloat(newValue); // Update result too!
-          if (lastStep.operationType === 'operation') {
-            lastStep.expression = `×${currentNum}%`;
-            lastStep.result = percentValue;
-          }
-        }
       } else {
         console.log('🔢 NO VALID OPERAND FOUND for percentage calculation');
         // Simple percentage
