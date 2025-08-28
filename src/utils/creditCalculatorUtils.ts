@@ -504,15 +504,8 @@ export const processCalculatorInput = (
           
           // The operand for multiplication should be the number from the addition step
           // For "25 + 5 × 3", we want the 5 from the "+5" expression
-          if (secondStep.expression.startsWith('+')) {
-            // Extract number after the + sign
-            const numberPart = secondStep.expression.substring(1); // Remove the "+"
-            multiplicationOperand = parseFloat(numberPart);
-          } else if (secondStep.expression.startsWith('-')) {
-            // Extract number after the - sign  
-            const numberPart = secondStep.expression.substring(1); // Remove the "-"
-            multiplicationOperand = parseFloat(numberPart);
-          }
+          // Use the result from the second step, which should be the operand value
+          multiplicationOperand = secondStep.result;
           
           console.log('🔍 Extracted multiplication operand:', multiplicationOperand);
           
@@ -531,8 +524,14 @@ export const processCalculatorInput = (
             displayValue: `(${multiplicationOperand}${displayOperator}${currentNumber})=${multiplicationResult}`
           };
           
-          // Calculate final result: first number + multiplication result
-          result = firstStep.result + multiplicationResult;
+          // Calculate final result based on the original operation
+          if (secondStep.expression.startsWith('+')) {
+            result = firstStep.result + multiplicationResult;
+          } else if (secondStep.expression.startsWith('-')) {
+            result = firstStep.result - multiplicationResult;
+          } else {
+            result = firstStep.result + multiplicationResult; // Default to addition
+          }
           newArticleCount = 2; // Keep only 2 steps
         } else {
           // Regular addition/subtraction after existing steps
