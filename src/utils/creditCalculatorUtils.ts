@@ -624,6 +624,31 @@ export const processCalculatorInput = (
         newValue = currentValue + '.';
       }
     }
+  } else if (['+', '-', '*', '/', '×', '÷'].includes(input)) {
+    // Handle operators
+    const operator = input === '×' ? '*' : input === '÷' ? '/' : input;
+    const displayOperator = operator === '*' ? '×' : operator === '/' ? '÷' : operator;
+    
+    console.log('🔢 OPERATOR INPUT:', {
+      input,
+      operator,
+      displayOperator,
+      currentValue: newValue,
+      lastOperation: newLastOperation,
+      isNewNumber: newIsNewNumber,
+      calculationSteps: newCalculationSteps.length
+    });
+    
+    // Store the pending operation
+    newLastOperation = operator;
+    newIsNewNumber = true;
+    isActive = true;
+    
+    console.log('🔢 OPERATOR SET:', {
+      newLastOperation,
+      newIsNewNumber,
+      calculationSteps: newCalculationSteps
+    });
   } else if (input === '=' || input === 'ENTER') {
     try {
       // For calculations like 25+5×3, we need to handle order of operations
