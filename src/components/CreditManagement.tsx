@@ -891,6 +891,10 @@ const CreditManagement: React.FC = () => {
                 </div>
                 <div className="text-gray-400 font-mono">
                   {lastOperation && <span>OP: {lastOperation === '*' ? '×' : lastOperation === '/' ? '÷' : lastOperation}</span>}
+                </div>
+              </div>
+              
+              {/* Main Display */}
               <div className="text-2xl sm:text-3xl font-mono text-green-400 min-h-[3rem] flex items-center justify-end overflow-hidden bg-black rounded px-3 py-2">
                 <div className="truncate max-w-full" title={calculatorValue}>
                   {calculatorValue}
@@ -903,6 +907,10 @@ const CreditManagement: React.FC = () => {
                   const currentStepIndex = parseInt(localStorage.getItem('currentCheckIndex') || '0');
                   const actualStepNumber = currentStepIndex + 1; // Convert 0-based index to 1-based display
                   const totalSteps = calculationSteps.length;
+                  return `STEP ${actualStepNumber}/${totalSteps}`;
+                })() : 'READY'}
+              </div>
+            </div>
             <div className="text-2xl sm:text-3xl font-mono text-green-400 min-h-[3rem] flex items-center justify-between overflow-hidden bg-black rounded px-3 py-2">
               {/* Article Count Circle - Left side */}
               {articleCount > 0 && (
