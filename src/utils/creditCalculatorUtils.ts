@@ -437,15 +437,34 @@ export const processCalculatorInput = (
   } else if (input === '%') {
     // Percentage calculation
     const currentNum = getCurrentNumber();
-    if (newLastOperation && newLastOperand !== null) {
-      // Calculate percentage of last operand
+    if (newLastOperation === '*' && newLastOperand !== null) {
+      // For multiplication: calculate percentage of the first operand
+      // Example: 1000 × 10% = 1000 × (10/100) = 100
       const percentValue = (newLastOperand * currentNum) / 100;
       newValue = percentValue.toString();
+      newIsNewNumber = true;
+      
+      // Clear the pending operation since % completes it
+      newLastOperation = null;
+      newLastOperand = null;
+      
+      // Add this as a calculation step
+      if (newCalculationSteps.length > 0) {
+        // Replace the last operation step with the percentage result
+        newCalculationSteps[newCalculationSteps.length - 1] = {
+          expression: `×${currentNum}%`,
+          result: percentValue,
+          timestamp: Date.now(),
+          stepNumber: newCalculationSteps.length,
+          operationType: 'operation',
+          displayValue: `×${currentNum}%`
+        };
+      }
     } else {
       // Simple percentage
       newValue = (currentNum / 100).toString();
+      newIsNewNumber = true;
     }
-    newIsNewNumber = true;
   } else if (input === '√') {
     // Square root
     const currentNum = getCurrentNumber();
