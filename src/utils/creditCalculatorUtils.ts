@@ -354,6 +354,16 @@ export const processCalculatorInput = (
       newValue = currentStep.displayValue; // Show the proper display value with operator
       console.log('🔍 CHECK→ SETTING newValue to:', newValue);
       
+      // Update article count based on current step
+      // Don't increment for result steps (those with '=')
+      if (currentStep.operationType === 'result') {
+        // For result steps, keep the count from the previous operation step
+        newArticleCount = Math.max(1, currentStepIndex);
+      } else {
+        // For number and operation steps, use step index + 1
+        newArticleCount = currentStepIndex + 1;
+      }
+      
       // Skip all number formatting for CHECK navigation
       return { 
         value: newValue, // Use exact displayValue without any formatting
@@ -418,6 +428,16 @@ export const processCalculatorInput = (
       });
       newValue = currentStep.displayValue; // Show the proper display value with operator
       console.log('🔍 CHECK← SETTING newValue to:', newValue);
+      
+      // Update article count based on current step
+      // Don't increment for result steps (those with '=')
+      if (currentStep.operationType === 'result') {
+        // For result steps, keep the count from the previous operation step
+        newArticleCount = Math.max(1, currentStepIndex);
+      } else {
+        // For number and operation steps, use step index + 1
+        newArticleCount = currentStepIndex + 1;
+      }
       
       // Skip all number formatting for CHECK navigation
       return { 
