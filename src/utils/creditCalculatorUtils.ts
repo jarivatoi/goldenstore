@@ -414,17 +414,47 @@ export const processCalculatorInput = (
           displayValue: `-${input}`
         });
         newArticleCount = 2;
+      } else if (newCalculationSteps.length >= 2 && newLastOperation === '+') {
+        // For subsequent additions like 20+30+10, add new step
+        newCalculationSteps.push({
+          expression: `+${input}`,
+          result: parseFloat(input),
+          timestamp: Date.now(),
+          stepNumber: newCalculationSteps.length + 1,
+          operationType: 'operation',
+          displayValue: `+${input}`
+        });
+        newArticleCount = newCalculationSteps.length;
+      } else if (newCalculationSteps.length >= 2 && newLastOperation === '-') {
+        // For subsequent subtractions
+        newCalculationSteps.push({
+          expression: `-${input}`,
+          result: parseFloat(input),
+          timestamp: Date.now(),
+          stepNumber: newCalculationSteps.length + 1,
+          operationType: 'operation',
+          displayValue: `-${input}`
+        });
+        newArticleCount = newCalculationSteps.length;
       }
       newValue = input;
       newIsNewNumber = false;
     } else {
       newValue = currentValue + input;
       
+      // Update the last step if it's an operation step being built
       if (newCalculationSteps.length > 0) {
         const lastStep = newCalculationSteps[newCalculationSteps.length - 1];
         if (lastStep.operationType === 'number') {
+          // Update number step
           lastStep.displayValue = newValue;
           lastStep.expression = newValue;
+          lastStep.result = parseFloat(newValue);
+        } else if (lastStep.operationType === 'operation' && (lastStep.expression.startsWith('+') || lastStep.expression.startsWith('-'))) {
+          // Update operation step with complete number
+          const operator = lastStep.expression.charAt(0);
+          lastStep.displayValue = `${operator}${newValue}`;
+          lastStep.expression = `${operator}${newValue}`;
           lastStep.result = parseFloat(newValue);
         }
       }
