@@ -616,19 +616,20 @@ export const processCalculatorInput = (
     
     if (newCalculationSteps.length === 0) {
       // First number in calculation
-      console.log('🔧 Creating FIRST number step for operator:', newValue);
+      console.log('🔧 Creating FIRST number step for operator:', newValue, 'parsed as:', parseFloat(newValue));
       newCalculationSteps.push({
         expression: newValue,
-        result: parseFloat(newValue), // This should store 1000, not 1
-        timestamp: Date.now(),
+        result: parseFloat(newValue), // Store the complete number (1000)
+        result: parseFloat(newValue), // Use newValue instead of input to get full number
         stepNumber: 1,
         operationType: 'number',
-        displayValue: newValue
+        displayValue: newValue // This should be "1000"
       });
       console.log('🔧 STORED first operand:', {
         expression: newValue,
         result: parseFloat(newValue),
-        shouldBe1000: parseFloat(newValue) === 1000
+        shouldBe1000: parseFloat(newValue) === 1000,
+        actualParsedValue: parseFloat(newValue)
       });
     }
     
