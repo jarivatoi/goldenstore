@@ -532,15 +532,18 @@ export const processCalculatorInput = (
       newValue = currentValue + input;
       
       // Update the last step's display value if we're building a multi-digit number
-      if (newCalculationSteps.length > 0 && newLastOperation && !newIsNewNumber) {
+      if (newCalculationSteps.length > 0 && !newIsNewNumber) {
         const lastStep = newCalculationSteps[newCalculationSteps.length - 1];
-        const operatorSymbol = newLastOperation === '*' ? '×' : 
-                             newLastOperation === '/' ? '÷' : 
-                             newLastOperation === '+' ? '+' :
-                             newLastOperation === '-' ? '-' :
-                             newLastOperation;
-        lastStep.displayValue = `${operatorSymbol}${newValue}`;
-        lastStep.expression = `${operatorSymbol}${newValue}`;
+        // Only update if this step has an operator (not the first step)
+        if (lastStep.displayValue.match(/^[+\-×÷]/)) {
+          const operatorSymbol = lastStep.displayValue.charAt(0);
+          lastStep.displayValue = `${operatorSymbol}${newValue}`;
+          lastStep.expression = `${operatorSymbol}${newValue}`;
+        } else {
+          // First step - just update the number
+          lastStep.displayValue = newValue;
+          lastStep.expression = newValue;
+        }
       }
     }
     isActive = true;
