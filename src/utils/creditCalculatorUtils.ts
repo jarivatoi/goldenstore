@@ -733,6 +733,8 @@ export const processCalculatorInput = (
       newArticleCount++;
     }
     
+    // CRITICAL: Set isNewNumber to true after operator
+    newIsNewNumber = true;
   } else if (input === '.') {
     // Decimal point
     if (newIsNewNumber) {
