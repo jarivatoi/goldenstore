@@ -321,16 +321,8 @@ export const processCalculatorInput = (
       // Get current step index from stored state or start from 0
       let currentStepIndex = parseInt(localStorage.getItem('currentCheckIndex') || '0');
       
-      // If no stored index (first CHECK→ after calculation), start from last step (same as CHECK←)
+      // For CHECK→: increment forward with wraparound
       currentStepIndex = (currentStepIndex + 1) % newCalculationSteps.length;
-      
-      const storedIndex = localStorage.getItem('currentCheckIndex');
-      if (storedIndex === null || storedIndex === '-1') {
-        currentStepIndex = newCalculationSteps.length - 1;
-      } else {
-        // Move to previous step with wraparound (same direction as CHECK←)
-        currentStepIndex = currentStepIndex === 0 ? newCalculationSteps.length - 1 : currentStepIndex - 1;
-      }
       
       // Store current index
       localStorage.setItem('currentCheckIndex', currentStepIndex.toString());
