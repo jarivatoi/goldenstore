@@ -714,13 +714,12 @@ export const processCalculatorInput = (
           stepNumber: 1,
           operationType: 'number',
           displayValue: result.toString()
-        }
-        ]
+        }];
+      } catch (error) {
+        console.error('Error in operator handling:', error);
       }
     }
-    } catch (error) {
-      console.error('Error in operator handling:', error);
-    }
+    
     if (newCalculationSteps.length === 0) {
       // First number in calculation
       console.log('🔢 Creating FIRST step for operator:', newValue);
