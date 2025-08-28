@@ -447,16 +447,24 @@ export const processCalculatorInput = (
     
     // Check if we have a pending multiplication operation
     if (newLastOperation === '*') {
-      // Find the first operand from calculation steps
-      const firstStep = newCalculationSteps.find(step => step.operationType === 'number');
+      // Find the most recent number step before the current operation
+      // Look backwards through steps to find the operand for this multiplication
+      let firstOperand = 0;
+      for (let i = newCalculationSteps.length - 1; i >= 0; i--) {
+        const step = newCalculationSteps[i];
+        if (step.operationType === 'number') {
+          firstOperand = step.result;
+          break;
+        }
+      }
+      
       console.log('🔢 PERCENTAGE CALCULATION:', {
-        firstStep,
+        firstOperand,
         currentNum,
-        willCalculate: firstStep ? `${firstStep.result} × ${currentNum}% = ${(firstStep.result * currentNum) / 100}` : 'No first step found'
+        willCalculate: `${firstOperand} × ${currentNum}% = ${(firstOperand * currentNum) / 100}`
       });
       
-      if (firstStep) {
-        const firstOperand = firstStep.result;
+      if (firstOperand !== 0) {
         // Calculate percentage: 1000 × 10% = 1000 × (10/100) = 100
         const percentValue = (firstOperand * currentNum) / 100;
         console.log('🔢 PERCENTAGE RESULT:', {
@@ -482,7 +490,7 @@ export const processCalculatorInput = (
           }
         }
       } else {
-        console.log('🔢 NO FIRST STEP FOUND for percentage calculation');
+        console.log('🔢 NO VALID OPERAND FOUND for percentage calculation');
         // Simple percentage
         newValue = (currentNum / 100).toString();
         newIsNewNumber = true;
