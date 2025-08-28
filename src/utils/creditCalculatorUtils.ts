@@ -509,18 +509,22 @@ export const processCalculatorInput = (
           formula: `${firstOperand} × ${currentNum}% = ${percentValue}`
         });
         newValue = percentValue.toString();
+            lastStep.result = parseFloat(newValue); // Update result too!
         newIsNewNumber = true;
         
         // Clear the pending operation since % completes it
-        newLastOperation = null;
+              newExpression: lastStep.expression,
+              newResult: lastStep.result
         newLastOperand = null;
         
         // Update the last step to show the percentage operation
         if (newCalculationSteps.length > 0) {
           const lastStep = newCalculationSteps[newCalculationSteps.length - 1];
+            lastStep.result = parseFloat(newValue); // Update result too!
           if (lastStep.operationType === 'operation') {
             lastStep.expression = `×${currentNum}%`;
-            lastStep.displayValue = `×${currentNum}%`;
+              newExpression: lastStep.expression,
+              newResult: lastStep.result
             lastStep.result = percentValue;
           }
         }
