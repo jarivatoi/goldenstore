@@ -128,37 +128,23 @@ export const processCalculatorInput = (
   
   // Build expression string for proper order of operations
   const buildExpression = (): string => {
-    // Build expression from calculation steps
-    let expression = '';
+    // Simple expression building - just concatenate the parts we have
+    let parts: string[] = [];
     
+    // Add the first number if we have steps
     if (newCalculationSteps.length > 0) {
-      // Start with the first number
-      expression = newCalculationSteps[0].result.toString();
-      
-      // Add each operation step
-      for (let i = 1; i < newCalculationSteps.length; i++) {
-        const step = newCalculationSteps[i];
-        if (step.operationType === 'operation') {
-          // Extract operator and operand from step expression
-          const stepExpr = step.expression;
-          if (stepExpr.startsWith('+') || stepExpr.startsWith('-') || stepExpr.startsWith('×') || stepExpr.startsWith('÷')) {
-            const operator = stepExpr.charAt(0) === '×' ? '*' : stepExpr.charAt(0) === '÷' ? '/' : stepExpr.charAt(0);
-            const operand = stepExpr.substring(1);
-            expression += operator + operand;
-          }
-        }
-      }
-      
-      // If we have a pending operation and current value, add it
-      if (newLastOperation && newValue !== '0' && newIsNewNumber === false) {
-        const operator = newLastOperation === '*' ? '*' : newLastOperation === '/' ? '/' : newLastOperation;
-        expression += operator + newValue;
-      }
-    } else {
-      expression = newValue;
+      parts.push(newCalculationSteps[0].result.toString());
     }
     
-    console.log('🔧 Built expression:', expression);
+    // Add pending operation and current value if we have them
+    if (newLastOperation && newValue !== '0' && !newIsNewNumber) {
+      const jsOperator = newLastOperation === '*' ? '*' : newLastOperation === '/' ? '/' : newLastOperation;
+      parts.push(jsOperator);
+      parts.push(newValue);
+    }
+    
+    const expression = parts.join('');
+    console.log('🔧 Built expression:', expression, 'from parts:', parts);
     return expression;
   };
 
@@ -696,34 +682,8 @@ export const processCalculatorInput = (
       calculationSteps: newCalculationSteps
     });
     
-    if (newLastOperation && !newIsNewNumber) {
-      // We have a pending operation and a new number
-      // Evaluate the pending operation first
-      try {
-        const expression = buildExpression() + newValue;
-        const result = evaluateExpression(expression);
-        
-        // Update the display with intermediate result
-        newValue = result.toString();
-        
-        // Clear steps and start fresh with the result
-        newCalculationSteps = [{
-          expression: result.toString(),
-          result: result,
-          timestamp: Date.now(),
-          stepNumber: 1,
-          operationType: 'number',
-          displayValue: result.toString()
-        }];
-      } catch (error) {
-        console.error('Error in operator handling:', error);
-      }
-    }
-    
+    // If we have no steps yet, create the first step with current value
     if (newCalculationSteps.length === 0) {
-      // First number in calculation
-      console.log('🔢 Creating FIRST step for operator:', newValue);
-      newArticleCount = 1;
       newCalculationSteps.push({
         expression: newValue,
         result: parseFloat(newValue),
@@ -732,31 +692,18 @@ export const processCalculatorInput = (
         operationType: 'number',
         displayValue: newValue
       });
-    } else if (!newIsNewNumber) {
-      // We just entered a number, add it as an operation step
-      const stepNumber = newCalculationSteps.length + 1;
-      newCalculationSteps.push({
-        expression: `${displayOperator}${newValue}`,
-        result: parseFloat(newValue),
-        timestamp: Date.now(),
-        stepNumber: stepNumber,
-        operationType: 'operation',
-        displayValue: `${displayOperator}${newValue}`
-      });
+      newArticleCount = 1;
     }
     
-    // Set the new operation
+    // Just store the operation - don't evaluate yet
     newLastOperation = operator;
     newIsNewNumber = true;
     
     console.log('🔢 OPERATOR SET:', {
       newLastOperation,
       newIsNewNumber,
-      calculationSteps: newCalculationSteps
+      calculationSteps: newCalculationSteps.length
     });
-    
-  } else if (/^\d$/.test(input) || input === '.') {
-    // Handle numeric input and decimal point
     console.log('🔢 NUMERIC INPUT:', {
       input,
       currentValue,
