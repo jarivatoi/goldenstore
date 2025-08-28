@@ -513,19 +513,27 @@ export const processCalculatorInput = (
     isActive = true;
   } else if (input === '=' || input === 'ENTER') {
     try {
+      console.log('🧮 EQUALS pressed - Debug info:');
+      console.log('📊 Current calculation steps:', newCalculationSteps);
+      console.log('📊 Last operation:', newLastOperation);
+      console.log('📊 Current value:', newValue);
+      
       let expression = '';
       let result = 0;
       
       if (newCalculationSteps.length === 1 && newLastOperation && newValue !== '0') {
+        console.log('📊 Case: Single step with operation');
         // Simple case: first_number operator current_number
         const firstNumber = newCalculationSteps[0].result;
         const operator = newLastOperation;
         const currentNumber = parseFloat(newValue);
+        console.log('📊 First number:', firstNumber, 'Operator:', operator, 'Current number:', currentNumber);
         
         if (operator === '+' || operator === '-') {
           // For + and - operations, create a transaction step
           expression = `${firstNumber}${operator}${currentNumber}`;
           result = evaluateExpression(expression);
+          console.log('📊 Expression:', expression, 'Result:', result);
           
           newCalculationSteps.push({
             expression: `${operator === '+' ? '+' : '-'}${currentNumber}`,
@@ -539,12 +547,17 @@ export const processCalculatorInput = (
           newArticleCount = 2;
         }
       } else if (newCalculationSteps.length >= 2 && newLastOperation && newValue !== '0') {
+        console.log('📊 Case: Multiple steps with operation');
         // Handle multiple operations
         const currentNumber = parseFloat(newValue);
         const firstStep = newCalculationSteps[0];
         const secondStep = newCalculationSteps[1];
+        console.log('📊 Current number:', currentNumber);
+        console.log('📊 First step:', firstStep);
+        console.log('📊 Second step:', secondStep);
         
         if (newLastOperation === '*' || newLastOperation === '/') {
+          console.log('📊 Handling multiplication/division');
           // This is a compound operation like 25 + 5 × 3
           // Extract the operand from the addition step expression
           let multiplicationOperand = 0;
@@ -597,25 +610,40 @@ export const processCalculatorInput = (
           
           newArticleCount = 2; // Keep only 2 steps
         } else {
+          console.log('📊 Handling sequential addition/subtraction');
           // Sequential addition/subtraction like 20+30+10
           // Build expression from all existing steps plus current operation
           let fullExpression = '';
           
           // Start with first number
           fullExpression += firstStep.result;
+          console.log('📊 Starting expression with first number:', fullExpression);
           
           // Add all operation steps
           for (let i = 1; i < newCalculationSteps.length; i++) {
             const step = newCalculationSteps[i];
             if (step.operationType === 'operation') {
               fullExpression += step.expression;
+              console.log('📊 Added step', i, ':', step.expression, '-> Expression now:', fullExpression);
             }
           }
           
-          // Only add current operation and number if we have a valid number
-          // Don't add if newValue is '0' (which indicates no number was entered after the operator)
-          if (newValue !== '0' && !isNaN(currentNumber) && currentNumber !== 0) {
+          // Check if we should add the current number
+          // Don't add if newValue is the same as the display from the last step (trailing operator case)
+          const shouldAddCurrentNumber = newValue !== '0' && !isNaN(currentNumber) && currentNumber !== 0;
+          
+          // Also check if this is a trailing operator case (like 20+20+20+)
+          const lastStep = newCalculationSteps[newCalculationSteps.length - 1];
+          const isTrailingOperator = lastStep && lastStep.operationType === 'operation' && 
+                                   newValue === lastStep.result.toString();
+          
+          console.log('📊 Should add current number?', shouldAddCurrentNumber);
+          console.log('📊 Is trailing operator?', isTrailingOperator);
+          console.log('📊 Current value vs last step result:', newValue, 'vs', lastStep?.result);
+          
+          if (shouldAddCurrentNumber && !isTrailingOperator) {
             fullExpression += newLastOperation + currentNumber;
+            console.log('📊 Added current operation:', newLastOperation + currentNumber, '-> Final expression:', fullExpression);
             
             // Add the new operation step
             newCalculationSteps.push({
@@ -626,23 +654,34 @@ export const processCalculatorInput = (
               operationType: 'operation',
               displayValue: `${newLastOperation === '+' ? '+' : newLastOperation === '-' ? '-' : newLastOperation}${currentNumber}`
             });
+          } else {
+            console.log('📊 Skipping current number (trailing operator or invalid)');
           }
           
           // Calculate result
+          console.log('📊 Final expression to evaluate:', fullExpression);
           result = evaluateExpression(fullExpression);
+          console.log('📊 Evaluation result:', result);
           
           newArticleCount = newCalculationSteps.filter(step => 
             step.operationType === 'operation' && (step.expression.startsWith('+') || step.expression.startsWith('-'))
           ).length + 1;
         }
       } else if (newCalculationSteps.length > 0) {
+        console.log('📊 Case: Just evaluate existing steps');
         // Just evaluate what we have
         expression = buildExpressionFromSteps(newCalculationSteps);
+        console.log('📊 Built expression from steps:', expression);
         result = evaluateExpression(expression);
+        console.log('📊 Evaluation result:', result);
       } else {
+        console.log('📊 Case: No steps, use current value');
         // No steps, just use current value
         result = parseFloat(newValue);
+        console.log('📊 Using current value as result:', result);
       }
+      
+      console.log('📊 Final result before adding to steps:', result);
       
       // Add result step
       newCalculationSteps.push({
