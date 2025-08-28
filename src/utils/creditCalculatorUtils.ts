@@ -566,25 +566,48 @@ export const processCalculatorInput = (
           newArticleCount = 2; // Keep only 2 steps
         } else {
           // Sequential addition/subtraction like 20+30+10
-          // Build expression from all existing steps plus current operation
-          let fullExpression = '';
+          // Debug: Log what we're working with
+          console.log('🔍 Sequential operation debug:', {
+            steps: newCalculationSteps,
+            currentNumber: currentNumber,
+            lastOperation: newLastOperation
+          });
+          
+          // Build expression step by step
+          let expressionParts = [];
           
           // Start with first number
-          fullExpression += firstStep.result;
+          expressionParts.push(firstStep.result.toString());
           
           // Add all operation steps
           for (let i = 1; i < newCalculationSteps.length; i++) {
             const step = newCalculationSteps[i];
             if (step.operationType === 'operation') {
-              fullExpression += step.expression;
+              // Extract the operator and operand
+              if (step.expression.startsWith('+')) {
+                const operand = step.expression.substring(1);
+                expressionParts.push('+');
+                expressionParts.push(operand);
+              } else if (step.expression.startsWith('-')) {
+                const operand = step.expression.substring(1);
+                expressionParts.push('-');
+                expressionParts.push(operand);
+              } else {
+                expressionParts.push(step.expression);
+              }
             }
           }
           
           // Add current operation and number
-          fullExpression += newLastOperation + currentNumber;
+          expressionParts.push(newLastOperation);
+          expressionParts.push(currentNumber.toString());
+          
+          const fullExpression = expressionParts.join('');
+          console.log('🔍 Built expression:', fullExpression);
           
           // Calculate result
           result = evaluateExpression(fullExpression);
+          console.log('🔍 Calculated result:', result);
           
           // Add the new operation step
           newCalculationSteps.push({
@@ -681,7 +704,17 @@ const buildExpressionFromSteps = (steps: CalculationStep[]): string => {
         expression = step.result.toString();
       } else {
         // Regular operation like +5 or -3
-        expression += step.expression;
+        // For sequential operations, we need to extract just the number part
+        // and add it with the correct operator
+        if (step.expression.startsWith('+')) {
+          const operand = step.expression.substring(1);
+          expression += '+' + operand;
+        } else if (step.expression.startsWith('-')) {
+          const operand = step.expression.substring(1);
+          expression += '-' + operand;
+        } else {
+          expression += step.expression;
+        }
       }
     }
   }
