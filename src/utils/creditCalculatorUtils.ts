@@ -128,24 +128,40 @@ export const processCalculatorInput = (
   
   // Build expression string for proper order of operations
   const buildExpression = (): string => {
-    let expression = '';
+    // For building expressions, we need to be more careful about how we combine steps
+    // The issue is that we're concatenating step expressions directly
     
-    // Filter out result steps to avoid including '=' in expressions
-    const validSteps = newCalculationSteps.filter(step => step.operationType !== 'result');
-    
-    if (validSteps.length > 0) {
-      expression = validSteps[0].expression;
-      
-      for (let i = 1; i < validSteps.length; i++) {
-        const step = validSteps[i];
-        expression += step.expression;
-      }
-    } else {
-      expression = newValue;
+    // If we have pending operation and current value, build simple expression
+    if (newLastOperation && newValue !== '0' && newCalculationSteps.length > 0) {
+      const firstStep = newCalculationSteps[0];
+      const operator = newLastOperation === '*' ? '*' : newLastOperation === '/' ? '/' : newLastOperation;
+      const expression = `${firstStep.result}${operator}${newValue}`;
+      console.log('🔧 Built expression (simple):', expression);
+      return expression;
     }
     
-    console.log('🔧 Built expression:', expression);
-    return expression;
+    // For complex expressions, we need to reconstruct properly
+    if (newCalculationSteps.length > 0) {
+      // Start with first number
+      let expression = newCalculationSteps[0].result.toString();
+      
+      // Add subsequent operations
+      for (let i = 1; i < newCalculationSteps.length; i++) {
+        const step = newCalculationSteps[i];
+        if (step.operationType === 'operation' && !step.expression.includes('=')) {
+          // This is an operation step like "+5" or "×3"
+          const operator = step.expression.charAt(0);
+          const operand = step.expression.substring(1);
+          expression += operator + operand;
+        }
+      }
+      
+      console.log('🔧 Built expression (complex):', expression);
+      return expression;
+    }
+    
+    console.log('🔧 Built expression (fallback):', newValue);
+    return newValue;
   };
 
   // Helper function to get the current expression for display
