@@ -718,6 +718,9 @@ export const processCalculatorInput = (
         ]
       }
     }
+    } catch (error) {
+      console.error('Error in operator handling:', error);
+    }
     if (newCalculationSteps.length === 0) {
       // First number in calculation
       console.log('🔢 Creating FIRST step for operator:', newValue);
