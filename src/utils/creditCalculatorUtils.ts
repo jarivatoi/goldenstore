@@ -127,33 +127,30 @@ export const processCalculatorInput = (
   
   // Build expression string for proper order of operations
   const buildExpression = (): string => {
-    if (newCalculationSteps.length === 0) {
-      return newValue;
+    let expression = '';
+    
+    // Start with the first number
+    if (newCalculationSteps.length > 0) {
+      expression = newCalculationSteps[0].expression;
+    } else {
+      expression = newValue;
     }
     
-    // Build expression from steps properly
-    let expression = newCalculationSteps[0].expression; // Start with first number
-    
+    // Add subsequent operations
     for (let i = 1; i < newCalculationSteps.length; i++) {
       const step = newCalculationSteps[i];
-      if (step.operationType === 'operation') {
-        // Extract operator and number from step expression like "+5" or "×3"
-        const stepExpr = step.expression;
-        if (stepExpr.startsWith('+') || stepExpr.startsWith('-') || stepExpr.startsWith('×') || stepExpr.startsWith('÷')) {
-          const operator = stepExpr.charAt(0);
-          const number = stepExpr.substring(1);
-          
-          // Convert display operators to JavaScript operators
-          const jsOperator = operator === '×' ? '*' : 
-                            operator === '÷' ? '/' : 
-                            operator === 'x' ? '*' :
-                            operator;
-          expression += jsOperator + number;
-        }
-      }
+      const stepExpr = step.expression;
+      
+      // Convert display operators to JavaScript operators
+      const convertedExpr = stepExpr
+        .replace(/×/g, '*')
+        .replace(/÷/g, '/')
+        .replace(/x/g, '*');
+      
+      expression += convertedExpr;
     }
     
-    // If we're currently entering a number after an operator, add it
+    // If we have a pending operation and current value, add it
     if (newLastOperation && !newIsNewNumber && newValue !== '0') {
       const jsOperator = newLastOperation === '*' ? '*' :
                         newLastOperation === 'x' ? '*' :
@@ -162,6 +159,32 @@ export const processCalculatorInput = (
       expression += jsOperator + newValue;
     }
     
+    console.log('🔧 Built expression:', expression);
+    return expression;
+  };
+
+  // Helper function to get the current expression for display
+  const getCurrentExpression = (): string => {
+    let expression = '';
+    
+    // Build from steps
+    if (newCalculationSteps.length > 0) {
+      expression = newCalculationSteps[0].expression;
+      
+      for (let i = 1; i < newCalculationSteps.length; i++) {
+        expression += newCalculationSteps[i].expression;
+      }
+    }
+    
+    // Add current operation if we have one
+    if (newLastOperation && !newIsNewNumber && newValue !== '0') {
+      const displayOperator = newLastOperation === '*' ? '×' :
+                             newLastOperation === '/' ? '÷' : 
+                             newLastOperation;
+      expression += displayOperator + newValue;
+    }
+    
+    console.log('📺 Display expression:', expression);
     return expression;
   };
   let pendingOperandExpression = ''; // Track compound expressions like "3×5"
@@ -335,8 +358,12 @@ export const processCalculatorInput = (
       // Build the complete expression from steps
       const expression = buildExpression();
       
+      console.log('🧮 Evaluating final expression:', expression);
+      
       // Evaluate the complete expression with proper order of operations
       const result = evaluateExpression(expression);
+      
+      console.log('🧮 Final result:', result);
       
       if (isNaN(result) || !isFinite(result)) {
         newValue = 'Error';
@@ -381,8 +408,23 @@ export const processCalculatorInput = (
     }
   } else if (['+', '-', '*', '×', '/', '÷'].includes(input)) {
     // Arithmetic operations
-    // Store the operator for the next number
-    const operatorSymbol = input === '*' ? '×' : input === '/' ? '÷' : input;
+    // When we get an operator, we need to:
+    // 1. If this is the first operator, store the current value as the first operand
+    // 2. Store the operator for the next number
+    
+    if (newCalculationSteps.length === 0) {
+      // First number in calculation
+      newCalculationSteps.push({
+        expression: newValue,
+        result: parseFloat(newValue),
+        timestamp: Date.now(),
+        stepNumber: 1,
+        operationType: 'number',
+        displayValue: newValue
+      });
+    }
+    
+    // Store the operator (convert display symbols to JS operators)
     newLastOperation = input === '×' ? '*' : input === '÷' ? '/' : input;
     
     newIsNewNumber = true;
