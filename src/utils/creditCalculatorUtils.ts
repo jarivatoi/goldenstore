@@ -437,28 +437,31 @@ export const processCalculatorInput = (
   } else if (input === '%') {
     // Percentage calculation
     const currentNum = getCurrentNumber();
-    if (newLastOperation === '*' && newLastOperand !== null) {
-      // For multiplication: calculate percentage of the first operand
-      // Example: 1000 × 10% = 1000 × (10/100) = 100
-      const percentValue = (newLastOperand * currentNum) / 100;
-      newValue = percentValue.toString();
-      newIsNewNumber = true;
-      
-      // Clear the pending operation since % completes it
-      newLastOperation = null;
-      newLastOperand = null;
-      
-      // Add this as a calculation step
-      if (newCalculationSteps.length > 0) {
-        // Replace the last operation step with the percentage result
-        newCalculationSteps[newCalculationSteps.length - 1] = {
-          expression: `×${currentNum}%`,
-          result: percentValue,
-          timestamp: Date.now(),
-          stepNumber: newCalculationSteps.length,
-          operationType: 'operation',
-          displayValue: `×${currentNum}%`
-        };
+    
+    // Check if we have a pending multiplication operation
+    if (newLastOperation === '*') {
+      // Find the first operand from calculation steps
+      const firstStep = newCalculationSteps.find(step => step.operationType === 'number');
+      if (firstStep) {
+        const firstOperand = firstStep.result;
+        // Calculate percentage: 1000 × 10% = 1000 × (10/100) = 100
+        const percentValue = (firstOperand * currentNum) / 100;
+        newValue = percentValue.toString();
+        newIsNewNumber = true;
+        
+        // Clear the pending operation since % completes it
+        newLastOperation = null;
+        newLastOperand = null;
+        
+        // Update the last step to show the percentage operation
+        if (newCalculationSteps.length > 0) {
+          const lastStep = newCalculationSteps[newCalculationSteps.length - 1];
+          if (lastStep.operationType === 'operation') {
+            lastStep.expression = `×${currentNum}%`;
+            lastStep.displayValue = `×${currentNum}%`;
+            lastStep.result = percentValue;
+          }
+        }
       }
     } else {
       // Simple percentage
