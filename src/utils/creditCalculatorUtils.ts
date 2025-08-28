@@ -29,7 +29,7 @@ const CreditCalculator: React.FC<CreditCalculatorProps> = ({
 }) => {
   return (
     <div className="w-full lg:w-80 bg-white rounded-lg shadow-lg p-4 lg:p-6 order-1 lg:order-2 flex flex-col">
-        <Calculator size={24} className="text-blue-600" />
+      <div className="flex items-center gap-2 mb-4">
         <div className="flex-1">
           <h3 className="text-lg lg:text-xl font-semibold text-gray-800">Calculator</h3>
         </div>
