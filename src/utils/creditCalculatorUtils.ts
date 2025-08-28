@@ -321,6 +321,16 @@ export const processCalculatorInput = (
       // Get current step index from stored state or start from 0
       let currentStepIndex = parseInt(localStorage.getItem('currentCheckIndex') || '0');
       
+      // Move to next step (with wraparound)
+      currentStepIndex = (currentStepIndex + 1) % newCalculationSteps.length;
+      
+      const storedIndex = localStorage.getItem('currentCheckIndex');
+      if (storedIndex === null || storedIndex === '-1') {
+        currentStepIndex = 0;
+      } else {
+        // Move to next step (don't go beyond last step)
+        currentStepIndex = (currentStepIndex + 1) % newCalculationSteps.length;
+      }
       
       // Store current index
       localStorage.setItem('currentCheckIndex', currentStepIndex.toString());
@@ -338,7 +348,6 @@ export const processCalculatorInput = (
         willDisplay: currentStep.displayValue,
         actualStepContent: JSON.stringify(currentStep)
       });
-      console.log('🔍 CHECK→ SETTING newValue to:', newValue);
       // For CHECK navigation, preserve the exact displayValue without formatting
       newValue = currentStep.displayValue; // Show the proper display value with operator
       console.log('🔍 CHECK→ SETTING newValue to:', newValue);
@@ -380,8 +389,8 @@ export const processCalculatorInput = (
       if (storedIndex === null || storedIndex === '-1') {
         currentStepIndex = newCalculationSteps.length - 1;
       } else {
-        // Move to previous step (don't go below 0)
-        currentStepIndex = Math.max(currentStepIndex - 1, 0);
+        // Move to previous step (with wraparound)
+        currentStepIndex = currentStepIndex === 0 ? newCalculationSteps.length - 1 : currentStepIndex - 1;
       }
       
       // Store current index
@@ -442,13 +451,6 @@ export const processCalculatorInput = (
       newValue = 'Error';
     } else {
       newValue = Math.sqrt(currentNum).toString();
-      // If no stored index (first CHECK→ after calculation), start from step 0
-      if (currentStepIndex === -1) {
-        currentStepIndex = 0;
-      } else {
-        // Move to next step
-        currentStepIndex = (currentStepIndex + 1) % newCalculationSteps.length;
-      }
     }
     newIsNewNumber = true;
   } else if (input === '=' || input === 'ENTER') {
