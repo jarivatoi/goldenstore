@@ -456,19 +456,17 @@ export const processCalculatorInput = (
       } else if (newLastOperation && newIsNewNumber) {
         // New number after an operation - increment article count
         newArticleCount++;
-        // Create step for this number with the pending operation
-        const operatorSymbol = newLastOperation === '*' ? '×' : 
-                             newLastOperation === '/' ? '÷' : 
-                             newLastOperation === '+' ? '+' :
-                             newLastOperation === '-' ? '-' :
-                             newLastOperation;
+        // Create step for this number with the pending operation (display format)
+        const displayOperator = newLastOperation === '*' ? '×' : 
+                               newLastOperation === '/' ? '÷' : 
+                               newLastOperation;
         newCalculationSteps.push({
-          expression: `${operatorSymbol}${input}`,
+          expression: `${displayOperator}${input}`,
           result: parseFloat(input),
           timestamp: Date.now(),
           stepNumber: newCalculationSteps.length + 1,
           operationType: 'operation',
-          displayValue: `${operatorSymbol}${input}`
+          displayValue: `${displayOperator}${input}`
         });
       }
       newValue = input;
