@@ -1,764 +1,227 @@
+import React from 'react';
+import { Calculator, Plus, X } from 'lucide-react';
+import { Client } from '../../types';
+
+interface CreditCalculatorProps {
+  calculatorValue: string;
+  calculatorMemory: number;
+  linkedClient: Client | null;
+  onCalculatorInput: (value: string) => void;
+  onCalculatorCancel: () => void;
+  onAddToClient: () => void;
+  isDisabled: boolean;
+}
+
 /**
- * CREDIT CALCULATOR UTILITIES
+ * CREDIT CALCULATOR COMPONENT
  * ===========================
  * 
- * Utility functions for calculator operations and expression evaluation
+ * Calculator interface for credit transactions
  */
+const CreditCalculator: React.FC<CreditCalculatorProps> = ({
+  calculatorValue,
+  calculatorMemory,
+  linkedClient,
+  onCalculatorInput,
+  onCalculatorCancel,
+  onAddToClient,
+  isDisabled
+}) => {
+  return (
+    <div className="w-full lg:w-80 bg-white rounded-lg shadow-lg p-4 lg:p-6 order-1 lg:order-2 flex flex-col">
+      <div className="flex items-center gap-2 mb-4">
+        <Calculator size={24} className="text-blue-600" />
+        <div className="flex-1">
+          <h3 className="text-lg lg:text-xl font-semibold text-gray-800">Calculator</h3>
+        </div>
+        {linkedClient && (
+          <>
+            <p className="text-xs lg:text-sm text-green-600 font-medium">
+              Adding to: {linkedClient.name}
+            </p>
+            <button
+              onClick={onCalculatorCancel}
+              className="text-gray-500 hover:text-gray-700 transition-colors"
+              title="Cancel link to client"
+            >
+              <X size={20} />
+            </button>
+          </>
+        )}
+      </div>
 
-/**
- * Calculator state interface
- */
-interface CalculatorState {
-  display: string;
-  memory: number;
-  grandTotal: number;
-  lastOperation: string | null;
-  lastOperand: number | null;
-  isNewNumber: boolean;
-  isError: boolean;
-}
+      {/* Calculator Display */}
+      <div className="mb-4">
+        <div className="bg-gray-100 rounded-lg p-4 text-right relative">
+          {calculatorMemory !== 0 && (
+            <div className="absolute top-2 left-3 text-xs text-blue-600 font-semibold">
+              M
+            </div>
+          )}
+          <div className="text-xl sm:text-2xl font-mono text-gray-800 min-h-[2rem] flex items-center justify-end overflow-hidden">
+            <div className="truncate max-w-full" title={calculatorValue}>
+              {calculatorValue}
+            </div>
+          </div>
+        </div>
+      </div>
 
-/**
- * Calculation step interface for tracking intermediate steps
- */
-interface CalculationStep {
-  expression: string;
-  result: number;
-  timestamp: number;
-  stepNumber: number;
-  operationType: 'number' | 'operation' | 'result';
-  displayValue: string;
-}
+      {/* Calculator Buttons */}
+      <div className="grid grid-cols-5 gap-2 mb-4">
+        {/* Row 0 - Memory Functions */}
+        <button
+          onClick={() => onCalculatorInput('M+')}
+          className="bg-purple-500 hover:bg-purple-600 text-white p-3 rounded-lg font-semibold text-sm"
+        >
+          M+
+        </button>
+        <button
+          onClick={() => onCalculatorInput('MR')}
+          className="bg-purple-500 hover:bg-purple-600 text-white p-3 rounded-lg font-semibold text-sm"
+        >
+          MR
+        </button>
+        <button
+          onClick={() => onCalculatorInput('MC')}
+          className="bg-purple-500 hover:bg-purple-600 text-white p-3 rounded-lg font-semibold text-sm"
+        >
+          MC
+        </button>
+        <button
+          onClick={() => onCalculatorInput('CE')}
+          className="bg-orange-500 hover:bg-orange-600 text-white p-3 rounded-lg font-semibold text-sm"
+        >
+          CE
+        </button>
+        <button
+          onClick={() => onCalculatorInput('C')}
+          className="bg-red-500 hover:bg-red-600 text-white p-3 rounded-lg font-semibold text-sm"
+        >
+          C
+        </button>
 
-/**
- * Article count state interface
- */
-interface ArticleCountState {
-  count: number;
-  hasCurrentArticle: boolean;
-}
+        {/* Row 1 */}
+        <button
+          onClick={() => onCalculatorInput('7')}
+          className="bg-gray-200 hover:bg-gray-300 text-gray-800 p-4 rounded-lg font-semibold text-lg"
+        >
+          7
+        </button>
+        <button
+          onClick={() => onCalculatorInput('8')}
+          className="bg-gray-200 hover:bg-gray-300 text-gray-800 p-3 rounded-lg font-semibold"
+        >
+          8
+        </button>
+        <button
+          onClick={() => onCalculatorInput('9')}
+          className="bg-gray-200 hover:bg-gray-300 text-gray-800 p-3 rounded-lg font-semibold"
+        >
+          9
+        </button>
+        <button
+          onClick={() => onCalculatorInput('/')}
+          className="bg-blue-500 hover:bg-blue-600 text-white p-3 rounded-lg font-semibold"
+        >
+          ÷
+        </button>
+        <button
+          onClick={() => onCalculatorInput('⌫')}
+          className="bg-gray-500 hover:bg-gray-600 text-white p-3 rounded-lg font-semibold"
+        >
+          ⌫
+        </button>
 
-/**
- * Initialize calculator state
- */
-export const initCalculatorState = (): CalculatorState & { articleCount: number } => ({
-  display: '0',
-  memory: 0,
-  grandTotal: 0,
-  lastOperation: null,
-  lastOperand: null,
-  isNewNumber: true,
-  isError: false,
-  articleCount: 0
-});
+        {/* Row 2 */}
+        <button
+          onClick={() => onCalculatorInput('4')}
+          className="bg-gray-200 hover:bg-gray-300 text-gray-800 p-3 rounded-lg font-semibold"
+        >
+          4
+        </button>
+        <button
+          onClick={() => onCalculatorInput('5')}
+          className="bg-gray-200 hover:bg-gray-300 text-gray-800 p-3 rounded-lg font-semibold"
+        >
+          5
+        </button>
+        <button
+          onClick={() => onCalculatorInput('6')}
+          className="bg-gray-200 hover:bg-gray-300 text-gray-800 p-3 rounded-lg font-semibold"
+        >
+          6
+        </button>
+        <button
+          onClick={() => onCalculatorInput('*')}
+          className="bg-blue-500 hover:bg-blue-600 text-white p-3 rounded-lg font-semibold"
+        >
+          ×
+        </button>
+        <button
+          onClick={() => onCalculatorInput('-')}
+          className="bg-blue-500 hover:bg-blue-600 text-white p-3 rounded-lg font-semibold row-span-2"
+        >
+          −
+        </button>
 
-/**
- * Safely evaluates a calculator expression
- */
-export const evaluateExpression = (expression: string): number => {
-  try {
-    // Replace display symbols with JavaScript operators for evaluation
-    let cleanExpression = expression
-      .replace(/×/g, '*')
-      .replace(/÷/g, '/')
-      .replace(/x/g, '*');
-    
-    // Remove trailing operators before evaluation
-    cleanExpression = cleanExpression.replace(/[+\-*/÷×]+$/, '');
-    
-    // If expression is empty after cleaning, use 0
-    if (!cleanExpression || cleanExpression === '') {
-      return 0;
-    }
-    
-    const result = Function('"use strict"; return (' + cleanExpression + ')')();
-    
-    if (isNaN(result) || !isFinite(result)) {
-      return 0;
-    }
-    
-    return result;
-  } catch {
-    return 0;
-  }
+        {/* Row 3 */}
+        <button
+          onClick={() => onCalculatorInput('1')}
+          className="bg-gray-200 hover:bg-gray-300 text-gray-800 p-3 rounded-lg font-semibold"
+        >
+          1
+        </button>
+        <button
+          onClick={() => onCalculatorInput('2')}
+          className="bg-gray-200 hover:bg-gray-300 text-gray-800 p-3 rounded-lg font-semibold"
+        >
+          2
+        </button>
+        <button
+          onClick={() => onCalculatorInput('3')}
+          className="bg-gray-200 hover:bg-gray-300 text-gray-800 p-3 rounded-lg font-semibold"
+        >
+          3
+        </button>
+        <button
+          onClick={() => onCalculatorInput('+')}
+          className="bg-blue-500 hover:bg-blue-600 text-white p-3 rounded-lg font-semibold row-span-2"
+        >
+          +
+        </button>
+
+        {/* Row 4 */}
+        <button
+          onClick={() => onCalculatorInput('0')}
+          className="bg-gray-200 hover:bg-gray-300 text-gray-800 p-3 rounded-lg font-semibold col-span-2"
+        >
+          0
+        </button>
+        <button
+          onClick={() => onCalculatorInput('.')}
+          className="bg-gray-200 hover:bg-gray-300 text-gray-800 p-3 rounded-lg font-semibold"
+        >
+          .
+        </button>
+        <button
+          onClick={() => onCalculatorInput('=')}
+          className="bg-green-500 hover:bg-green-600 text-white p-3 rounded-lg font-semibold"
+        >
+          =
+        </button>
+      </div>
+
+      {/* Add Button */}
+      <button
+        onClick={onAddToClient}
+        disabled={isDisabled}
+        className={`w-full ${linkedClient ? 'bg-blue-500 hover:bg-blue-600' : 'bg-green-500 hover:bg-green-600'} disabled:bg-gray-300 disabled:cursor-not-allowed text-white p-4 rounded-lg font-semibold text-lg flex items-center justify-center gap-2`}
+      >
+        <Plus size={20} />
+        {linkedClient ? `Add to ${linkedClient.name}` : 'Add to Client'}
+      </button>
+    </div>
+  );
 };
 
-/**
- * Enhanced calculator input processor with proper order of operations
- */
-export const processCalculatorInput = (
-  currentValue: string,
-  input: string,
-  memory: number,
-  grandTotal: number = 0,
-  lastOperation: string | null = null,
-  lastOperand: number | null = null,
-  isNewNumber: boolean = false,
-  transactionHistory: number[] = [],
-  calculationSteps: CalculationStep[] = [],
-  articleCount: number = 0
-): { 
-  value: string; 
-  memory: number; 
-  grandTotal: number;
-  lastOperation: string | null;
-  lastOperand: number | null;
-  isNewNumber: boolean;
-  isActive: boolean;
-  transactionHistory: number[];
-  calculationSteps: CalculationStep[];
-  autoReplayActive: boolean;
-  articleCount: number;
-} => {
-  let newValue = currentValue;
-  let newMemory = memory;
-  let newGrandTotal = grandTotal;
-  let newLastOperation = lastOperation;
-  let newLastOperand = lastOperand;
-  let newIsNewNumber = isNewNumber;
-  let isActive = true;
-  let newTransactionHistory = [...transactionHistory];
-  let newCalculationSteps = [...calculationSteps];
-  let autoReplayActive = false;
-  let newArticleCount = articleCount;
-  
-  // Handle error state
-  if (currentValue === 'Error' && !['ON/C', 'AC', 'C'].includes(input)) {
-    return {
-      value: 'Error',
-      memory: newMemory,
-      grandTotal: newGrandTotal,
-      lastOperation: newLastOperation,
-      lastOperand: newLastOperand,
-      isNewNumber: newIsNewNumber,
-      isActive: true,
-      transactionHistory: newTransactionHistory,
-      calculationSteps: newCalculationSteps,
-      autoReplayActive: false,
-      articleCount: newArticleCount
-    };
-  }
-
-  // Get current numeric value
-  const getCurrentNumber = (): number => {
-    const num = parseFloat(currentValue);
-    return isNaN(num) ? 0 : num;
-  };
-
-  // Handle different input types
-  if (input === 'ON/C' || input === 'C') {
-    // Clear everything
-    newValue = '0';
-    newMemory = 0;
-    newGrandTotal = 0;
-    newLastOperation = null;
-    newLastOperand = null;
-    newIsNewNumber = true;
-    newTransactionHistory = [];
-    newCalculationSteps = [];
-    newArticleCount = 0;
-    isActive = false;
-    localStorage.removeItem('currentCheckIndex');
-  } else if (input === 'AC') {
-    // All Clear - same as ON/C
-    newValue = '0';
-    newMemory = 0;
-    newGrandTotal = 0;
-    newLastOperation = null;
-    newLastOperand = null;
-    newIsNewNumber = true;
-    newTransactionHistory = [];
-    newCalculationSteps = [];
-    newArticleCount = 0;
-    isActive = false;
-    localStorage.removeItem('currentCheckIndex');
-  } else if (input === 'CE') {
-    // Clear Entry - only clear display
-    newValue = '0';
-    newIsNewNumber = true;
-  } else if (input === '→') {
-    // Backspace
-    if (currentValue.length > 1 && currentValue !== '0') {
-      newValue = currentValue.slice(0, -1);
-    } else {
-      newValue = '0';
-      newIsNewNumber = true;
-    }
-  } else if (input === 'MU') {
-    // Mark Up - add current number to memory
-    const currentNum = getCurrentNumber();
-    newMemory += currentNum;
-  } else if (input === 'MRC') {
-    // Memory Recall/Clear
-    if (memory === 0) {
-      // Nothing in memory, do nothing
-    } else if (currentValue === memory.toString()) {
-      // If displaying memory value, clear memory
-      newMemory = 0;
-    } else {
-      // Recall memory value
-      newValue = memory.toString();
-      newIsNewNumber = true;
-    }
-  } else if (input === 'M-') {
-    // Memory Minus
-    const currentNum = getCurrentNumber();
-    newMemory -= currentNum;
-  } else if (input === 'M+') {
-    // Memory Plus
-    const currentNum = getCurrentNumber();
-    newMemory += currentNum;
-  } else if (input === 'GT') {
-    // Grand Total - show accumulated grand total
-    newValue = newGrandTotal.toString();
-    newIsNewNumber = true;
-  } else if (input === 'AUTO') {
-    // AUTO REPLAY - replay transaction history
-    if (newCalculationSteps.length > 0) {
-      autoReplayActive = true;
-      localStorage.setItem('currentCheckIndex', '0');
-      newValue = newCalculationSteps[0].displayValue;
-      newIsNewNumber = true;
-      
-      setTimeout(() => {
-        startAutoReplaySequence(newCalculationSteps);
-      }, 500);
-    } else {
-      newValue = currentValue;
-    }
-  } else if (input === 'CHECK→') {
-    // Check forward - move to next transaction in history
-    if (newCalculationSteps.length > 0) {
-      const storedIndex = localStorage.getItem('currentCheckIndex');
-      let currentStepIndex;
-      
-      if (storedIndex === null || storedIndex === '-1') {
-        currentStepIndex = 0;
-      } else {
-        const currentIndex = parseInt(storedIndex);
-        currentStepIndex = (currentIndex + 1) % newCalculationSteps.length;
-      }
-      
-      localStorage.setItem('currentCheckIndex', currentStepIndex.toString());
-      
-      const currentStep = newCalculationSteps[currentStepIndex];
-      newValue = currentStep.displayValue;
-      
-      if (currentStep.operationType === 'result') {
-        newArticleCount = Math.max(1, currentStepIndex);
-      } else {
-        newArticleCount = currentStepIndex + 1;
-      }
-      
-      return { 
-        value: newValue,
-        memory: newMemory, 
-        grandTotal: newGrandTotal,
-        lastOperation: newLastOperation,
-        lastOperand: newLastOperand,
-        isNewNumber: true,
-        isActive,
-        transactionHistory: newTransactionHistory,
-        calculationSteps: newCalculationSteps,
-        autoReplayActive: true,
-        articleCount: newArticleCount
-      };
-    }
-  } else if (input === 'CHECK←') {
-    // Check backward - move to previous transaction in history
-    if (newCalculationSteps.length > 0) {
-      let currentStepIndex = parseInt(localStorage.getItem('currentCheckIndex') || '0');
-      
-      const storedIndex = localStorage.getItem('currentCheckIndex');
-      if (storedIndex === null || storedIndex === '-1') {
-        currentStepIndex = newCalculationSteps.length - 1;
-      } else {
-        currentStepIndex = currentStepIndex === 0 ? newCalculationSteps.length - 1 : currentStepIndex - 1;
-      }
-      
-      localStorage.setItem('currentCheckIndex', currentStepIndex.toString());
-      
-      const currentStep = newCalculationSteps[currentStepIndex];
-      newValue = currentStep.displayValue;
-      
-      if (currentStep.operationType === 'result') {
-        newArticleCount = Math.max(1, currentStepIndex);
-      } else {
-        newArticleCount = currentStepIndex + 1;
-      }
-      
-      return { 
-        value: newValue,
-        memory: newMemory, 
-        grandTotal: newGrandTotal,
-        lastOperation: newLastOperation,
-        lastOperand: newLastOperand,
-        isNewNumber: true,
-        isActive,
-        transactionHistory: newTransactionHistory,
-        calculationSteps: newCalculationSteps,
-        autoReplayActive: true,
-        articleCount: newArticleCount
-      };
-    }
-  } else if (input === '%') {
-    // Percentage calculation
-    const currentNum = getCurrentNumber();
-    
-    if (newLastOperation === '*') {
-      let firstOperand = 0;
-      
-      for (let i = 0; i < newCalculationSteps.length; i++) {
-        const step = newCalculationSteps[i];
-        if (step.operationType === 'number' && !step.expression.includes('×') && 
-            !step.expression.includes('+') && !step.expression.includes('-') && 
-            !step.expression.includes('÷')) {
-          firstOperand = step.result;
-          break;
-        }
-      }
-      
-      if (firstOperand === 0 && newCalculationSteps.length > 0) {
-        const firstStep = newCalculationSteps[0];
-        const parsed = parseFloat(firstStep.expression);
-        if (!isNaN(parsed)) {
-          firstOperand = parsed;
-        }
-      }
-      
-      if (firstOperand !== 0) {
-        const percentValue = (firstOperand * currentNum) / 100;
-        newValue = percentValue.toString();
-        newIsNewNumber = true;
-        newLastOperation = null;
-        
-        newCalculationSteps = [{
-          expression: percentValue.toString(),
-          result: percentValue,
-          timestamp: Date.now(),
-          stepNumber: 1,
-          operationType: 'number',
-          displayValue: percentValue.toString()
-        }];
-        
-        newLastOperand = null;
-      } else {
-        const percentResult = currentNum / 100;
-        newValue = percentResult.toString();
-        newIsNewNumber = true;
-        
-        newCalculationSteps = [{
-          expression: percentResult.toString(),
-          result: percentResult,
-          timestamp: Date.now(),
-          stepNumber: 1,
-          operationType: 'number',
-          displayValue: percentResult.toString()
-        }];
-      }
-    } else {
-      const percentResult = currentNum / 100;
-      newValue = percentResult.toString();
-      newIsNewNumber = true;
-      
-      newCalculationSteps = [{
-        expression: percentResult.toString(),
-        result: percentResult,
-        timestamp: Date.now(),
-        stepNumber: 1,
-        operationType: 'number',
-        displayValue: percentResult.toString()
-      }];
-    }
-  } else if (input === '√') {
-    // Square root
-    const currentNum = getCurrentNumber();
-    if (currentNum < 0) {
-      newValue = 'Error';
-    } else {
-      newValue = Math.sqrt(currentNum).toString();
-    }
-    newIsNewNumber = true;
-  } else if (/^\d+$/.test(input) || input === '00' || input === '000') {
-    // Handle numeric input
-    if (newIsNewNumber || currentValue === '0') {
-      if (newCalculationSteps.length === 0) {
-        newArticleCount = 1;
-        newCalculationSteps.push({
-          expression: input,
-          result: parseFloat(input),
-          timestamp: Date.now(),
-          stepNumber: 1,
-          operationType: 'number',
-          displayValue: input
-        });
-      } else if (newCalculationSteps.length === 1 && newLastOperation === '+') {
-        // After 25+, when entering 5, create the addition step
-        newCalculationSteps.push({
-          expression: `+${input}`,
-          result: parseFloat(input), // Store the actual operand (5)
-          timestamp: Date.now(),
-          stepNumber: 2,
-          operationType: 'operation',
-          displayValue: `+${input}`
-        });
-        newArticleCount = 2;
-      } else if (newCalculationSteps.length === 1 && newLastOperation === '-') {
-        // After 25-, when entering number, create the subtraction step
-        newCalculationSteps.push({
-          expression: `-${input}`,
-          result: parseFloat(input), // Store the actual operand
-          timestamp: Date.now(),
-          stepNumber: 2,
-          operationType: 'operation',
-          displayValue: `-${input}`
-        });
-        newArticleCount = 2;
-      } else if (newCalculationSteps.length >= 2 && newLastOperation === '+') {
-        // For subsequent additions like 20+30+10, add new step
-        newCalculationSteps.push({
-          expression: `+${input}`,
-          result: parseFloat(input),
-          timestamp: Date.now(),
-          stepNumber: newCalculationSteps.length + 1,
-          operationType: 'operation',
-          displayValue: `+${input}`
-        });
-        newArticleCount = newCalculationSteps.length;
-      } else if (newCalculationSteps.length >= 2 && newLastOperation === '-') {
-        // For subsequent subtractions
-        newCalculationSteps.push({
-          expression: `-${input}`,
-          result: parseFloat(input),
-          timestamp: Date.now(),
-          stepNumber: newCalculationSteps.length + 1,
-          operationType: 'operation',
-          displayValue: `-${input}`
-        });
-        newArticleCount = newCalculationSteps.length;
-      }
-      newValue = input;
-      newIsNewNumber = false;
-    } else {
-      newValue = currentValue + input;
-      
-      // Update the last step if it's an operation step being built
-      if (newCalculationSteps.length > 0) {
-        const lastStep = newCalculationSteps[newCalculationSteps.length - 1];
-        if (lastStep.operationType === 'number') {
-          // Update number step
-          lastStep.displayValue = newValue;
-          lastStep.expression = newValue;
-          lastStep.result = parseFloat(newValue);
-        } else if (lastStep.operationType === 'operation' && (lastStep.expression.startsWith('+') || lastStep.expression.startsWith('-'))) {
-          // Update operation step with complete number
-          const operator = lastStep.expression.charAt(0);
-          lastStep.displayValue = `${operator}${newValue}`;
-          lastStep.expression = `${operator}${newValue}`;
-          lastStep.result = parseFloat(newValue);
-        }
-      }
-    }
-    isActive = true;
-  } else if (input === '.') {
-    // Handle decimal point
-    if (!currentValue.includes('.')) {
-      if (newIsNewNumber) {
-        newValue = '0.';
-        newIsNewNumber = false;
-      } else {
-        newValue = currentValue + '.';
-      }
-    }
-  } else if (['+', '-', '*', '/', '×', '÷'].includes(input)) {
-    // Handle operators
-    const operator = input === '×' ? '*' : input === '÷' ? '/' : input;
-    
-    if (newCalculationSteps.length === 0) {
-      // First number entry
-      newCalculationSteps.push({
-        expression: newValue,
-        result: parseFloat(newValue),
-        timestamp: Date.now(),
-        stepNumber: 1,
-        operationType: 'number',
-        displayValue: newValue
-      });
-      newArticleCount = 1;
-    } else if (newCalculationSteps.length === 1 && operator === '+') {
-      // When pressing + after first number, create addition step with the next number
-      // Don't create the step yet - wait for the number to be entered
-      // This will be handled when the next number is entered
-    } else if (newCalculationSteps.length === 1 && (operator === '*' || operator === '/')) {
-      // Direct multiplication/division after first number
-      const firstNumber = newCalculationSteps[0].result;
-      const currentNumber = parseFloat(newValue);
-      const displayOperator = operator === '*' ? '×' : '÷';
-      const result = operator === '*' ? firstNumber * currentNumber : firstNumber / currentNumber;
-      
-      newCalculationSteps.push({
-        expression: `(${firstNumber}${displayOperator}${currentNumber})=${result}`,
-        result: result,
-        timestamp: Date.now(),
-        stepNumber: 2,
-        operationType: 'operation',
-        displayValue: `(${firstNumber}${displayOperator}${currentNumber})=${result}`
-      });
-      
-      newArticleCount = 2;
-    }
-    
-    newLastOperation = operator;
-    newIsNewNumber = true;
-    isActive = true;
-  } else if (input === '=' || input === 'ENTER') {
-    try {
-      console.log('🧮 EQUALS pressed - Debug info:');
-      console.log('📊 Current calculation steps:', newCalculationSteps);
-      console.log('📊 Last operation:', newLastOperation);
-      console.log('📊 Current value:', newValue);
-      
-      let expression = '';
-      let result = 0;
-      
-      if (newCalculationSteps.length === 1 && newLastOperation && newValue !== '0') {
-        console.log('📊 Case: Single step with operation');
-        // Simple case: first_number operator current_number
-        const firstNumber = newCalculationSteps[0].result;
-        const operator = newLastOperation;
-        const currentNumber = parseFloat(newValue);
-        console.log('📊 First number:', firstNumber, 'Operator:', operator, 'Current number:', currentNumber);
-        
-        if (operator === '+' || operator === '-') {
-          // For + and - operations, create a transaction step
-          expression = `${firstNumber}${operator}${currentNumber}`;
-          result = evaluateExpression(expression);
-          console.log('📊 Expression:', expression, 'Result:', result);
-          
-          newCalculationSteps.push({
-            expression: `${operator === '+' ? '+' : '-'}${currentNumber}`,
-            result: currentNumber,
-            timestamp: Date.now(),
-            stepNumber: 2,
-            operationType: 'operation',
-            displayValue: `${operator === '+' ? '+' : '-'}${currentNumber}`
-          });
-          
-          newArticleCount = 2;
-        }
-      } else if (newCalculationSteps.length >= 2 && newLastOperation && newValue !== '0') {
-        console.log('📊 Case: Multiple steps with operation');
-        // Handle multiple operations
-        const currentNumber = parseFloat(newValue);
-        const firstStep = newCalculationSteps[0];
-        const secondStep = newCalculationSteps[1];
-        console.log('📊 Current number:', currentNumber);
-        console.log('📊 First step:', firstStep);
-        console.log('📊 Second step:', secondStep);
-        
-        if (newLastOperation === '*' || newLastOperation === '/') {
-          console.log('📊 Handling multiplication/division');
-          // This is a compound operation like 25 + 5 × 3
-          // Extract the operand from the addition step expression
-          let multiplicationOperand = 0;
-          
-          // After an operation, when entering a number, create the operation step
-          const operator = newLastOperation === '+' ? '+' : '-';
-          newCalculationSteps.push({
-            expression: `${operator}${input}`,
-            result: parseFloat(input),
-            timestamp: Date.now(),
-            stepNumber: newCalculationSteps.length + 1,
-            operationType: 'operation',
-            displayValue: `${operator}${input}`
-          });
-          newArticleCount = newCalculationSteps.length;
-          
-          newArticleCount = 2; // Keep only 2 steps
-        } else {
-          console.log('📊 Handling sequential addition/subtraction');
-          // Sequential addition/subtraction like 20+30+10
-          // Build expression from all existing steps plus current operation
-          let fullExpression = '';
-          
-          // Start with first number
-          fullExpression += firstStep.result;
-          console.log('📊 Starting expression with first number:', fullExpression);
-          
-          // Add all operation steps
-          for (let i = 1; i < newCalculationSteps.length; i++) {
-            const step = newCalculationSteps[i];
-            if (step.operationType === 'operation') {
-              fullExpression += step.expression;
-              console.log('📊 Added step', i, ':', step.expression, '-> Expression now:', fullExpression);
-            }
-          }
-          
-          // Check if we should add the current number
-          // Don't add if newValue is the same as the display from the last step (trailing operator case)
-          const shouldAddCurrentNumber = newValue !== '0' && !isNaN(currentNumber) && currentNumber !== 0;
-          
-          // Also check if this is a trailing operator case (like 20+20+20+)
-          const lastStep = newCalculationSteps[newCalculationSteps.length - 1];
-          const isTrailingOperator = lastStep && lastStep.operationType === 'operation' && 
-                                   newValue === lastStep.result.toString();
-          
-          console.log('📊 Should add current number?', shouldAddCurrentNumber);
-          console.log('📊 Is trailing operator?', isTrailingOperator);
-          console.log('📊 Current value vs last step result:', newValue, 'vs', lastStep?.result);
-          
-          if (shouldAddCurrentNumber && !isTrailingOperator) {
-            fullExpression += newLastOperation + currentNumber;
-            console.log('📊 Added current operation:', newLastOperation + currentNumber, '-> Final expression:', fullExpression);
-            
-            // Add the new operation step
-            newCalculationSteps.push({
-              expression: `${newLastOperation === '+' ? '+' : newLastOperation === '-' ? '-' : newLastOperation}${currentNumber}`,
-              result: currentNumber,
-              timestamp: Date.now(),
-              stepNumber: newCalculationSteps.length + 1,
-              operationType: 'operation',
-              displayValue: `${newLastOperation === '+' ? '+' : newLastOperation === '-' ? '-' : newLastOperation}${currentNumber}`
-            });
-          } else {
-            console.log('📊 Skipping current number (trailing operator or invalid)');
-          }
-          
-          // Calculate result
-          console.log('📊 Final expression to evaluate:', fullExpression);
-          result = evaluateExpression(fullExpression);
-          console.log('📊 Evaluation result:', result);
-          
-          newArticleCount = newCalculationSteps.filter(step => 
-            step.operationType === 'operation' && (step.expression.startsWith('+') || step.expression.startsWith('-'))
-          ).length + 1;
-        }
-      } else if (newCalculationSteps.length > 0) {
-        console.log('📊 Case: Just evaluate existing steps');
-        // Just evaluate what we have
-        expression = buildExpressionFromSteps(newCalculationSteps);
-        console.log('📊 Built expression from steps:', expression);
-        result = evaluateExpression(expression);
-        console.log('📊 Evaluation result:', result);
-      } else {
-        console.log('📊 Case: No steps, use current value');
-        // No steps, just use current value
-        result = parseFloat(newValue);
-        console.log('📊 Using current value as result:', result);
-      }
-      
-      console.log('📊 Final result before adding to steps:', result);
-      
-      // Add result step
-      newCalculationSteps.push({
-        expression: `=${result}`,
-        result: result,
-        timestamp: Date.now(),
-        stepNumber: newCalculationSteps.length + 1,
-        operationType: 'result',
-        displayValue: `=${result}`
-      });
-      
-      // Update state
-      newValue = result.toString();
-      newGrandTotal += result;
-      newLastOperation = null;
-      newLastOperand = null;
-      newIsNewNumber = true;
-      
-      // Add to transaction history
-      newTransactionHistory.push(result);
-      
-      // Clear check navigation index
-      localStorage.setItem('currentCheckIndex', '-1');
-      
-    } catch (error) {
-      console.error('Calculator error:', error);
-      newValue = 'Error';
-      newIsNewNumber = true;
-    }
-  }
-
-  // Format display value
-  if (newValue !== 'Error' && !isNaN(parseFloat(newValue))) {
-    const num = parseFloat(newValue);
-    if (num.toString().length > 12) {
-      newValue = num.toExponential(6);
-    } else {
-      newValue = num.toString();
-    }
-  }
-
-  return { 
-    value: newValue, 
-    memory: newMemory, 
-    grandTotal: newGrandTotal,
-    lastOperation: newLastOperation,
-    lastOperand: newLastOperand,
-    isNewNumber: newIsNewNumber,
-    isActive,
-    transactionHistory: newTransactionHistory,
-    calculationSteps: newCalculationSteps,
-    autoReplayActive,
-    articleCount: newArticleCount
-  };
-};
-
-/**
- * Build expression from calculation steps
- */
-const buildExpressionFromSteps = (steps: CalculationStep[]): string => {
-  let expression = '';
-  
-  for (let i = 0; i < steps.length; i++) {
-    const step = steps[i];
-    
-    if (step.operationType === 'number') {
-      expression += step.result;
-    } else if (step.operationType === 'operation') {
-      if (step.expression.startsWith('(') && step.expression.includes(')=')) {
-        // This is a compound operation like (5×3)=15, use the result
-        expression = step.result.toString();
-      } else {
-        // Regular operation like +5 or -3
-        expression += step.expression;
-      }
-    }
-  }
-  
-  return expression;
-};
-
-/**
- * Auto-replay sequence function
- */
-const startAutoReplaySequence = (steps: CalculationStep[]) => {
-  let currentStepIndex = 0;
-  
-  const showNextStep = () => {
-    if (currentStepIndex < steps.length) {
-      const step = steps[currentStepIndex];
-      
-      window.dispatchEvent(new CustomEvent('autoReplayStep', {
-        detail: {
-          displayValue: step.displayValue,
-          stepIndex: currentStepIndex,
-          totalSteps: steps.length,
-          currentStep: currentStepIndex + 1,
-          articleCount: step.operationType === 'result' ? 'Result' : `${currentStepIndex + 1}/${steps.filter(s => s.operationType !== 'result').length}`
-        }
-      }));
-      
-      localStorage.setItem('currentCheckIndex', currentStepIndex.toString());
-      currentStepIndex++;
-      
-      if (currentStepIndex < steps.length) {
-        setTimeout(showNextStep, 1000);
-      } else {
-        window.dispatchEvent(new CustomEvent('autoReplayComplete'));
-      }
-    }
-  };
-  
-  showNextStep();
-};
+export default CreditCalculator;
