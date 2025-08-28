@@ -451,12 +451,12 @@ export const processCalculatorInput = (
       // Add step for the current operand with proper operator symbol
       const operatorSymbol = newLastOperation === '*' ? '×' : newLastOperation === '/' ? '÷' : newLastOperation;
       newCalculationSteps.push({
-        expression: `${operatorSymbol}${currentNum}`,
+        expression: `+${currentNum}`,
         result: currentNum,
         timestamp: Date.now(),
         stepNumber: newCalculationSteps.length + 1,
         operationType: 'operation',
-        displayValue: `+5` // Always show +5 for step 2
+        displayValue: `+${currentNum}` // Show + with the actual number
       });
     } else {
       // First operand or starting new calculation
