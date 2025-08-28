@@ -562,50 +562,18 @@ export const processCalculatorInput = (
           // Extract the operand from the addition step expression
           let multiplicationOperand = 0;
           
-          // The operand for multiplication should be the number from the addition step
-          // For "25 + 5 × 3", we want the 5 from the "+5" expression
-          if (secondStep && secondStep.result) {
-            multiplicationOperand = secondStep.result;
-          }
-          
-          // Validate we have a valid operand
-          if (isNaN(multiplicationOperand) || multiplicationOperand === 0) {
-            throw new Error('Invalid multiplication operand');
-          }
-          
-          const displayOperator = newLastOperation === '*' ? '×' : '÷';
-          const multiplicationResult = newLastOperation === '*' 
-            ? multiplicationOperand * currentNumber 
-            : multiplicationOperand / currentNumber;
-          
-          // Validate multiplication result
-          if (isNaN(multiplicationResult) || !isFinite(multiplicationResult)) {
-            throw new Error('Invalid multiplication result');
-          }
-          
-          // Replace the second step with the compound operation
-          newCalculationSteps[1] = {
-            expression: `(${multiplicationOperand}${displayOperator}${currentNumber})=${multiplicationResult}`,
-            result: multiplicationResult,
-            timestamp: Date.now(),
-            stepNumber: 2,
-            operationType: 'operation',
-            displayValue: `(${multiplicationOperand}${displayOperator}${currentNumber})=${multiplicationResult}`
-          };
-          
-          // Calculate final result: first number + multiplication result
-          const firstNumber = firstStep?.result || 0;
-          
-          // Validate final result
-          if (isNaN(firstNumber)) {
-            throw new Error('Invalid first number');
-          }
-          
-          result = firstNumber + multiplicationResult;
-          
-          // Validate final result
-          if (isNaN(result) || !isFinite(result)) {
-            throw new Error('Invalid final result');
+          } else if (newLastOperation === '+' || newLastOperation === '-') {
+            // After an operation, when entering a number, create the operation step
+            const operator = newLastOperation === '+' ? '+' : '-';
+            newCalculationSteps.push({
+              expression: `${operator}${input}`,
+              result: parseFloat(input),
+              timestamp: Date.now(),
+              stepNumber: newCalculationSteps.length + 1,
+              operationType: 'operation',
+              displayValue: `${operator}${input}`
+            });
+            newArticleCount = newCalculationSteps.length;
           }
           
           newArticleCount = 2; // Keep only 2 steps
