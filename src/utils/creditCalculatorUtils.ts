@@ -436,16 +436,35 @@ export const processCalculatorInput = (
     }
   } else if (input === '%') {
     // Percentage calculation
+    console.log('🔢 PERCENTAGE DEBUG:', {
+      currentValue: newValue,
+      lastOperation: newLastOperation,
+      calculationSteps: newCalculationSteps,
+      stepsLength: newCalculationSteps.length
+    });
+    
     const currentNum = getCurrentNumber();
     
     // Check if we have a pending multiplication operation
     if (newLastOperation === '*') {
       // Find the first operand from calculation steps
       const firstStep = newCalculationSteps.find(step => step.operationType === 'number');
+      console.log('🔢 PERCENTAGE CALCULATION:', {
+        firstStep,
+        currentNum,
+        willCalculate: firstStep ? `${firstStep.result} × ${currentNum}% = ${(firstStep.result * currentNum) / 100}` : 'No first step found'
+      });
+      
       if (firstStep) {
         const firstOperand = firstStep.result;
         // Calculate percentage: 1000 × 10% = 1000 × (10/100) = 100
         const percentValue = (firstOperand * currentNum) / 100;
+        console.log('🔢 PERCENTAGE RESULT:', {
+          firstOperand,
+          currentNum,
+          percentValue,
+          formula: `${firstOperand} × ${currentNum}% = ${percentValue}`
+        });
         newValue = percentValue.toString();
         newIsNewNumber = true;
         
@@ -462,8 +481,14 @@ export const processCalculatorInput = (
             lastStep.result = percentValue;
           }
         }
+      } else {
+        console.log('🔢 NO FIRST STEP FOUND for percentage calculation');
+        // Simple percentage
+        newValue = (currentNum / 100).toString();
+        newIsNewNumber = true;
       }
     } else {
+      console.log('🔢 SIMPLE PERCENTAGE (no pending multiplication)');
       // Simple percentage
       newValue = (currentNum / 100).toString();
       newIsNewNumber = true;
