@@ -749,9 +749,10 @@ export const processCalculatorInput = (
         displayValue: newValue
       });
       newArticleCount = 1;
-  } else {
+      } else {
     // Handle any other input types that might exist
     console.warn('Unhandled calculator input:', input);
+  }
   }
 
   // Format display value
