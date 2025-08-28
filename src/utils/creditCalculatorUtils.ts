@@ -562,19 +562,17 @@ export const processCalculatorInput = (
           // Extract the operand from the addition step expression
           let multiplicationOperand = 0;
           
-          } else if (newLastOperation === '+' || newLastOperation === '-') {
-            // After an operation, when entering a number, create the operation step
-            const operator = newLastOperation === '+' ? '+' : '-';
-            newCalculationSteps.push({
-              expression: `${operator}${input}`,
-              result: parseFloat(input),
-              timestamp: Date.now(),
-              stepNumber: newCalculationSteps.length + 1,
-              operationType: 'operation',
-              displayValue: `${operator}${input}`
-            });
-            newArticleCount = newCalculationSteps.length;
-          }
+          // After an operation, when entering a number, create the operation step
+          const operator = newLastOperation === '+' ? '+' : '-';
+          newCalculationSteps.push({
+            expression: `${operator}${input}`,
+            result: parseFloat(input),
+            timestamp: Date.now(),
+            stepNumber: newCalculationSteps.length + 1,
+            operationType: 'operation',
+            displayValue: `${operator}${input}`
+          });
+          newArticleCount = newCalculationSteps.length;
           
           newArticleCount = 2; // Keep only 2 steps
         } else {
