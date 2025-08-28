@@ -876,17 +876,8 @@ const CreditManagement: React.FC = () => {
               {/* Status Indicators */}
               <div className="flex justify-between items-center mb-2 text-xs">
                 <div className="flex gap-2">
-                  {/* Article Count Circle */}
-                  {articleCount > 0 && (
-                    <div className="bg-blue-500 text-white rounded-full w-6 h-6 flex items-center justify-center text-xs font-bold">
-                      {articleCount}
-                    </div>
-                  )}
                   {calculatorMemory !== 0 && (
                     <span className="text-green-400 font-bold">M</span>
-                  )}
-                  {calculatorGrandTotal !== 0 && (
-                    <span className="text-green-400 font-bold">GT</span>
                   )}
                 </div>
                 <div className="text-gray-400 font-mono">
@@ -894,9 +885,16 @@ const CreditManagement: React.FC = () => {
                 </div>
               </div>
               
-              {/* Main Display */}
-              <div className="text-2xl sm:text-3xl font-mono text-green-400 min-h-[3rem] flex items-center justify-end overflow-hidden bg-black rounded px-3 py-2">
-                <div className="truncate max-w-full" title={calculatorValue}>
+              {/* Main Display with inline counter */}
+              <div className="text-2xl sm:text-3xl font-mono text-green-400 min-h-[3rem] flex items-center justify-between overflow-hidden bg-black rounded px-3 py-2">
+                {/* Article Count Circle - Left side */}
+                {articleCount > 0 && (
+                  <div className="bg-blue-500 text-white rounded-full w-8 h-8 flex items-center justify-center text-sm font-bold flex-shrink-0">
+                    {articleCount}
+                  </div>
+                )}
+                {/* Calculator Value - Right side */}
+                <div className="truncate max-w-full text-right flex-1" title={calculatorValue}>
                   {calculatorValue}
                 </div>
               </div>
@@ -909,18 +907,6 @@ const CreditManagement: React.FC = () => {
                   const totalSteps = calculationSteps.length;
                   return `STEP ${actualStepNumber}/${totalSteps}`;
                 })() : 'READY'}
-              </div>
-            </div>
-            <div className="text-2xl sm:text-3xl font-mono text-green-400 min-h-[3rem] flex items-center justify-between overflow-hidden bg-black rounded px-3 py-2">
-              {/* Article Count Circle - Left side */}
-              {articleCount > 0 && (
-                <div className="bg-blue-500 text-white rounded-full w-8 h-8 flex items-center justify-center text-sm font-bold flex-shrink-0">
-                  {articleCount}
-                </div>
-              )}
-              {/* Calculator Value - Right side */}
-              <div className="truncate max-w-full text-right flex-1" title={calculatorValue}>
-                {calculatorValue}
               </div>
             </div>
           </div>
