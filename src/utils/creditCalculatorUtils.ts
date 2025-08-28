@@ -514,7 +514,8 @@ export const processCalculatorInput = (
         // Clear the pending operation since % completes it
         newLastOperation = null;
         
-        // Clear calculation steps and add only the result to avoid % in expressions
+        // IMPORTANT: Clear calculation steps and add only the clean result
+        // This prevents % from appearing in any expressions
         newCalculationSteps = [{
           expression: percentValue.toString(),
           result: percentValue,
@@ -529,14 +530,36 @@ export const processCalculatorInput = (
       } else {
         console.log('🔢 NO VALID OPERAND FOUND for percentage calculation');
         // Simple percentage
-        newValue = (currentNum / 100).toString();
+        const percentResult = currentNum / 100;
+        newValue = percentResult.toString();
         newIsNewNumber = true;
+        
+        // Clear calculation steps and add clean result
+        newCalculationSteps = [{
+          expression: percentResult.toString(),
+          result: percentResult,
+          timestamp: Date.now(),
+          stepNumber: 1,
+          operationType: 'number',
+          displayValue: percentResult.toString()
+        }];
       }
     } else {
       console.log('🔢 SIMPLE PERCENTAGE (no pending multiplication)');
       // Simple percentage
-      newValue = (currentNum / 100).toString();
+      const percentResult = currentNum / 100;
+      newValue = percentResult.toString();
       newIsNewNumber = true;
+      
+      // Clear calculation steps and add clean result
+      newCalculationSteps = [{
+        expression: percentResult.toString(),
+        result: percentResult,
+        timestamp: Date.now(),
+        stepNumber: 1,
+        operationType: 'number',
+        displayValue: percentResult.toString()
+      }];
     }
   } else if (input === '√') {
     // Square root
