@@ -312,8 +312,10 @@ export const processCalculatorInput = (
           index: idx,
           expression: step.expression,
           displayValue: step.displayValue,
-          operationType: step.operationType
-        }))
+          operationType: step.operationType,
+          stepNumber: step.stepNumber
+        })),
+        detailedSteps: newCalculationSteps.map((step, idx) => `Step ${idx}: "${step.displayValue}" (${step.operationType})`)
       });
       
       // Get current step index from stored state or start from 0
@@ -326,6 +328,18 @@ export const processCalculatorInput = (
       localStorage.setItem('currentCheckIndex', currentStepIndex.toString());
       
       const currentStep = newCalculationSteps[currentStepIndex];
+      console.log('🔍 CHECK→ DETAILED:', {
+        currentStepIndex,
+        totalSteps: newCalculationSteps.length,
+        currentStep: {
+          expression: currentStep.expression,
+          displayValue: currentStep.displayValue,
+          operationType: currentStep.operationType,
+          stepNumber: currentStep.stepNumber
+        },
+        willDisplay: currentStep.displayValue,
+        actualStepContent: JSON.stringify(currentStep)
+      });
       newValue = currentStep.displayValue; // Show the proper display value with operator
       newIsNewNumber = true;
       autoReplayActive = true;
