@@ -677,16 +677,70 @@ export const processCalculatorInput = (
       });
     }
     
-    // Store the operator (convert display symbols to JS operators)
-    newLastOperation = input === '×' ? '*' : input === '÷' ? '/' : input;
-    console.log('🔧 SET lastOperation:', {
-      input,
-      newLastOperation,
-      willWaitForNextNumber: true
-    });
+    // Handle pending operation before setting new one
+    if (newLastOperation && !newIsNewNumber) {
+      // We have a pending operation and current number - evaluate it
+      const currentNum = parseFloat(newValue);
+      const lastStep = newCalculationSteps[newCalculationSteps.length - 1];
+      const firstOperand = lastStep ? lastStep.result : 0;
+      
+      let intermediateResult;
+      switch (newLastOperation) {
+        case '*':
+          intermediateResult = firstOperand * currentNum;
+          break;
+        case '/':
+          intermediateResult = firstOperand / currentNum;
+          break;
+        case '+':
+          intermediateResult = firstOperand + currentNum;
+          break;
+        case '-':
+          intermediateResult = firstOperand - currentNum;
+          break;
+        default:
+          intermediateResult = currentNum;
+      }
+      
+      // For multiplication/division, create a compound step like "(5×3)=15"
+      if (newLastOperation === '*' || newLastOperation === '/') {
+        const displayOperator = newLastOperation === '*' ? '×' : '÷';
+        const compoundExpression = `(${firstOperand}${displayOperator}${currentNum})=${intermediateResult}`;
+        
+        // Replace the last step with the compound result
+        newCalculationSteps[newCalculationSteps.length - 1] = {
+          expression: compoundExpression,
+          result: intermediateResult,
+          timestamp: Date.now(),
+          stepNumber: newCalculationSteps.length,
+          operationType: 'operation',
+          displayValue: compoundExpression
+        };
+      } else {
+        // For + and -, just add the current number as a new step
+        const displayOperator = newLastOperation === '+' ? '+' : '-';
+        newCalculationSteps.push({
+          expression: `${displayOperator}${currentNum}`,
+          result: currentNum,
+          timestamp: Date.now(),
+          stepNumber: newCalculationSteps.length + 1,
+          operationType: 'operation',
+          displayValue: `${displayOperator}${currentNum}`
+        });
+      }
+      
+      // Update the display value to show the intermediate result
+      newValue = intermediateResult.toString();
+    }
     
-    newIsNewNumber = true;
-    isActive = true;
+    // Store the new operator (convert display symbols to JS operators)
+    newLastOperation = input === '×' ? '*' : input === '÷' ? '/' : input;
+    
+    // Only increment article count for transaction operators (+ and -)
+    if (isTransactionOperator) {
+      newArticleCount++;
+    }
+    
   } else if (input === '.') {
     // Decimal point
     if (newIsNewNumber) {
