@@ -822,7 +822,8 @@ const startAutoReplaySequence = (steps: CalculationStep[]) => {
           displayValue: step.displayValue, // Show the proper display value
           stepIndex: currentStepIndex,
           totalSteps: steps.length,
-          currentStep: currentStepIndex + 1 // 1-based step number for display
+          currentStep: currentStepIndex + 1, // 1-based step number for display
+          articleCount: currentStepIndex + 1 // Update article count to match current step
         }
       }));
       
