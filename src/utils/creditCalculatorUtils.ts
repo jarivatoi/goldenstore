@@ -305,6 +305,17 @@ export const processCalculatorInput = (
   } else if (input === 'CHECK→') {
     // Check forward - move to next transaction in history
     if (newCalculationSteps.length > 0) {
+      console.log('🔍 CHECK→ BEFORE:', {
+        currentStoredIndex: localStorage.getItem('currentCheckIndex'),
+        stepsLength: newCalculationSteps.length,
+        allSteps: newCalculationSteps.map((step, idx) => ({
+          index: idx,
+          expression: step.expression,
+          displayValue: step.displayValue,
+          operationType: step.operationType
+        }))
+      });
+      
       // Get current step index from stored state or start from 0
       let currentStepIndex = parseInt(localStorage.getItem('currentCheckIndex') || '0');
       
@@ -315,33 +326,6 @@ export const processCalculatorInput = (
       localStorage.setItem('currentCheckIndex', currentStepIndex.toString());
       
       const currentStep = newCalculationSteps[currentStepIndex];
-      console.log('🔍 CHECK→ DETAILED DEBUG:', {
-        currentStepIndex,
-        totalSteps: newCalculationSteps.length,
-        currentStep: {
-          expression: currentStep.expression,
-          displayValue: currentStep.displayValue,
-          operationType: currentStep.operationType,
-          stepNumber: currentStep.stepNumber
-        },
-        allSteps: newCalculationSteps.map((step, idx) => ({
-          index: idx,
-          expression: step.expression,
-          displayValue: step.displayValue,
-          operationType: step.operationType
-        })),
-        willDisplay: currentStep.displayValue
-      });
-      console.log('🔍 CHECK→ DEBUG:', {
-        currentStepIndex,
-        totalSteps: newCalculationSteps.length,
-        currentStep: {
-          expression: currentStep.expression,
-          displayValue: currentStep.displayValue,
-          operationType: currentStep.operationType
-        },
-        willDisplay: currentStep.displayValue
-      });
       newValue = currentStep.displayValue; // Show the proper display value with operator
       newIsNewNumber = true;
       autoReplayActive = true;
@@ -349,6 +333,17 @@ export const processCalculatorInput = (
   } else if (input === 'CHECK←') {
     // Check backward - move to previous transaction in history
     if (newCalculationSteps.length > 0) {
+      console.log('🔍 CHECK← BEFORE:', {
+        currentStoredIndex: localStorage.getItem('currentCheckIndex'),
+        stepsLength: newCalculationSteps.length,
+        allSteps: newCalculationSteps.map((step, idx) => ({
+          index: idx,
+          expression: step.expression,
+          displayValue: step.displayValue,
+          operationType: step.operationType
+        }))
+      });
+      
       // Get current step index from stored state or start from 0
       let currentStepIndex = parseInt(localStorage.getItem('currentCheckIndex') || '0');
       
