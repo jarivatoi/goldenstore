@@ -58,7 +58,10 @@ export const initCalculatorState = (): CalculatorState & { articleCount: number 
 export const evaluateExpression = (expression: string): number => {
   try {
     // Replace display symbols with JavaScript operators for evaluation
-    let cleanExpression = expression.replace(/×/g, '*').replace(/÷/g, '/');
+    let cleanExpression = expression
+      .replace(/×/g, '*')
+      .replace(/÷/g, '/')
+      .replace(/x/g, '*'); // Also handle lowercase x
     
     // Remove trailing operators before evaluation
     cleanExpression = cleanExpression.replace(/[+\-*/÷×]+$/, '');
@@ -68,7 +71,9 @@ export const evaluateExpression = (expression: string): number => {
       return 0;
     }
     
+    console.log('🧮 Evaluating expression:', cleanExpression);
     const result = Function('"use strict"; return (' + cleanExpression + ')')();
+    console.log('🧮 Expression result:', result);
     
     if (isNaN(result) || !isFinite(result)) {
       return 0;
@@ -76,6 +81,7 @@ export const evaluateExpression = (expression: string): number => {
     
     return result;
   } catch {
+    console.error('🧮 Expression evaluation failed for:', expression);
     return 0;
   }
 };
@@ -138,7 +144,10 @@ export const processCalculatorInput = (
           const number = stepExpr.substring(1);
           
           // Convert display operators to JavaScript operators
-          const jsOperator = operator === '×' ? '*' : operator === '÷' ? '/' : operator;
+          const jsOperator = operator === '×' ? '*' : 
+                            operator === '÷' ? '/' : 
+                            operator === 'x' ? '*' :
+                            operator;
           expression += jsOperator + number;
         }
       }
@@ -146,7 +155,8 @@ export const processCalculatorInput = (
     
     // If we're currently entering a number after an operator, add it
     if (newLastOperation && !newIsNewNumber && newValue !== '0') {
-      const jsOperator = newLastOperation === '*' ? '*' : 
+      const jsOperator = newLastOperation === '*' ? '*' :
+                        newLastOperation === 'x' ? '*' :
                         newLastOperation === '÷' ? '/' : 
                         newLastOperation;
       expression += jsOperator + newValue;
