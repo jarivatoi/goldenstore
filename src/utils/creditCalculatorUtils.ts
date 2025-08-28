@@ -568,6 +568,62 @@ export const processCalculatorInput = (
       newValue = Math.sqrt(currentNum).toString();
     }
     newIsNewNumber = true;
+  } else if (/^\d+$/.test(input) || input === '00' || input === '000') {
+    // Handle numeric input (0-9, 00, 000)
+    console.log('🔢 NUMERIC INPUT:', {
+      input,
+      currentValue,
+      isNewNumber: newIsNewNumber,
+      calculationSteps: newCalculationSteps.length
+    });
+    
+    if (newIsNewNumber || currentValue === '0') {
+      // Starting a new number
+      if (newCalculationSteps.length === 0) {
+        // Very first number in calculation
+        console.log('🔢 Creating FIRST step:', input);
+        newArticleCount = 1;
+        newCalculationSteps.push({
+          expression: input,
+          result: parseFloat(input),
+          timestamp: Date.now(),
+          stepNumber: 1,
+          operationType: 'number',
+          displayValue: input
+        });
+      }
+      newValue = input;
+      newIsNewNumber = false;
+    } else {
+      // Continuing to build the same number
+      console.log('🔢 CONTINUING number build:', {
+        currentValue,
+        input,
+        willBecome: currentValue + input
+      });
+      newValue = currentValue + input;
+      
+      // Update the current step if we're building a multi-digit number
+      if (newCalculationSteps.length > 0) {
+        const lastStep = newCalculationSteps[newCalculationSteps.length - 1];
+        if (lastStep.operationType === 'number') {
+          lastStep.displayValue = newValue;
+          lastStep.expression = newValue;
+          lastStep.result = parseFloat(newValue);
+        }
+      }
+    }
+    isActive = true;
+  } else if (input === '.') {
+    // Handle decimal point
+    if (!currentValue.includes('.')) {
+      if (newIsNewNumber) {
+        newValue = '0.';
+        newIsNewNumber = false;
+      } else {
+        newValue = currentValue + '.';
+      }
+    }
   } else if (input === '=' || input === 'ENTER') {
     try {
       // For calculations like 25+5×3, we need to handle order of operations
@@ -693,62 +749,6 @@ export const processCalculatorInput = (
         displayValue: newValue
       });
       newArticleCount = 1;
-    }
-    
-    // Just store the operation - don't evaluate yet
-    newLastOperation = operator;
-    newIsNewNumber = true;
-    
-    console.log('🔢 OPERATOR SET:', {
-      newLastOperation,
-      newIsNewNumber,
-      calculationSteps: newCalculationSteps.length
-    });
-    console.log('🔢 NUMERIC INPUT:', {
-      input,
-      currentValue,
-      isNewNumber: newIsNewNumber,
-      calculationSteps: newCalculationSteps.length
-    });
-    
-    // Don't evaluate immediately - just store the operator
-    // The evaluation happens when = is pressed
-    
-    if (newIsNewNumber || currentValue === '0') {
-      // Starting a new number
-      if (newCalculationSteps.length === 0) {
-        // Very first number in calculation
-        console.log('🔢 Creating FIRST step:', input);
-        newArticleCount = 1;
-        newCalculationSteps.push({
-          expression: input,
-          result: parseFloat(input),
-          timestamp: Date.now(),
-          stepNumber: 1,
-          operationType: 'number',
-          displayValue: input
-        });
-      }
-      newValue = input;
-      newIsNewNumber = false;
-    } else {
-      // Continuing to build the same number
-      console.log('🔢 CONTINUING number build:', {
-        currentValue,
-        input,
-        willBecome: currentValue + input
-      });
-      newValue = currentValue + input;
-      
-      // Update the current step if we're building a multi-digit number
-      if (newCalculationSteps.length > 0) {
-        const lastStep = newCalculationSteps[newCalculationSteps.length - 1];
-        lastStep.displayValue = newValue;
-        lastStep.expression = newValue;
-        lastStep.result = parseFloat(newValue);
-      }
-    }
-    isActive = true;
   } else {
     // Handle any other input types that might exist
     console.warn('Unhandled calculator input:', input);
