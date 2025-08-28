@@ -340,10 +340,25 @@ export const processCalculatorInput = (
         willDisplay: currentStep.displayValue,
         actualStepContent: JSON.stringify(currentStep)
       });
+      console.log('🔍 CHECK→ SETTING newValue to:', newValue);
+      // For CHECK navigation, preserve the exact displayValue without formatting
       newValue = currentStep.displayValue; // Show the proper display value with operator
       console.log('🔍 CHECK→ SETTING newValue to:', newValue);
-      newIsNewNumber = true;
-      autoReplayActive = true;
+      
+      // Skip all number formatting for CHECK navigation
+      return { 
+        value: newValue, // Use exact displayValue without any formatting
+        memory: newMemory, 
+        grandTotal: newGrandTotal,
+        lastOperation: newLastOperation,
+        lastOperand: newLastOperand,
+        isNewNumber: true,
+        isActive,
+        transactionHistory: newTransactionHistory,
+        calculationSteps: newCalculationSteps,
+        autoReplayActive: true,
+        articleCount: newArticleCount
+      };
     }
   } else if (input === 'CHECK←') {
     // Check backward - move to previous transaction in history
@@ -386,10 +401,23 @@ export const processCalculatorInput = (
         })),
         willDisplay: currentStep.displayValue
       });
-      console.log('🔍 CHECK← SETTING newValue to:', currentStep.displayValue);
       newValue = currentStep.displayValue; // Show the proper display value with operator
-      newIsNewNumber = true;
-      autoReplayActive = true;
+      console.log('🔍 CHECK← SETTING newValue to:', newValue);
+      
+      // Skip all number formatting for CHECK navigation
+      return { 
+        value: newValue, // Use exact displayValue without any formatting
+        memory: newMemory, 
+        grandTotal: newGrandTotal,
+        lastOperation: newLastOperation,
+        lastOperand: newLastOperand,
+        isNewNumber: true,
+        isActive,
+        transactionHistory: newTransactionHistory,
+        calculationSteps: newCalculationSteps,
+        autoReplayActive: true,
+        articleCount: newArticleCount
+      };
     }
   } else if (input === '%') {
     // Percentage calculation
