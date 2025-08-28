@@ -132,17 +132,6 @@ export const processCalculatorInput = (
     // Filter out result steps to avoid including '=' in expressions
     const validSteps = newCalculationSteps.filter(step => step.operationType !== 'result');
     
-    if (validSteps.length > 0) {
-      expression = validSteps[0].expression;
-      
-      for (let i = 1; i < validSteps.length; i++) {
-        const step = validSteps[i];
-        expression += step.expression;
-      }
-    } else {
-      expression = newValue;
-    }
-    
     console.log('🔧 Built expression:', expression);
     return expression;
   };
@@ -602,14 +591,25 @@ export const processCalculatorInput = (
             expression: `(${firstNumber}${displayOperator}${newValue})=${compoundResult}`,
             result: compoundResult,
             timestamp: Date.now(),
-            stepNumber: 2,
+            stepNumber: newCalculationSteps.length,
             operationType: 'operation',
             displayValue: `(${firstNumber}${displayOperator}${newValue})=${compoundResult}`
           });
         }
       } else {
         // Build expression from existing steps
-        expression = buildExpression();
+        const validSteps = newCalculationSteps.filter(step => step.operationType !== 'result');
+        
+        if (validSteps.length > 0) {
+          expression = validSteps[0].expression;
+          
+          for (let i = 1; i < validSteps.length; i++) {
+            const step = validSteps[i];
+            expression += step.expression;
+          }
+        } else {
+          expression = newValue;
+        }
       }
       
       // Evaluate the complete expression with proper order of operations
