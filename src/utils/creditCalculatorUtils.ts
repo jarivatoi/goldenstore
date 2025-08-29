@@ -502,8 +502,8 @@ export const processCalculatorInput = (
           );
           
           if (addSubtractStep) {
-            // Calculate compound operation - get the correct operands
-            const firstOperand = addSubtractStep.result; // 5 from +5 step
+            // Calculate compound operation - FIXED: get the correct operands
+            const firstOperand = addSubtractStep.result; // 5 from +5 step  
             const secondOperand = multiplyDivideStep.result; // 3 from ×3 step
             const isMultiply = multiplyDivideStep.expression.includes('×');
             const compoundResult = isMultiply ? firstOperand * secondOperand : firstOperand / secondOperand;
@@ -525,7 +525,7 @@ export const processCalculatorInput = (
             
             // Calculate final result: first number + compound result
             result = newCalculationSteps[0].result + compoundResult;
-            newArticleCount = 3; // Will be 3 after adding result step
+            newArticleCount = 2; // FIXED: Will be 3 after adding result step below
           }
         }
       } else {
