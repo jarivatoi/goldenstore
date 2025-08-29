@@ -438,6 +438,7 @@ export const processCalculatorInput = (
     
     // Create operation step when operator is pressed (not when typing numbers)
     if (newCalculationSteps.length > 0 && newValue !== '0') {
+      try {
       const currentNumber = parseFloat(newValue);
       const operatorSymbol = operator === '+' ? '+' : operator === '-' ? '-' : operator === '*' ? '×' : '÷';
       
@@ -552,11 +553,16 @@ export const processCalculatorInput = (
       // Clear check navigation index
       localStorage.setItem('currentCheckIndex', '-1');
       
-    } catch (error) {
-      console.error('Calculator error:', error);
-      newValue = 'Error';
-      newIsNewNumber = true;
+      } catch (error) {
+        console.error('Calculator error:', error);
+        newValue = 'Error';
+        newIsNewNumber = true;
+      }
     }
+    
+    // Set operation for next input
+    newLastOperation = operator;
+    newIsNewNumber = true;
   }
   
   return {
