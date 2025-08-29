@@ -542,17 +542,31 @@ export const processCalculatorInput = (
       
       // Move to next step
       currentStepIndex++;
-      if (currentStepIndex >= newCalculationSteps.length) {
+      
+      // Check if we have a completed calculation (result available)
+      const hasResult = newCalculationSteps.some(step => step.isComplete);
+      const totalPositions = hasResult ? newCalculationSteps.length + 1 : newCalculationSteps.length;
+      
+      if (currentStepIndex >= totalPositions) {
         currentStepIndex = 0; // Wrap to beginning
       }
       
       // Save new index
       localStorage.setItem('currentCheckIndex', currentStepIndex.toString());
       
-      // Get the step and update display
-      const currentStep = newCalculationSteps[currentStepIndex];
-      newValue = currentStep.displayValue;
-      newArticleCount = currentStepIndex + 1;
+      // Check if we're showing the result
+      if (hasResult && currentStepIndex === newCalculationSteps.length) {
+        // Show the result
+        const expression = buildSimpleExpression(newCalculationSteps);
+        const resultValue = evaluateExpression(expression);
+        newValue = `=${resultValue}`;
+        newArticleCount = newCalculationSteps.length;
+      } else {
+        // Get the step and update display
+        const currentStep = newCalculationSteps[currentStepIndex];
+        newValue = currentStep.displayValue;
+        newArticleCount = currentStepIndex + 1;
+      }
       newIsNewNumber = true;
       
       return { 
@@ -575,19 +589,32 @@ export const processCalculatorInput = (
       // Enhanced check navigation - cycle through all steps backwards
       let currentStepIndex = parseInt(localStorage.getItem('currentCheckIndex') || '-1');
       
+      // Check if we have a completed calculation (result available)
+      const hasResult = newCalculationSteps.some(step => step.isComplete);
+      const totalPositions = hasResult ? newCalculationSteps.length + 1 : newCalculationSteps.length;
+      
       // Move to previous step
       currentStepIndex--;
       if (currentStepIndex < 0) {
-        currentStepIndex = newCalculationSteps.length - 1; // Wrap to end
+        currentStepIndex = totalPositions - 1; // Wrap to end (including result if available)
       }
       
       // Save new index
       localStorage.setItem('currentCheckIndex', currentStepIndex.toString());
       
-      // Get the step and update display
-      const currentStep = newCalculationSteps[currentStepIndex];
-      newValue = currentStep.displayValue;
-      newArticleCount = currentStepIndex + 1;
+      // Check if we're showing the result
+      if (hasResult && currentStepIndex === newCalculationSteps.length) {
+        // Show the result
+        const expression = buildSimpleExpression(newCalculationSteps);
+        const resultValue = evaluateExpression(expression);
+        newValue = `=${resultValue}`;
+        newArticleCount = newCalculationSteps.length;
+      } else {
+        // Get the step and update display
+        const currentStep = newCalculationSteps[currentStepIndex];
+        newValue = currentStep.displayValue;
+        newArticleCount = currentStepIndex + 1;
+      }
       newIsNewNumber = true;
       
       return { 

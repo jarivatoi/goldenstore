@@ -915,15 +915,19 @@ const CreditManagement: React.FC = () => {
               <div className="text-xs text-gray-400 font-mono mt-1 text-center">
                 {autoReplayActive ? (() => {
                   const currentStepIndex = parseInt(localStorage.getItem('currentCheckIndex') || '0');
-                  const hasResult = calculationSteps.some(step => step.isComplete);
+                  const hasResult = calculationSteps.length > 0 && calculationSteps.some(step => step.isComplete);
+                  const totalPositions = hasResult ? calculationSteps.length + 1 : calculationSteps.length;
                   
-                  if (currentStepIndex < calculationSteps.length) {
+                  if (hasResult && currentStepIndex === calculationSteps.length) {
+                    // Showing the result
+                    return `RESULT`;
+                  } else if (currentStepIndex < calculationSteps.length) {
                     // Showing a calculation step
                     const actualStepNumber = currentStepIndex + 1;
                     const totalSteps = calculationSteps.length;
                     return `STEP ${actualStepNumber}/${totalSteps}`;
                   } else {
-                    // Showing the result
+                    // Fallback
                     return `RESULT`;
                   }
                 })() : 'READY'}
