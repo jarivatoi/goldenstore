@@ -183,8 +183,14 @@ const processSimpleCalculation = (
     newIsNewNumber = true;
     // Keep current value displayed until next number is entered
   } else if (input === '=' || input === 'ENTER') {
-    // Calculate result for simple operations
-    if (newCalculationSteps.length > 0) {
+    // Handle equals - check if we already have a completed calculation
+    if (newCalculationSteps.length > 0 && newCalculationSteps.some(step => step.isComplete)) {
+      // Already have a completed calculation (like percentage), just keep the current value
+      // Don't recalculate or change anything
+      newValue = currentValue;
+      newIsNewNumber = true;
+    } else if (newCalculationSteps.length > 0) {
+      // Calculate result for incomplete operations
       // Mark all previous steps as complete
       newCalculationSteps.forEach(step => {
         step.isComplete = true;
@@ -201,6 +207,10 @@ const processSimpleCalculation = (
       // Add to grand total and transaction history
       newGrandTotal += result;
       newTransactionHistory.push(result);
+    } else {
+      // No calculation steps, just keep current value
+      newValue = currentValue;
+      newIsNewNumber = true;
     }
   }
 
@@ -326,8 +336,13 @@ const processCompoundCalculation = (
     newLastOperation = input;
     newIsNewNumber = true;
   } else if (input === '=' || input === 'ENTER') {
-    // Calculate result for compound operations
-    if (newCalculationSteps.length > 0) {
+    // Handle equals for compound operations
+    if (newCalculationSteps.length > 0 && newCalculationSteps.some(step => step.isComplete)) {
+      // Already have a completed calculation (like percentage), just keep the current value
+      newValue = currentValue;
+      newIsNewNumber = true;
+    } else if (newCalculationSteps.length > 0) {
+      // Calculate result for incomplete compound operations
       // Mark all previous steps as complete
       newCalculationSteps.forEach(step => {
         step.isComplete = true;
@@ -343,6 +358,14 @@ const processCompoundCalculation = (
       // Add to grand total and transaction history
       newGrandTotal += result;
       newTransactionHistory.push(result);
+    } else {
+      // No calculation steps, just keep current value
+      newValue = currentValue;
+      newIsNewNumber = true;
+    } else {
+      // No calculation steps, just keep current value
+      newValue = currentValue;
+      newIsNewNumber = true;
     }
   }
 
@@ -654,12 +677,12 @@ export const processCalculatorInput = (
         stepNumber: 2,
         operationType: 'operation',
         displayValue: `(${baseValue}×${percentageValue}%)=${percentResult}`,
-        isComplete: false
+        isComplete: true // Mark as complete since percentage calculation is finished
       };
       
       // Show the percentage result (10) in display
       newValue = percentResult.toString();
-      newLastOperation = null;
+      newLastOperation = null; // Clear operation since calculation is complete
       newIsNewNumber = true;
       newArticleCount = 2;
     } else {
@@ -676,7 +699,7 @@ export const processCalculatorInput = (
           stepNumber: newCalculationSteps.length,
           operationType: 'operation',
           displayValue: `${percentResult}%`,
-          isComplete: false
+          isComplete: true // Mark as complete since percentage calculation is finished
         };
       } else {
         newCalculationSteps = [{
@@ -686,7 +709,7 @@ export const processCalculatorInput = (
           stepNumber: 1,
           operationType: 'number',
           displayValue: `${percentResult}%`,
-          isComplete: false
+          isComplete: true // Mark as complete since percentage calculation is finished
         }];
       }
       newArticleCount = newCalculationSteps.length;
