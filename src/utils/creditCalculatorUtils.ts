@@ -776,84 +776,82 @@ export const processCalculatorInput = (
   } else if (input === '%') {
     // Percentage calculation
     const currentNum = getCurrentNumber();
-    
-   // Debug logging for percentage calculation
-   console.log('🔢 Percentage calculation debug:', {
-     currentNum,
-     currentValue,
-     lastOperation: newLastOperation,
-     calculationSteps: newCalculationSteps,
-     stepsLength: newCalculationSteps.length
-   });
-    if (newLastOperation === '*') {
-     // Find the base value from calculation steps
-     let baseValue = 0;
-     
-     if (newCalculationSteps.length >= 1) {
-       // Get the first number (base value for percentage)
-       const firstStep = newCalculationSteps[0];
-       baseValue = firstStep.result;
-       
-       console.log('🔢 Found base value:', baseValue, 'from step:', firstStep);
-     }
+    // Handle percentage calculation for compound operations
+    if (newLastOperation === '*' && newCalculationSteps.length >= 2) {
+      // For 100×10%, we have:
+      // Step 1: "100" (base value)
+      // Step 2: "×10" (percentage value)
       
-     if (baseValue !== 0) {
-       // For 100×10%, calculate 100 × (10/100) = 10
-       const percentValue = baseValue * (currentNum / 100);
-       
-       console.log('🔢 Percentage calculation:', {
-         baseValue,
-         currentNum,
-         formula: `${baseValue} × (${currentNum}/100)`,
-         result: percentValue
-       });
-       
-        newValue = percentValue.toString();
-        newIsNewNumber = true;
-        newLastOperation = null;
-        
-        newCalculationSteps = [{
-          expression: percentValue.toString(),
-          result: percentValue,
+      const baseValue = newCalculationSteps[0].result; // 100
+      const percentageValue = currentNum; // 10
+      
+      // Calculate percentage: 100 × (10/100) = 10
+      const percentResult = baseValue * (percentageValue / 100);
+      
+      // Replace step 2 with the percentage calculation result
+      newCalculationSteps[1] = {
+        expression: `(${baseValue}×${percentageValue}%)=${percentResult}`,
+        result: percentResult,
+        timestamp: Date.now(),
+        stepNumber: 2,
+        operationType: 'operation',
+        displayValue: `(${baseValue}×${percentageValue}%)=${percentResult}`
+      };
+      
+      // For compound operations like 100×10%+, we need to add the percentage to the base
+      // So the final result should be: 100 + 10 = 110
+      const finalResult = baseValue + percentResult;
+      
+      // Update the calculation to show the addition
+      newCalculationSteps = [
+        {
+          expression: baseValue.toString(),
+          result: baseValue,
           timestamp: Date.now(),
           stepNumber: 1,
           operationType: 'number',
-          displayValue: percentValue.toString()
-        }];
-        
-        newLastOperand = null;
-        newArticleCount = 1;
-      } else {
-       console.log('🔢 No base value found, using simple percentage');
-        const percentResult = currentNum / 100;
-        newValue = percentResult.toString();
-        newIsNewNumber = true;
-        
-        newCalculationSteps = [{
-          expression: percentResult.toString(),
+          displayValue: baseValue.toString()
+        },
+        {
+          expression: `+(${baseValue}×${percentageValue}%)=${percentResult}`,
           result: percentResult,
           timestamp: Date.now(),
-          stepNumber: 1,
-          operationType: 'number',
-          displayValue: percentResult.toString()
-        }];
-        newArticleCount = 1;
-      }
+          stepNumber: 2,
+          operationType: 'operation',
+          displayValue: `+(${baseValue}×${percentageValue}%)=${percentResult}`
+        }
+      ];
+      
+      newValue = finalResult.toString();
+      newLastOperation = null;
+      newIsNewNumber = true;
+      newArticleCount = 2;
     } else {
-     console.log('🔢 No multiplication operator, using simple percentage');
+      // Simple percentage calculation
       const percentResult = currentNum / 100;
       newValue = percentResult.toString();
       newIsNewNumber = true;
       
-      newCalculationSteps = [{
-        expression: percentResult.toString(),
-        result: percentResult,
-        timestamp: Date.now(),
-        stepNumber: 1,
-        operationType: 'number',
-        displayValue: percentResult.toString()
-      }];
-      newArticleCount = 1;
+      if (newCalculationSteps.length > 0) {
+        newCalculationSteps[newCalculationSteps.length - 1] = {
+          expression: `${percentResult}%`,
+          result: percentResult,
+          timestamp: Date.now(),
+          stepNumber: newCalculationSteps.length,
+          operationType: 'operation',
+          displayValue: `${percentResult}%`
+        };
+      } else {
+        newCalculationSteps = [{
+          expression: `${percentResult}%`,
+          result: percentResult,
+          timestamp: Date.now(),
+          stepNumber: 1,
+          operationType: 'number',
+          displayValue: `${percentResult}%`
+        }];
+      }
+      newArticleCount = newCalculationSteps.length;
     }
   } else if (input === '√') {
     // Square root
