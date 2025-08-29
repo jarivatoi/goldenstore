@@ -605,6 +605,7 @@ const processCompoundCalculation = (
         newValue = finalResult.toString();
         newLastOperation = null;
         newIsNewNumber = true;
+      }
       // Check if we have a result step followed by an operation step (e.g., =40, +1)
       if (newCalculationSteps.length >= 2) {
         const lastStep = newCalculationSteps[newCalculationSteps.length - 1];
