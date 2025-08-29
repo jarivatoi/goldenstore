@@ -497,10 +497,17 @@ const processCompoundCalculation = (
   } else if (input === '=' || input === 'ENTER') {
     // Handle equals - check if we already have a percentage calculation
     if (newCalculationSteps.length > 0) {
+      console.log('🔢 Equals pressed - Debug info:', {
+        currentValue,
+        calculationSteps: newCalculationSteps,
+        lastStep: newCalculationSteps[newCalculationSteps.length - 1]
+      });
+      
       const lastStep = newCalculationSteps[newCalculationSteps.length - 1];
       
       // If the last step is already a percentage calculation, just add result step
-      if (lastStep.expression.includes('%') && lastStep.expression.includes('=')) {
+      if (lastStep.expression.includes('%')) {
+        console.log('🔢 Found percentage step, using result:', lastStep.result);
         // Already calculated percentage (like "(100×10%)=10"), just add result step
         result = lastStep.result; // Use the percentage result (10)
         
@@ -523,6 +530,12 @@ const processCompoundCalculation = (
         newGrandTotal += result;
         newTransactionHistory.push(result);
         localStorage.setItem('currentCheckIndex', '-1');
+        
+        console.log('🔢 Percentage equals result:', {
+          result,
+          newValue,
+          steps: newCalculationSteps
+        });
       } else {
         // Regular calculation
         if (newCalculationSteps.length === 3) {
