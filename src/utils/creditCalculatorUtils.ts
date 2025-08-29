@@ -433,30 +433,7 @@ export const processCalculatorInput = (
           });
         }
         newArticleCount = newCalculationSteps.filter(step => step.operationType !== 'result').length;
-      }
-      newValue = input;
-      newIsNewNumber = false;
-    } else {
-      // Continuing to type digits - update current number
-      newValue = currentValue + input;
-      
-      if (newCalculationSteps.length > 0) {
-        const lastStep = newCalculationSteps[newCalculationSteps.length - 1];
-        if (lastStep.operationType === 'number' || lastStep.operationType === 'operation') {
-          if (lastStep.operationType === 'operation') {
-            // Keep the operator prefix and update the number part
-            const operatorChar = lastStep.expression.charAt(0);
-            lastStep.displayValue = `${operatorChar}${newValue}`;
-            lastStep.expression = `${operatorChar}${newValue}`;
-          } else {
-            lastStep.displayValue = newValue;
-            lastStep.expression = newValue;
-          }
-          lastStep.result = parseFloat(newValue);
-        }
-      }
-    }
-    isActive = true;
+      } else if (newCalculationSteps.length === 1 && newLastOperation === '+') {
         // After 25+, when entering 5, create the addition step
         newCalculationSteps.push({
           expression: `+${input}`,
