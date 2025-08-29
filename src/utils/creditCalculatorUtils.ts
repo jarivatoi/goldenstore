@@ -358,14 +358,6 @@ const processCompoundCalculation = (
       // Add to grand total and transaction history
       newGrandTotal += result;
       newTransactionHistory.push(result);
-    } else {
-      // No calculation steps, just keep current value
-      newValue = currentValue;
-      newIsNewNumber = true;
-    } else {
-      // No calculation steps, just keep current value
-      newValue = currentValue;
-      newIsNewNumber = true;
     }
   }
 
