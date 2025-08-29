@@ -1020,7 +1020,21 @@ export const processCalculatorInput = (
       if (newValue.endsWith('.')) {
         newValue = num.toString() + '.';
       } else {
-        newValue = num.toString();
+        // Format to 2 decimal places if it has 1 decimal place, otherwise keep as is
+        const numStr = num.toString();
+        if (numStr.includes('.')) {
+          const decimalPart = numStr.split('.')[1];
+          if (decimalPart.length === 1) {
+            // 1 decimal place -> format to 2 decimal places (1.2 -> 1.20)
+            newValue = num.toFixed(2);
+          } else {
+            // Multiple decimal places or whole number -> keep as is
+            newValue = numStr;
+          }
+        } else {
+          // Whole number -> keep as is (100 stays 100, not 100.00)
+          newValue = numStr;
+        }
       }
     }
   }
