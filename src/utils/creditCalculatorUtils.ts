@@ -501,22 +501,22 @@ export const processCalculatorInput = (
           );
           
           if (addSubtractStep) {
-            // Calculate compound operation
-            const additionOperand = addSubtractStep.result;
-            const multiplicationOperand = multiplyDivideStep.result;
+            // Calculate compound operation - get the two operands for multiplication/division
+            const firstOperand = addSubtractStep.result; // This is 5 in 25+5×3
+            const secondOperand = multiplyDivideStep.result; // This is 3 in 25+5×3
             const isMultiply = multiplyDivideStep.expression.includes('×');
-            const compoundResult = isMultiply ? additionOperand * multiplicationOperand : additionOperand / multiplicationOperand;
+            const compoundResult = isMultiply ? firstOperand * secondOperand : firstOperand / secondOperand;
             const displayOperator = isMultiply ? '×' : '÷';
             
-            // Update the addition step to show compound operation
+            // Update the addition step to show compound operation (5×3)=15
             const stepIndex = newCalculationSteps.findIndex(step => step === addSubtractStep);
             newCalculationSteps[stepIndex] = {
-              expression: `(${additionOperand}${displayOperator}${multiplicationOperand})=${compoundResult}`,
+              expression: `(${firstOperand}${displayOperator}${secondOperand})=${compoundResult}`,
               result: compoundResult,
               timestamp: Date.now(),
               stepNumber: 2,
               operationType: 'operation',
-              displayValue: `(${additionOperand}${displayOperator}${multiplicationOperand})=${compoundResult}`
+              displayValue: `(${firstOperand}${displayOperator}${secondOperand})=${compoundResult}`
             };
             
             // Remove the multiplication step since it's now part of compound
@@ -524,7 +524,7 @@ export const processCalculatorInput = (
             
             // Calculate final result: first number + compound result
             result = newCalculationSteps[0].result + compoundResult;
-            newArticleCount = 2;
+            newArticleCount = 2; // Step 2 shows compound operation
           }
         }
       } else {
@@ -549,11 +549,11 @@ export const processCalculatorInput = (
       
       // Add result step
       newCalculationSteps.push({
-        expression: `=${result}`,
+        expression: `=${result}`, 
         result: result,
         timestamp: Date.now(),
-        stepNumber: -1,
-        operationType: 'result',
+        stepNumber: 3, // This will be step 3 for compound calculations
+        operationType: 'result', 
         displayValue: `=${result}`
       });
       
@@ -568,6 +568,13 @@ export const processCalculatorInput = (
       
       // Clear check navigation index
       localStorage.setItem('currentCheckIndex', '-1');
+      
+      // Update article count to include the result step
+      if (hasMultiplicationOrDivision) {
+        newArticleCount = 3; // 1: first number, 2: compound operation, 3: result
+      } else {
+        newArticleCount = newCalculationSteps.filter(step => step.operationType !== 'result').length;
+      }
       
     } catch (error) {
       console.error('Calculator error:', error);
