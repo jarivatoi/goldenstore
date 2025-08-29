@@ -753,24 +753,11 @@ export const processCalculatorInput = (
     const currentNum = getCurrentNumber();
     
     if (newLastOperation === '*') {
+      // Find the first operand (should be the first step)
       let firstOperand = 0;
-      
-      for (let i = 0; i < newCalculationSteps.length; i++) {
-        const step = newCalculationSteps[i];
-        if (step.operationType === 'number' && !step.expression.includes('×') && 
-            !step.expression.includes('+') && !step.expression.includes('-') && 
-            !step.expression.includes('÷')) {
-          firstOperand = step.result;
-          break;
-        }
-      }
-      
-      if (firstOperand === 0 && newCalculationSteps.length > 0) {
+      if (newCalculationSteps.length > 0) {
         const firstStep = newCalculationSteps[0];
-        const parsed = parseFloat(firstStep.expression);
-        if (!isNaN(parsed)) {
-          firstOperand = parsed;
-        }
+        firstOperand = firstStep.result;
       }
       
       if (firstOperand !== 0) {
@@ -790,6 +777,7 @@ export const processCalculatorInput = (
         }];
         
         newLastOperand = null;
+        newArticleCount = 1;
       } else {
         const percentResult = currentNum / 100;
         newValue = percentResult.toString();
@@ -803,6 +791,7 @@ export const processCalculatorInput = (
           operationType: 'number',
           displayValue: percentResult.toString()
         }];
+        newArticleCount = 1;
       }
     } else {
       const percentResult = currentNum / 100;
@@ -817,6 +806,7 @@ export const processCalculatorInput = (
         operationType: 'number',
         displayValue: percentResult.toString()
       }];
+      newArticleCount = 1;
     }
   } else if (input === '√') {
     // Square root
