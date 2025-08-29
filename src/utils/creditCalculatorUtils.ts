@@ -137,6 +137,7 @@ const processSimpleCalculation = (
         const lastStep = newCalculationSteps[newCalculationSteps.length - 1];
         if (lastStep.operationType === 'result') {
           // We're adding a new number after a result (e.g., 40+ then 15)
+        }
       } else if (newLastOperation && newIsNewNumber) {
         // After any operator, create new step
         newCalculationSteps.push({
@@ -285,13 +286,11 @@ const processCompoundCalculation = (
           result: parseFloat(input),
           timestamp: Date.now(),
           stepNumber: newCalculationSteps.length + 1,
-      }
+          operationType: 'operation',
+          displayValue: `${displayOperator}${input}`
+        });
         // Increment article count for new operand
         newArticleCount = newCalculationSteps.length;
-    } else {
-      // Building existing number
-      newValue = currentValue + input;
-      
       }
       newValue = input;
       newIsNewNumber = false;
@@ -356,7 +355,6 @@ const processCompoundCalculation = (
       newLastOperation = null;
       newIsNewNumber = true;
     }
-  }
   }
 
   return {
@@ -690,6 +688,7 @@ export const processCalculatorInput = (
     newIsNewNumber = true;
   } else if (input === '.') {
     // Handle decimal point - route to appropriate pathway
+    const willBeCompound = isCompound;
     if (willBeCompound) {
       // Use compound calculation flow for decimal
       const compoundResult = processCompoundCalculation(
