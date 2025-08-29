@@ -264,7 +264,7 @@ const processCompoundCalculation = (
     // Handle numeric input
     if (newIsNewNumber || currentValue === '0') {
       if (newCalculationSteps.length === 0) {
-        // First number: quantity (e.g., 5 articles)
+        // First number
         newCalculationSteps.push({
           expression: input,
           result: parseFloat(input),
@@ -276,9 +276,11 @@ const processCompoundCalculation = (
         });
       } else if (newLastOperation && newIsNewNumber) {
         // After any operator, create new step
-        const displayOperator = newLastOperation === '*' ? '×' : '÷';
+        const displayOperator = newLastOperation === '*' ? '×' : 
+                               newLastOperation === '/' ? '÷' : 
+                               newLastOperation;
         newCalculationSteps.push({
-          expression: `${displayOperator}${input}`,
+          expression: `${newLastOperation}${input}`,
           result: parseFloat(input),
           timestamp: Date.now(),
           stepNumber: newCalculationSteps.length + 1,
@@ -287,7 +289,6 @@ const processCompoundCalculation = (
           isComplete: false,
           operator: newLastOperation
         });
-        // Increment article count for new operand
         newArticleCount = newCalculationSteps.length;
       }
       newValue = input;
@@ -305,9 +306,11 @@ const processCompoundCalculation = (
           lastStep.result = parseFloat(newValue);
           lastStep.isComplete = false;
         } else if (lastStep.operationType === 'operation') {
-          const operator = lastStep.expression.charAt(0);
+          const operator = lastStep.operator === '*' ? '×' : 
+                          lastStep.operator === '/' ? '÷' : 
+                          lastStep.operator || lastStep.expression.charAt(0);
           lastStep.displayValue = `${operator}${newValue}`;
-          lastStep.expression = `${operator}${newValue}`;
+          lastStep.expression = `${lastStep.operator}${newValue}`;
           lastStep.result = parseFloat(newValue);
           lastStep.isComplete = false;
         }
@@ -318,12 +321,11 @@ const processCompoundCalculation = (
     if (!currentValue.includes('.')) {
       newValue = currentValue + '.';
     }
-  } else if (input === '*' || input === '/') {
-    // Handle multiplication and division
-    // For compound: 5×3 means 5 articles at 3.00 each
+  } else if (input === '*' || input === '/' || input === '+' || input === '-') {
+    // Handle all operators
     const currentNum = parseFloat(currentValue);
     
-    if (!isNaN(currentNum) && currentNum > 0) {
+    if (!isNaN(currentNum) && currentNum > 0 && (input === '*' || input === '/')) {
       if (input === '*') {
         // Set article count to the first number (quantity)
         newArticleCount = Math.floor(currentNum);
@@ -348,7 +350,7 @@ const processCompoundCalculation = (
         step.isComplete = true;
       });
       
-      const expression = buildSimpleExpression(newCalculationSteps);
+      const expression = buildCompoundExpression(newCalculationSteps);
       result = evaluateExpression(expression);
       
       newValue = result.toString();
@@ -393,13 +395,44 @@ const buildSimpleExpression = (steps: CalculationStep[]): string => {
 };
 
 /**
+ * Build expression from compound calculation steps
+ */
+const buildCompoundExpression = (steps: CalculationStep[]): string => {
+  let expression = '';
+  
+  for (let i = 0; i < steps.length; i++) {
+    const step = steps[i];
+    
+    if (step.operationType === 'number') {
+      expression += step.result;
+    } else if (step.operationType === 'operation') {
+      // Use the stored operator for building expression
+      expression += step.operator + step.result;
+    }
+  }
+  
+  return expression;
+};
+/**
  * Determine if calculation is compound
  * Simple: Only + and - operators
  * Compound: Any × or ÷ operators
  */
 const isCompoundCalculation = (calculationSteps: CalculationStep[], lastOperation: string | null): boolean => {
-  // Compound if current operation is × or ÷
-  return (lastOperation === '*' || lastOperation === '/' || lastOperation === '×' || lastOperation === '÷');
+  // Check if any step contains multiplication or division
+  const hasMultiplyDivide = calculationSteps.some(step => 
+    step.expression.includes('*') || 
+    step.expression.includes('/') || 
+    step.expression.includes('×') || 
+    step.expression.includes('÷') ||
+    step.operator === '*' ||
+    step.operator === '/' ||
+    step.operator === '×' ||
+    step.operator === '÷'
+  );
+  
+  // Compound if current operation is × or ÷ OR if any previous step had × or ÷
+  return hasMultiplyDivide || (lastOperation === '*' || lastOperation === '/' || lastOperation === '×' || lastOperation === '÷');
 };
 
 /**
@@ -757,7 +790,10 @@ export const processCalculatorInput = (
     }
   } else {
     // Route to appropriate calculation flow
-    if (input === '*' || input === '/' || input === '×' || input === '÷') {
+    const willBeCompound = input === '*' || input === '/' || input === '×' || input === '÷' || 
+                          isCompoundCalculation(newCalculationSteps, newLastOperation);
+    
+    if (willBeCompound) {
       const compoundResult = processCompoundCalculation(
         currentValue, input, newCalculationSteps, newLastOperation,
         newIsNewNumber, newArticleCount
