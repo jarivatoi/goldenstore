@@ -605,17 +605,8 @@ const processCompoundCalculation = (
         newValue = finalResult.toString();
         newLastOperation = null;
         newIsNewNumber = true;
-              const operator = step.expression.charAt(0);
-              const operandValue = step.result;
-              
-              if (operator === '+') {
-                runningTotal += operandValue;
-              } else if (operator === '-') {
-                runningTotal -= operandValue;
-              }
-        } else if (newCalculationSteps.length === 3) {
         newArticleCount = 3;
-        } else if (newCalculationSteps.length === 2) {
+      } else if (newCalculationSteps.length === 2) {
         // Simple addition: 10+20+ should show 30
         const firstStep = newCalculationSteps[0];
         const secondStep = newCalculationSteps[1];
@@ -624,7 +615,6 @@ const processCompoundCalculation = (
           const result = firstStep.result + secondStep.result;
           newValue = result.toString();
           newIsNewNumber = true;
-        }
         }
       }
     } else if (input === '+' && newCalculationSteps.length === 1) {
