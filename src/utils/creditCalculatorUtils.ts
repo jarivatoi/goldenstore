@@ -480,6 +480,26 @@ export const processCalculatorInput = (
           }
         }
       }
+    } else if (newLastOperation && (newLastOperation === '*' || newLastOperation === '/')) {
+      // We're in a high precedence operation, complete it when we get the next operator
+      if (newCalculationSteps.length >= 2) {
+        const lastStep = newCalculationSteps[newCalculationSteps.length - 1];
+        if (lastStep.operationType === 'operation' && !lastStep.expression.includes('=')) {
+          // Get the previous number step
+          const prevStep = newCalculationSteps[newCalculationSteps.length - 2];
+          if (prevStep.operationType === 'number') {
+            const firstNum = prevStep.result;
+            const secondNum = parseFloat(newValue);
+            const displayOp = newLastOperation === '*' ? '×' : '÷';
+            const result = newLastOperation === '*' ? firstNum * secondNum : firstNum / secondNum;
+            
+            // Update the operation step to show compound operation
+            lastStep.expression = `(${firstNum}${displayOp}${secondNum})=${result}`;
+            lastStep.result = result;
+            lastStep.displayValue = `(${firstNum}${displayOp}${secondNum})=${result`;
+          }
+        }
+      }
     } else if (newCalculationSteps.length === 0) {
       // First number entry when operator is pressed
       newCalculationSteps.push({
