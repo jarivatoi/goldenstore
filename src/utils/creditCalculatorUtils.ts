@@ -614,7 +614,7 @@ export const processCalculatorInput = (
         expression: `=${result}`,
         result: result,
         timestamp: Date.now(),
-        stepNumber: newCalculationSteps.length + 1,
+        stepNumber: newCalculationSteps.filter(step => step.operationType !== 'result').length + 1,
         operationType: 'result',
         displayValue: `=${result}`
       });
