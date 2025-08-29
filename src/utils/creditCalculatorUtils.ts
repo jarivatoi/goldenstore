@@ -678,7 +678,7 @@ export const processCalculatorInput = (
             } else if (result === 0) {
               // No steps, just use current value
               result = parseFloat(newValue);
-            }</parameter>
+            }
           }
           
           // Add the current operation
