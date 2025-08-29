@@ -140,8 +140,14 @@ const processSimpleCalculation = (
       newValue = input;
       newIsNewNumber = false;
     } else {
-      // Continuing to type digits - build the number properly
-      newValue = currentValue + input;
+      // Continuing to type digits - build the number properly (handles decimals)
+      if (currentValue.includes('.')) {
+        // Building decimal number: 10. + 1 = 10.1
+        newValue = currentValue + input;
+      } else {
+        // Building whole number: 1 + 0 = 10
+        newValue = currentValue + input;
+      }
       
       // Update the last step if it's a number or operation
       if (newCalculationSteps.length > 0) {
@@ -316,8 +322,14 @@ const processCompoundCalculation = (
       newValue = input;
       newIsNewNumber = false;
     } else {
-      // Continuing to type digits - build the number properly
-      newValue = currentValue + input;
+      // Continuing to type digits - build the number properly (handles decimals)
+      if (currentValue.includes('.')) {
+        // Building decimal number: 10. + 1 = 10.1
+        newValue = currentValue + input;
+      } else {
+        // Building whole number: 1 + 0 = 10
+        newValue = currentValue + input;
+      }
       
       if (newCalculationSteps.length > 0) {
         const lastStep = newCalculationSteps[newCalculationSteps.length - 1];
@@ -881,13 +893,18 @@ export const processCalculatorInput = (
     }
   }
 
-  // Format display value
-  if (newValue !== 'Error' && !isNaN(parseFloat(newValue))) {
+  // Format display value - preserve decimal formatting
+  if (newValue !== 'Error' && newValue !== '0.' && !isNaN(parseFloat(newValue))) {
     const num = parseFloat(newValue);
     if (num.toString().length > 12) {
       newValue = num.toExponential(6);
     } else {
-      newValue = num.toString();
+      // Preserve trailing decimal point for user feedback
+      if (newValue.endsWith('.')) {
+        newValue = num.toString() + '.';
+      } else {
+        newValue = num.toString();
+      }
     }
   }
 
