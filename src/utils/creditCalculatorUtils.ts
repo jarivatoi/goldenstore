@@ -517,6 +517,12 @@ const processCompoundCalculation = (
         newValue = result.toString();
         newLastOperation = null;
         newIsNewNumber = true;
+        newArticleCount = newCalculationSteps.length;
+        
+        // Add to grand total and transaction history
+        newGrandTotal += result;
+        newTransactionHistory.push(result);
+        localStorage.setItem('currentCheckIndex', '-1');
       } else {
         // Regular calculation
         if (newCalculationSteps.length === 3) {
