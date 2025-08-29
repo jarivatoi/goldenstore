@@ -473,10 +473,6 @@ export const processCalculatorInput = (
         displayValue: newValue
       });
       newArticleCount = 1;
-    } else if (newCalculationSteps.length === 1 && operator === '+') {
-      // When pressing + after first number, create addition step with the next number
-      // Don't create the step yet - wait for the number to be entered
-      // This will be handled when the next number is entered
     } else if (newCalculationSteps.length === 1 && (operator === '*' || operator === '/')) {
       // Direct multiplication/division after first number
       const firstNumber = newCalculationSteps[0].result;
