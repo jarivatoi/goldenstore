@@ -572,9 +572,17 @@ export const processCalculatorInput = (
       // Check if we're showing the result
       if (hasResult && currentStepIndex === newCalculationSteps.length) {
         // Show the result
-        const expression = buildSimpleExpression(newCalculationSteps);
-        const resultValue = evaluateExpression(expression);
-        newValue = `=${resultValue}`;
+        // For percentage calculations, use the last step's result
+        const lastStep = newCalculationSteps[newCalculationSteps.length - 1];
+        if (lastStep && lastStep.isComplete && lastStep.displayValue.includes('%')) {
+          // Use the percentage result directly
+          newValue = `=${lastStep.result}`;
+        } else {
+          // For other calculations, build expression
+          const expression = buildSimpleExpression(newCalculationSteps);
+          const resultValue = evaluateExpression(expression);
+          newValue = `=${resultValue}`;
+        }
         newArticleCount = newCalculationSteps.length;
       } else {
         // Get the step and update display
