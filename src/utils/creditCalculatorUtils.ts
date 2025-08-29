@@ -417,10 +417,31 @@ export const processCalculatorInput = (
       newIsNewNumber = false;
     } else {
       // Continuing to type digits - update the current step
-      const lastStep = newCalculationSteps[newCalculationSteps.length - 1];
-      if (lastStep) {
-        lastStep.displayValue = newValue;
-        lastStep.expression = newValue;
+      if (newCalculationSteps.length === 0) {
+        // First number being typed
+        newCalculationSteps.push({
+          expression: currentValue + input,
+          result: parseFloat(currentValue + input),
+          timestamp: Date.now(),
+          stepNumber: 1,
+          operationType: 'number',
+          displayValue: currentValue + input
+        });
+        newArticleCount = 1;
+      } else {
+        const lastStep = newCalculationSteps[newCalculationSteps.length - 1];
+        if (lastStep && lastStep.operationType === 'number') {
+          // Update the first number step
+          lastStep.expression = currentValue + input;
+          lastStep.result = parseFloat(currentValue + input);
+          lastStep.displayValue = currentValue + input;
+        } else if (lastStep && lastStep.operationType === 'operation') {
+          // Update operation step
+          const operatorSymbol = lastStep.expression.charAt(0);
+          lastStep.expression = operatorSymbol + (currentValue + input);
+          lastStep.result = parseFloat(currentValue + input);
+          lastStep.displayValue = operatorSymbol + (currentValue + input);
+        }
       }
       if (newCalculationSteps.length >= 1) {
         // Update operation step - preserve operator prefix and handle compound operations
