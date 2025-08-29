@@ -605,7 +605,28 @@ const processCompoundCalculation = (
         newValue = finalResult.toString();
         newLastOperation = null;
         newIsNewNumber = true;
-      }
+              const operator = step.expression.charAt(0);
+              const operandValue = step.result;
+              
+              if (operator === '+') {
+                runningTotal += operandValue;
+              } else if (operator === '-') {
+                runningTotal -= operandValue;
+              }
+            }
+          }
+          
+          // Show the running total
+          newValue = runningTotal.toString(); // Show 42 for 40+1+1
+          newLastOperation = input; // Set + for next operation
+          newIsNewNumber = true;
+          
+          console.log('🔢 Continuous addition running total:', {
+            lastResult: lastResultStep?.result,
+            runningTotal,
+            steps: newCalculationSteps.slice(newCalculationSteps.indexOf(lastResultStep) + 1)
+          });
+          
       // Check if we have a result step followed by an operation step (e.g., =40, +1)
       if (newCalculationSteps.length >= 2) {
         const lastStep = newCalculationSteps[newCalculationSteps.length - 1];
