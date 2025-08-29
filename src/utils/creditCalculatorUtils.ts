@@ -287,22 +287,22 @@ const processCompoundCalculation = (
   } else if (input === '=' || input === 'ENTER') {
     // Calculate result for compound operations
     if (newCalculationSteps.length === 3) {
-      // Compound calculation: 25+5×3
+      // Compound calculation: 25+5×3 = 25 + (5×3) = 25 + 15 = 40
       const firstStep = newCalculationSteps[0]; // "25"
       const secondStep = newCalculationSteps[1]; // "+5"
       const thirdStep = newCalculationSteps[2]; // "×3"
       
-      // Extract operands
+      // Extract operands correctly
       const firstNumber = firstStep.result; // 25
-      const additionOperand = secondStep.result; // 5
-      const multiplicationOperand = thirdStep.result; // 3
+      const additionOperand = secondStep.result; // 5 (from "+5")
+      const multiplicationOperand = thirdStep.result; // 3 (from "×3")
       
-      // Calculate compound operation: 5×3=15
+      // Calculate compound operation: 5×3=15 (NOT 25×5)
       const compoundResult = thirdStep.expression.startsWith('×') 
         ? additionOperand * multiplicationOperand
         : additionOperand / multiplicationOperand;
       
-      // Replace the multiplication step with compound result
+      // Replace step 2 with the compound result: (5×3)=15
       const displayOperator = thirdStep.expression.charAt(0);
       newCalculationSteps[1] = {
         expression: `(${additionOperand}${displayOperator}${multiplicationOperand})=${compoundResult}`,
@@ -313,11 +313,11 @@ const processCompoundCalculation = (
         displayValue: `(${additionOperand}${displayOperator}${multiplicationOperand})=${compoundResult}`
       };
       
-      // Remove the third step since it's now incorporated into step 2
+      // Remove step 3 since it's now incorporated into step 2
       newCalculationSteps = newCalculationSteps.slice(0, 2);
       newArticleCount = 2;
       
-      // Calculate final result: 25 + 15 = 40
+      // Calculate final result: 25 + 15 = 40 (NOT 25 + 5)
       result = firstNumber + compoundResult;
     } else if (newCalculationSteps.length > 0) {
       // Simple calculation or other cases
