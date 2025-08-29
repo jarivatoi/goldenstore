@@ -383,6 +383,7 @@ export const processCalculatorInput = (
     // Handle numeric input
     if (newIsNewNumber || currentValue === '0') {
       if (newCalculationSteps.length === 0) {
+        // First number entry
         newArticleCount = 1;
         newCalculationSteps.push({
           expression: input,
@@ -392,7 +393,70 @@ export const processCalculatorInput = (
           operationType: 'number',
           displayValue: input
         });
-      } else if (newCalculationSteps.length === 1 && newLastOperation === '+') {
+      } else if (newCalculationSteps.length >= 1 && newLastOperation === '+') {
+        // Check if we already have an operation step for this operator
+        const lastStep = newCalculationSteps[newCalculationSteps.length - 1];
+        if (lastStep.operationType === 'operation' && lastStep.expression.startsWith('+')) {
+          // Update existing operation step instead of creating new one
+          lastStep.expression = `+${input}`;
+          lastStep.result = parseFloat(input);
+          lastStep.displayValue = `+${input}`;
+        } else {
+          // Create new operation step
+          newCalculationSteps.push({
+            expression: `+${input}`,
+            result: parseFloat(input),
+            timestamp: Date.now(),
+            stepNumber: newCalculationSteps.length + 1,
+            operationType: 'operation',
+            displayValue: `+${input}`
+          });
+        }
+        newArticleCount = newCalculationSteps.filter(step => step.operationType !== 'result').length;
+      } else if (newCalculationSteps.length >= 1 && newLastOperation === '-') {
+        // Check if we already have an operation step for this operator
+        const lastStep = newCalculationSteps[newCalculationSteps.length - 1];
+        if (lastStep.operationType === 'operation' && lastStep.expression.startsWith('-')) {
+          // Update existing operation step instead of creating new one
+          lastStep.expression = `-${input}`;
+          lastStep.result = parseFloat(input);
+          lastStep.displayValue = `-${input}`;
+        } else {
+          // Create new operation step
+          newCalculationSteps.push({
+            expression: `-${input}`,
+            result: parseFloat(input),
+            timestamp: Date.now(),
+            stepNumber: newCalculationSteps.length + 1,
+            operationType: 'operation',
+            displayValue: `-${input}`
+          });
+        }
+        newArticleCount = newCalculationSteps.filter(step => step.operationType !== 'result').length;
+      }
+      newValue = input;
+      newIsNewNumber = false;
+    } else {
+      // Continuing to type digits - update current number
+      newValue = currentValue + input;
+      
+      if (newCalculationSteps.length > 0) {
+        const lastStep = newCalculationSteps[newCalculationSteps.length - 1];
+        if (lastStep.operationType === 'number' || lastStep.operationType === 'operation') {
+          if (lastStep.operationType === 'operation') {
+            // Keep the operator prefix and update the number part
+            const operatorChar = lastStep.expression.charAt(0);
+            lastStep.displayValue = `${operatorChar}${newValue}`;
+            lastStep.expression = `${operatorChar}${newValue}`;
+          } else {
+            lastStep.displayValue = newValue;
+            lastStep.expression = newValue;
+          }
+          lastStep.result = parseFloat(newValue);
+        }
+      }
+    }
+    isActive = true;
         // After 25+, when entering 5, create the addition step
         newCalculationSteps.push({
           expression: `+${input}`,
