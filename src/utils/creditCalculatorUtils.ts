@@ -123,7 +123,7 @@ const processSimpleCalculation = (
     // Handle numeric input
     if (newIsNewNumber || currentValue === '0') {
       if (newCalculationSteps.length === 0) {
-        // First number: 25
+        // First number: 10
         newArticleCount = 1;
         newCalculationSteps.push({
           expression: input,
@@ -134,20 +134,14 @@ const processSimpleCalculation = (
           displayValue: input,
           isComplete: false
         });
-      } else if (newLastOperation === '+' || newLastOperation === '-') {
-        // After operator, create new step: +5, +30, -10, etc.
-        // Check if we're continuing after a result
-        const lastStep = newCalculationSteps[newCalculationSteps.length - 1];
-        if (lastStep.operationType === 'result') {
-          // We're adding a new number after a result (e.g., 40+ then 15)
-        }
       } else if (newLastOperation && newIsNewNumber) {
-        // After any operator, create new step
+        // After operator, create new step: +20, +30, -10, etc.
+        newArticleCount = newCalculationSteps.length + 1;
         newCalculationSteps.push({
           expression: `${newLastOperation}${input}`,
           result: parseFloat(input),
           timestamp: Date.now(),
-          stepNumber: newCalculationSteps.length + 1,
+          stepNumber: newArticleCount,
           operationType: 'operation',
           displayValue: `${newLastOperation}${input}`,
           isComplete: false,
@@ -157,7 +151,7 @@ const processSimpleCalculation = (
       newValue = input;
       newIsNewNumber = false;
     } else {
-      // Building existing number: 1 + 0 = 10
+      // Building existing number: 1 + 0 = 10, 2 + 0 = 20
       newValue = currentValue + input;
       
       // Update the last step
@@ -184,26 +178,10 @@ const processSimpleCalculation = (
     }
   } else if (input === '+' || input === '-') {
     // Handle + and - operators
-    // Update counter based on the current number and operator
-    const currentNum = parseFloat(currentValue);
-    
-    if (!isNaN(currentNum) && currentNum > 0) {
-      if (input === '+') {
-        newArticleCount = Math.max(1, newArticleCount + 1);
-      } else if (input === '-') {
-        newArticleCount = Math.max(0, newArticleCount - 1);
-      }
-    }
-    
+    // Don't update display value yet - just store the operator
     newLastOperation = input;
     newIsNewNumber = true;
-    
-    // Calculate running total if we have operations
-    if (newCalculationSteps.length >= 2) {
-      const expression = buildSimpleExpression(newCalculationSteps);
-      const runningTotal = evaluateExpression(expression);
-      newValue = runningTotal.toString();
-    }
+    // Keep current value displayed until next number is entered
   } else if (input === '=' || input === 'ENTER') {
     // Calculate result for simple operations
     if (newCalculationSteps.length > 0) {
@@ -229,6 +207,7 @@ const processSimpleCalculation = (
       newValue = result.toString();
       newLastOperation = null;
       newIsNewNumber = true;
+      newArticleCount = newCalculationSteps.length;
       
       // Add to grand total and transaction history
       newGrandTotal += result;

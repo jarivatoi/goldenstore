@@ -976,16 +976,16 @@ const CreditManagement: React.FC = () => {
               M+
             </button>
             <button
+              onClick={() => handleCalculatorInput('AUTO')}
+              className="bg-gray-400 hover:bg-gray-500 text-white p-3 rounded-lg font-bold text-sm shadow-md border border-gray-500"
+            >
+              AUTO
+            </button>
+            <button
               onClick={() => handleCalculatorInput('→')}
               className="bg-gray-400 hover:bg-gray-500 text-white p-3 rounded-lg font-bold text-sm shadow-md border border-gray-500"
             >
               →
-            </button>
-            <button
-              onClick={() => handleCalculatorInput('AUTO')}
-              className="bg-gray-400 hover:bg-gray-500 text-white p-3 rounded-lg font-bold text-sm shadow-md border border-gray-500"
-            >
-              AUTO REPLAY
             </button>
 
             {/* Row 2: %, 7, 8, 9, (, ) */}
@@ -1064,7 +1064,7 @@ const CreditManagement: React.FC = () => {
               ÷
             </button>
 
-            {/* Row 4: AC, 1, 2, 3, +, - */}
+            {/* Row 4: AC (spans 2 rows), 1, 2, 3, +, - */}
             <button
               onClick={() => handleCalculatorInput('AC')}
               className="bg-red-500 hover:bg-red-600 text-white p-3 rounded-lg font-bold text-sm shadow-md border border-red-600"
@@ -1104,7 +1104,7 @@ const CreditManagement: React.FC = () => {
               −
             </button>
 
-            {/* Row 5: (AC spans from row 4), 0, 00, •, = */}
+            {/* Row 5: (AC spans from row 4), 0, 00, •, (+ spans from row 4), = */}
             <button
               onClick={() => handleCalculatorInput('0')}
               className="bg-gray-800 hover:bg-gray-900 text-white p-3 rounded-lg font-bold text-xl shadow-md border border-gray-600"
