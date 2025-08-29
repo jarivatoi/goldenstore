@@ -193,21 +193,10 @@ const processSimpleCalculation = (
       const expression = buildSimpleExpression(newCalculationSteps);
       result = evaluateExpression(expression);
       
-      // Add result step
-      newCalculationSteps.push({
-        expression: `=${result}`,
-        result: result,
-        timestamp: Date.now(),
-        stepNumber: newCalculationSteps.length + 1,
-        operationType: 'result',
-        displayValue: `=${result}`,
-        isComplete: true
-      });
-      
       newValue = result.toString();
       newLastOperation = null;
       newIsNewNumber = true;
-      newArticleCount = newCalculationSteps.length;
+      newArticleCount = newCalculationSteps.length; // Keep same article count, don't increment
       
       // Add to grand total and transaction history
       newGrandTotal += result;
@@ -346,17 +335,6 @@ const processCompoundCalculation = (
       
       const expression = buildSimpleExpression(newCalculationSteps);
       result = evaluateExpression(expression);
-      
-      // Add result step
-      newCalculationSteps.push({
-        expression: `=${result}`,
-        result: result,
-        timestamp: Date.now(),
-        stepNumber: newCalculationSteps.length + 1,
-        operationType: 'result',
-        displayValue: `=${result}`,
-        isComplete: true
-      });
       
       newValue = result.toString();
       newLastOperation = null;
