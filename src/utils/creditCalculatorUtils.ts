@@ -206,7 +206,15 @@ const processSimpleCalculation = (
           operationType: 'operation',
           displayValue: `${newLastOperation}0.`
         });
-        newArticleCount = newCalculationSteps.length;
+        // Check if we're continuing after a result
+        const lastStep = newCalculationSteps[newCalculationSteps.length - 2]; // Check second to last step
+        if (lastStep && lastStep.operationType === 'result') {
+          // We're adding a new number after a result (e.g., 40+ then 0.)
+          newArticleCount = newArticleCount + 1; // Increment from current count
+        } else {
+          // Normal case
+          newArticleCount = newCalculationSteps.length;
+        }
       } else {
         newValue = '0.';
       }
@@ -377,6 +385,20 @@ const processCompoundCalculation = (
           displayValue: `${displayOperator}${input}`
         });
         newArticleCount = 2; // Stay at 2 because we're still working on the second article
+      } else if (newCalculationSteps.length > 0 && 
+                 newCalculationSteps[newCalculationSteps.length - 1].operationType === 'result' &&
+                 (newLastOperation === '+' || newLastOperation === '-')) {
+        // After a result and + operator, when entering a new number (e.g., 40+1)
+        // This should increment the counter to 3
+        newArticleCount = 3; // Increment to 3 articles
+        newCalculationSteps.push({
+          expression: `${newLastOperation}${input}`,
+          result: parseFloat(input),
+          timestamp: Date.now(),
+          stepNumber: newCalculationSteps.length + 1,
+          operationType: 'operation',
+          displayValue: `${newLastOperation}${input}`
+        });
       }
       newValue = input;
       newIsNewNumber = false;
