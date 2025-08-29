@@ -495,60 +495,85 @@ const processCompoundCalculation = (
     newIsNewNumber = true;
     }
   } else if (input === '=' || input === 'ENTER') {
-    // Calculate result for compound operations
-    if (newCalculationSteps.length === 3) {
-      // Compound calculation: 25+5×3 = 25 + (5×3) = 25 + 15 = 40
-      const firstStep = newCalculationSteps[0]; // "25"
-      const secondStep = newCalculationSteps[1]; // "+5"
-      const thirdStep = newCalculationSteps[2]; // "×3"
+    // Handle equals - check if we already have a percentage calculation
+    if (newCalculationSteps.length > 0) {
+      const lastStep = newCalculationSteps[newCalculationSteps.length - 1];
       
-      // Extract operands correctly
-      const firstNumber = firstStep.result; // 25
-      const additionOperand = secondStep.result; // 5 (from "+5")
-      const multiplicationOperand = thirdStep.result; // 3 (from "×3")
-      
-      // Calculate compound operation: 5×3=15 (NOT 25×5)
-      const compoundResult = thirdStep.expression.startsWith('×') 
-        ? additionOperand * multiplicationOperand
-        : additionOperand / multiplicationOperand;
-      
-      // Replace step 2 with the compound result: (5×3)=15
-      const displayOperator = thirdStep.expression.charAt(0);
-      newCalculationSteps[1] = {
-        expression: `(${additionOperand}${displayOperator}${multiplicationOperand})=${compoundResult}`,
-        result: compoundResult,
-        timestamp: Date.now(),
-        stepNumber: 2,
-        operationType: 'operation',
-        displayValue: `(${additionOperand}${displayOperator}${multiplicationOperand})=${compoundResult}`
-      };
-      
-      // Remove step 3 since it's now incorporated into step 2
-      newCalculationSteps = newCalculationSteps.slice(0, 2);
-      newArticleCount = 2;
-      
-      // Calculate final result: 25 + 15 = 40 (NOT 25 + 5)
-      result = firstNumber + compoundResult;
-    } else if (newCalculationSteps.length > 0) {
-      // Simple calculation or other cases
-      const expression = buildSimpleExpression(newCalculationSteps);
-      result = evaluateExpression(expression);
-    }
-    
-    if (result !== undefined) {
-      // Add result step
-      newCalculationSteps.push({
-        expression: `=${result}`,
-        result: result,
-        timestamp: Date.now(),
-        stepNumber: newCalculationSteps.length + 1,
-        operationType: 'result',
-        displayValue: `=${result}`
-      });
-      
-      newValue = result.toString();
-      newLastOperation = null;
-      newIsNewNumber = true;
+      // If the last step is already a percentage calculation, just add result step
+      if (lastStep.expression.includes('%') && lastStep.expression.includes('=')) {
+        // Already calculated percentage (like "(100×10%)=10"), just add result step
+        result = lastStep.result; // Use the percentage result (10)
+        
+        // Add result step
+        newCalculationSteps.push({
+          expression: `=${result}`,
+          result: result,
+          timestamp: Date.now(),
+          stepNumber: newCalculationSteps.length + 1,
+          operationType: 'result',
+          displayValue: `=${result}`
+        });
+        
+        newValue = result.toString();
+        newLastOperation = null;
+        newIsNewNumber = true;
+      } else {
+        // Regular calculation
+        if (newCalculationSteps.length === 3) {
+          // Compound calculation: 25+5×3 = 25 + (5×3) = 25 + 15 = 40
+          const firstStep = newCalculationSteps[0]; // "25"
+          const secondStep = newCalculationSteps[1]; // "+5"
+          const thirdStep = newCalculationSteps[2]; // "×3"
+          
+          // Extract operands correctly
+          const firstNumber = firstStep.result; // 25
+          const additionOperand = secondStep.result; // 5 (from "+5")
+          const multiplicationOperand = thirdStep.result; // 3 (from "×3")
+          
+          // Calculate compound operation: 5×3=15 (NOT 25×5)
+          const compoundResult = thirdStep.expression.startsWith('×') 
+            ? additionOperand * multiplicationOperand
+            : additionOperand / multiplicationOperand;
+          
+          // Replace step 2 with the compound result: (5×3)=15
+          const displayOperator = thirdStep.expression.charAt(0);
+          newCalculationSteps[1] = {
+            expression: `(${additionOperand}${displayOperator}${multiplicationOperand})=${compoundResult}`,
+            result: compoundResult,
+            timestamp: Date.now(),
+            stepNumber: 2,
+            operationType: 'operation',
+            displayValue: `(${additionOperand}${displayOperator}${multiplicationOperand})=${compoundResult}`
+          };
+          
+          // Remove step 3 since it's now incorporated into step 2
+          newCalculationSteps = newCalculationSteps.slice(0, 2);
+          newArticleCount = 2;
+          
+          // Calculate final result: 25 + 15 = 40 (NOT 25 + 5)
+          result = firstNumber + compoundResult;
+        } else if (newCalculationSteps.length > 0) {
+          // Simple calculation or other cases
+          const expression = buildSimpleExpression(newCalculationSteps);
+          result = evaluateExpression(expression);
+        }
+        
+        if (result !== undefined) {
+          // Add result step
+          newCalculationSteps.push({
+            expression: `=${result}`,
+            result: result,
+            timestamp: Date.now(),
+            stepNumber: newCalculationSteps.length + 1,
+            operationType: 'result',
+            displayValue: `=${result}`
+          });
+          
+          newValue = result.toString();
+          newLastOperation = null;
+          newIsNewNumber = true;
+        }
+      }
     }
   }
 
