@@ -605,8 +605,38 @@ const processCompoundCalculation = (
         newValue = finalResult.toString();
         newLastOperation = null;
         newIsNewNumber = true;
+      // Check if we have a result step followed by an operation step (e.g., =40, +1)
+      if (newCalculationSteps.length >= 2) {
+        const lastStep = newCalculationSteps[newCalculationSteps.length - 1];
+        const secondLastStep = newCalculationSteps[newCalculationSteps.length - 2];
+        
+        // Case: We have =40, +1 and now pressing +
+        if (lastStep.operationType === 'operation' && 
+            secondLastStep.operationType === 'result' &&
+            (lastStep.expression.startsWith('+') || lastStep.expression.startsWith('-'))) {
+          
+          // Calculate: 40 + 1 = 41
+          const resultValue = secondLastStep.result; // 40
+          const operandValue = lastStep.result; // 1
+          const operator = lastStep.expression.charAt(0); // +
+          
+          const runningTotal = operator === '+' ? resultValue + operandValue : resultValue - operandValue;
+          
+          // Show the running total
+          newValue = runningTotal.toString(); // Show 41
+          newLastOperation = input; // Set + for next operation
+          newIsNewNumber = true;
+          
+          console.log('🔢 Running total after result+number+:', {
+            resultValue,
+            operandValue,
+            operator,
+            runningTotal
+          });
+          
+        } else if (newCalculationSteps.length === 3) {
         newArticleCount = 3;
-      } else if (newCalculationSteps.length === 2) {
+        } else if (newCalculationSteps.length === 2) {
         // Simple addition: 10+20+ should show 30
         const firstStep = newCalculationSteps[0];
         const secondStep = newCalculationSteps[1];
@@ -616,6 +646,7 @@ const processCompoundCalculation = (
           newValue = result.toString();
           newIsNewNumber = true;
         }
+        }
       }
     } else if (input === '+' && newCalculationSteps.length === 1) {
       // Handle + after single number (e.g., 25+)
@@ -623,8 +654,8 @@ const processCompoundCalculation = (
       newValue = currentValue;
     } else {
       // Normal operator handling
-    newLastOperation = input;
-    newIsNewNumber = true;
+      newLastOperation = input;
+      newIsNewNumber = true;
     }
   } else if (input === '=' || input === 'ENTER') {
     // Handle equals - check if we already have a percentage calculation
