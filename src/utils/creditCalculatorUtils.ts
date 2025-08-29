@@ -375,13 +375,15 @@ const buildSimpleExpression = (steps: CalculationStep[]): string => {
  * Determine if calculation is simple or compound
  */
 const isCompoundCalculation = (calculationSteps: CalculationStep[], lastOperation: string | null): boolean => {
-  // Check if we have multiplication or division operations
-  const hasMultiplyDivide = calculationSteps.some(step => 
+  // Check if we have multiplication or division operations in steps OR current input
+  const hasMultiplyDivideInSteps = calculationSteps.some(step => 
     step.expression.includes('×') || step.expression.includes('÷') || 
     step.expression.includes('*') || step.expression.includes('/')
-  ) || (lastOperation === '*' || lastOperation === '/');
+  );
   
-  return hasMultiplyDivide;
+  const hasMultiplyDivideInOperation = (lastOperation === '*' || lastOperation === '/' || lastOperation === '×' || lastOperation === '÷');
+  
+  return hasMultiplyDivideInSteps || hasMultiplyDivideInOperation;
 };
 
 /**
@@ -692,7 +694,7 @@ export const processCalculatorInput = (
     }
   } else {
     // Determine which flow to use based on current state and input
-    const isCompound = isCompoundCalculation(newCalculationSteps, input);
+    const isCompound = isCompoundCalculation(newCalculationSteps, newLastOperation);
     
     if (isCompound) {
       // Use compound calculation flow
