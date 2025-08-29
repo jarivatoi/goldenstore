@@ -416,16 +416,16 @@ export const processCalculatorInput = (
       
       if (newCalculationSteps.length > 0) {
         const lastStep = newCalculationSteps[newCalculationSteps.length - 1];
-        if (lastStep.operationType === 'number') {
+        if (lastStep.operationType === 'number' && !newLastOperation) {
           // Update number step
           lastStep.displayValue = newValue;
           lastStep.expression = newValue;
           lastStep.result = parseFloat(newValue);
-        } else if (lastStep.operationType === 'operation') {
+        } else if (lastStep.operationType === 'operation' && newLastOperation) {
           // Update operation step - preserve operator prefix
-          const operatorChar = lastStep.expression.charAt(0);
-          lastStep.displayValue = `${operatorChar}${newValue}`;
-          lastStep.expression = `${operatorChar}${newValue}`;
+          const operatorSymbol = newLastOperation === '+' ? '+' : '-';
+          lastStep.displayValue = `${operatorSymbol}${newValue}`;
+          lastStep.expression = `${operatorSymbol}${newValue}`;
           lastStep.result = parseFloat(newValue);
         }
       }
