@@ -805,14 +805,31 @@ export const processCalculatorInput = (
     }
     newIsNewNumber = true;
   } else if (input === '.') {
-    // Handle decimal point
-    if (!currentValue.includes('.')) {
-      if (newIsNewNumber) {
-        newValue = '0.';
-        newIsNewNumber = false;
-      } else {
-        newValue = currentValue + '.';
-      }
+    // Handle decimal point - route to appropriate pathway
+    if (willBeCompound) {
+      // Use compound calculation flow for decimal
+      const compoundResult = processCompoundCalculation(
+        currentValue, input, newCalculationSteps, newLastOperation, 
+        newIsNewNumber, newArticleCount
+      );
+      
+      newValue = compoundResult.value;
+      newCalculationSteps = compoundResult.calculationSteps;
+      newLastOperation = compoundResult.lastOperation;
+      newIsNewNumber = compoundResult.isNewNumber;
+      newArticleCount = compoundResult.articleCount;
+    } else {
+      // Use simple calculation flow for decimal
+      const simpleResult = processSimpleCalculation(
+        currentValue, input, newCalculationSteps, newLastOperation, 
+        newIsNewNumber, newArticleCount
+      );
+      
+      newValue = simpleResult.value;
+      newCalculationSteps = simpleResult.calculationSteps;
+      newLastOperation = simpleResult.lastOperation;
+      newIsNewNumber = simpleResult.isNewNumber;
+      newArticleCount = simpleResult.articleCount;
     }
   } else {
     // FIXED: Check if we need to switch to compound calculation
