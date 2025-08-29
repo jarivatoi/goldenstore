@@ -393,43 +393,25 @@ export const processCalculatorInput = (
           operationType: 'number',
           displayValue: input
         });
-      } else if (newCalculationSteps.length >= 1 && newLastOperation === '+') {
-        // Check if we already have an operation step for this operator
+      } else if (newLastOperation && ['+', '-'].includes(newLastOperation)) {
+        // After an operator, create new operation step only if we don't already have one for this operation
         const lastStep = newCalculationSteps[newCalculationSteps.length - 1];
-        if (lastStep.operationType === 'operation' && lastStep.expression.startsWith('+')) {
+        const operatorSymbol = newLastOperation;
+        
+        if (lastStep.operationType === 'operation' && lastStep.expression.startsWith(operatorSymbol)) {
           // Update existing operation step instead of creating new one
-          lastStep.expression = `+${input}`;
+          lastStep.expression = `${operatorSymbol}${input}`;
           lastStep.result = parseFloat(input);
-          lastStep.displayValue = `+${input}`;
+          lastStep.displayValue = `${operatorSymbol}${input}`;
         } else {
           // Create new operation step
           newCalculationSteps.push({
-            expression: `+${input}`,
+            expression: `${operatorSymbol}${input}`,
             result: parseFloat(input),
             timestamp: Date.now(),
             stepNumber: newCalculationSteps.length + 1,
             operationType: 'operation',
-            displayValue: `+${input}`
-          });
-        }
-        newArticleCount = newCalculationSteps.filter(step => step.operationType !== 'result').length;
-      } else if (newCalculationSteps.length >= 1 && newLastOperation === '-') {
-        // Check if we already have an operation step for this operator
-        const lastStep = newCalculationSteps[newCalculationSteps.length - 1];
-        if (lastStep.operationType === 'operation' && lastStep.expression.startsWith('-')) {
-          // Update existing operation step instead of creating new one
-          lastStep.expression = `-${input}`;
-          lastStep.result = parseFloat(input);
-          lastStep.displayValue = `-${input}`;
-        } else {
-          // Create new operation step
-          newCalculationSteps.push({
-            expression: `-${input}`,
-            result: parseFloat(input),
-            timestamp: Date.now(),
-            stepNumber: newCalculationSteps.length + 1,
-            operationType: 'operation',
-            displayValue: `-${input}`
+            displayValue: `${operatorSymbol}${input}`
           });
         }
         newArticleCount = newCalculationSteps.filter(step => step.operationType !== 'result').length;
@@ -455,17 +437,6 @@ export const processCalculatorInput = (
           displayValue: `-${input}`
         });
         newArticleCount = 2;
-      } else if (newCalculationSteps.length >= 2 && newLastOperation && ['+', '-'].includes(newLastOperation)) {
-        // Sequential operations like 10+20+30 - create new operation step
-        newCalculationSteps.push({
-          expression: `${newLastOperation}${input}`,
-          result: parseFloat(input),
-          timestamp: Date.now(),
-          stepNumber: newCalculationSteps.length + 1,
-          operationType: 'operation',
-          displayValue: `${newLastOperation}${input}`
-        });
-        newArticleCount = newCalculationSteps.filter(step => step.operationType !== 'result').length;
       }
       newValue = input;
       newIsNewNumber = false;
@@ -480,11 +451,12 @@ export const processCalculatorInput = (
             const operatorChar = lastStep.expression.charAt(0);
             lastStep.displayValue = `${operatorChar}${newValue}`;
             lastStep.expression = `${operatorChar}${newValue}`;
+            lastStep.result = parseFloat(newValue);
           } else {
             lastStep.displayValue = newValue;
             lastStep.expression = newValue;
+            lastStep.result = parseFloat(newValue);
           }
-          lastStep.result = parseFloat(newValue);
         }
       }
     }
