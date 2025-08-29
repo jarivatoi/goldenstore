@@ -316,7 +316,7 @@ const processCompoundCalculation = (
       newValue = input;
       newIsNewNumber = false;
     } else {
-      // Continuing to type digits
+      // Continuing to type digits - build the number properly
       newValue = currentValue + input;
       
       if (newCalculationSteps.length > 0) {
