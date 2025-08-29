@@ -472,7 +472,7 @@ export const processCalculatorInput = (
             
             // Calculate final result: first number + compound result
             const firstNumber = newCalculationSteps[0].result;
-            const result = firstNumber + multiplicationResult;
+              newArticleCount = newCalculationSteps.length; // Total steps including first number
             newArticleCount = 2;
           } else {
             // Regular operation - add current number as new step
@@ -504,7 +504,7 @@ export const processCalculatorInput = (
               }
             }
             
-            newArticleCount = newCalculationSteps.filter(step => step.operationType === 'operation').length + 1;
+            newArticleCount = newCalculationSteps.length; // Total steps
           }
         } else {
           // No pending operation, just use existing steps
