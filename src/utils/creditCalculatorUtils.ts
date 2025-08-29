@@ -605,6 +605,28 @@ const processCompoundCalculation = (
         newValue = finalResult.toString();
         newLastOperation = null;
         newIsNewNumber = true;
+        newArticleCount = 2;
+      } else {
+        // Find the last result step and calculate running total from there
+        let lastResultStep: CalculationStep | null = null;
+        let lastResultIndex = -1;
+        
+        for (let i = newCalculationSteps.length - 1; i >= 0; i--) {
+          if (newCalculationSteps[i].operationType === 'result') {
+            lastResultStep = newCalculationSteps[i];
+            lastResultIndex = i;
+            break;
+          }
+        }
+        
+        if (lastResultStep) {
+          // Calculate running total from the last result
+          let runningTotal = lastResultStep.result;
+          
+          // Apply all operations after the result
+          for (let i = lastResultIndex + 1; i < newCalculationSteps.length; i++) {
+            const step = newCalculationSteps[i];
+            if (step.operationType === 'operation') {
               const operator = step.expression.charAt(0);
               const operandValue = step.result;
               
@@ -626,7 +648,9 @@ const processCompoundCalculation = (
             runningTotal,
             steps: newCalculationSteps.slice(newCalculationSteps.indexOf(lastResultStep) + 1)
           });
-          
+        }
+      }
+      
       // Check if we have a result step followed by an operation step (e.g., =40, +1)
       if (newCalculationSteps.length >= 2) {
         const lastStep = newCalculationSteps[newCalculationSteps.length - 1];
@@ -657,17 +681,17 @@ const processCompoundCalculation = (
           });
           
         } else if (newCalculationSteps.length === 3) {
-        newArticleCount = 3;
+          newArticleCount = 3;
         } else if (newCalculationSteps.length === 2) {
-        // Simple addition: 10+20+ should show 30
-        const firstStep = newCalculationSteps[0];
-        const secondStep = newCalculationSteps[1];
-        
-        if (secondStep.expression.startsWith('+')) {
-          const result = firstStep.result + secondStep.result;
-          newValue = result.toString();
-          newIsNewNumber = true;
-        }
+          // Simple addition: 10+20+ should show 30
+          const firstStep = newCalculationSteps[0];
+          const secondStep = newCalculationSteps[1];
+          
+          if (secondStep.expression.startsWith('+')) {
+            const result = firstStep.result + secondStep.result;
+            newValue = result.toString();
+            newIsNewNumber = true;
+          }
         }
       }
     } else if (input === '+' && newCalculationSteps.length === 1) {
