@@ -289,9 +289,9 @@ const processCompoundCalculation = (
           operationType: 'operation',
           displayValue: `${displayOperator}${input}`
         });
+      }
         // Increment article count for new operand
         newArticleCount = newCalculationSteps.length;
-      }
       newValue = input;
       newIsNewNumber = false;
     } else {
@@ -548,26 +548,20 @@ export const processCalculatorInput = (
   } else if (input === 'CHECK→') {
     // Check forward - move to next transaction in history
     if (newCalculationSteps.length > 0) {
-      const storedIndex = localStorage.getItem('currentCheckIndex');
-      let currentStepIndex;
+      // Get current step index from localStorage or start at -1
+      let currentStepIndex = parseInt(localStorage.getItem('currentCheckIndex') || '-1');
       
-      if (storedIndex === null || storedIndex === '-1') {
-        currentStepIndex = 0;
-      } else {
-        const currentIndex = parseInt(storedIndex);
-        currentStepIndex = (currentIndex + 1) % newCalculationSteps.length;
-      }
+      // Move to next step
+      currentStepIndex = (currentStepIndex + 1) % newCalculationSteps.length;
       
+      // Save new index
       localStorage.setItem('currentCheckIndex', currentStepIndex.toString());
       
+      // Get the step and update display
       const currentStep = newCalculationSteps[currentStepIndex];
       newValue = currentStep.displayValue;
-      
-      if (currentStep.operationType === 'result') {
-        newArticleCount = Math.max(1, currentStepIndex);
-      } else {
-        newArticleCount = currentStepIndex + 1;
-      }
+      newArticleCount = currentStepIndex + 1;
+      newIsNewNumber = true;
       
       return { 
         value: newValue,
@@ -586,25 +580,20 @@ export const processCalculatorInput = (
   } else if (input === 'CHECK←') {
     // Check backward - move to previous transaction in history
     if (newCalculationSteps.length > 0) {
-      let currentStepIndex = parseInt(localStorage.getItem('currentCheckIndex') || '0');
+      // Get current step index from localStorage or start at steps length
+      let currentStepIndex = parseInt(localStorage.getItem('currentCheckIndex') || newCalculationSteps.length.toString());
       
-      const storedIndex = localStorage.getItem('currentCheckIndex');
-      if (storedIndex === null || storedIndex === '-1') {
-        currentStepIndex = newCalculationSteps.length - 1;
-      } else {
-        currentStepIndex = currentStepIndex === 0 ? newCalculationSteps.length - 1 : currentStepIndex - 1;
-      }
+      // Move to previous step
+      currentStepIndex = currentStepIndex <= 0 ? newCalculationSteps.length - 1 : currentStepIndex - 1;
       
+      // Save new index
       localStorage.setItem('currentCheckIndex', currentStepIndex.toString());
       
+      // Get the step and update display
       const currentStep = newCalculationSteps[currentStepIndex];
       newValue = currentStep.displayValue;
-      
-      if (currentStep.operationType === 'result') {
-        newArticleCount = Math.max(1, currentStepIndex);
-      } else {
-        newArticleCount = currentStepIndex + 1;
-      }
+      newArticleCount = currentStepIndex + 1;
+      newIsNewNumber = true;
       
       return { 
         value: newValue,
@@ -620,6 +609,21 @@ export const processCalculatorInput = (
         articleCount: newArticleCount
       };
     }
+  } else if (input === 'AUTO') {
+    // AUTO REPLAY - replay calculation steps
+    if (newCalculationSteps.length > 0) {
+      autoReplayActive = true;
+      localStorage.setItem('currentCheckIndex', '0');
+      newValue = newCalculationSteps[0].displayValue;
+      newArticleCount = 1;
+      newIsNewNumber = true;
+      
+      // Start auto replay sequence
+      setTimeout(() => {
+        startAutoReplaySequence(newCalculationSteps);
+      }, 500);
+    }
+    return { value: newValue, memory: newMemory, grandTotal: newGrandTotal, lastOperation: newLastOperation, lastOperand: newLastOperand, isNewNumber: newIsNewNumber, isActive, transactionHistory: newTransactionHistory, calculationSteps: newCalculationSteps, autoReplayActive, articleCount: newArticleCount };
   } else if (input === '%') {
     // Percentage calculation
     const currentNum = getCurrentNumber();
@@ -818,7 +822,7 @@ const startAutoReplaySequence = (steps: CalculationStep[]) => {
           stepIndex: currentStepIndex,
           totalSteps: steps.length,
           currentStep: currentStepIndex + 1,
-          articleCount: step.operationType === 'result' ? currentStepIndex : currentStepIndex + 1
+          articleCount: currentStepIndex + 1
         }
       }));
       
@@ -829,6 +833,7 @@ const startAutoReplaySequence = (steps: CalculationStep[]) => {
         setTimeout(showNextStep, 1000);
       } else {
         window.dispatchEvent(new CustomEvent('autoReplayComplete'));
+        localStorage.removeItem('currentCheckIndex');
       }
     }
   };
