@@ -372,17 +372,20 @@ const buildSimpleExpression = (steps: CalculationStep[]): string => {
 };
 
 /**
- * Determine if calculation is simple or compound
+ * Determine if calculation is compound
+ * FIXED: Now properly detects when × or ÷ is involved
  */
 const isCompoundCalculation = (calculationSteps: CalculationStep[], lastOperation: string | null): boolean => {
-  // Check if we have multiplication or division operations in steps OR current input
+  // Check if we have multiplication or division operations in steps
   const hasMultiplyDivideInSteps = calculationSteps.some(step => 
     step.expression.includes('×') || step.expression.includes('÷') || 
     step.expression.includes('*') || step.expression.includes('/')
   );
   
+  // Check if current operation is multiplication or division
   const hasMultiplyDivideInOperation = (lastOperation === '*' || lastOperation === '/' || lastOperation === '×' || lastOperation === '÷');
   
+  // Return true if EITHER condition is met
   return hasMultiplyDivideInSteps || hasMultiplyDivideInOperation;
 };
 
@@ -693,10 +696,17 @@ export const processCalculatorInput = (
       }
     }
   } else {
-    // Determine which flow to use based on current state and input
-    const isCompound = isCompoundCalculation(newCalculationSteps, newLastOperation);
+    // FIXED: Check if we need to switch to compound calculation
+    // This happens when we encounter × or ÷ operators
+    let tempLastOperation = newLastOperation;
+    if (input === '*' || input === '/' || input === '×' || input === '÷') {
+      tempLastOperation = input;
+    }
     
-    if (isCompound) {
+    // Determine which flow to use - check FUTURE state, not just current
+    const willBeCompound = isCompoundCalculation(newCalculationSteps, tempLastOperation);
+    
+    if (willBeCompound) {
       // Use compound calculation flow
       const compoundResult = processCompoundCalculation(
         currentValue, input, newCalculationSteps, newLastOperation, 
