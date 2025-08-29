@@ -489,6 +489,68 @@ const processCompoundCalculation = (
       newGrandTotal += finalResult;
       newTransactionHistory.push(finalResult);
       localStorage.setItem('currentCheckIndex', '-1');
+    } else if (input === '+' && newCalculationSteps.length >= 2) {
+      // Handle + after compound calculation (e.g., 25+5×3+)
+      if (newCalculationSteps.length === 3) {
+        // We have: Step 1: "25", Step 2: "+5", Step 3: "×3"
+        // Calculate compound: 25 + (5×3) = 25 + 15 = 40
+        const firstStep = newCalculationSteps[0]; // "25"
+        const secondStep = newCalculationSteps[1]; // "+5"
+        const thirdStep = newCalculationSteps[2]; // "×3"
+        
+        const firstNumber = firstStep.result; // 25
+        const additionOperand = secondStep.result; // 5
+        const multiplicationOperand = thirdStep.result; // 3
+        
+        // Calculate compound operation: 5×3=15
+        const compoundResult = thirdStep.expression.startsWith('×') 
+          ? additionOperand * multiplicationOperand
+          : additionOperand / multiplicationOperand;
+        
+        // Calculate final result: 25 + 15 = 40
+        const finalResult = firstNumber + compoundResult;
+        
+        // Replace step 2 with the compound result
+        const displayOperator = thirdStep.expression.charAt(0);
+        newCalculationSteps[1] = {
+          expression: `(${additionOperand}${displayOperator}${multiplicationOperand})=${compoundResult}`,
+          result: compoundResult,
+          timestamp: Date.now(),
+          stepNumber: 2,
+          operationType: 'operation',
+          displayValue: `(${additionOperand}${displayOperator}${multiplicationOperand})=${compoundResult}`
+        };
+        
+        // Remove step 3 and add result step
+        newCalculationSteps = newCalculationSteps.slice(0, 2);
+        newCalculationSteps.push({
+          expression: `=${finalResult}`,
+          result: finalResult,
+          timestamp: Date.now(),
+          stepNumber: 3,
+          operationType: 'result',
+          displayValue: `=${finalResult}`
+        });
+        
+        newValue = finalResult.toString();
+        newLastOperation = null;
+        newIsNewNumber = true;
+        newArticleCount = 3;
+      } else if (newCalculationSteps.length === 2) {
+        // Simple addition: 10+20+ should show 30
+        const firstStep = newCalculationSteps[0];
+        const secondStep = newCalculationSteps[1];
+        
+        if (secondStep.expression.startsWith('+')) {
+          const result = firstStep.result + secondStep.result;
+          newValue = result.toString();
+          newIsNewNumber = true;
+        }
+      }
+    } else if (input === '+' && newCalculationSteps.length === 1) {
+      // Handle + after single number (e.g., 25+)
+      // Display should stay as the current number (25)
+      newValue = currentValue;
     } else {
       // Normal operator handling
     newLastOperation = input;
