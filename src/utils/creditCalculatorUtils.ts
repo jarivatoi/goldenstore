@@ -441,6 +441,23 @@ export const processCalculatorInput = (
       const currentNumber = parseFloat(newValue);
       const operatorSymbol = operator === '+' ? '+' : operator === '-' ? '-' : operator === '*' ? '×' : '÷';
       
+      newCalculationSteps.push({
+        expression: `${operatorSymbol}${currentNumber}`,
+        result: currentNumber,
+        timestamp: Date.now(),
+        stepNumber: newCalculationSteps.length + 1,
+        operationType: 'operation',
+        displayValue: `${operatorSymbol}${currentNumber}`
+      });
+      
+      newArticleCount = newCalculationSteps.filter(step => step.operationType !== 'result').length;
+    }
+    
+    newLastOperation = operator;
+    newIsNewNumber = true;
+  } else if (input === '=') {
+    // Handle equals - determine if calculation is simple or compound
+    try {
       // Add pending operation if exists
       if (newLastOperation && newValue !== '0' && !newCalculationSteps.some(step => 
           step.operationType === 'operation' && step.result === parseFloat(newValue)
