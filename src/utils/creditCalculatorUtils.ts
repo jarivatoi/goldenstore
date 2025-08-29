@@ -95,13 +95,17 @@ const processSimpleCalculation = (
   calculationSteps: CalculationStep[],
   lastOperation: string | null,
   isNewNumber: boolean,
-  articleCount: number
+  articleCount: number,
+  grandTotal: number,
+  transactionHistory: number[]
 ): {
   value: string;
   calculationSteps: CalculationStep[];
   lastOperation: string | null;
   isNewNumber: boolean;
   articleCount: number;
+  grandTotal: number;
+  transactionHistory: number[];
   result?: number;
 } => {
   let newValue = currentValue;
@@ -109,6 +113,8 @@ const processSimpleCalculation = (
   let newLastOperation = lastOperation;
   let newIsNewNumber = isNewNumber;
   let newArticleCount = articleCount;
+  let newGrandTotal = grandTotal;
+  let newTransactionHistory = [...transactionHistory];
   let result: number | undefined;
 
   if (/^\d+$/.test(input) || input === '00' || input === '000') {
