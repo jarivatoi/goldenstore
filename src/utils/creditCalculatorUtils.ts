@@ -752,17 +752,37 @@ export const processCalculatorInput = (
     // Percentage calculation
     const currentNum = getCurrentNumber();
     
+   // Debug logging for percentage calculation
+   console.log('🔢 Percentage calculation debug:', {
+     currentNum,
+     currentValue,
+     lastOperation: newLastOperation,
+     calculationSteps: newCalculationSteps,
+     stepsLength: newCalculationSteps.length
+   });
     if (newLastOperation === '*') {
-      // Find the first operand (should be the first step)
-      let firstOperand = 0;
-      if (newCalculationSteps.length > 0) {
-        const firstStep = newCalculationSteps[0];
-        firstOperand = firstStep.result;
-      }
+     // Find the base value from calculation steps
+     let baseValue = 0;
+     
+     if (newCalculationSteps.length >= 1) {
+       // Get the first number (base value for percentage)
+       const firstStep = newCalculationSteps[0];
+       baseValue = firstStep.result;
+       
+       console.log('🔢 Found base value:', baseValue, 'from step:', firstStep);
+     }
       
-      if (firstOperand !== 0) {
-        // For 100×10%, calculate 100 × (10/100) = 10
-        const percentValue = firstOperand * (currentNum / 100);
+     if (baseValue !== 0) {
+       // For 100×10%, calculate 100 × (10/100) = 10
+       const percentValue = baseValue * (currentNum / 100);
+       
+       console.log('🔢 Percentage calculation:', {
+         baseValue,
+         currentNum,
+         formula: `${baseValue} × (${currentNum}/100)`,
+         result: percentValue
+       });
+       
         newValue = percentValue.toString();
         newIsNewNumber = true;
         newLastOperation = null;
@@ -779,6 +799,7 @@ export const processCalculatorInput = (
         newLastOperand = null;
         newArticleCount = 1;
       } else {
+       console.log('🔢 No base value found, using simple percentage');
         const percentResult = currentNum / 100;
         newValue = percentResult.toString();
         newIsNewNumber = true;
@@ -794,6 +815,7 @@ export const processCalculatorInput = (
         newArticleCount = 1;
       }
     } else {
+     console.log('🔢 No multiplication operator, using simple percentage');
       const percentResult = currentNum / 100;
       newValue = percentResult.toString();
       newIsNewNumber = true;
