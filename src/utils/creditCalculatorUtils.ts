@@ -382,81 +382,51 @@ export const processCalculatorInput = (
   } else if (/^\d+$/.test(input) || input === '00' || input === '000') {
     // Handle numeric input
     if (newIsNewNumber || currentValue === '0') {
-      if (newCalculationSteps.length === 0) {
+      if (newCalculationSteps.length === 0 || (newCalculationSteps.length > 0 && !newLastOperation)) {
         // First number entry
         newArticleCount = 1;
-        newCalculationSteps.push({
-          expression: input,
-          result: parseFloat(input),
-          timestamp: Date.now(),
-          stepNumber: 1,
-          operationType: 'number',
-          displayValue: input
-        });
-      } else if (newLastOperation && ['+', '-'].includes(newLastOperation)) {
-        // After an operator, create new operation step only if we don't already have one for this operation
-        const lastStep = newCalculationSteps[newCalculationSteps.length - 1];
-        const operatorSymbol = newLastOperation;
-        
-        if (lastStep.operationType === 'operation' && lastStep.expression.startsWith(operatorSymbol)) {
-          // Update existing operation step instead of creating new one
-          lastStep.expression = `${operatorSymbol}${input}`;
-          lastStep.result = parseFloat(input);
-          lastStep.displayValue = `${operatorSymbol}${input}`;
-        } else {
-          // Create new operation step
+        if (newCalculationSteps.length === 0) {
           newCalculationSteps.push({
-            expression: `${operatorSymbol}${input}`,
+            expression: input,
             result: parseFloat(input),
             timestamp: Date.now(),
-            stepNumber: newCalculationSteps.length + 1,
-            operationType: 'operation',
-            displayValue: `${operatorSymbol}${input}`
+            stepNumber: 1,
+            operationType: 'number',
+            displayValue: input
           });
         }
+      } else if (newLastOperation && ['+', '-'].includes(newLastOperation)) {
+        // After an operator, create new operation step
+        const operatorSymbol = newLastOperation === '+' ? '+' : '-';
+        newCalculationSteps.push({
+          expression: `${operatorSymbol}${input}`,
+          result: parseFloat(input),
+          timestamp: Date.now(),
+          stepNumber: newCalculationSteps.length + 1,
+          operationType: 'operation',
+          displayValue: `${operatorSymbol}${input}`
+        });
         newArticleCount = newCalculationSteps.filter(step => step.operationType !== 'result').length;
-      } else if (newCalculationSteps.length === 1 && newLastOperation === '+') {
-        // After 25+, when entering 5, create the addition step
-        newCalculationSteps.push({
-          expression: `+${input}`,
-          result: parseFloat(input), // Store the actual operand (5)
-          timestamp: Date.now(),
-          stepNumber: 2,
-          operationType: 'operation',
-          displayValue: `+${input}`
-        });
-        newArticleCount = 2;
-      } else if (newCalculationSteps.length === 1 && newLastOperation === '-') {
-        // After 25-, when entering number, create the subtraction step
-        newCalculationSteps.push({
-          expression: `-${input}`,
-          result: parseFloat(input), // Store the actual operand
-          timestamp: Date.now(),
-          stepNumber: 2,
-          operationType: 'operation',
-          displayValue: `-${input}`
-        });
-        newArticleCount = 2;
       }
       newValue = input;
       newIsNewNumber = false;
     } else {
+      // Continuing to type digits - update the current step
       newValue = currentValue + input;
       
       if (newCalculationSteps.length > 0) {
         const lastStep = newCalculationSteps[newCalculationSteps.length - 1];
-        if (lastStep.operationType === 'number' || lastStep.operationType === 'operation') {
-          if (lastStep.operationType === 'operation') {
-            // Keep the operator prefix and update the number part
-            const operatorChar = lastStep.expression.charAt(0);
-            lastStep.displayValue = `${operatorChar}${newValue}`;
-            lastStep.expression = `${operatorChar}${newValue}`;
-            lastStep.result = parseFloat(newValue);
-          } else {
-            lastStep.displayValue = newValue;
-            lastStep.expression = newValue;
-            lastStep.result = parseFloat(newValue);
-          }
+        if (lastStep.operationType === 'number') {
+          // Update number step
+          lastStep.displayValue = newValue;
+          lastStep.expression = newValue;
+          lastStep.result = parseFloat(newValue);
+        } else if (lastStep.operationType === 'operation') {
+          // Update operation step - preserve operator prefix
+          const operatorChar = lastStep.expression.charAt(0);
+          lastStep.displayValue = `${operatorChar}${newValue}`;
+          lastStep.expression = `${operatorChar}${newValue}`;
+          lastStep.result = parseFloat(newValue);
         }
       }
     }
@@ -475,34 +445,37 @@ export const processCalculatorInput = (
     // Handle operators
     const operator = input === '×' ? '*' : input === '÷' ? '/' : input;
     
-    if (newCalculationSteps.length === 0) {
-      // First number entry
-      newCalculationSteps.push({
-        expression: newValue,
-        result: parseFloat(newValue),
-        timestamp: Date.now(),
-        stepNumber: 1,
-        operationType: 'number',
-        displayValue: newValue
-      });
-      newArticleCount = 1;
-    } else if (newCalculationSteps.length === 1 && (operator === '*' || operator === '/')) {
-      // Direct multiplication/division after first number
-      const firstNumber = newCalculationSteps[0].result;
-      const currentNumber = parseFloat(newValue);
-      const displayOperator = operator === '*' ? '×' : '÷';
-      const result = operator === '*' ? firstNumber * currentNumber : firstNumber / currentNumber;
-      
-      newCalculationSteps.push({
-        expression: `(${firstNumber}${displayOperator}${currentNumber})=${result}`,
-        result: result,
-        timestamp: Date.now(),
-        stepNumber: 2,
-        operationType: 'operation',
-        displayValue: `(${firstNumber}${displayOperator}${currentNumber})=${result}`
-      });
-      
-      newArticleCount = 2;
+    // Don't create duplicate steps for operators
+    if (newLastOperation !== operator) {
+      if (newCalculationSteps.length === 0) {
+        // First number entry when operator is pressed
+        newCalculationSteps.push({
+          expression: newValue,
+          result: parseFloat(newValue),
+          timestamp: Date.now(),
+          stepNumber: 1,
+          operationType: 'number',
+          displayValue: newValue
+        });
+        newArticleCount = 1;
+      } else if (newCalculationSteps.length === 1 && (operator === '*' || operator === '/')) {
+        // Direct multiplication/division after first number
+        const firstNumber = newCalculationSteps[0].result;
+        const currentNumber = parseFloat(newValue);
+        const displayOperator = operator === '*' ? '×' : '÷';
+        const result = operator === '*' ? firstNumber * currentNumber : firstNumber / currentNumber;
+        
+        newCalculationSteps.push({
+          expression: `(${firstNumber}${displayOperator}${currentNumber})=${result}`,
+          result: result,
+          timestamp: Date.now(),
+          stepNumber: 2,
+          operationType: 'operation',
+          displayValue: `(${firstNumber}${displayOperator}${currentNumber})=${result}`
+        });
+        
+        newArticleCount = 2;
+      }
     }
     
     newLastOperation = operator;
@@ -510,127 +483,39 @@ export const processCalculatorInput = (
     isActive = true;
   } else if (input === '=' || input === 'ENTER') {
     try {
-      let expression = '';
       let result = 0;
       
-      if (newCalculationSteps.length === 1 && newLastOperation && newValue !== '0') {
-        // Simple case: first_number operator current_number
-        const firstNumber = newCalculationSteps[0].result;
-        const operator = newLastOperation;
-        const currentNumber = parseFloat(newValue);
-        
-        if (operator === '+' || operator === '-') {
-          // For + and - operations, create a transaction step
-          expression = `${firstNumber}${operator}${currentNumber}`;
-          result = evaluateExpression(expression);
-          
-          newCalculationSteps.push({
-            expression: `${operator === '+' ? '+' : '-'}${currentNumber}`,
-            result: currentNumber,
-            timestamp: Date.now(),
-            stepNumber: 2,
-            operationType: 'operation',
-            displayValue: `${operator === '+' ? '+' : '-'}${currentNumber}`
-          });
-        }
-      } else if (newCalculationSteps.length >= 2 && newLastOperation && newValue !== '0') {
-        // Handle multiple operations
-        const currentNumber = parseFloat(newValue);
+      if (newCalculationSteps.length >= 1) {
+        // Calculate result by processing all steps
         const firstStep = newCalculationSteps[0];
-        const secondStep = newCalculationSteps[1];
+        result = firstStep.result; // Start with first number
         
-        if (newLastOperation === '*' || newLastOperation === '/') {
-          // This is a compound operation like 25 + 5 × 3
-          // Extract the operand from the addition step expression
-          let multiplicationOperand = 0;
-          
-          // The operand for multiplication should be the number from the addition step
-          // For "25 + 5 × 3", we want the 5 from the "+5" expression
-          if (secondStep && secondStep.result) {
-            multiplicationOperand = secondStep.result;
-          }
-          
-          // Validate we have a valid operand
-          if (isNaN(multiplicationOperand) || multiplicationOperand === 0) {
-            throw new Error('Invalid multiplication operand');
-          }
-          
-          const displayOperator = newLastOperation === '*' ? '×' : '÷';
-          const multiplicationResult = newLastOperation === '*' 
-            ? multiplicationOperand * currentNumber 
-            : multiplicationOperand / currentNumber;
-          
-          // Validate multiplication result
-          if (isNaN(multiplicationResult) || !isFinite(multiplicationResult)) {
-            throw new Error('Invalid multiplication result');
-          }
-          
-          // Replace the second step with the compound operation
-          newCalculationSteps[1] = {
-            expression: `(${multiplicationOperand}${displayOperator}${currentNumber})=${multiplicationResult}`,
-            result: multiplicationResult,
-            timestamp: Date.now(),
-            stepNumber: 2,
-            operationType: 'operation',
-            displayValue: `(${multiplicationOperand}${displayOperator}${currentNumber})=${multiplicationResult}`
-          };
-          
-          // Calculate final result: first number + multiplication result
-          const firstNumber = firstStep?.result || 0;
-          
-          // Validate final result
-          if (isNaN(firstNumber)) {
-            throw new Error('Invalid first number');
-          }
-          
-          result = firstNumber + multiplicationResult;
-          
-          // Validate final result
-          if (isNaN(result) || !isFinite(result)) {
-            throw new Error('Invalid final result');
-          }
-          
-          newArticleCount = 2; // Keep only 2 steps
-        } else {
-          // Sequential addition/subtraction like 10+20+30
-          const currentNumber = parseFloat(newValue);
-          
-          // Add the new operation step
-          newCalculationSteps.push({
-            expression: `${newLastOperation === '+' ? '+' : newLastOperation === '-' ? '-' : newLastOperation}${currentNumber}`,
-            result: currentNumber,
-            timestamp: Date.now(),
-            stepNumber: newCalculationSteps.length + 1,
-            operationType: 'operation',
-            displayValue: `${newLastOperation === '+' ? '+' : newLastOperation === '-' ? '-' : newLastOperation}${currentNumber}`
-          });
-          
-          // Calculate result by summing all steps
-          result = firstStep.result; // Start with first number (10)
-          
-          // Add all operation steps
-          for (let i = 1; i < newCalculationSteps.length; i++) {
-            const step = newCalculationSteps[i];
-            if (step.operationType === 'operation') {
-              if (step.expression.startsWith('+')) {
-                result += step.result;
-              } else if (step.expression.startsWith('-')) {
-                result -= step.result;
-              }
+        // Process all operation steps
+        for (let i = 1; i < newCalculationSteps.length; i++) {
+          const step = newCalculationSteps[i];
+          if (step.operationType === 'operation') {
+            if (step.expression.startsWith('+')) {
+              result += step.result;
+            } else if (step.expression.startsWith('-')) {
+              result -= step.result;
+            } else if (step.expression.includes('×') || step.expression.includes('÷')) {
+              // For compound operations, the result is already calculated
+              result = step.result;
             }
           }
-          
-          newArticleCount = newCalculationSteps.filter(step => 
-            step.operationType === 'operation' && (step.expression.startsWith('+') || step.expression.startsWith('-'))
-          ).length + 1;
         }
-      } else if (newCalculationSteps.length > 0) {
-        // Just evaluate what we have
-        expression = buildExpressionFromSteps(newCalculationSteps);
-        result = evaluateExpression(expression);
-      } else {
-        // No steps, just use current value
-        result = parseFloat(newValue);
+        
+        // If we have a pending operation (user typed number after operator but didn't press =)
+        if (newLastOperation && newValue !== '0' && !newCalculationSteps.some(step => 
+          step.operationType === 'operation' && step.result === parseFloat(newValue)
+        )) {
+          const currentNumber = parseFloat(newValue);
+          if (newLastOperation === '+') {
+            result += currentNumber;
+          } else if (newLastOperation === '-') {
+            result -= currentNumber;
+          }
+        }
       }
       
       // Add result step
