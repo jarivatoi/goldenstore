@@ -495,22 +495,39 @@ export const processCalculatorInput = (
         );
         
         if (multiplyDivideStep) {
-          // Find the addition/subtraction step before it
-          const addSubtractStep = newCalculationSteps.find(step => 
-            step.operationType === 'operation' && 
-            (step.expression.startsWith('+') || step.expression.startsWith('-'))
-          );
+          // This is a compound operation like 25 + 5 × 3
+          // We need to find the addition step and multiplication step
+          let additionStep = null;
+          let multiplicationStep = null;
           
-          if (addSubtractStep) {
-            // Calculate compound operation - Use the correct operands for 5×3
-            const firstOperand = addSubtractStep.result; // 5 from +5 step  
-            const secondOperand = multiplyDivideStep.result; // 3 from ×3 step
-            const isMultiply = multiplyDivideStep.expression.includes('×');
+          // Find the addition step (should be step with + or -)
+          for (let i = 0; i < newCalculationSteps.length; i++) {
+            const step = newCalculationSteps[i];
+            if (step.operationType === 'operation' && (step.expression.startsWith('+') || step.expression.startsWith('-'))) {
+              additionStep = step;
+              break;
+            }
+          }
+          
+          // Find the multiplication step (should be step with × or ÷)
+          for (let i = 0; i < newCalculationSteps.length; i++) {
+            const step = newCalculationSteps[i];
+            if (step.operationType === 'operation' && (step.expression.includes('×') || step.expression.includes('÷'))) {
+              multiplicationStep = step;
+              break;
+            }
+          }
+          
+          if (additionStep && multiplicationStep) {
+            // Get the operands: 5 from addition step, 3 from multiplication step
+            const firstOperand = additionStep.result; // 5
+            const secondOperand = multiplicationStep.result; // 3
+            const isMultiply = multiplicationStep.expression.includes('×');
             const compoundResult = isMultiply ? firstOperand * secondOperand : firstOperand / secondOperand;
             const displayOperator = isMultiply ? '×' : '÷';
             
-            // Replace the addition/subtraction step with the compound operation
-            const addStepIndex = newCalculationSteps.findIndex(step => step === addSubtractStep);
+            // Replace the addition step with the compound operation
+            const addStepIndex = newCalculationSteps.findIndex(step => step === additionStep);
             newCalculationSteps[addStepIndex] = {
               expression: `(${firstOperand}${displayOperator}${secondOperand})=${compoundResult}`,
               result: compoundResult,
@@ -521,11 +538,44 @@ export const processCalculatorInput = (
             };
             
             // Remove the multiplication step since it's now part of compound
-            newCalculationSteps = newCalculationSteps.filter(step => step !== multiplyDivideStep);
+            newCalculationSteps = newCalculationSteps.filter(step => step !== multiplicationStep);
             
             // Calculate final result: first number + compound result
             result = newCalculationSteps[0].result + compoundResult;
-            newArticleCount = 2; // FIXED: Will be 3 after adding result step below
+            newArticleCount = 2; // Will be 3 after adding result step
+          } else {
+            // Find the addition/subtraction step before it
+            const addSubtractStep = newCalculationSteps.find(step => 
+              step.operationType === 'operation' && 
+              (step.expression.startsWith('+') || step.expression.startsWith('-'))
+            );
+            
+            if (addSubtractStep) {
+              // Calculate compound operation - Use the correct operands for 5×3
+              const firstOperand = addSubtractStep.result; // 5 from +5 step  
+              const secondOperand = multiplyDivideStep.result; // 3 from ×3 step
+              const isMultiply = multiplyDivideStep.expression.includes('×');
+              const compoundResult = isMultiply ? firstOperand * secondOperand : firstOperand / secondOperand;
+              const displayOperator = isMultiply ? '×' : '÷';
+              
+              // Replace the addition/subtraction step with the compound operation
+              const addStepIndex = newCalculationSteps.findIndex(step => step === addSubtractStep);
+              newCalculationSteps[addStepIndex] = {
+                expression: `(${firstOperand}${displayOperator}${secondOperand})=${compoundResult}`,
+                result: compoundResult,
+                timestamp: Date.now(),
+                stepNumber: 2,
+                operationType: 'operation',
+                displayValue: `(${firstOperand}${displayOperator}${secondOperand})=${compoundResult}`
+              };
+              
+              // Remove the multiplication step since it's now part of compound
+              newCalculationSteps = newCalculationSteps.filter(step => step !== multiplyDivideStep);
+              
+              // Calculate final result: first number + compound result
+              result = newCalculationSteps[0].result + compoundResult;
+              newArticleCount = 2; // FIXED: Will be 3 after adding result step below
+            }
           }
         }
       } else {
