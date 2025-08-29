@@ -158,6 +158,59 @@ const processSimpleCalculation = (
         }
       }
     }
+  } else if (input === '.') {
+    // Handle decimal point
+    if (newIsNewNumber || currentValue === '0') {
+      // Starting a new decimal number
+      if (newCalculationSteps.length === 0) {
+        // First number: 0.
+        newValue = '0.';
+        newArticleCount = 1;
+        newCalculationSteps.push({
+          expression: '0.',
+          result: 0,
+          timestamp: Date.now(),
+          stepNumber: 1,
+          operationType: 'number',
+          displayValue: '0.'
+        });
+      } else if (newLastOperation === '+' || newLastOperation === '-') {
+        // After operator, create new step: +0., -0., etc.
+        newValue = '0.';
+        newCalculationSteps.push({
+          expression: `${newLastOperation}0.`,
+          result: 0,
+          timestamp: Date.now(),
+          stepNumber: newCalculationSteps.length + 1,
+          operationType: 'operation',
+          displayValue: `${newLastOperation}0.`
+        });
+        newArticleCount = newCalculationSteps.length;
+      } else {
+        newValue = '0.';
+      }
+      newIsNewNumber = false;
+    } else {
+      // Adding decimal to existing number
+      if (!currentValue.includes('.')) {
+        newValue = currentValue + '.';
+        
+        // Update the last step
+        if (newCalculationSteps.length > 0) {
+          const lastStep = newCalculationSteps[newCalculationSteps.length - 1];
+          if (lastStep.operationType === 'number') {
+            lastStep.displayValue = newValue;
+            lastStep.expression = newValue;
+            lastStep.result = parseFloat(newValue) || 0;
+          } else if (lastStep.operationType === 'operation') {
+            const operator = lastStep.expression.charAt(0);
+            lastStep.displayValue = `${operator}${newValue}`;
+            lastStep.expression = `${operator}${newValue}`;
+            lastStep.result = parseFloat(newValue) || 0;
+          }
+        }
+      }
+    }
   } else if (input === '+' || input === '-') {
     // Handle operators
     newLastOperation = input;
@@ -277,6 +330,72 @@ const processCompoundCalculation = (
           lastStep.displayValue = `${operator}${newValue}`;
           lastStep.expression = `${operator}${newValue}`;
           lastStep.result = parseFloat(newValue);
+        }
+      }
+    }
+  } else if (input === '.') {
+    // Handle decimal point
+    if (newIsNewNumber || currentValue === '0') {
+      // Starting a new decimal number
+      if (newCalculationSteps.length === 0) {
+        // First number: 0.
+        newValue = '0.';
+        newArticleCount = 1;
+        newCalculationSteps.push({
+          expression: '0.',
+          result: 0,
+          timestamp: Date.now(),
+          stepNumber: 1,
+          operationType: 'number',
+          displayValue: '0.'
+        });
+      } else if (newCalculationSteps.length === 1 && (newLastOperation === '+' || newLastOperation === '-')) {
+        // After operator, create new step: +0., -0., etc.
+        newValue = '0.';
+        newCalculationSteps.push({
+          expression: `${newLastOperation}0.`,
+          result: 0,
+          timestamp: Date.now(),
+          stepNumber: 2,
+          operationType: 'operation',
+          displayValue: `${newLastOperation}0.`
+        });
+        newArticleCount = 2;
+      } else if (newCalculationSteps.length === 2 && (newLastOperation === '*' || newLastOperation === '/')) {
+        // After multiplication operator, create new step: ×0., ÷0., etc.
+        const displayOperator = newLastOperation === '*' ? '×' : '÷';
+        newValue = '0.';
+        newCalculationSteps.push({
+          expression: `${displayOperator}0.`,
+          result: 0,
+          timestamp: Date.now(),
+          stepNumber: 3,
+          operationType: 'operation',
+          displayValue: `${displayOperator}0.`
+        });
+        newArticleCount = 3;
+      } else {
+        newValue = '0.';
+      }
+      newIsNewNumber = false;
+    } else {
+      // Adding decimal to existing number
+      if (!currentValue.includes('.')) {
+        newValue = currentValue + '.';
+        
+        // Update the last step
+        if (newCalculationSteps.length > 0) {
+          const lastStep = newCalculationSteps[newCalculationSteps.length - 1];
+          if (lastStep.operationType === 'number') {
+            lastStep.displayValue = newValue;
+            lastStep.expression = newValue;
+            lastStep.result = parseFloat(newValue) || 0;
+          } else if (lastStep.operationType === 'operation') {
+            const operator = lastStep.expression.charAt(0);
+            lastStep.displayValue = `${operator}${newValue}`;
+            lastStep.expression = `${operator}${newValue}`;
+            lastStep.result = parseFloat(newValue) || 0;
+          }
         }
       }
     }
