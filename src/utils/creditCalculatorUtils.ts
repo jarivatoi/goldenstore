@@ -434,10 +434,15 @@ export const processCalculatorInput = (
       if (newCalculationSteps.length > 0) {
         const lastStep = newCalculationSteps[newCalculationSteps.length - 1];
         if (lastStep.operationType === 'number' || lastStep.operationType === 'operation') {
-          lastStep.displayValue = newValue;
-          lastStep.expression = lastStep.operationType === 'operation' 
-            ? `${lastStep.expression.charAt(0)}${newValue}` // Keep the operator prefix
-            : newValue;
+          if (lastStep.operationType === 'operation') {
+            // Keep the operator prefix and update the number part
+            const operatorChar = lastStep.expression.charAt(0);
+            lastStep.displayValue = `${operatorChar}${newValue}`;
+            lastStep.expression = `${operatorChar}${newValue}`;
+          } else {
+            lastStep.displayValue = newValue;
+            lastStep.expression = newValue;
+          }
           lastStep.result = parseFloat(newValue);
         }
       }
