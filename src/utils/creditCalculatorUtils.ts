@@ -502,7 +502,7 @@ export const processCalculatorInput = (
           );
           
           if (addSubtractStep) {
-            // Calculate compound operation - FIXED: get the correct operands
+            // Calculate compound operation - Use the correct operands for 5×3
             const firstOperand = addSubtractStep.result; // 5 from +5 step  
             const secondOperand = multiplyDivideStep.result; // 3 from ×3 step
             const isMultiply = multiplyDivideStep.expression.includes('×');
