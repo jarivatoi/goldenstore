@@ -417,170 +417,236 @@ export const processCalculatorInput = (
       newIsNewNumber = false;
     } else {
       // Continuing to type digits - update the current step
-          lastStep.displayValue = newValue;
-          lastStep.expression = newValue;
-            if (newCalculationSteps.length >= 1) {
-        // Update operation step - preserve operator prefix and handle compound operations
-          // This is already a completed compound operation, don't update
-          const operatorSymbol = newLastOperation === '+' ? '+' : newLastOperation === '-' ? '-' : 
-              if (newLastOperation && newValue !== '0') {
-                // Check if this is a compound operation (low precedence followed by high precedence)
-                if (newCalculationSteps.length === 2 && 
-                    newCalculationSteps[1].operationType === 'operation' && 
-                    (newCalculationSteps[1].expression.startsWith('+') || newCalculationSteps[1].expression.startsWith('-')) &&
-                    (newLastOperation === '*' || newLastOperation === '/')) {
-                  
-                  // This is a compound operation like 25+5×3
-                  const additionOperand = newCalculationSteps[1].result;
-                  const multiplicationResult = newLastOperation === '*' ? additionOperand * currentNumber : additionOperand / currentNumber;
-                  const displayOperator = newLastOperation === '*' ? '×' : '÷';
-                  
-                  // Update the addition step to show compound operation
-                  newCalculationSteps[1] = {
-                    expression: `(${additionOperand}${displayOperator}${currentNumber})=${multiplicationResult}`,
-                    result: multiplicationResult,
-                    timestamp: Date.now(),
-                    stepNumber: 2,
-                    operationType: 'operation',
-                    displayValue: `(${additionOperand}${displayOperator}${currentNumber})=${multiplicationResult}`
-                  };
-                  
-                  // Calculate final result: first number + compound result
-                  result = firstNumber + multiplicationResult;
-                  newArticleCount = 2;
-                } else {
-                  // Regular operation - add current number as new step
-                  if (!newCalculationSteps.some(step => 
-                    step.operationType === 'operation' && step.result === currentNumber
-                  )) {
-                    newCalculationSteps.push({
-                      expression: `${newLastOperation === '+' ? '+' : newLastOperation === '-' ? '-' : newLastOperation}${currentNumber}`,
-                      result: currentNumber,
-                      timestamp: Date.now(),
-                      stepNumber: newCalculationSteps.length + 1,
-                      operationType: 'operation',
-                      displayValue: `${newLastOperation === '+' ? '+' : newLastOperation === '-' ? '-' : newLastOperation}${currentNumber}`
-                    });
-                  }
-                  
-                  // Calculate result from all steps
-                  result = firstNumber;
-                  for (let i = 1; i < newCalculationSteps.length; i++) {
-                    const step = newCalculationSteps[i];
-                    if (step.operationType === 'operation') {
-                      if (step.expression.startsWith('+')) {
-                        result += step.result;
-                      } else if (step.expression.startsWith('-')) {
-                        result -= step.result;
-                      }
-                    }
-                  }
-                  
-                  newArticleCount = newCalculationSteps.filter(step => step.operationType === 'operation').length + 1;
-                }
-              } else {
-                // No pending operation, just use existing steps
-                result = firstNumber;
+      const lastStep = newCalculationSteps[newCalculationSteps.length - 1];
+      if (lastStep) {
+        lastStep.displayValue = newValue;
+        lastStep.expression = newValue;
       }
-                for (let i = 1; i < newCalculationSteps.length; i++) {
-                  const step = newCalculationSteps[i];
-                  if (step.operationType === 'operation') {
-                    if (step.expression.includes('=')) {
-                      // This is a compound operation, use its result
-                      result = step.result;
-                    } else if (step.expression.startsWith('+')) {
-                      result += step.result;
-                    } else if (step.expression.startsWith('-')) {
-                      result -= step.result;
-                    }
-                  }
+      if (newCalculationSteps.length >= 1) {
+        // Update operation step - preserve operator prefix and handle compound operations
+        // This is already a completed compound operation, don't update
+        const operatorSymbol = newLastOperation === '+' ? '+' : newLastOperation === '-' ? '-' : '';
+        if (newLastOperation && newValue !== '0') {
+          // Check if this is a compound operation (low precedence followed by high precedence)
+          if (newCalculationSteps.length === 2 && 
+              newCalculationSteps[1].operationType === 'operation' && 
+              (newCalculationSteps[1].expression.startsWith('+') || newCalculationSteps[1].expression.startsWith('-')) &&
+              (newLastOperation === '*' || newLastOperation === '/')) {
+            
+            // This is a compound operation like 25+5×3
+            const additionOperand = newCalculationSteps[1].result;
+            const currentNumber = parseFloat(newValue);
+            const multiplicationResult = newLastOperation === '*' ? additionOperand * currentNumber : additionOperand / currentNumber;
+            const displayOperator = newLastOperation === '*' ? '×' : '÷';
+            
+            // Update the addition step to show compound operation
+            newCalculationSteps[1] = {
+              expression: `(${additionOperand}${displayOperator}${currentNumber})=${multiplicationResult}`,
+              result: multiplicationResult,
+              timestamp: Date.now(),
+              stepNumber: 2,
+              operationType: 'operation',
+              displayValue: `(${additionOperand}${displayOperator}${currentNumber})=${multiplicationResult}`
+            };
+            
+            // Calculate final result: first number + compound result
+            const firstNumber = newCalculationSteps[0].result;
+            const result = firstNumber + multiplicationResult;
+            newArticleCount = 2;
+          } else {
+            // Regular operation - add current number as new step
+            const currentNumber = parseFloat(newValue);
+            if (!newCalculationSteps.some(step => 
+              step.operationType === 'operation' && step.result === currentNumber
+            )) {
+              newCalculationSteps.push({
+                expression: `${newLastOperation === '+' ? '+' : newLastOperation === '-' ? '-' : newLastOperation}${currentNumber}`,
+                result: currentNumber,
+                timestamp: Date.now(),
+                stepNumber: newCalculationSteps.length + 1,
+                operationType: 'operation',
+                displayValue: `${newLastOperation === '+' ? '+' : newLastOperation === '-' ? '-' : newLastOperation}${currentNumber}`
+              });
+            }
+            
+            // Calculate result from all steps
+            const firstNumber = newCalculationSteps[0].result;
+            let result = firstNumber;
+            for (let i = 1; i < newCalculationSteps.length; i++) {
+              const step = newCalculationSteps[i];
+              if (step.operationType === 'operation') {
+                if (step.expression.startsWith('+')) {
+                  result += step.result;
+                } else if (step.expression.startsWith('-')) {
+                  result -= step.result;
                 }
-        newIsNewNumber = false;
-                newArticleCount = newCalculationSteps.filter(step => step.operationType !== 'result').length;
-        newValue = currentValue + '.';
+              }
+            }
+            
+            newArticleCount = newCalculationSteps.filter(step => step.operationType === 'operation').length + 1;
+          }
+        } else {
+          // No pending operation, just use existing steps
+          const firstNumber = newCalculationSteps[0].result;
+          let result = firstNumber;
+          for (let i = 1; i < newCalculationSteps.length; i++) {
+            const step = newCalculationSteps[i];
+            if (step.operationType === 'operation') {
+              if (step.expression.includes('=')) {
+                // This is a compound operation, use its result
+                result = step.result;
+              } else if (step.expression.startsWith('+')) {
+                result += step.result;
+              } else if (step.expression.startsWith('-')) {
+                result -= step.result;
+              }
+            }
+          }
+        }
+      }
+      newIsNewNumber = false;
+      newArticleCount = newCalculationSteps.filter(step => step.operationType !== 'result').length;
+      newValue = currentValue + input;
+    }
+  } else if (input === '.') {
+    // Decimal point
+    if (!currentValue.includes('.')) {
+      newValue = currentValue + '.';
+    }
+  } else if (['+', '-', '*', '/', '×', '÷'].includes(input)) {
+    // Handle operators
+    const operator = input === '×' ? '*' : input === '÷' ? '/' : input;
+    newLastOperation = operator;
+    newIsNewNumber = true;
+  } else if (input === '=') {
+    // Handle equals
+    let result = 0;
+    
+    // Handle pending operation when equals is pressed
+    if (newLastOperation && newValue !== '0') {
+      const currentNumber = parseFloat(newValue);
+      
+      // Check if this should be a compound operation
+      if (newCalculationSteps.length === 2 && 
+          newCalculationSteps[1].operationType === 'operation' && 
+          (newCalculationSteps[1].expression.startsWith('+') || newCalculationSteps[1].expression.startsWith('-')) &&
+          (newLastOperation === '*' || newLastOperation === '/')) {
+        
+        // This is a compound operation like 25+5×3
+        const additionOperand = newCalculationSteps[1].result;
+        const multiplicationResult = newLastOperation === '*' ? additionOperand * currentNumber : additionOperand / currentNumber;
+        const displayOperator = newLastOperation === '*' ? '×' : '÷';
+        
+        // Update the addition step to show compound operation
+        newCalculationSteps[1] = {
+          expression: `(${additionOperand}${displayOperator}${currentNumber})=${multiplicationResult}`,
+          result: multiplicationResult,
+          timestamp: Date.now(),
+          stepNumber: 2,
+          operationType: 'operation',
+          displayValue: `(${additionOperand}${displayOperator}${currentNumber})=${multiplicationResult}`
+        };
+        
+        // Calculate final result: first number + compound result
+        result = newCalculationSteps[0].result + multiplicationResult;
+        newArticleCount = 2;
+      } else {
+        // Regular operation - add current number as new step
+        newCalculationSteps.push({
+          expression: `${newLastOperation === '+' ? '+' : newLastOperation === '-' ? '-' : newLastOperation}${currentNumber}`,
+          result: currentNumber,
+          timestamp: Date.now(),
+          stepNumber: newCalculationSteps.length + 1,
+          operationType: 'operation',
+          displayValue: `${newLastOperation === '+' ? '+' : newLastOperation === '-' ? '-' : newLastOperation}${currentNumber}`
+        });
+        
+        // Calculate result from all steps
+        result = newCalculationSteps[0].result;
+        for (let i = 1; i < newCalculationSteps.length; i++) {
+          const step = newCalculationSteps[i];
+          if (step.operationType === 'operation') {
+            if (step.expression.startsWith('+')) {
+              result += step.result;
+            } else if (step.expression.startsWith('-')) {
+              result -= step.result;
+            }
+          }
+        }
+        
+        newArticleCount = newCalculationSteps.filter(step => step.operationType === 'operation').length + 1;
+      }
+    } else {
+      // No pending operation, calculate from existing steps
+      result = newCalculationSteps[0].result;
+      
+      for (let i = 1; i < newCalculationSteps.length; i++) {
+        const step = newCalculationSteps[i];
+        if (step.operationType === 'operation') {
+          if (step.expression.includes('=')) {
+            // This is a compound operation, use its result
+            result = step.result;
+          } else if (step.expression.startsWith('+')) {
+            result += step.result;
+          } else if (step.expression.startsWith('-')) {
+            result -= step.result;
+          }
+        }
+      }
+      
+      newArticleCount = newCalculationSteps.filter(step => step.operationType !== 'result').length;
+    }
+    
+    // Add result step
+    newCalculationSteps.push({
+      expression: `=${result}`,
+      result: result,
+      timestamp: Date.now(),
+      stepNumber: -1,
+      operationType: 'result',
+      displayValue: `=${result}`
+    });
+    
+    newValue = result.toString();
+    newGrandTotal += result;
+    newLastOperation = null;
+    newLastOperand = null;
+    newIsNewNumber = true;
+  }
+  
+  return {
+    value: newValue,
+    memory: newMemory,
+    grandTotal: newGrandTotal,
+    lastOperation: newLastOperation,
+    lastOperand: newLastOperand,
+    isNewNumber: newIsNewNumber,
+    isActive,
+    transactionHistory: newTransactionHistory,
+    calculationSteps: newCalculationSteps,
+    autoReplayActive,
+    articleCount: newArticleCount
+  };
+};
+
+/**
+ * Build expression string from calculation steps
+ */
+const buildExpressionFromSteps = (steps: CalculationStep[]): string => {
+  let expression = '';
+  
+  for (const step of steps) {
+    if (step.operationType === 'number') {
       expression += step.result;
     } else if (step.operationType === 'operation') {
-            // Handle pending operation when equals is pressed
-            if (newLastOperation && newValue !== '0') {
-              const currentNumber = parseFloat(newValue);
-              
-              // Check if this should be a compound operation
-              if (newCalculationSteps.length === 2 && 
-                  newCalculationSteps[1].operationType === 'operation' && 
-                  (newCalculationSteps[1].expression.startsWith('+') || newCalculationSteps[1].expression.startsWith('-')) &&
-                  (newLastOperation === '*' || newLastOperation === '/')) {
-                
-                // This is a compound operation like 25+5×3
-                const additionOperand = newCalculationSteps[1].result;
-                const multiplicationResult = newLastOperation === '*' ? additionOperand * currentNumber : additionOperand / currentNumber;
-                const displayOperator = newLastOperation === '*' ? '×' : '÷';
-                
-                // Update the addition step to show compound operation
-                newCalculationSteps[1] = {
-                  expression: `(${additionOperand}${displayOperator}${currentNumber})=${multiplicationResult}`,
-                  result: multiplicationResult,
-                  timestamp: Date.now(),
-                  stepNumber: 2,
-                  operationType: 'operation',
-                  displayValue: `(${additionOperand}${displayOperator}${currentNumber})=${multiplicationResult}`
-                };
-                
-                // Calculate final result: first number + compound result
-                result = newCalculationSteps[0].result + multiplicationResult;
-                newArticleCount = 2;
-              } else {
-                // Regular operation - add current number as new step
-                newCalculationSteps.push({
-                  expression: `${newLastOperation === '+' ? '+' : newLastOperation === '-' ? '-' : newLastOperation}${currentNumber}`,
-                  result: currentNumber,
-                  timestamp: Date.now(),
-                  stepNumber: newCalculationSteps.length + 1,
-                  operationType: 'operation',
-                  displayValue: `${newLastOperation === '+' ? '+' : newLastOperation === '-' ? '-' : newLastOperation}${currentNumber}`
-                });
-                
-                // Calculate result from all steps
-                result = newCalculationSteps[0].result;
-                for (let i = 1; i < newCalculationSteps.length; i++) {
-                  const step = newCalculationSteps[i];
-                  if (step.operationType === 'operation') {
-                    if (step.expression.startsWith('+')) {
-                      result += step.result;
-                    } else if (step.expression.startsWith('-')) {
-                      result -= step.result;
-                    }
-                  }
-                }
-                
-                newArticleCount = newCalculationSteps.filter(step => step.operationType === 'operation').length + 1;
-              }
-            } else {
-              // No pending operation, calculate from existing steps
-              result = newCalculationSteps[0].result;
-              
-              for (let i = 1; i < newCalculationSteps.length; i++) {
-                const step = newCalculationSteps[i];
-                if (step.operationType === 'operation') {
-                  if (step.expression.includes('=')) {
-                    // This is a compound operation, use its result
-                    result = step.result;
-                  } else if (step.expression.startsWith('+')) {
-                    result += step.result;
-                  } else if (step.expression.startsWith('-')) {
-                    result -= step.result;
-                  }
-                }
-              }
-              
-              newArticleCount = newCalculationSteps.filter(step => step.operationType !== 'result').length;
-            }
+      if (step.expression.includes('=')) {
         // This is a compound operation like (5×3)=15, use the result
         expression = step.result.toString();
       } else {
         // Regular operation like +5 or -3
         expression += step.expression;
       }
-              stepNumber: -1,
+    }
   }
   
   return expression;
