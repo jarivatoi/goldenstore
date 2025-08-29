@@ -414,6 +414,17 @@ export const processCalculatorInput = (
           displayValue: `-${input}`
         });
         newArticleCount = 2;
+      } else if (newCalculationSteps.length >= 2 && newLastOperation && ['+', '-'].includes(newLastOperation)) {
+        // Sequential operations like 10+20+30 - create new operation step
+        newCalculationSteps.push({
+          expression: `${newLastOperation}${input}`,
+          result: parseFloat(input),
+          timestamp: Date.now(),
+          stepNumber: newCalculationSteps.length + 1,
+          operationType: 'operation',
+          displayValue: `${newLastOperation}${input}`
+        });
+        newArticleCount = newCalculationSteps.filter(step => step.operationType !== 'result').length;
       }
       newValue = input;
       newIsNewNumber = false;
@@ -422,9 +433,11 @@ export const processCalculatorInput = (
       
       if (newCalculationSteps.length > 0) {
         const lastStep = newCalculationSteps[newCalculationSteps.length - 1];
-        if (lastStep.operationType === 'number') {
+        if (lastStep.operationType === 'number' || lastStep.operationType === 'operation') {
           lastStep.displayValue = newValue;
-          lastStep.expression = newValue;
+          lastStep.expression = lastStep.operationType === 'operation' 
+            ? `${lastStep.expression.charAt(0)}${newValue}` // Keep the operator prefix
+            : newValue;
           lastStep.result = parseFloat(newValue);
         }
       }
