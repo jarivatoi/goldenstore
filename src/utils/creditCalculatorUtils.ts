@@ -496,7 +496,7 @@ export const processCalculatorInput = (
             // Update the operation step to show compound operation
             lastStep.expression = `(${firstNum}${displayOp}${secondNum})=${result}`;
             lastStep.result = result;
-            lastStep.displayValue = `(${firstNum}${displayOp}${secondNum})=${result`;
+            lastStep.displayValue = `(${firstNum}${displayOp}${secondNum})=${result}`;
           }
         }
       }
