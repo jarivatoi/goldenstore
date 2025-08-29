@@ -437,7 +437,7 @@ export const processCalculatorInput = (
     // Handle operators
     const operator = input === '×' ? '*' : input === '÷' ? '/' : input;
     
-    // Create operation step when operator is pressed (not when typing numbers)
+    // Create operation step when operator is pressed
     if (newCalculationSteps.length > 0 && newValue !== '0') {
       const currentNumber = parseFloat(newValue);
       const operatorSymbol = operator === '+' ? '+' : operator === '-' ? '-' : operator === '*' ? '×' : '÷';
