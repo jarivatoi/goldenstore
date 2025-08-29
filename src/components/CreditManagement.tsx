@@ -975,7 +975,12 @@ const CreditManagement: React.FC = () => {
             >
               M+
             </button>
-            <div className="bg-gray-200"></div>
+            <button
+              onClick={() => handleCalculatorInput('→')}
+              className="bg-gray-400 hover:bg-gray-500 text-white p-3 rounded-lg font-bold text-sm shadow-md border border-gray-500"
+            >
+              →
+            </button>
             <button
               onClick={() => handleCalculatorInput('AUTO')}
               className="bg-gray-400 hover:bg-gray-500 text-white p-3 rounded-lg font-bold text-xs shadow-md border border-gray-500"
@@ -1059,12 +1064,13 @@ const CreditManagement: React.FC = () => {
               ÷
             </button>
 
-            {/* Row 4: →, 1, 2, 3, •, - */}
+            {/* Row 4: AC, 1, 2, 3, +, - */}
             <button
-              onClick={() => handleCalculatorInput('→')}
-              className="bg-gray-400 hover:bg-gray-500 text-white p-3 rounded-lg font-bold text-sm shadow-md border border-gray-500"
+              onClick={() => handleCalculatorInput('AC')}
+              className="bg-red-500 hover:bg-red-600 text-white p-3 rounded-lg font-bold text-sm shadow-md border border-red-600 row-span-2"
+              style={{ gridRow: 'span 2' }}
             >
-              →
+              AC
             </button>
             <button
               onClick={() => handleCalculatorInput('1')}
@@ -1098,13 +1104,7 @@ const CreditManagement: React.FC = () => {
               −
             </button>
 
-            {/* Row 5: AC, 0, 00, •, = */}
-            <button
-              onClick={() => handleCalculatorInput('AC')}
-              className="bg-red-500 hover:bg-red-600 text-white p-3 rounded-lg font-bold text-sm shadow-md border border-red-600"
-            >
-              AC
-            </button>
+            {/* Row 5: (AC spans from row 4), 0, 00, •, = */}
             <button
               onClick={() => handleCalculatorInput('0')}
               className="bg-gray-800 hover:bg-gray-900 text-white p-3 rounded-lg font-bold text-xl shadow-md border border-gray-600"
