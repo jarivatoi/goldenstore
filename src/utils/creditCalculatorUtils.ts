@@ -255,6 +255,8 @@ const processSimpleCalculation = (
     lastOperation: newLastOperation,
     isNewNumber: newIsNewNumber,
     articleCount: newArticleCount,
+    grandTotal: newGrandTotal,
+    transactionHistory: newTransactionHistory,
     result
   };
 };
@@ -556,6 +558,8 @@ const processCompoundCalculation = (
     lastOperation: newLastOperation,
     isNewNumber: newIsNewNumber,
     articleCount: newArticleCount,
+    grandTotal: newGrandTotal,
+    transactionHistory: newTransactionHistory,
     result
   };
 };
