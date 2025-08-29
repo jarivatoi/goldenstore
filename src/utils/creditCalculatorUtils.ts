@@ -331,7 +331,7 @@ const processCompoundCalculation = (
           operationType: 'operation',
           displayValue: `${displayOperator}${input}`
         });
-        newArticleCount = 3;
+        newArticleCount = 2; // Stay at 2 because we're still working on the second article (5×3)
       } else if (newCalculationSteps.length === 1 && (newLastOperation === '*' || newLastOperation === '/')) {
         // After 100×, when entering 10, create multiplication step
         const displayOperator = newLastOperation === '*' ? '×' : '÷';
@@ -343,7 +343,7 @@ const processCompoundCalculation = (
           operationType: 'operation',
           displayValue: `${displayOperator}${input}`
         });
-        newArticleCount = 2;
+        newArticleCount = 2; // Stay at 2 because we're still working on the second article
       }
       newValue = input;
       newIsNewNumber = false;
