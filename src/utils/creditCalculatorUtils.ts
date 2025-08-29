@@ -501,14 +501,14 @@ export const processCalculatorInput = (
           );
           
           if (addSubtractStep) {
-            // Calculate compound operation - get the two operands for multiplication/division
-            const firstOperand = addSubtractStep.result; // This is 5 in 25+5×3
-            const secondOperand = multiplyDivideStep.result; // This is 3 in 25+5×3
+            // Calculate compound operation - get the correct operands for multiplication/division
+            const firstOperand = addSubtractStep.result; // This is 5 in 25+5×3 (from +5)
+            const secondOperand = multiplyDivideStep.result; // This is 3 in 25+5×3 (from ×3)
             const isMultiply = multiplyDivideStep.expression.includes('×');
             const compoundResult = isMultiply ? firstOperand * secondOperand : firstOperand / secondOperand;
             const displayOperator = isMultiply ? '×' : '÷';
             
-            // Update the addition step to show compound operation (5×3)=15
+            // Update the step to show compound operation (5×3)=15
             const stepIndex = newCalculationSteps.findIndex(step => step === addSubtractStep);
             newCalculationSteps[stepIndex] = {
               expression: `(${firstOperand}${displayOperator}${secondOperand})=${compoundResult}`,
@@ -549,11 +549,11 @@ export const processCalculatorInput = (
       
       // Add result step
       newCalculationSteps.push({
-        expression: `=${result}`, 
+        expression: `=${result}`,
         result: result,
         timestamp: Date.now(),
-        stepNumber: 3, // This will be step 3 for compound calculations
-        operationType: 'result', 
+        stepNumber: hasMultiplicationOrDivision ? 3 : newCalculationSteps.length + 1,
+        operationType: 'result',
         displayValue: `=${result}`
       });
       
