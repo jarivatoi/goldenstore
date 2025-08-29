@@ -227,6 +227,30 @@ const processSimpleCalculation = (
     // Handle operators
     newLastOperation = input;
     newIsNewNumber = true;
+    
+    // Calculate running total for simple addition/subtraction
+    if (newCalculationSteps.length === 2) {
+      const firstStep = newCalculationSteps[0];
+      const secondStep = newCalculationSteps[1];
+      
+      if (secondStep.expression.startsWith('+')) {
+        const runningTotal = firstStep.result + secondStep.result;
+        newValue = runningTotal.toString();
+        console.log('🔢 Simple addition running total:', {
+          first: firstStep.result,
+          second: secondStep.result,
+          total: runningTotal
+        });
+      } else if (secondStep.expression.startsWith('-')) {
+        const runningTotal = firstStep.result - secondStep.result;
+        newValue = runningTotal.toString();
+        console.log('🔢 Simple subtraction running total:', {
+          first: firstStep.result,
+          second: secondStep.result,
+          total: runningTotal
+        });
+      }
+    }
   } else if (input === '=' || input === 'ENTER') {
     // Calculate result for simple operations
     if (newCalculationSteps.length > 0) {
