@@ -438,8 +438,48 @@ const processCompoundCalculation = (
     }
   } else if (input === '+' || input === '-' || input === '*' || input === '/') {
     // Handle operators
+    // Special handling for + after percentage calculation
+    if (input === '+' && newCalculationSteps.length === 2 && 
+        newCalculationSteps[1].expression.includes('%')) {
+      // This is 100×10%+ case - add percentage result to base
+      const baseValue = newCalculationSteps[0].result; // 100
+      const percentResult = newCalculationSteps[1].result; // 10
+      const finalResult = baseValue + percentResult; // 110
+      
+      // Update step 2 to show addition
+      newCalculationSteps[1] = {
+        expression: `+(${newCalculationSteps[1].expression})=${percentResult}`,
+        result: percentResult,
+        timestamp: Date.now(),
+        stepNumber: 2,
+        operationType: 'operation',
+        displayValue: `+(${newCalculationSteps[1].expression})=${percentResult}`
+      };
+      
+      // Add result step
+      newCalculationSteps.push({
+        expression: `=${finalResult}`,
+        result: finalResult,
+        timestamp: Date.now(),
+        stepNumber: 3,
+        operationType: 'result',
+        displayValue: `=${finalResult}`
+      });
+      
+      newValue = finalResult.toString();
+      newLastOperation = null;
+      newIsNewNumber = true;
+      newArticleCount = 3;
+      
+      // Add to grand total and transaction history
+      newGrandTotal += finalResult;
+      newTransactionHistory.push(finalResult);
+      localStorage.setItem('currentCheckIndex', '-1');
+    } else {
+      // Normal operator handling
     newLastOperation = input;
     newIsNewNumber = true;
+    }
   } else if (input === '=' || input === 'ENTER') {
     // Calculate result for compound operations
     if (newCalculationSteps.length === 3) {
@@ -788,9 +828,9 @@ export const processCalculatorInput = (
       // Calculate percentage: 100 × (10/100) = 10
       const percentResult = baseValue * (percentageValue / 100);
       
-      // Replace step 2 with the percentage calculation result
+      // Update step 2 to show the percentage calculation
       newCalculationSteps[1] = {
-        expression: `(${baseValue}×${percentageValue}%)=${percentResult}`,
+        expression: `(${baseValue}×${percentageValue}%)`,
         result: percentResult,
         timestamp: Date.now(),
         stepNumber: 2,
@@ -798,31 +838,8 @@ export const processCalculatorInput = (
         displayValue: `(${baseValue}×${percentageValue}%)=${percentResult}`
       };
       
-      // For compound operations like 100×10%+, we need to add the percentage to the base
-      // So the final result should be: 100 + 10 = 110
-      const finalResult = baseValue + percentResult;
-      
-      // Update the calculation to show the addition
-      newCalculationSteps = [
-        {
-          expression: baseValue.toString(),
-          result: baseValue,
-          timestamp: Date.now(),
-          stepNumber: 1,
-          operationType: 'number',
-          displayValue: baseValue.toString()
-        },
-        {
-          expression: `+(${baseValue}×${percentageValue}%)=${percentResult}`,
-          result: percentResult,
-          timestamp: Date.now(),
-          stepNumber: 2,
-          operationType: 'operation',
-          displayValue: `+(${baseValue}×${percentageValue}%)=${percentResult}`
-        }
-      ];
-      
-      newValue = finalResult.toString();
+      // Show the percentage result (10) in display
+      newValue = percentResult.toString();
       newLastOperation = null;
       newIsNewNumber = true;
       newArticleCount = 2;
