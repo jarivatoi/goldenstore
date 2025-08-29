@@ -415,6 +415,28 @@ export const processCalculatorInput = (
           displayValue: `-${input}`
         });
         newArticleCount = 2;
+      } else if (newCalculationSteps.length === 2 && newLastOperation === '+') {
+        // SIMPLE PATHWAY: After 25+5+, when entering 3
+        newCalculationSteps.push({
+          expression: `+${input}`,
+          result: parseFloat(input),
+          timestamp: Date.now(),
+          stepNumber: 3,
+          operationType: 'operation',
+          displayValue: `+${input}`
+        });
+        newArticleCount = 3;
+      } else if (newCalculationSteps.length === 2 && newLastOperation === '-') {
+        // SIMPLE PATHWAY: After 25+5-, when entering 3 (mixed operations)
+        newCalculationSteps.push({
+          expression: `-${input}`,
+          result: parseFloat(input),
+          timestamp: Date.now(),
+          stepNumber: 3,
+          operationType: 'operation',
+          displayValue: `-${input}`
+        });
+        newArticleCount = 3;
       } else if (newCalculationSteps.length === 2 && (newLastOperation === '*' || newLastOperation === '/')) {
         // COMPOUND PATHWAY: After 25+5×, when entering 3
         const displayOperator = newLastOperation === '*' ? '×' : '÷';
