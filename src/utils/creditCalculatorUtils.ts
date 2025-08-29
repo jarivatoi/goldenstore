@@ -890,8 +890,8 @@ export const processCalculatorInput = (
     if (willBeCompound) {
       // Use compound calculation flow for decimal
       const compoundResult = processCompoundCalculation(
-        currentValue, input, newCalculationSteps, newLastOperation, 
-        newIsNewNumber, newArticleCount
+        currentValue, input, newCalculationSteps, newLastOperation,
+        newIsNewNumber, newArticleCount, newGrandTotal, newTransactionHistory
       );
       
       newValue = compoundResult.value;
@@ -899,11 +899,13 @@ export const processCalculatorInput = (
       newLastOperation = compoundResult.lastOperation;
       newIsNewNumber = compoundResult.isNewNumber;
       newArticleCount = compoundResult.articleCount;
+      newGrandTotal = compoundResult.grandTotal;
+      newTransactionHistory = compoundResult.transactionHistory;
     } else {
       // Use simple calculation flow for decimal
       const simpleResult = processSimpleCalculation(
-        currentValue, input, newCalculationSteps, newLastOperation, 
-        newIsNewNumber, newArticleCount
+        currentValue, input, newCalculationSteps, newLastOperation,
+        newIsNewNumber, newArticleCount, newGrandTotal, newTransactionHistory
       );
       
       newValue = simpleResult.value;
@@ -911,6 +913,8 @@ export const processCalculatorInput = (
       newLastOperation = simpleResult.lastOperation;
       newIsNewNumber = simpleResult.isNewNumber;
       newArticleCount = simpleResult.articleCount;
+      newGrandTotal = simpleResult.grandTotal;
+      newTransactionHistory = simpleResult.transactionHistory;
     }
   } else {
     if (willBeCompound) {
