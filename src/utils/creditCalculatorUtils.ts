@@ -399,9 +399,12 @@ const processCompoundCalculation = (
           operationType: 'operation',
           displayValue: `${newLastOperation}${input}`
         });
-      }
+      } else {
         // Increment article count for new operand
         newArticleCount = newCalculationSteps.length;
+      }
+      newValue = input;
+      newIsNewNumber = false;
     } else {
       // Continuing to type digits - build the number properly (handles decimals)
       // BUT: Don't build numbers if we just pressed an operator and should start fresh
@@ -436,6 +439,7 @@ const processCompoundCalculation = (
       
       // Update the last step if it's a number or operation (only if we're building existing number)
       if (newCalculationSteps.length > 0 && !newIsNewNumber) {
+        const lastStep = newCalculationSteps[newCalculationSteps.length - 1];
         if (lastStep.operationType === 'number') {
           lastStep.displayValue = newValue;
           lastStep.expression = newValue;
@@ -627,8 +631,27 @@ const processCompoundCalculation = (
         newValue = finalResult.toString();
         newLastOperation = null;
         newIsNewNumber = true;
-      }
-              const operator = step.expression.charAt(0);
+      } else {
+        // Handle multiple operations after a result
+        if (newCalculationSteps.length > 0) {
+          // Find the last result step
+          let lastResultIndex = -1;
+          for (let i = newCalculationSteps.length - 1; i >= 0; i--) {
+            if (newCalculationSteps[i].operationType === 'result') {
+              lastResultIndex = i;
+              break;
+            }
+          }
+          
+          if (lastResultIndex !== -1) {
+            // Calculate running total from the last result
+            const lastResultStep = newCalculationSteps[lastResultIndex];
+            let runningTotal = lastResultStep.result;
+            
+            // Apply all operations after the result
+            for (let i = lastResultIndex + 1; i < newCalculationSteps.length; i++) {
+              const step = newCalculationSteps[i];
+              if (step.operationType === 'operation') {
                 const operator = step.expression.charAt(0);
                 const operandValue = step.result;
                 
@@ -651,25 +674,21 @@ const processCompoundCalculation = (
               finalRunningTotal: runningTotal
             });
           }
-              const operandValue = step.result;
-              
-              if (operator === '+') {
-                runningTotal += operandValue;
-              } else if (operator === '-') {
-                runningTotal -= operandValue;
-              }
-        } else if (newCalculationSteps.length === 3) {
-        newArticleCount = 3;
-        } else if (newCalculationSteps.length === 2) {
-        // Simple addition: 10+20+ should show 30
-        const firstStep = newCalculationSteps[0];
-        const secondStep = newCalculationSteps[1];
-        
-        if (secondStep.expression.startsWith('+')) {
-          const result = firstStep.result + secondStep.result;
-          newValue = result.toString();
-          newIsNewNumber = true;
-        }
+        } else {
+          // Handle other cases
+          if (newCalculationSteps.length === 3) {
+            newArticleCount = 3;
+          } else if (newCalculationSteps.length === 2) {
+            // Simple addition: 10+20+ should show 30
+            const firstStep = newCalculationSteps[0];
+            const secondStep = newCalculationSteps[1];
+            
+            if (secondStep.expression.startsWith('+')) {
+              const result = firstStep.result + secondStep.result;
+              newValue = result.toString();
+              newIsNewNumber = true;
+            }
+          }
         }
       }
     } else if (input === '+' && newCalculationSteps.length === 1) {
