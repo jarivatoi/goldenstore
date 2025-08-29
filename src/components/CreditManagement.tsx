@@ -597,6 +597,18 @@ const CreditManagement: React.FC = () => {
 
   const handleQuickAdd = (client: Client) => {
     setLinkedClient(client);
+    // Reset calculator when linking to client
+    setCalculatorValue('0');
+    setCalculatorMemory(0);
+    setCalculatorGrandTotal(0);
+    setLastOperation(null);
+    setLastOperand(null);
+    setIsNewNumber(true);
+    setTransactionHistory([]);
+    setCalculationSteps([]);
+    setAutoReplayActive(false);
+    setArticleCount(0);
+    setIsCalculatorActive(false);
   };
 
   const handleCalculatorCancel = () => {
