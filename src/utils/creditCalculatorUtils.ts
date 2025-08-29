@@ -513,6 +513,28 @@ const processCompoundCalculation = (
       newGrandTotal += finalResult;
       newTransactionHistory.push(finalResult);
       localStorage.setItem('currentCheckIndex', '-1');
+    } else if (input === '+' && newCalculationSteps.length > 0 && 
+               newCalculationSteps[newCalculationSteps.length - 1].operationType === 'result') {
+      // Handle + after a result (e.g., after 25+5×3=40, pressing + should start new calculation with 40)
+      const lastResultStep = newCalculationSteps[newCalculationSteps.length - 1];
+      const resultValue = lastResultStep.result; // 40
+      
+      // Start fresh calculation with the result as the first number
+      newCalculationSteps = [{
+        expression: resultValue.toString(),
+        result: resultValue,
+        timestamp: Date.now(),
+        stepNumber: 1,
+        operationType: 'number',
+        displayValue: resultValue.toString()
+      }];
+      
+      newValue = resultValue.toString(); // Display 40
+      newLastOperation = input; // Set + as the operation
+      newIsNewNumber = true;
+      newArticleCount = 1;
+      
+      // Don't add to grand total yet - wait for the next number and equals
     } else if (input === '+' && newCalculationSteps.length >= 2) {
       // Handle + after compound calculation (e.g., 25+5×3+)
       if (newCalculationSteps.length === 3) {
