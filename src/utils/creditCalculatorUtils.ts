@@ -605,29 +605,33 @@ const processCompoundCalculation = (
         newValue = finalResult.toString();
         newLastOperation = null;
         newIsNewNumber = true;
-              const operator = step.expression.charAt(0);
-                const operator = step.expression.charAt(0);
-                const operandValue = step.result;
-                
-                if (operator === '+') {
-                  runningTotal += operandValue;
-                } else if (operator === '-') {
-                  runningTotal -= operandValue;
-                }
-              }
-            }
-            
-            // Show the running total
-            newValue = runningTotal.toString();
-            newLastOperation = input;
-            newIsNewNumber = true;
-            
-            console.log('🔢 Multiple operations running total:', {
-              baseResult: lastResultStep.result,
-              operationsAfterResult: newCalculationSteps.slice(lastResultIndex + 1),
-              finalRunningTotal: runningTotal
-            });
+        newArticleCount = 2;
+        
+        // Add to grand total and transaction history
+        newGrandTotal += finalResult;
+        newTransactionHistory.push(finalResult);
+        localStorage.setItem('currentCheckIndex', '-1');
+      } else if (newCalculationSteps.length > 3) {
+        // Handle multiple operations after a result
+        // Find the last result step
+        let lastResultIndex = -1;
+        for (let i = newCalculationSteps.length - 1; i >= 0; i--) {
+          if (newCalculationSteps[i].operationType === 'result') {
+            lastResultIndex = i;
+            break;
           }
+        }
+        
+        if (lastResultIndex !== -1) {
+          // Calculate running total from the last result
+          const lastResultStep = newCalculationSteps[lastResultIndex];
+          let runningTotal = lastResultStep.result;
+          
+          // Apply all operations after the result
+          for (let i = lastResultIndex + 1; i < newCalculationSteps.length; i++) {
+            const step = newCalculationSteps[i];
+            if (step.operationType === 'operation') {
+              const operator = step.expression.charAt(0);
               const operandValue = step.result;
               
               if (operator === '+') {
@@ -635,9 +639,21 @@ const processCompoundCalculation = (
               } else if (operator === '-') {
                 runningTotal -= operandValue;
               }
-        } else if (newCalculationSteps.length === 3) {
-        newArticleCount = 3;
-        } else if (newCalculationSteps.length === 2) {
+            }
+          }
+          
+          // Show the running total
+          newValue = runningTotal.toString();
+          newLastOperation = input;
+          newIsNewNumber = true;
+          
+          console.log('🔢 Multiple operations running total:', {
+            baseResult: lastResultStep.result,
+            operationsAfterResult: newCalculationSteps.slice(lastResultIndex + 1),
+            finalRunningTotal: runningTotal
+          });
+        }
+      } else if (newCalculationSteps.length === 2) {
         // Simple addition: 10+20+ should show 30
         const firstStep = newCalculationSteps[0];
         const secondStep = newCalculationSteps[1];
@@ -646,7 +662,6 @@ const processCompoundCalculation = (
           const result = firstStep.result + secondStep.result;
           newValue = result.toString();
           newIsNewNumber = true;
-        }
         }
       }
     } else if (input === '+' && newCalculationSteps.length === 1) {
