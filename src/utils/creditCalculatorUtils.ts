@@ -414,18 +414,6 @@ export const processCalculatorInput = (
           displayValue: `-${input}`
         });
         newArticleCount = 2;
-      } else if (newCalculationSteps.length === 2 && (newLastOperation === '*' || newLastOperation === '/')) {
-        // After 25+5×, when entering 3, create the multiplication step
-        const displayOperator = newLastOperation === '*' ? '×' : '÷';
-        newCalculationSteps.push({
-          expression: `${displayOperator}${input}`,
-          result: parseFloat(input), // Store the actual operand (3)
-          timestamp: Date.now(),
-          stepNumber: 3,
-          operationType: 'operation',
-          displayValue: `${displayOperator}${input}`
-        });
-        newArticleCount = 3;
       }
       newValue = input;
       newIsNewNumber = false;
@@ -467,6 +455,27 @@ export const processCalculatorInput = (
         displayValue: newValue
       });
       newArticleCount = 1;
+    } else if (newCalculationSteps.length === 1 && operator === '+') {
+      // When pressing + after first number, create addition step with the next number
+      // Don't create the step yet - wait for the number to be entered
+      // This will be handled when the next number is entered
+    } else if (newCalculationSteps.length === 1 && (operator === '*' || operator === '/')) {
+      // Direct multiplication/division after first number
+      const firstNumber = newCalculationSteps[0].result;
+      const currentNumber = parseFloat(newValue);
+      const displayOperator = operator === '*' ? '×' : '÷';
+      const result = operator === '*' ? firstNumber * currentNumber : firstNumber / currentNumber;
+      
+      newCalculationSteps.push({
+        expression: `(${firstNumber}${displayOperator}${currentNumber})=${result}`,
+        result: result,
+        timestamp: Date.now(),
+        stepNumber: 2,
+        operationType: 'operation',
+        displayValue: `(${firstNumber}${displayOperator}${currentNumber})=${result}`
+      });
+      
+      newArticleCount = 2;
     }
     
     newLastOperation = operator;
@@ -515,76 +524,118 @@ export const processCalculatorInput = (
           
           newArticleCount = 2;
         }
-      } else if (newCalculationSteps.length >= 2 && newLastOperation && newValue !== '0') {
-        // Handle multiple operations
+      } else if (newCalculationSteps.length === 2 && newLastOperation && newValue !== '0') {
+        // Case: 25 + 5 × 3 (first number, then addition, then multiplication)
+        const firstStep = newCalculationSteps[0]; // Should be "25"
+        const secondStep = newCalculationSteps[1]; // Should be "+5"
         const currentNumber = parseFloat(newValue);
-        const firstStep = newCalculationSteps[0];
         
         if (newLastOperation === '*' || newLastOperation === '/') {
           // This is a compound operation like 25 + 5 × 3
+          // Extract the operand from the addition step expression
+          // For compound operations, the multiplication operand is the second step's result
+          const multiplicationOperand = secondStep.result;
           
-          // Find the addition/subtraction step to get the first operand for multiplication
-          let additionOperand = 0;
-          for (let i = 1; i < newCalculationSteps.length; i++) {
-            const step = newCalculationSteps[i];
-            if (step.operationType === 'operation' && (step.expression.startsWith('+') || step.expression.startsWith('-'))) {
-              additionOperand = step.result; // This should be 5 for "25+5×3"
-              break;
-            }
-          }
+          const displayOperator = newLastOperation === '*' ? '×' : '÷';
+          const multiplicationResult = newLastOperation === '*' 
+            ? multiplicationOperand * currentNumber 
+            : multiplicationOperand / currentNumber;
           
-          if (additionOperand > 0) {
-            // Calculate the compound operation: 5 × 3 = 15
-            const compoundResult = newLastOperation === '*' ? additionOperand * currentNumber : additionOperand / currentNumber;
-            const displayOperator = newLastOperation === '*' ? '×' : '÷';
-            
-            // Replace the last step with the compound operation
-            newCalculationSteps[newCalculationSteps.length - 1] = {
-              expression: `(${additionOperand}${displayOperator}${currentNumber})=${compoundResult}`,
-              result: compoundResult,
-              timestamp: Date.now(),
-              stepNumber: 2,
-              operationType: 'operation',
-              displayValue: `(${additionOperand}${displayOperator}${currentNumber})=${compoundResult}`
-            };
-            
-            // Calculate final result: 25 + 15 = 40
-            result = firstStep.result + compoundResult;
-            
-            newArticleCount = 2; // Keep only 2 steps before result
-          }
+          // Replace the second step with the compound operation
+          newCalculationSteps[1] = {
+            expression: `(${multiplicationOperand}${displayOperator}${currentNumber})=${multiplicationResult}`,
+            result: multiplicationResult,
+            timestamp: Date.now(),
+            stepNumber: 2,
+            operationType: 'operation',
+            displayValue: `(${multiplicationOperand}${displayOperator}${currentNumber})=${multiplicationResult}`
+          };
+          
+          // Calculate final result: first number + multiplication result
+          result = firstStep.result + multiplicationResult;
+          newArticleCount = 2; // Keep only 2 steps
         } else {
-          // Sequential addition/subtraction like 25+5+3
-          // Add the current number as a new step if it's not a trailing operator
-          const lastStep = newCalculationSteps[newCalculationSteps.length - 1];
-          const isTrailingOperator = lastStep && lastStep.operationType === 'operation' && 
-                                   newValue === lastStep.result.toString();
-          
-          if (!isTrailingOperator && newValue !== '0' && !isNaN(currentNumber) && currentNumber !== 0) {
-            // Add the new operation step
-            newCalculationSteps.push({
-              expression: `${newLastOperation === '+' ? '+' : '-'}${currentNumber}`,
-              result: currentNumber,
-              timestamp: Date.now(),
-              stepNumber: newCalculationSteps.length + 1,
-              operationType: 'operation',
-              displayValue: `${newLastOperation === '+' ? '+' : '-'}${currentNumber}`
-            });
-          }
-          
-          // Build expression from all steps
-          let fullExpression = firstStep.result.toString();
-          for (let i = 1; i < newCalculationSteps.length; i++) {
-            const step = newCalculationSteps[i];
-            if (step.operationType === 'operation') {
-              fullExpression += step.expression;
-            }
-          }
-          
+          // Regular addition/subtraction after existing steps
+          const displayOperator = newLastOperation;
+          const fullExpression = buildExpressionFromSteps(newCalculationSteps) + newLastOperation + currentNumber;
           result = evaluateExpression(fullExpression);
           
-          // Count only operation steps (exclude the first number and result)
-          newArticleCount = newCalculationSteps.filter(step => step.operationType === 'operation').length + 1;
+          newCalculationSteps.push({
+            expression: `${displayOperator}${currentNumber}`,
+            result: currentNumber,
+            timestamp: Date.now(),
+            stepNumber: newCalculationSteps.length + 1,
+            operationType: 'operation',
+            displayValue: `${displayOperator}${currentNumber}`
+          });
+          
+          newArticleCount = newCalculationSteps.filter(step => 
+            step.operationType === 'operation' && (step.expression.startsWith('+') || step.expression.startsWith('-'))
+          ).length + 1;
+        }
+      } else if (newCalculationSteps.length > 2 && newLastOperation && newValue !== '0') {
+        // Complex case with multiple operations
+        const currentNumber = parseFloat(newValue);
+        const displayOperator = newLastOperation === '*' ? '×' : 
+                               newLastOperation === '/' ? '÷' : 
+                               newLastOperation;
+        
+        // For multiplication/division, we need to handle them first
+        if (newLastOperation === '*' || newLastOperation === '/') {
+          // Find the last number to multiply/divide with
+          let lastNumber = currentNumber;
+          let baseExpression = '';
+          
+          // Build the expression from steps
+          for (let i = 0; i < newCalculationSteps.length; i++) {
+            const step = newCalculationSteps[i];
+            if (step.operationType === 'number') {
+              baseExpression += step.result;
+            } else if (step.operationType === 'operation') {
+              if (step.expression.startsWith('+') || step.expression.startsWith('-')) {
+                baseExpression += step.expression;
+              } else {
+                // This is a compound operation, use its result
+                baseExpression = step.result.toString();
+              }
+            }
+          }
+          
+          // Add the current operation
+          const fullExpression = `(${baseExpression})${newLastOperation}${currentNumber}`;
+          result = evaluateExpression(fullExpression);
+          
+          // Add the operation step
+          newCalculationSteps.push({
+            expression: `${displayOperator}${currentNumber}`,
+            result: currentNumber,
+            timestamp: Date.now(),
+            stepNumber: newCalculationSteps.length + 1,
+            operationType: 'operation',
+            displayValue: `${displayOperator}${currentNumber}`
+          });
+          
+          newArticleCount = newCalculationSteps.filter(step => 
+            step.operationType === 'operation' && (step.expression.startsWith('+') || step.expression.startsWith('-'))
+          ).length + 1;
+        } else {
+          // For addition/subtraction, just append to the expression
+          const fullExpression = buildExpressionFromSteps(newCalculationSteps) + newLastOperation + currentNumber;
+          result = evaluateExpression(fullExpression);
+          
+          // Add the operation step
+          newCalculationSteps.push({
+            expression: `${displayOperator}${currentNumber}`,
+            result: currentNumber,
+            timestamp: Date.now(),
+            stepNumber: newCalculationSteps.length + 1,
+            operationType: 'operation',
+            displayValue: `${displayOperator}${currentNumber}`
+          });
+          
+          newArticleCount = newCalculationSteps.filter(step => 
+            step.operationType === 'operation' && (step.expression.startsWith('+') || step.expression.startsWith('-'))
+          ).length + 1;
         }
       } else if (newCalculationSteps.length > 0) {
         // Just evaluate what we have
