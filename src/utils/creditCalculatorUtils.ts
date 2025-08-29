@@ -342,7 +342,7 @@ export const processCalculatorInput = (
         }];
         
         newLastOperand = null;
-         newArticleCount = 3; // Step 1: first number, Step 2: compound operation, Step 3: result
+      } else {
         const percentResult = currentNum / 100;
         newValue = percentResult.toString();
         newIsNewNumber = true;
@@ -515,9 +515,9 @@ export const processCalculatorInput = (
               result: compoundResult,
               timestamp: Date.now(),
               stepNumber: 2,
-             // Calculate compound operation - get the correct operands
-             const firstOperand = addSubtractStep.result; // 5 from +5 step  
-             const secondOperand = multiplyDivideStep.result; // 3 from ×3 step
+              operationType: 'operation',
+              displayValue: `(${firstOperand}${displayOperator}${secondOperand})=${compoundResult}`
+            };
             
             // Remove the multiplication step since it's now part of compound
             newCalculationSteps = newCalculationSteps.filter(step => step !== multiplyDivideStep);
@@ -538,7 +538,11 @@ export const processCalculatorInput = (
             if (step.expression.startsWith('+')) {
               result += step.result;
             } else if (step.expression.startsWith('-')) {
-             newArticleCount = 2; // Step 1: first number, Step 2: compound operation
+              result -= step.result;
+            } else if (step.expression.includes('×')) {
+              result *= step.result;
+            } else if (step.expression.includes('÷')) {
+              result /= step.result;
             }
           }
         }
