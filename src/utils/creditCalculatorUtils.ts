@@ -137,6 +137,7 @@ const processSimpleCalculation = (
         const lastStep = newCalculationSteps[newCalculationSteps.length - 1];
         if (lastStep.operationType === 'result') {
           // We're adding a new number after a result (e.g., 40+ then 15)
+        }
       } else if (newLastOperation && newIsNewNumber) {
         // After any operator, create new step
         newCalculationSteps.push({
@@ -176,45 +177,18 @@ const processSimpleCalculation = (
     }
   } else if (input === '+' || input === '-') {
     // Handle + and - operators
-    // Counter logic: only start counting after first operation
-    if (newCalculationSteps.length === 1) {
-      // First operation: 10+ -> counter becomes 1
-      newArticleCount = 1;
-    } else if (newCalculationSteps.length > 1) {
-      // Subsequent operations: increment/decrement based on operator
-      const currentNum = parseFloat(currentValue);
-      if (!isNaN(currentNum) && currentNum > 0) {
-        if (input === '+') {
-          newArticleCount = newArticleCount + 1;
-        } else if (input === '-') {
-          newArticleCount = Math.max(0, newArticleCount - 1);
-        }
+    // Update counter based on the current number and operator
+    const currentNum = parseFloat(currentValue);
+    
+    if (!isNaN(currentNum) && currentNum > 0) {
+      if (input === '+') {
+        newArticleCount = Math.max(1, newArticleCount + 1);
+      } else if (input === '-') {
+        newArticleCount = Math.max(0, newArticleCount - 1);
       }
     }
     
     newLastOperation = input;
-    newIsNewNumber = true;
-    
-    // Calculate running total if we have operations
-    if (newCalculationSteps.length >= 2) {
-      const expression = buildSimpleExpression(newCalculationSteps);
-      const runningTotal = evaluateExpression(expression);
-      newValue = runningTotal.toString();
-    }
-  } else if (input === '*' || input === '/' || input === '×' || input === '÷') {
-    // Handle × and ÷ operators (treat same as + and -)
-    // Counter logic: only start counting after first operation
-    if (newCalculationSteps.length === 1) {
-      // First operation: 10× -> counter becomes 1
-      newArticleCount = 1;
-    } else if (newCalculationSteps.length > 1) {
-      // Subsequent operations: increment counter
-      newArticleCount = newArticleCount + 1;
-    }
-    
-    // Convert display symbols to internal operators
-    const operator = (input === '×') ? '*' : (input === '÷') ? '/' : input;
-    newLastOperation = operator;
     newIsNewNumber = true;
     
     // Calculate running total if we have operations
@@ -714,7 +688,8 @@ export const processCalculatorInput = (
     newIsNewNumber = true;
   } else if (input === '.') {
     // Handle decimal point - route to appropriate pathway
-    if (isCompound) {
+    const willBeCompound = isCompound;
+    if (willBeCompound) {
       // Use compound calculation flow for decimal
       const compoundResult = processCompoundCalculation(
         currentValue, input, newCalculationSteps, newLastOperation,
