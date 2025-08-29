@@ -950,7 +950,7 @@ const CreditManagement: React.FC = () => {
               </button>
             </div>
 
-            {/* Row 1 - Top row: MU, MRC, M-, M+, ON/C, AUTO */}
+            {/* Row 1: MU, MRC, M-, M+, →, AUTO */}
             <button
               onClick={() => handleCalculatorInput('MU')}
               className="bg-blue-400 hover:bg-blue-500 text-white p-3 rounded-lg font-bold text-sm shadow-md border border-blue-500"
@@ -976,10 +976,10 @@ const CreditManagement: React.FC = () => {
               M+
             </button>
             <button
-              onClick={() => handleCalculatorInput('ON/C')}
+              onClick={() => handleCalculatorInput('→')}
               className="bg-gray-400 hover:bg-gray-500 text-white p-3 rounded-lg font-bold text-sm shadow-md border border-gray-500"
             >
-              ON/C
+              →
             </button>
             <button
               onClick={() => handleCalculatorInput('AUTO')}
@@ -988,7 +988,7 @@ const CreditManagement: React.FC = () => {
               AUTO REPLAY
             </button>
 
-            {/* Row 2 - Second row: %, 7, 8, 9, GT, √ */}
+            {/* Row 2: %, 7, 8, 9, (, ) */}
             <button
               onClick={() => handleCalculatorInput('%')}
               className="bg-blue-400 hover:bg-blue-500 text-white p-3 rounded-lg font-bold text-lg shadow-md border border-blue-500"
@@ -1014,10 +1014,10 @@ const CreditManagement: React.FC = () => {
               9
             </button>
             <button
-              onClick={() => handleCalculatorInput('GT')}
+              onClick={() => handleCalculatorInput('(')}
               className="bg-blue-400 hover:bg-blue-500 text-white p-3 rounded-lg font-bold text-sm shadow-md border border-blue-500"
             >
-              GT
+              (
             </button>
             <button
               onClick={() => handleCalculatorInput(')')}
@@ -1026,7 +1026,7 @@ const CreditManagement: React.FC = () => {
               )
             </button>
 
-            {/* Row 3 - Third row: →, 4, 5, 6, ×, ÷ */}
+            {/* Row 3: √, 4, 5, 6, ×, ÷ */}
             <button
               onClick={() => handleCalculatorInput('√')}
               className="bg-blue-400 hover:bg-blue-500 text-white p-3 rounded-lg font-bold text-lg shadow-md border border-blue-500"
@@ -1064,7 +1064,13 @@ const CreditManagement: React.FC = () => {
               ÷
             </button>
 
-            {/* Row 4 - Fourth row: AC, 1, 2, 3, +, - */}
+            {/* Row 4: ON/C, 1, 2, 3, +, - */}
+            <button
+              onClick={() => handleCalculatorInput('ON/C')}
+              className="bg-gray-400 hover:bg-gray-500 text-white p-3 rounded-lg font-bold text-sm shadow-md border border-gray-500"
+            >
+              ON/C
+            </button>
             <button
               onClick={() => handleCalculatorInput('1')}
               className="bg-gray-800 hover:bg-gray-900 text-white p-3 rounded-lg font-bold text-xl shadow-md border border-gray-600"
@@ -1096,9 +1102,15 @@ const CreditManagement: React.FC = () => {
               −
             </button>
               →
-            {/* Row 5 - Bottom row: 0, 00, 000, •, =, = */}
+            {/* Row 5: AC, 0, 00, •, = */}
             <button
-              onClick={() => handleCalculatorInput('→')}
+              onClick={() => handleCalculatorInput('AC')}
+              className="bg-red-500 hover:bg-red-600 text-white p-3 rounded-lg font-bold text-sm shadow-md border border-red-600"
+            >
+              AC
+            </button>
+            <button
+              onClick={() => handleCalculatorInput('0')}
               className="bg-gray-800 hover:bg-gray-900 text-white p-3 rounded-lg font-bold text-xl shadow-md border border-gray-600"
             >
               0
@@ -1110,28 +1122,11 @@ const CreditManagement: React.FC = () => {
               00
             </button>
             <button
-              onClick={() => handleCalculatorInput('000')}
-              className="bg-gray-800 hover:bg-gray-900 text-white p-3 rounded-lg font-bold text-lg shadow-md border border-gray-600"
-            >
-              000
-            </button>
-            <button
               onClick={() => handleCalculatorInput('.')}
               className="bg-gray-800 hover:bg-gray-900 text-white p-3 rounded-lg font-bold text-xl shadow-md border border-gray-600"
             >
               •
             </button>
-            <button
-              onClick={() => handleCalculatorInput('AC')}
-              className="bg-red-500 hover:bg-red-600 text-white p-3 rounded-lg font-bold text-sm shadow-md border border-red-600"
-            >
-              AC
-            </button>
-          </div>
-
-          {/* Row 6 - New bottom row for = button */}
-          <div className="grid grid-cols-6 gap-2">
-            <div className="col-span-5"></div>
             <button
               onClick={() => handleCalculatorInput('=')}
               className="bg-green-500 hover:bg-green-600 text-white p-3 rounded-lg font-bold text-xl shadow-md border border-green-600"
