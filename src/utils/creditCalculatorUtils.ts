@@ -508,9 +508,9 @@ export const processCalculatorInput = (
             const compoundResult = isMultiply ? firstOperand * secondOperand : firstOperand / secondOperand;
             const displayOperator = isMultiply ? '×' : '÷';
             
-            // Update the step to show compound operation (5×3)=15
-            const stepIndex = newCalculationSteps.findIndex(step => step === addSubtractStep);
-            newCalculationSteps[stepIndex] = {
+            // Replace the addition step with the compound operation
+            const addStepIndex = newCalculationSteps.findIndex(step => step === addSubtractStep);
+            newCalculationSteps[addStepIndex] = {
               expression: `(${firstOperand}${displayOperator}${secondOperand})=${compoundResult}`,
               result: compoundResult,
               timestamp: Date.now(),
@@ -524,7 +524,7 @@ export const processCalculatorInput = (
             
             // Calculate final result: first number + compound result
             result = newCalculationSteps[0].result + compoundResult;
-            newArticleCount = 2; // Step 2 shows compound operation
+            newArticleCount = 2; // Step 1: first number, Step 2: compound operation
           }
         }
       } else {
@@ -552,7 +552,7 @@ export const processCalculatorInput = (
         expression: `=${result}`,
         result: result,
         timestamp: Date.now(),
-        stepNumber: hasMultiplicationOrDivision ? 3 : newCalculationSteps.length + 1,
+        stepNumber: newCalculationSteps.length + 1,
         operationType: 'result',
         displayValue: `=${result}`
       });
@@ -571,7 +571,7 @@ export const processCalculatorInput = (
       
       // Update article count to include the result step
       if (hasMultiplicationOrDivision) {
-        newArticleCount = 3; // 1: first number, 2: compound operation, 3: result
+        newArticleCount = 3; // Step 1: first number, Step 2: compound operation, Step 3: result
       } else {
         newArticleCount = newCalculationSteps.filter(step => step.operationType !== 'result').length;
       }
