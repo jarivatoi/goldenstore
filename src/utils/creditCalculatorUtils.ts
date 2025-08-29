@@ -519,20 +519,13 @@ const processCompoundCalculation = (
       const lastResultStep = newCalculationSteps[newCalculationSteps.length - 1];
       const resultValue = lastResultStep.result; // 40
       
-      // Start fresh calculation with the result as the first number
-      newCalculationSteps = [{
-        expression: resultValue.toString(),
-        result: resultValue,
-        timestamp: Date.now(),
-        stepNumber: 1,
-        operationType: 'number',
-        displayValue: resultValue.toString()
-      }];
+      // Continue calculation by treating the result as the base for the next operation
+      // Keep all previous steps and add a new step for continuing the calculation
       
       newValue = resultValue.toString(); // Display 40
       newLastOperation = input; // Set + as the operation
       newIsNewNumber = true;
-      newArticleCount = 1;
+      newArticleCount = newCalculationSteps.length; // Keep current article count
       
       // Don't add to grand total yet - wait for the next number and equals
     } else if (input === '+' && newCalculationSteps.length >= 2) {
