@@ -525,7 +525,7 @@ const processCompoundCalculation = (
       newValue = resultValue.toString(); // Display 40
       newLastOperation = input; // Set + as the operation
       newIsNewNumber = true;
-      newArticleCount = newCalculationSteps.length; // Keep current article count
+      newArticleCount = 2; // Keep at 2 articles (the compound calculation represents 2 items)
       
       // Don't add to grand total yet - wait for the next number and equals
     } else if (input === '+' && newCalculationSteps.length >= 2) {
