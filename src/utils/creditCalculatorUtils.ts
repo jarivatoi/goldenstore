@@ -396,8 +396,7 @@ export const processCalculatorInput = (
           });
         }
       } else if (newLastOperation && ['+', '-'].includes(newLastOperation)) {
-      // After a low precedence operator (+/-), create new operation step
-      if (newCalculationSteps.length > 0) {
+        // After an operator, create new operation step
         const operatorSymbol = newLastOperation === '+' ? '+' : '-';
         newCalculationSteps.push({
           expression: `${operatorSymbol}${input}`,
@@ -408,10 +407,6 @@ export const processCalculatorInput = (
           displayValue: `${operatorSymbol}${input}`
         });
         newArticleCount = newCalculationSteps.filter(step => step.operationType !== 'result').length;
-      }
-    } else if (newLastOperation && ['*', '/'].includes(newLastOperation)) {
-      // After a high precedence operator (×/÷), prepare for compound operation
-      // Don't create step yet - wait for operator precedence resolution
       }
       newValue = input;
       newIsNewNumber = false;
@@ -428,12 +423,7 @@ export const processCalculatorInput = (
           lastStep.result = parseFloat(newValue);
         } else if (lastStep.operationType === 'operation' && newLastOperation) {
           // Update operation step - preserve operator prefix
-        // Update operation step - preserve operator prefix and handle compound operations
-        if (lastStep.expression.includes('=')) {
-          // This is already a completed compound operation, don't update
-        } else {
-          const operatorSymbol = newLastOperation === '+' ? '+' : newLastOperation === '-' ? '-' : 
-                               newLastOperation === '*' ? '×' : newLastOperation === '/' ? '÷' : '';
+          const operatorSymbol = newLastOperation === '+' ? '+' : '-';
           lastStep.displayValue = `${operatorSymbol}${newValue}`;
           lastStep.expression = `${operatorSymbol}${newValue}`;
           lastStep.result = parseFloat(newValue);
@@ -455,41 +445,37 @@ export const processCalculatorInput = (
     // Handle operators
     const operator = input === '×' ? '*' : input === '÷' ? '/' : input;
     
-    // Handle operator precedence for compound calculations
-    if (newLastOperation && (operator === '*' || operator === '/') && (newLastOperation === '+' || newLastOperation === '-')) {
-      // High precedence operation after low precedence - this will be a compound operation
-      // Don't create step yet, wait for the number
-    } else if (newLastOperation && (newLastOperation === '*' || newLastOperation === '/') && (operator === '+' || operator === '-')) {
-      // Low precedence after high precedence - complete the high precedence operation
-      if (newCalculationSteps.length >= 2) {
-        const lastStep = newCalculationSteps[newCalculationSteps.length - 1];
-        if (lastStep.operationType === 'operation' && !lastStep.expression.includes('=')) {
-          // Complete the multiplication/division operation
-          const prevStep = newCalculationSteps[newCalculationSteps.length - 2];
-          if (prevStep.operationType === 'number') {
-            const firstNum = prevStep.result;
-            const secondNum = parseFloat(newValue);
-            const displayOp = newLastOperation === '*' ? '×' : '÷';
-            const result = newLastOperation === '*' ? firstNum * secondNum : firstNum / secondNum;
-            
-            // Update the last step to show the compound operation
-            lastStep.expression = `(${firstNum}${displayOp}${secondNum})=${result}`;
-            lastStep.result = result;
-            lastStep.displayValue = `(${firstNum}${displayOp}${secondNum})=${result}`;
-          }
-        }
+    // Don't create duplicate steps for operators
+    if (newLastOperation !== operator) {
+      if (newCalculationSteps.length === 0) {
+        // First number entry when operator is pressed
+        newCalculationSteps.push({
+          expression: newValue,
+          result: parseFloat(newValue),
+          timestamp: Date.now(),
+          stepNumber: 1,
+          operationType: 'number',
+          displayValue: newValue
+        });
+        newArticleCount = 1;
+      } else if (newCalculationSteps.length === 1 && (operator === '*' || operator === '/')) {
+        // Direct multiplication/division after first number
+        const firstNumber = newCalculationSteps[0].result;
+        const currentNumber = parseFloat(newValue);
+        const displayOperator = operator === '*' ? '×' : '÷';
+        const result = operator === '*' ? firstNumber * currentNumber : firstNumber / currentNumber;
+        
+        newCalculationSteps.push({
+          expression: `(${firstNumber}${displayOperator}${currentNumber})=${result}`,
+          result: result,
+          timestamp: Date.now(),
+          stepNumber: 2,
+          operationType: 'operation',
+          displayValue: `(${firstNumber}${displayOperator}${currentNumber})=${result}`
+        });
+        
+        newArticleCount = 2;
       }
-    } else if (newCalculationSteps.length === 0) {
-      // First number entry when operator is pressed
-      newCalculationSteps.push({
-        expression: newValue,
-        result: parseFloat(newValue),
-        timestamp: Date.now(),
-        stepNumber: 1,
-        operationType: 'number',
-        displayValue: newValue
-      });
-      newArticleCount = 1;
     }
     
     newLastOperation = operator;
