@@ -983,7 +983,7 @@ const CreditManagement: React.FC = () => {
             </button>
             <button
               onClick={() => handleCalculatorInput('AUTO')}
-              className="bg-gray-400 hover:bg-gray-500 text-white p-3 rounded-lg font-bold text-xs shadow-md border border-gray-500"
+              className="bg-gray-400 hover:bg-gray-500 text-white p-3 rounded-lg font-bold text-sm shadow-md border border-gray-500"
             >
               AUTO REPLAY
             </button>
@@ -1067,7 +1067,7 @@ const CreditManagement: React.FC = () => {
             {/* Row 4: AC, 1, 2, 3, +, - */}
             <button
               onClick={() => handleCalculatorInput('AC')}
-              className="bg-red-500 hover:bg-red-600 text-white p-3 rounded-lg font-bold text-sm shadow-md border border-red-600 row-span-2"
+              className="bg-red-500 hover:bg-red-600 text-white p-3 rounded-lg font-bold text-sm shadow-md border border-red-600"
               style={{ gridRow: 'span 2' }}
             >
               AC

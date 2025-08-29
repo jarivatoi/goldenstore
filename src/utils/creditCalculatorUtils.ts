@@ -28,6 +28,8 @@ interface CalculationStep {
   stepNumber: number;
   operationType: 'number' | 'operation' | 'result';
   displayValue: string;
+  isComplete: boolean; // Track if this step is complete
+  operator?: string; // Store the operator used
 }
 
 /**
@@ -129,7 +131,8 @@ const processSimpleCalculation = (
           timestamp: Date.now(),
           stepNumber: 1,
           operationType: 'number',
-          displayValue: input
+          displayValue: input,
+          isComplete: false
         });
       } else if (newLastOperation === '+' || newLastOperation === '-') {
         // After operator, create new step: +5, +30, -10, etc.
@@ -146,7 +149,9 @@ const processSimpleCalculation = (
           timestamp: Date.now(),
           stepNumber: newCalculationSteps.length + 1,
           operationType: 'operation',
-          displayValue: `${newLastOperation}${input}`
+          displayValue: `${newLastOperation}${input}`,
+          isComplete: false,
+          operator: newLastOperation
         });
       }
       newValue = input;
@@ -162,11 +167,13 @@ const processSimpleCalculation = (
           lastStep.displayValue = newValue;
           lastStep.expression = newValue;
           lastStep.result = parseFloat(newValue);
+          lastStep.isComplete = false;
         } else if (lastStep.operationType === 'operation') {
           const operator = lastStep.expression.charAt(0);
           lastStep.displayValue = `${operator}${newValue}`;
           lastStep.expression = `${operator}${newValue}`;
           lastStep.result = parseFloat(newValue);
+          lastStep.isComplete = false;
         }
       }
     }
@@ -200,6 +207,11 @@ const processSimpleCalculation = (
   } else if (input === '=' || input === 'ENTER') {
     // Calculate result for simple operations
     if (newCalculationSteps.length > 0) {
+      // Mark all previous steps as complete
+      newCalculationSteps.forEach(step => {
+        step.isComplete = true;
+      });
+      
       const expression = buildSimpleExpression(newCalculationSteps);
       result = evaluateExpression(expression);
       
@@ -210,12 +222,17 @@ const processSimpleCalculation = (
         timestamp: Date.now(),
         stepNumber: newCalculationSteps.length + 1,
         operationType: 'result',
-        displayValue: `=${result}`
+        displayValue: `=${result}`,
+        isComplete: true
       });
       
       newValue = result.toString();
       newLastOperation = null;
       newIsNewNumber = true;
+      
+      // Add to grand total and transaction history
+      newGrandTotal += result;
+      newTransactionHistory.push(result);
     }
   }
 
@@ -276,7 +293,8 @@ const processCompoundCalculation = (
           timestamp: Date.now(),
           stepNumber: 1,
           operationType: 'number',
-          displayValue: input
+          displayValue: input,
+          isComplete: false
         });
       } else if (newLastOperation && newIsNewNumber) {
         // After any operator, create new step
@@ -287,7 +305,9 @@ const processCompoundCalculation = (
           timestamp: Date.now(),
           stepNumber: newCalculationSteps.length + 1,
           operationType: 'operation',
-          displayValue: `${displayOperator}${input}`
+          displayValue: `${displayOperator}${input}`,
+          isComplete: false,
+          operator: newLastOperation
         });
         // Increment article count for new operand
         newArticleCount = newCalculationSteps.length;
@@ -305,11 +325,13 @@ const processCompoundCalculation = (
           lastStep.displayValue = newValue;
           lastStep.expression = newValue;
           lastStep.result = parseFloat(newValue);
+          lastStep.isComplete = false;
         } else if (lastStep.operationType === 'operation') {
           const operator = lastStep.expression.charAt(0);
           lastStep.displayValue = `${operator}${newValue}`;
           lastStep.expression = `${operator}${newValue}`;
           lastStep.result = parseFloat(newValue);
+          lastStep.isComplete = false;
         }
       }
     }
@@ -338,6 +360,11 @@ const processCompoundCalculation = (
   } else if (input === '=' || input === 'ENTER') {
     // Calculate result for compound operations
     if (newCalculationSteps.length > 0) {
+      // Mark all previous steps as complete
+      newCalculationSteps.forEach(step => {
+        step.isComplete = true;
+      });
+      
       const expression = buildSimpleExpression(newCalculationSteps);
       result = evaluateExpression(expression);
       
@@ -348,12 +375,17 @@ const processCompoundCalculation = (
         timestamp: Date.now(),
         stepNumber: newCalculationSteps.length + 1,
         operationType: 'result',
-        displayValue: `=${result}`
+        displayValue: `=${result}`,
+        isComplete: true
       });
       
       newValue = result.toString();
       newLastOperation = null;
       newIsNewNumber = true;
+      
+      // Add to grand total and transaction history
+      newGrandTotal += result;
+      newTransactionHistory.push(result);
     }
   }
 
@@ -546,18 +578,15 @@ export const processCalculatorInput = (
       newValue = currentValue;
     }
   } else if (input === 'CHECK→') {
-    // Check forward - toggle between first and last step only
+    // Check forward - cycle through all steps
     if (newCalculationSteps.length > 0) {
-      // Get current step index - toggle between 0 (first) and last
+      // Enhanced check navigation - cycle through all steps
       let currentStepIndex = parseInt(localStorage.getItem('currentCheckIndex') || '-1');
-      const lastStepIndex = newCalculationSteps.length - 1;
       
-      if (currentStepIndex === -1 || currentStepIndex === lastStepIndex) {
-        // Show first step
-        currentStepIndex = 0;
-      } else {
-        // Show last step
-        currentStepIndex = lastStepIndex;
+      // Move to next step
+      currentStepIndex++;
+      if (currentStepIndex >= newCalculationSteps.length) {
+        currentStepIndex = 0; // Wrap to beginning
       }
       
       // Save new index
@@ -584,18 +613,15 @@ export const processCalculatorInput = (
       };
     }
   } else if (input === 'CHECK←') {
-    // Check backward - toggle between last and first step only
+    // Check backward - cycle through all steps in reverse
     if (newCalculationSteps.length > 0) {
-      // Get current step index - toggle between last and 0 (first)
+      // Enhanced check navigation - cycle through all steps backwards
       let currentStepIndex = parseInt(localStorage.getItem('currentCheckIndex') || '-1');
-      const lastStepIndex = newCalculationSteps.length - 1;
       
-      if (currentStepIndex === -1 || currentStepIndex === 0) {
-        // Show last step
-        currentStepIndex = lastStepIndex;
-      } else {
-        // Show first step
-        currentStepIndex = 0;
+      // Move to previous step
+      currentStepIndex--;
+      if (currentStepIndex < 0) {
+        currentStepIndex = newCalculationSteps.length - 1; // Wrap to end
       }
       
       // Save new index
@@ -643,7 +669,8 @@ export const processCalculatorInput = (
         timestamp: Date.now(),
         stepNumber: 2,
         operationType: 'operation',
-        displayValue: `(${baseValue}×${percentageValue}%)=${percentResult}`
+        displayValue: `(${baseValue}×${percentageValue}%)=${percentResult}`,
+        isComplete: false
       };
       
       // Show the percentage result (10) in display
@@ -664,7 +691,8 @@ export const processCalculatorInput = (
           timestamp: Date.now(),
           stepNumber: newCalculationSteps.length,
           operationType: 'operation',
-          displayValue: `${percentResult}%`
+          displayValue: `${percentResult}%`,
+          isComplete: false
         };
       } else {
         newCalculationSteps = [{
@@ -673,7 +701,8 @@ export const processCalculatorInput = (
           timestamp: Date.now(),
           stepNumber: 1,
           operationType: 'number',
-          displayValue: `${percentResult}%`
+          displayValue: `${percentResult}%`,
+          isComplete: false
         }];
       }
       newArticleCount = newCalculationSteps.length;
