@@ -881,8 +881,7 @@ const CreditManagement: React.FC = () => {
             <div className="bg-gray-800 rounded-lg p-4 text-right relative border-2 border-gray-400 shadow-inner">
               {/* LCD Header */}
               <div className="text-center mb-2">
-                <div className="text-xs text-gray-400 font-mono">GOLDEN STORE JS-705</div>
-                <div className="text-xs text-gray-400 font-mono">112 STEPS CHECK</div>
+                <div className="text-xs text-gray-400 font-mono">GOLDEN STORE CALCULATOR</div>
               </div>
               
               {/* Status Indicators */}
