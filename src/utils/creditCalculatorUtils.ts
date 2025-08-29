@@ -565,26 +565,8 @@ export const processCalculatorInput = (
           
           newArticleCount = 2; // Keep only 2 steps
         } else {
-          // Sequential addition/subtraction like 20+30+10
-          // Build expression from all existing steps plus current operation
-          let fullExpression = '';
-          
-          // Start with first number
-          fullExpression += firstStep.result;
-          
-          // Add all operation steps
-          for (let i = 1; i < newCalculationSteps.length; i++) {
-            const step = newCalculationSteps[i];
-            if (step.operationType === 'operation') {
-              fullExpression += step.expression;
-            }
-          }
-          
-          // Add current operation and number
-          fullExpression += newLastOperation + currentNumber;
-          
-          // Calculate result
-          result = evaluateExpression(fullExpression);
+          // Sequential addition/subtraction like 10+20+30
+          const currentNumber = parseFloat(newValue);
           
           // Add the new operation step
           newCalculationSteps.push({
@@ -595,6 +577,21 @@ export const processCalculatorInput = (
             operationType: 'operation',
             displayValue: `${newLastOperation === '+' ? '+' : newLastOperation === '-' ? '-' : newLastOperation}${currentNumber}`
           });
+          
+          // Calculate result by summing all steps
+          result = firstStep.result; // Start with first number (10)
+          
+          // Add all operation steps
+          for (let i = 1; i < newCalculationSteps.length; i++) {
+            const step = newCalculationSteps[i];
+            if (step.operationType === 'operation') {
+              if (step.expression.startsWith('+')) {
+                result += step.result;
+              } else if (step.expression.startsWith('-')) {
+                result -= step.result;
+              }
+            }
+          }
           
           newArticleCount = newCalculationSteps.filter(step => 
             step.operationType === 'operation' && (step.expression.startsWith('+') || step.expression.startsWith('-'))
