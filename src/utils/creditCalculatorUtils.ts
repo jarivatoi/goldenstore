@@ -133,6 +133,16 @@ const processSimpleCalculation = (
         });
       } else if (newLastOperation === '+' || newLastOperation === '-') {
         // After operator, create new step: +5, +30, -10, etc.
+        // Check if we're continuing after a result
+        const lastStep = newCalculationSteps[newCalculationSteps.length - 1];
+        if (lastStep.operationType === 'result') {
+          // We're adding a new number after a result (e.g., 40+ then 15)
+          newArticleCount = newArticleCount + 1; // Increment from current count
+        } else {
+          // Normal case
+          newArticleCount = newCalculationSteps.length + 1;
+        }
+        
         newCalculationSteps.push({
           expression: `${newLastOperation}${input}`,
           result: parseFloat(input),
@@ -141,7 +151,6 @@ const processSimpleCalculation = (
           operationType: 'operation',
           displayValue: `${newLastOperation}${input}`
         });
-        newArticleCount = newCalculationSteps.length;
       }
       newValue = input;
       newIsNewNumber = false;
