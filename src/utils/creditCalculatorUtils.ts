@@ -318,6 +318,18 @@ const processCompoundCalculation = (
           displayValue: `${displayOperator}${input}`
         });
         newArticleCount = 3;
+      } else if (newCalculationSteps.length === 1 && (newLastOperation === '*' || newLastOperation === '/')) {
+        // After 100×, when entering 10, create multiplication step
+        const displayOperator = newLastOperation === '*' ? '×' : '÷';
+        newCalculationSteps.push({
+          expression: `${displayOperator}${input}`,
+          result: parseFloat(input),
+          timestamp: Date.now(),
+          stepNumber: 2,
+          operationType: 'operation',
+          displayValue: `${displayOperator}${input}`
+        });
+        newArticleCount = 2;
       }
       newValue = input;
       newIsNewNumber = false;
@@ -386,6 +398,19 @@ const processCompoundCalculation = (
           displayValue: `${displayOperator}0.`
         });
         newArticleCount = 3;
+      } else if (newCalculationSteps.length === 1 && (newLastOperation === '*' || newLastOperation === '/')) {
+        // After 100×, when entering decimal, create multiplication step
+        const displayOperator = newLastOperation === '*' ? '×' : '÷';
+        newValue = '0.';
+        newCalculationSteps.push({
+          expression: `${displayOperator}0.`,
+          result: 0,
+          timestamp: Date.now(),
+          stepNumber: 2,
+          operationType: 'operation',
+          displayValue: `${displayOperator}0.`
+        });
+        newArticleCount = 2;
       } else {
         newValue = '0.';
       }
