@@ -2,11 +2,26 @@
  * CREDIT CALCULATOR UTILITIES
  * ===========================
  * 
- * Simple calculator logic with only addition and subtraction
- * Counter only starts after first operation is entered
+ * Utility functions for calculator operations and expression evaluation
  */
 
-export interface CalculationStep {
+/**
+ * Calculator state interface
+ */
+interface CalculatorState {
+  display: string;
+  memory: number;
+  grandTotal: number;
+  lastOperation: string | null;
+  lastOperand: number | null;
+  isNewNumber: boolean;
+  isError: boolean;
+}
+
+/**
+ * Calculation step interface for tracking intermediate steps
+ */
+interface CalculationStep {
   expression: string;
   result: number;
   timestamp: number;
@@ -16,7 +31,29 @@ export interface CalculationStep {
 }
 
 /**
- * Evaluate a mathematical expression safely
+ * Article count state interface
+ */
+interface ArticleCountState {
+  count: number;
+  hasCurrentArticle: boolean;
+}
+
+/**
+ * Initialize calculator state
+ */
+export const initCalculatorState = (): CalculatorState & { articleCount: number } => ({
+  display: '0',
+  memory: 0,
+  grandTotal: 0,
+  lastOperation: null,
+  lastOperand: null,
+  isNewNumber: true,
+  isError: false,
+  articleCount: 0
+});
+
+/**
+ * Safely evaluates a calculator expression
  */
 export const evaluateExpression = (expression: string): number => {
   try {
@@ -47,31 +84,10 @@ export const evaluateExpression = (expression: string): number => {
 };
 
 /**
- * Build expression from calculation steps
- */
-const buildSimpleExpression = (steps: CalculationStep[]): string => {
-  let expression = '';
-  
-  for (let i = 0; i < steps.length; i++) {
-    const step = steps[i];
-    
-    if (step.operationType === 'number') {
-      expression += step.result;
-    } else if (step.operationType === 'operation') {
-      expression += step.expression;
-    }
-  }
-  
-  return expression;
-};
-
-/**
- * SIMPLE CALCULATION FLOW ONLY
- * ============================
- * Handles: 10+5+3=18, 100-25-10=65
+ * SIMPLE CALCULATION FLOW
+ * =======================
+ * Handles: 10+20+30=60, 100-25-10=65
  * Only addition and subtraction operations
- * Counter increments on + operations, decrements on - operations
- * Only when operation has valid number (not 0)
  */
 const processSimpleCalculation = (
   currentValue: string,
@@ -105,7 +121,8 @@ const processSimpleCalculation = (
     // Handle numeric input
     if (newIsNewNumber || currentValue === '0') {
       if (newCalculationSteps.length === 0) {
-        // First number: don't change counter, wait for operation
+        // First number: 25
+        newArticleCount = 1;
         newCalculationSteps.push({
           expression: input,
           result: parseFloat(input),
@@ -114,7 +131,12 @@ const processSimpleCalculation = (
           operationType: 'number',
           displayValue: input
         });
-        // DON'T change counter here - keep it at current value
+      } else if (newLastOperation === '+' || newLastOperation === '-') {
+        // After operator, create new step: +5, +30, -10, etc.
+        // Check if we're continuing after a result
+        const lastStep = newCalculationSteps[newCalculationSteps.length - 1];
+        if (lastStep.operationType === 'result') {
+          // We're adding a new number after a result (e.g., 40+ then 15)
       } else if (newLastOperation && newIsNewNumber) {
         // After any operator, create new step
         newCalculationSteps.push({
@@ -125,7 +147,6 @@ const processSimpleCalculation = (
           operationType: 'operation',
           displayValue: `${newLastOperation}${input}`
         });
-        // DON'T change counter here - it was already set when operator was pressed
       }
       newValue = input;
       newIsNewNumber = false;
@@ -147,7 +168,6 @@ const processSimpleCalculation = (
           lastStep.result = parseFloat(newValue);
         }
       }
-      // DON'T change counter here - only change on operators
     }
   } else if (input === '.') {
     // Handle decimal point - add to current number
@@ -156,19 +176,14 @@ const processSimpleCalculation = (
     }
   } else if (input === '+' || input === '-') {
     // Handle + and - operators
-    // Counter logic: only start counting after first operation
-    if (newCalculationSteps.length === 1) {
-      // First operation: 10+ -> counter becomes 1
-      newArticleCount = 1;
-    } else if (newCalculationSteps.length > 1) {
-      // Subsequent operations: increment/decrement based on operator
-      const currentNum = parseFloat(currentValue);
-      if (!isNaN(currentNum) && currentNum > 0) {
-        if (input === '+') {
-          newArticleCount = newArticleCount + 1;
-        } else if (input === '-') {
-          newArticleCount = Math.max(0, newArticleCount - 1);
-        }
+    // Update counter based on the current number and operator
+    const currentNum = parseFloat(currentValue);
+    
+    if (!isNaN(currentNum) && currentNum > 0) {
+      if (input === '+') {
+        newArticleCount = Math.max(1, newArticleCount + 1);
+      } else if (input === '-') {
+        newArticleCount = Math.max(0, newArticleCount - 1);
       }
     }
     
@@ -200,10 +215,6 @@ const processSimpleCalculation = (
       newValue = result.toString();
       newLastOperation = null;
       newIsNewNumber = true;
-      
-      // Add to grand total and transaction history
-      newGrandTotal += result;
-      newTransactionHistory.push(result);
     }
   }
 
@@ -220,7 +231,177 @@ const processSimpleCalculation = (
 };
 
 /**
- * Main calculator input processor - SIMPLE ONLY
+ * COMPOUND CALCULATION FLOW
+ * =========================
+ * Handles: 5×3=15 (5 articles at 3.00 each), 10÷2=5 (10 articles at 0.50 each)
+ * Multiplication and division operations represent article quantities
+ */
+const processCompoundCalculation = (
+  currentValue: string,
+  input: string,
+  calculationSteps: CalculationStep[],
+  lastOperation: string | null,
+  isNewNumber: boolean,
+  articleCount: number,
+  grandTotal: number = 0,
+  transactionHistory: number[] = []
+): {
+  value: string;
+  calculationSteps: CalculationStep[];
+  lastOperation: string | null;
+  isNewNumber: boolean;
+  articleCount: number;
+  grandTotal: number;
+  transactionHistory: number[];
+  result?: number;
+} => {
+  let newValue = currentValue;
+  let newCalculationSteps = [...calculationSteps];
+  let newLastOperation = lastOperation;
+  let newIsNewNumber = isNewNumber;
+  let newArticleCount = articleCount;
+  let newGrandTotal = grandTotal;
+  let newTransactionHistory = [...transactionHistory];
+  let result: number | undefined;
+
+  if (/^\d+$/.test(input) || input === '00' || input === '000') {
+    // Handle numeric input
+    if (newIsNewNumber || currentValue === '0') {
+      if (newCalculationSteps.length === 0) {
+        // First number: quantity (e.g., 5 articles)
+        newCalculationSteps.push({
+          expression: input,
+          result: parseFloat(input),
+          timestamp: Date.now(),
+          stepNumber: 1,
+          operationType: 'number',
+          displayValue: input
+        });
+      } else if (newLastOperation && newIsNewNumber) {
+        // After any operator, create new step
+        const displayOperator = newLastOperation === '*' ? '×' : '÷';
+        newCalculationSteps.push({
+          expression: `${displayOperator}${input}`,
+          result: parseFloat(input),
+          timestamp: Date.now(),
+          stepNumber: newCalculationSteps.length + 1,
+      }
+        // Increment article count for new operand
+        newArticleCount = newCalculationSteps.length;
+    } else {
+      // Building existing number
+      newValue = currentValue + input;
+      
+      }
+      newValue = input;
+      newIsNewNumber = false;
+    } else {
+      // Building existing number
+      newValue = currentValue + input;
+      
+      // Update the last step
+      if (newCalculationSteps.length > 0) {
+        const lastStep = newCalculationSteps[newCalculationSteps.length - 1];
+        if (lastStep.operationType === 'number') {
+          lastStep.displayValue = newValue;
+          lastStep.expression = newValue;
+          lastStep.result = parseFloat(newValue);
+        } else if (lastStep.operationType === 'operation') {
+          const operator = lastStep.expression.charAt(0);
+          lastStep.displayValue = `${operator}${newValue}`;
+          lastStep.expression = `${operator}${newValue}`;
+          lastStep.result = parseFloat(newValue);
+        }
+      }
+    }
+  } else if (input === '.') {
+    // Handle decimal point
+    if (!currentValue.includes('.')) {
+      newValue = currentValue + '.';
+    }
+  } else if (input === '*' || input === '/') {
+    // Handle multiplication and division
+    // For compound: 5×3 means 5 articles at 3.00 each
+    const currentNum = parseFloat(currentValue);
+    
+    if (!isNaN(currentNum) && currentNum > 0) {
+      if (input === '*') {
+        // Set article count to the first number (quantity)
+        newArticleCount = Math.floor(currentNum);
+      } else if (input === '/') {
+        // Division: quantity ÷ price per unit
+        newArticleCount = Math.floor(currentNum);
+      }
+    }
+    
+    newLastOperation = input;
+    newIsNewNumber = true;
+  } else if (input === '=' || input === 'ENTER') {
+    // Calculate result for compound operations
+    if (newCalculationSteps.length > 0) {
+      const expression = buildSimpleExpression(newCalculationSteps);
+      result = evaluateExpression(expression);
+      
+      // Add result step
+      newCalculationSteps.push({
+        expression: `=${result}`,
+        result: result,
+        timestamp: Date.now(),
+        stepNumber: newCalculationSteps.length + 1,
+        operationType: 'result',
+        displayValue: `=${result}`
+      });
+      
+      newValue = result.toString();
+      newLastOperation = null;
+      newIsNewNumber = true;
+    }
+  }
+  }
+
+  return {
+    value: newValue,
+    calculationSteps: newCalculationSteps,
+    lastOperation: newLastOperation,
+    isNewNumber: newIsNewNumber,
+    articleCount: newArticleCount,
+    grandTotal: newGrandTotal,
+    transactionHistory: newTransactionHistory,
+    result
+  };
+};
+
+/**
+ * Build expression from simple calculation steps
+ */
+const buildSimpleExpression = (steps: CalculationStep[]): string => {
+  let expression = '';
+  
+  for (let i = 0; i < steps.length; i++) {
+    const step = steps[i];
+    
+    if (step.operationType === 'number') {
+      expression += step.result;
+    } else if (step.operationType === 'operation') {
+      expression += step.expression;
+    }
+  }
+  
+  return expression;
+};
+
+/**
+ * Determine if calculation is compound
+ * Simple: Only + and - operators
+ * Compound: Any × or ÷ operators
+ */
+const isCompoundCalculation = (calculationSteps: CalculationStep[], lastOperation: string | null): boolean => {
+  // Compound if current operation is × or ÷
+  return (lastOperation === '*' || lastOperation === '/' || lastOperation === '×' || lastOperation === '÷');
+};
+
+/**
+ * Calculator input processor with simplified flows
  */
 export const processCalculatorInput = (
   currentValue: string,
@@ -257,9 +438,30 @@ export const processCalculatorInput = (
   let newCalculationSteps = [...calculationSteps];
   let autoReplayActive = false;
   let newArticleCount = articleCount;
+  
+  // Determine which flow to use based on current operation
+  const isCompound = isCompoundCalculation(newCalculationSteps, newLastOperation) || 
+                     (input === '*' || input === '/' || input === '×' || input === '÷');
+  
+  // Handle error state
+  if (currentValue === 'Error' && !['ON/C', 'AC', 'C'].includes(input)) {
+    return {
+      value: 'Error',
+      memory: newMemory,
+      grandTotal: newGrandTotal,
+      lastOperation: newLastOperation,
+      lastOperand: newLastOperand,
+      isNewNumber: newIsNewNumber,
+      isActive: true,
+      transactionHistory: newTransactionHistory,
+      calculationSteps: newCalculationSteps,
+      autoReplayActive: false,
+      articleCount: newArticleCount
+    };
+  }
 
   // Get current numeric value
-  const getCurrentNumber = () => {
+  const getCurrentNumber = (): number => {
     const num = parseFloat(currentValue);
     return isNaN(num) ? 0 : num;
   };
@@ -273,10 +475,11 @@ export const processCalculatorInput = (
     newLastOperation = null;
     newLastOperand = null;
     newIsNewNumber = true;
+    newTransactionHistory = [];
     newCalculationSteps = [];
     newArticleCount = 0;
-    newTransactionHistory = [];
-    autoReplayActive = false;
+    isActive = false;
+    localStorage.removeItem('currentCheckIndex');
   } else if (input === 'AC') {
     // All Clear - same as ON/C
     newValue = '0';
@@ -285,10 +488,11 @@ export const processCalculatorInput = (
     newLastOperation = null;
     newLastOperand = null;
     newIsNewNumber = true;
+    newTransactionHistory = [];
     newCalculationSteps = [];
     newArticleCount = 0;
-    newTransactionHistory = [];
-    autoReplayActive = false;
+    isActive = false;
+    localStorage.removeItem('currentCheckIndex');
   } else if (input === 'CE') {
     // Clear Entry - only clear display
     newValue = '0';
@@ -307,14 +511,14 @@ export const processCalculatorInput = (
     newMemory += currentNum;
   } else if (input === 'MRC') {
     // Memory Recall/Clear
-    if (newMemory === 0) {
+    if (memory === 0) {
       // Nothing in memory, do nothing
-    } else if (currentValue === newMemory.toString()) {
+    } else if (currentValue === memory.toString()) {
       // If displaying memory value, clear memory
       newMemory = 0;
     } else {
       // Recall memory value
-      newValue = newMemory.toString();
+      newValue = memory.toString();
       newIsNewNumber = true;
     }
   } else if (input === 'M-') {
@@ -421,18 +625,60 @@ export const processCalculatorInput = (
   } else if (input === '%') {
     // Percentage calculation
     const currentNum = getCurrentNumber();
-    const percentResult = currentNum / 100;
-    newValue = percentResult.toString();
-    newIsNewNumber = true;
-    
-    newCalculationSteps = [{
-      expression: percentResult.toString(),
-      result: percentResult,
-      timestamp: Date.now(),
-      stepNumber: 1,
-      operationType: 'number',
-      displayValue: percentResult.toString()
-    }];
+    // Handle percentage calculation for compound operations
+    if (newLastOperation === '*' && newCalculationSteps.length >= 2) {
+      // For 100×10%, we have:
+      // Step 1: "100" (base value)
+      // Step 2: "×10" (percentage value)
+      
+      const baseValue = newCalculationSteps[0].result; // 100
+      const percentageValue = currentNum; // 10
+      
+      // Calculate percentage: 100 × (10/100) = 10
+      const percentResult = Math.round((baseValue * (percentageValue / 100)) * 100) / 100;
+      
+      // Update step 2 to show the percentage calculation
+      newCalculationSteps[1] = {
+        expression: `(${baseValue}×${percentageValue}%)`,
+        result: percentResult,
+        timestamp: Date.now(),
+        stepNumber: 2,
+        operationType: 'operation',
+        displayValue: `(${baseValue}×${percentageValue}%)=${percentResult}`
+      };
+      
+      // Show the percentage result (10) in display
+      newValue = percentResult.toString();
+      newLastOperation = null;
+      newIsNewNumber = true;
+      newArticleCount = 2;
+    } else {
+      // Simple percentage calculation
+      const percentResult = Math.round((currentNum / 100) * 100) / 100;
+      newValue = percentResult.toString();
+      newIsNewNumber = true;
+      
+      if (newCalculationSteps.length > 0) {
+        newCalculationSteps[newCalculationSteps.length - 1] = {
+          expression: `${percentResult}%`,
+          result: percentResult,
+          timestamp: Date.now(),
+          stepNumber: newCalculationSteps.length,
+          operationType: 'operation',
+          displayValue: `${percentResult}%`
+        };
+      } else {
+        newCalculationSteps = [{
+          expression: `${percentResult}%`,
+          result: percentResult,
+          timestamp: Date.now(),
+          stepNumber: 1,
+          operationType: 'number',
+          displayValue: `${percentResult}%`
+        }];
+      }
+      newArticleCount = newCalculationSteps.length;
+    }
   } else if (input === '√') {
     // Square root
     const currentNum = getCurrentNumber();
@@ -442,37 +688,102 @@ export const processCalculatorInput = (
       newValue = Math.sqrt(currentNum).toString();
     }
     newIsNewNumber = true;
+  } else if (input === '.') {
+    // Handle decimal point - route to appropriate pathway
+    if (willBeCompound) {
+      // Use compound calculation flow for decimal
+      const compoundResult = processCompoundCalculation(
+        currentValue, input, newCalculationSteps, newLastOperation,
+        newIsNewNumber, newArticleCount, newGrandTotal, newTransactionHistory
+      );
+      
+      newValue = compoundResult.value;
+      newCalculationSteps = compoundResult.calculationSteps;
+      newLastOperation = compoundResult.lastOperation;
+      newIsNewNumber = compoundResult.isNewNumber;
+      newArticleCount = compoundResult.articleCount;
+      newGrandTotal = compoundResult.grandTotal;
+      newTransactionHistory = compoundResult.transactionHistory;
+    } else {
+      // Use simple calculation flow for decimal
+      const simpleResult = processSimpleCalculation(
+        currentValue, input, newCalculationSteps, newLastOperation,
+        newIsNewNumber, newArticleCount, newGrandTotal, newTransactionHistory
+      );
+      
+      newValue = simpleResult.value;
+      newCalculationSteps = simpleResult.calculationSteps;
+      newLastOperation = simpleResult.lastOperation;
+      newIsNewNumber = simpleResult.isNewNumber;
+      newArticleCount = simpleResult.articleCount;
+      newGrandTotal = simpleResult.grandTotal;
+      newTransactionHistory = simpleResult.transactionHistory;
+    }
   } else {
-    // Use simple calculation flow for all operations
-    const simpleResult = processSimpleCalculation(
-      currentValue, input, newCalculationSteps, newLastOperation, 
-      newIsNewNumber, newArticleCount, newGrandTotal, newTransactionHistory
-    );
-    
-    newValue = simpleResult.value;
-    newCalculationSteps = simpleResult.calculationSteps;
-    newLastOperation = simpleResult.lastOperation;
-    newIsNewNumber = simpleResult.isNewNumber;
-    newArticleCount = simpleResult.articleCount;
-    newGrandTotal = simpleResult.grandTotal;
-    newTransactionHistory = simpleResult.transactionHistory;
-    
-    if (simpleResult.result !== undefined) {
-      localStorage.setItem('currentCheckIndex', '-1');
+    // Route to appropriate calculation flow
+    if (input === '*' || input === '/' || input === '×' || input === '÷') {
+      const compoundResult = processCompoundCalculation(
+        currentValue, input, newCalculationSteps, newLastOperation,
+        newIsNewNumber, newArticleCount
+      );
+      
+      newValue = compoundResult.value;
+      newCalculationSteps = compoundResult.calculationSteps;
+      newLastOperation = compoundResult.lastOperation;
+      newIsNewNumber = compoundResult.isNewNumber;
+      newArticleCount = compoundResult.articleCount;
+      
+      if (compoundResult.result !== undefined) {
+        newGrandTotal += compoundResult.result;
+        newTransactionHistory.push(compoundResult.result);
+        localStorage.setItem('currentCheckIndex', '-1');
+      }
+    } else {
+      // Use simple calculation flow
+      const simpleResult = processSimpleCalculation(
+        currentValue, input, newCalculationSteps, newLastOperation,
+        newIsNewNumber, newArticleCount
+      );
+      
+      newValue = simpleResult.value;
+      newCalculationSteps = simpleResult.calculationSteps;
+      newLastOperation = simpleResult.lastOperation;
+      newIsNewNumber = simpleResult.isNewNumber;
+      newArticleCount = simpleResult.articleCount;
+      
+      if (simpleResult.result !== undefined) {
+        newGrandTotal += simpleResult.result;
+        newTransactionHistory.push(simpleResult.result);
+        localStorage.setItem('currentCheckIndex', '-1');
+      }
     }
   }
 
   // Format display value - preserve decimal formatting
   if (newValue !== 'Error' && newValue !== '0.' && !isNaN(parseFloat(newValue))) {
     const num = parseFloat(newValue);
-    if (num.toString().length > 12) {
+    if (num > 999999999999 || (num < 0.000001 && num !== 0)) {
       newValue = num.toExponential(6);
     } else {
       // Preserve trailing decimal point for user feedback
       if (newValue.endsWith('.')) {
         newValue = num.toString() + '.';
       } else {
-        newValue = num.toString();
+        // Format to 2 decimal places if it has 1 decimal place, otherwise keep as is
+        const numStr = num.toString();
+        if (numStr.includes('.')) {
+          const decimalPart = numStr.split('.')[1];
+          if (decimalPart.length === 1) {
+            // 1 decimal place -> format to 2 decimal places (1.2 -> 1.20)
+            newValue = num.toFixed(2);
+          } else {
+            // Multiple decimal places or whole number -> keep as is
+            newValue = numStr;
+          }
+        } else {
+          // Whole number -> keep as is (100 stays 100, not 100.00)
+          newValue = numStr;
+        }
       }
     }
   }
