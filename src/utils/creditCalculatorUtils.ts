@@ -886,7 +886,7 @@ export const processCalculatorInput = (
       const percentageValue = currentNum; // 10
       
       // Calculate percentage: 100 × (10/100) = 10
-      const percentResult = baseValue * (percentageValue / 100);
+      const percentResult = Math.round((baseValue * (percentageValue / 100)) * 100) / 100;
       
       // Update step 2 to show the percentage calculation
       newCalculationSteps[1] = {
@@ -905,7 +905,7 @@ export const processCalculatorInput = (
       newArticleCount = 2;
     } else {
       // Simple percentage calculation
-      const percentResult = currentNum / 100;
+      const percentResult = Math.round((currentNum / 100) * 100) / 100;
       newValue = percentResult.toString();
       newIsNewNumber = true;
       
@@ -1013,7 +1013,7 @@ export const processCalculatorInput = (
   // Format display value - preserve decimal formatting
   if (newValue !== 'Error' && newValue !== '0.' && !isNaN(parseFloat(newValue))) {
     const num = parseFloat(newValue);
-    if (num.toString().length > 12) {
+    if (num > 999999999999 || (num < 0.000001 && num !== 0)) {
       newValue = num.toExponential(6);
     } else {
       // Preserve trailing decimal point for user feedback
