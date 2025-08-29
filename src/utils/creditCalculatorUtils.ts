@@ -627,6 +627,7 @@ const processCompoundCalculation = (
         newValue = finalResult.toString();
         newLastOperation = null;
         newIsNewNumber = true;
+      }
               const operator = step.expression.charAt(0);
                 const operator = step.expression.charAt(0);
                 const operandValue = step.result;
