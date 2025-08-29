@@ -289,9 +289,9 @@ const processCompoundCalculation = (
           operationType: 'operation',
           displayValue: `${displayOperator}${input}`
         });
-      }
         // Increment article count for new operand
         newArticleCount = newCalculationSteps.length;
+      }
       newValue = input;
       newIsNewNumber = false;
     } else {
@@ -546,13 +546,19 @@ export const processCalculatorInput = (
       newValue = currentValue;
     }
   } else if (input === 'CHECK→') {
-    // Check forward - move to next transaction in history
+    // Check forward - toggle between first and last step only
     if (newCalculationSteps.length > 0) {
-      // Get current step index from localStorage or start at -1
+      // Get current step index - toggle between 0 (first) and last
       let currentStepIndex = parseInt(localStorage.getItem('currentCheckIndex') || '-1');
+      const lastStepIndex = newCalculationSteps.length - 1;
       
-      // Move to next step
-      currentStepIndex = (currentStepIndex + 1) % newCalculationSteps.length;
+      if (currentStepIndex === -1 || currentStepIndex === lastStepIndex) {
+        // Show first step
+        currentStepIndex = 0;
+      } else {
+        // Show last step
+        currentStepIndex = lastStepIndex;
+      }
       
       // Save new index
       localStorage.setItem('currentCheckIndex', currentStepIndex.toString());
@@ -578,13 +584,19 @@ export const processCalculatorInput = (
       };
     }
   } else if (input === 'CHECK←') {
-    // Check backward - move to previous transaction in history
+    // Check backward - toggle between last and first step only
     if (newCalculationSteps.length > 0) {
-      // Get current step index from localStorage or start at steps length
-      let currentStepIndex = parseInt(localStorage.getItem('currentCheckIndex') || newCalculationSteps.length.toString());
+      // Get current step index - toggle between last and 0 (first)
+      let currentStepIndex = parseInt(localStorage.getItem('currentCheckIndex') || '-1');
+      const lastStepIndex = newCalculationSteps.length - 1;
       
-      // Move to previous step
-      currentStepIndex = currentStepIndex <= 0 ? newCalculationSteps.length - 1 : currentStepIndex - 1;
+      if (currentStepIndex === -1 || currentStepIndex === 0) {
+        // Show last step
+        currentStepIndex = lastStepIndex;
+      } else {
+        // Show first step
+        currentStepIndex = 0;
+      }
       
       // Save new index
       localStorage.setItem('currentCheckIndex', currentStepIndex.toString());
@@ -609,21 +621,6 @@ export const processCalculatorInput = (
         articleCount: newArticleCount
       };
     }
-  } else if (input === 'AUTO') {
-    // AUTO REPLAY - replay calculation steps
-    if (newCalculationSteps.length > 0) {
-      autoReplayActive = true;
-      localStorage.setItem('currentCheckIndex', '0');
-      newValue = newCalculationSteps[0].displayValue;
-      newArticleCount = 1;
-      newIsNewNumber = true;
-      
-      // Start auto replay sequence
-      setTimeout(() => {
-        startAutoReplaySequence(newCalculationSteps);
-      }, 500);
-    }
-    return { value: newValue, memory: newMemory, grandTotal: newGrandTotal, lastOperation: newLastOperation, lastOperand: newLastOperand, isNewNumber: newIsNewNumber, isActive, transactionHistory: newTransactionHistory, calculationSteps: newCalculationSteps, autoReplayActive, articleCount: newArticleCount };
   } else if (input === '%') {
     // Percentage calculation
     const currentNum = getCurrentNumber();
@@ -822,7 +819,7 @@ const startAutoReplaySequence = (steps: CalculationStep[]) => {
           stepIndex: currentStepIndex,
           totalSteps: steps.length,
           currentStep: currentStepIndex + 1,
-          articleCount: currentStepIndex + 1
+          articleCount: step.operationType === 'result' ? currentStepIndex : currentStepIndex + 1
         }
       }));
       
@@ -833,7 +830,6 @@ const startAutoReplaySequence = (steps: CalculationStep[]) => {
         setTimeout(showNextStep, 1000);
       } else {
         window.dispatchEvent(new CustomEvent('autoReplayComplete'));
-        localStorage.removeItem('currentCheckIndex');
       }
     }
   };
