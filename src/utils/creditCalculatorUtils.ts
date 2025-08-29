@@ -140,7 +140,7 @@ const processSimpleCalculation = (
       newValue = input;
       newIsNewNumber = false;
     } else {
-      // Continuing to type digits
+      // Continuing to type digits - build the number properly
       newValue = currentValue + input;
       
       // Update the last step if it's a number or operation
@@ -547,6 +547,16 @@ export const processCalculatorInput = (
   let autoReplayActive = false;
   let newArticleCount = articleCount;
   
+  // FIXED: Check if we need to switch to compound calculation
+  // This happens when we encounter × or ÷ operators
+  let tempLastOperationForCompoundCheck = newLastOperation;
+  if (input === '*' || input === '/' || input === '×' || input === '÷') {
+    tempLastOperationForCompoundCheck = input;
+  }
+  
+  // Determine which flow to use - check FUTURE state, not just current
+  const willBeCompound = isCompoundCalculation(newCalculationSteps, tempLastOperationForCompoundCheck);
+  
   // Handle error state
   if (currentValue === 'Error' && !['ON/C', 'AC', 'C'].includes(input)) {
     return {
@@ -832,16 +842,6 @@ export const processCalculatorInput = (
       newArticleCount = simpleResult.articleCount;
     }
   } else {
-    // FIXED: Check if we need to switch to compound calculation
-    // This happens when we encounter × or ÷ operators
-    let tempLastOperation = newLastOperation;
-    if (input === '*' || input === '/' || input === '×' || input === '÷') {
-      tempLastOperation = input;
-    }
-    
-    // Determine which flow to use - check FUTURE state, not just current
-    const willBeCompound = isCompoundCalculation(newCalculationSteps, tempLastOperation);
-    
     if (willBeCompound) {
       // Use compound calculation flow
       const compoundResult = processCompoundCalculation(
