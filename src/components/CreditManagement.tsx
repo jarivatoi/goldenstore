@@ -1066,12 +1066,6 @@ const CreditManagement: React.FC = () => {
 
             {/* Row 4 - Fourth row: AC, 1, 2, 3, +, - */}
             <button
-              onClick={() => handleCalculatorInput('ON/C')}
-              className="bg-red-500 hover:bg-red-600 text-white p-3 rounded-lg font-bold text-sm shadow-md border border-red-600"
-            >
-              ON/C
-            </button>
-            <button
               onClick={() => handleCalculatorInput('1')}
               className="bg-gray-800 hover:bg-gray-900 text-white p-3 rounded-lg font-bold text-xl shadow-md border border-gray-600"
             >
