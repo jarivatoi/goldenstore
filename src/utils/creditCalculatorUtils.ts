@@ -774,7 +774,8 @@ export const processCalculatorInput = (
       }
       
       if (firstOperand !== 0) {
-        const percentValue = (firstOperand * currentNum) / 100;
+        // For 100×10%, calculate 100 × (10/100) = 10
+        const percentValue = firstOperand * (currentNum / 100);
         newValue = percentValue.toString();
         newIsNewNumber = true;
         newLastOperation = null;
