@@ -95,17 +95,13 @@ const processSimpleCalculation = (
   calculationSteps: CalculationStep[],
   lastOperation: string | null,
   isNewNumber: boolean,
-  articleCount: number,
-  grandTotal: number = 0,
-  transactionHistory: number[] = []
+  articleCount: number
 ): {
   value: string;
   calculationSteps: CalculationStep[];
   lastOperation: string | null;
   isNewNumber: boolean;
   articleCount: number;
-  grandTotal: number;
-  transactionHistory: number[];
   result?: number;
 } => {
   let newValue = currentValue;
@@ -113,8 +109,6 @@ const processSimpleCalculation = (
   let newLastOperation = lastOperation;
   let newIsNewNumber = isNewNumber;
   let newArticleCount = articleCount;
-  let newGrandTotal = grandTotal;
-  let newTransactionHistory = [...transactionHistory];
   let result: number | undefined;
 
   if (/^\d+$/.test(input) || input === '00' || input === '000') {
@@ -133,13 +127,6 @@ const processSimpleCalculation = (
         });
       } else if (newLastOperation === '+' || newLastOperation === '-') {
         // After operator, create new step: +5, +30, -10, etc.
-        // Check if we're continuing after a result
-        const lastStep = newCalculationSteps[newCalculationSteps.length - 1];
-        if (lastStep.operationType === 'result') {
-          // We're adding a new number after a result (e.g., 40+ then 15)
-        }
-      } else if (newLastOperation && newIsNewNumber) {
-        // After any operator, create new step
         newCalculationSteps.push({
           expression: `${newLastOperation}${input}`,
           result: parseFloat(input),
@@ -148,14 +135,21 @@ const processSimpleCalculation = (
           operationType: 'operation',
           displayValue: `${newLastOperation}${input}`
         });
+        newArticleCount = newCalculationSteps.length;
       }
       newValue = input;
       newIsNewNumber = false;
     } else {
-      // Building existing number: 1 + 0 = 10
-      newValue = currentValue + input;
+      // Continuing to type digits - build the number properly (handles decimals)
+      if (currentValue.includes('.')) {
+        // Building decimal number: 10. + 1 = 10.1
+        newValue = currentValue + input;
+      } else {
+        // Building whole number: 1 + 0 = 10
+        newValue = currentValue + input;
+      }
       
-      // Update the last step
+      // Update the last step if it's a number or operation
       if (newCalculationSteps.length > 0) {
         const lastStep = newCalculationSteps[newCalculationSteps.length - 1];
         if (lastStep.operationType === 'number') {
@@ -171,32 +165,62 @@ const processSimpleCalculation = (
       }
     }
   } else if (input === '.') {
-    // Handle decimal point - add to current number
-    if (!currentValue.includes('.')) {
-      newValue = currentValue + '.';
-    }
-  } else if (input === '+' || input === '-') {
-    // Handle + and - operators
-    // Update counter based on the current number and operator
-    const currentNum = parseFloat(currentValue);
-    
-    if (!isNaN(currentNum) && currentNum > 0) {
-      if (input === '+') {
-        newArticleCount = Math.max(1, newArticleCount + 1);
-      } else if (input === '-') {
-        newArticleCount = Math.max(0, newArticleCount - 1);
+    // Handle decimal point
+    if (newIsNewNumber || currentValue === '0') {
+      // Starting a new decimal number
+      if (newCalculationSteps.length === 0) {
+        // First number: 0.
+        newValue = '0.';
+        newArticleCount = 1;
+        newCalculationSteps.push({
+          expression: '0.',
+          result: 0,
+          timestamp: Date.now(),
+          stepNumber: 1,
+          operationType: 'number',
+          displayValue: '0.'
+        });
+      } else if (newLastOperation === '+' || newLastOperation === '-') {
+        // After operator, create new step: +0., -0., etc.
+        newValue = '0.';
+        newCalculationSteps.push({
+          expression: `${newLastOperation}0.`,
+          result: 0,
+          timestamp: Date.now(),
+          stepNumber: newCalculationSteps.length + 1,
+          operationType: 'operation',
+          displayValue: `${newLastOperation}0.`
+        });
+        newArticleCount = newCalculationSteps.length;
+      } else {
+        newValue = '0.';
+      }
+      newIsNewNumber = false;
+    } else {
+      // Adding decimal to existing number
+      if (!currentValue.includes('.')) {
+        newValue = currentValue + '.';
+        
+        // Update the last step
+        if (newCalculationSteps.length > 0) {
+          const lastStep = newCalculationSteps[newCalculationSteps.length - 1];
+          if (lastStep.operationType === 'number') {
+            lastStep.displayValue = newValue;
+            lastStep.expression = newValue;
+            lastStep.result = parseFloat(newValue) || 0;
+          } else if (lastStep.operationType === 'operation') {
+            const operator = lastStep.expression.charAt(0);
+            lastStep.displayValue = `${operator}${newValue}`;
+            lastStep.expression = `${operator}${newValue}`;
+            lastStep.result = parseFloat(newValue) || 0;
+          }
+        }
       }
     }
-    
+  } else if (input === '+' || input === '-') {
+    // Handle operators
     newLastOperation = input;
     newIsNewNumber = true;
-    
-    // Calculate running total if we have operations
-    if (newCalculationSteps.length >= 2) {
-      const expression = buildSimpleExpression(newCalculationSteps);
-      const runningTotal = evaluateExpression(expression);
-      newValue = runningTotal.toString();
-    }
   } else if (input === '=' || input === 'ENTER') {
     // Calculate result for simple operations
     if (newCalculationSteps.length > 0) {
@@ -225,8 +249,6 @@ const processSimpleCalculation = (
     lastOperation: newLastOperation,
     isNewNumber: newIsNewNumber,
     articleCount: newArticleCount,
-    grandTotal: newGrandTotal,
-    transactionHistory: newTransactionHistory,
     result
   };
 };
@@ -234,8 +256,8 @@ const processSimpleCalculation = (
 /**
  * COMPOUND CALCULATION FLOW
  * =========================
- * Handles: 5×3=15 (5 articles at 3.00 each), 10÷2=5 (10 articles at 0.50 each)
- * Multiplication and division operations represent article quantities
+ * Handles: 25+5×3=40, 100-10÷2=95
+ * Addition/subtraction with multiplication/division
  */
 const processCompoundCalculation = (
   currentValue: string,
@@ -243,17 +265,13 @@ const processCompoundCalculation = (
   calculationSteps: CalculationStep[],
   lastOperation: string | null,
   isNewNumber: boolean,
-  articleCount: number,
-  grandTotal: number = 0,
-  transactionHistory: number[] = []
+  articleCount: number
 ): {
   value: string;
   calculationSteps: CalculationStep[];
   lastOperation: string | null;
   isNewNumber: boolean;
   articleCount: number;
-  grandTotal: number;
-  transactionHistory: number[];
   result?: number;
 } => {
   let newValue = currentValue;
@@ -261,15 +279,14 @@ const processCompoundCalculation = (
   let newLastOperation = lastOperation;
   let newIsNewNumber = isNewNumber;
   let newArticleCount = articleCount;
-  let newGrandTotal = grandTotal;
-  let newTransactionHistory = [...transactionHistory];
   let result: number | undefined;
 
   if (/^\d+$/.test(input) || input === '00' || input === '000') {
     // Handle numeric input
     if (newIsNewNumber || currentValue === '0') {
       if (newCalculationSteps.length === 0) {
-        // First number: quantity (e.g., 5 articles)
+        // First number: 25
+        newArticleCount = 1;
         newCalculationSteps.push({
           expression: input,
           result: parseFloat(input),
@@ -278,27 +295,42 @@ const processCompoundCalculation = (
           operationType: 'number',
           displayValue: input
         });
-      } else if (newLastOperation && newIsNewNumber) {
-        // After any operator, create new step
+      } else if (newCalculationSteps.length === 1 && (newLastOperation === '+' || newLastOperation === '-')) {
+        // After 25+, when entering 5, create addition step
+        newCalculationSteps.push({
+          expression: `${newLastOperation}${input}`,
+          result: parseFloat(input),
+          timestamp: Date.now(),
+          stepNumber: 2,
+          operationType: 'operation',
+          displayValue: `${newLastOperation}${input}`
+        });
+        newArticleCount = 2;
+      } else if (newCalculationSteps.length === 2 && (newLastOperation === '*' || newLastOperation === '/')) {
+        // After 25+5×, when entering 3, create multiplication step
         const displayOperator = newLastOperation === '*' ? '×' : '÷';
         newCalculationSteps.push({
           expression: `${displayOperator}${input}`,
           result: parseFloat(input),
           timestamp: Date.now(),
-          stepNumber: newCalculationSteps.length + 1,
+          stepNumber: 3,
           operationType: 'operation',
           displayValue: `${displayOperator}${input}`
         });
-        // Increment article count for new operand
-        newArticleCount = newCalculationSteps.length;
+        newArticleCount = 3;
       }
       newValue = input;
       newIsNewNumber = false;
     } else {
-      // Building existing number
-      newValue = currentValue + input;
+      // Continuing to type digits - build the number properly (handles decimals)
+      if (currentValue.includes('.')) {
+        // Building decimal number: 10. + 1 = 10.1
+        newValue = currentValue + input;
+      } else {
+        // Building whole number: 1 + 0 = 10
+        newValue = currentValue + input;
+      }
       
-      // Update the last step
       if (newCalculationSteps.length > 0) {
         const lastStep = newCalculationSteps[newCalculationSteps.length - 1];
         if (lastStep.operationType === 'number') {
@@ -315,32 +347,116 @@ const processCompoundCalculation = (
     }
   } else if (input === '.') {
     // Handle decimal point
-    if (!currentValue.includes('.')) {
-      newValue = currentValue + '.';
-    }
-  } else if (input === '*' || input === '/') {
-    // Handle multiplication and division
-    // For compound: 5×3 means 5 articles at 3.00 each
-    const currentNum = parseFloat(currentValue);
-    
-    if (!isNaN(currentNum) && currentNum > 0) {
-      if (input === '*') {
-        // Set article count to the first number (quantity)
-        newArticleCount = Math.floor(currentNum);
-      } else if (input === '/') {
-        // Division: quantity ÷ price per unit
-        newArticleCount = Math.floor(currentNum);
+    if (newIsNewNumber || currentValue === '0') {
+      // Starting a new decimal number
+      if (newCalculationSteps.length === 0) {
+        // First number: 0.
+        newValue = '0.';
+        newArticleCount = 1;
+        newCalculationSteps.push({
+          expression: '0.',
+          result: 0,
+          timestamp: Date.now(),
+          stepNumber: 1,
+          operationType: 'number',
+          displayValue: '0.'
+        });
+      } else if (newCalculationSteps.length === 1 && (newLastOperation === '+' || newLastOperation === '-')) {
+        // After operator, create new step: +0., -0., etc.
+        newValue = '0.';
+        newCalculationSteps.push({
+          expression: `${newLastOperation}0.`,
+          result: 0,
+          timestamp: Date.now(),
+          stepNumber: 2,
+          operationType: 'operation',
+          displayValue: `${newLastOperation}0.`
+        });
+        newArticleCount = 2;
+      } else if (newCalculationSteps.length === 2 && (newLastOperation === '*' || newLastOperation === '/')) {
+        // After multiplication operator, create new step: ×0., ÷0., etc.
+        const displayOperator = newLastOperation === '*' ? '×' : '÷';
+        newValue = '0.';
+        newCalculationSteps.push({
+          expression: `${displayOperator}0.`,
+          result: 0,
+          timestamp: Date.now(),
+          stepNumber: 3,
+          operationType: 'operation',
+          displayValue: `${displayOperator}0.`
+        });
+        newArticleCount = 3;
+      } else {
+        newValue = '0.';
+      }
+      newIsNewNumber = false;
+    } else {
+      // Adding decimal to existing number
+      if (!currentValue.includes('.')) {
+        newValue = currentValue + '.';
+        
+        // Update the last step
+        if (newCalculationSteps.length > 0) {
+          const lastStep = newCalculationSteps[newCalculationSteps.length - 1];
+          if (lastStep.operationType === 'number') {
+            lastStep.displayValue = newValue;
+            lastStep.expression = newValue;
+            lastStep.result = parseFloat(newValue) || 0;
+          } else if (lastStep.operationType === 'operation') {
+            const operator = lastStep.expression.charAt(0);
+            lastStep.displayValue = `${operator}${newValue}`;
+            lastStep.expression = `${operator}${newValue}`;
+            lastStep.result = parseFloat(newValue) || 0;
+          }
+        }
       }
     }
-    
+  } else if (input === '+' || input === '-' || input === '*' || input === '/') {
+    // Handle operators
     newLastOperation = input;
     newIsNewNumber = true;
   } else if (input === '=' || input === 'ENTER') {
     // Calculate result for compound operations
-    if (newCalculationSteps.length > 0) {
+    if (newCalculationSteps.length === 3) {
+      // Compound calculation: 25+5×3 = 25 + (5×3) = 25 + 15 = 40
+      const firstStep = newCalculationSteps[0]; // "25"
+      const secondStep = newCalculationSteps[1]; // "+5"
+      const thirdStep = newCalculationSteps[2]; // "×3"
+      
+      // Extract operands correctly
+      const firstNumber = firstStep.result; // 25
+      const additionOperand = secondStep.result; // 5 (from "+5")
+      const multiplicationOperand = thirdStep.result; // 3 (from "×3")
+      
+      // Calculate compound operation: 5×3=15 (NOT 25×5)
+      const compoundResult = thirdStep.expression.startsWith('×') 
+        ? additionOperand * multiplicationOperand
+        : additionOperand / multiplicationOperand;
+      
+      // Replace step 2 with the compound result: (5×3)=15
+      const displayOperator = thirdStep.expression.charAt(0);
+      newCalculationSteps[1] = {
+        expression: `(${additionOperand}${displayOperator}${multiplicationOperand})=${compoundResult}`,
+        result: compoundResult,
+        timestamp: Date.now(),
+        stepNumber: 2,
+        operationType: 'operation',
+        displayValue: `(${additionOperand}${displayOperator}${multiplicationOperand})=${compoundResult}`
+      };
+      
+      // Remove step 3 since it's now incorporated into step 2
+      newCalculationSteps = newCalculationSteps.slice(0, 2);
+      newArticleCount = 2;
+      
+      // Calculate final result: 25 + 15 = 40 (NOT 25 + 5)
+      result = firstNumber + compoundResult;
+    } else if (newCalculationSteps.length > 0) {
+      // Simple calculation or other cases
       const expression = buildSimpleExpression(newCalculationSteps);
       result = evaluateExpression(expression);
-      
+    }
+    
+    if (result !== undefined) {
       // Add result step
       newCalculationSteps.push({
         expression: `=${result}`,
@@ -363,8 +479,6 @@ const processCompoundCalculation = (
     lastOperation: newLastOperation,
     isNewNumber: newIsNewNumber,
     articleCount: newArticleCount,
-    grandTotal: newGrandTotal,
-    transactionHistory: newTransactionHistory,
     result
   };
 };
@@ -390,16 +504,24 @@ const buildSimpleExpression = (steps: CalculationStep[]): string => {
 
 /**
  * Determine if calculation is compound
- * Simple: Only + and - operators
- * Compound: Any × or ÷ operators
+ * FIXED: Now properly detects when × or ÷ is involved
  */
 const isCompoundCalculation = (calculationSteps: CalculationStep[], lastOperation: string | null): boolean => {
-  // Compound if current operation is × or ÷
-  return (lastOperation === '*' || lastOperation === '/' || lastOperation === '×' || lastOperation === '÷');
+  // Check if we have multiplication or division operations in steps
+  const hasMultiplyDivideInSteps = calculationSteps.some(step => 
+    step.expression.includes('×') || step.expression.includes('÷') || 
+    step.expression.includes('*') || step.expression.includes('/')
+  );
+  
+  // Check if current operation is multiplication or division
+  const hasMultiplyDivideInOperation = (lastOperation === '*' || lastOperation === '/' || lastOperation === '×' || lastOperation === '÷');
+  
+  // Return true if EITHER condition is met
+  return hasMultiplyDivideInSteps || hasMultiplyDivideInOperation;
 };
 
 /**
- * Calculator input processor with simplified flows
+ * Enhanced calculator input processor with separated flows
  */
 export const processCalculatorInput = (
   currentValue: string,
@@ -437,9 +559,15 @@ export const processCalculatorInput = (
   let autoReplayActive = false;
   let newArticleCount = articleCount;
   
-  // Determine which flow to use based on current operation
-  const isCompound = isCompoundCalculation(newCalculationSteps, newLastOperation) || 
-                     (input === '*' || input === '/' || input === '×' || input === '÷');
+  // FIXED: Check if we need to switch to compound calculation
+  // This happens when we encounter × or ÷ operators
+  let tempLastOperationForCompoundCheck = newLastOperation;
+  if (input === '*' || input === '/' || input === '×' || input === '÷') {
+    tempLastOperationForCompoundCheck = input;
+  }
+  
+  // Determine which flow to use - check FUTURE state, not just current
+  const willBeCompound = isCompoundCalculation(newCalculationSteps, tempLastOperationForCompoundCheck);
   
   // Handle error state
   if (currentValue === 'Error' && !['ON/C', 'AC', 'C'].includes(input)) {
@@ -623,59 +751,71 @@ export const processCalculatorInput = (
   } else if (input === '%') {
     // Percentage calculation
     const currentNum = getCurrentNumber();
-    // Handle percentage calculation for compound operations
-    if (newLastOperation === '*' && newCalculationSteps.length >= 2) {
-      // For 100×10%, we have:
-      // Step 1: "100" (base value)
-      // Step 2: "×10" (percentage value)
+    
+    if (newLastOperation === '*') {
+      let firstOperand = 0;
       
-      const baseValue = newCalculationSteps[0].result; // 100
-      const percentageValue = currentNum; // 10
+      for (let i = 0; i < newCalculationSteps.length; i++) {
+        const step = newCalculationSteps[i];
+        if (step.operationType === 'number' && !step.expression.includes('×') && 
+            !step.expression.includes('+') && !step.expression.includes('-') && 
+            !step.expression.includes('÷')) {
+          firstOperand = step.result;
+          break;
+        }
+      }
       
-      // Calculate percentage: 100 × (10/100) = 10
-      const percentResult = Math.round((baseValue * (percentageValue / 100)) * 100) / 100;
+      if (firstOperand === 0 && newCalculationSteps.length > 0) {
+        const firstStep = newCalculationSteps[0];
+        const parsed = parseFloat(firstStep.expression);
+        if (!isNaN(parsed)) {
+          firstOperand = parsed;
+        }
+      }
       
-      // Update step 2 to show the percentage calculation
-      newCalculationSteps[1] = {
-        expression: `(${baseValue}×${percentageValue}%)`,
-        result: percentResult,
-        timestamp: Date.now(),
-        stepNumber: 2,
-        operationType: 'operation',
-        displayValue: `(${baseValue}×${percentageValue}%)=${percentResult}`
-      };
-      
-      // Show the percentage result (10) in display
-      newValue = percentResult.toString();
-      newLastOperation = null;
-      newIsNewNumber = true;
-      newArticleCount = 2;
-    } else {
-      // Simple percentage calculation
-      const percentResult = Math.round((currentNum / 100) * 100) / 100;
-      newValue = percentResult.toString();
-      newIsNewNumber = true;
-      
-      if (newCalculationSteps.length > 0) {
-        newCalculationSteps[newCalculationSteps.length - 1] = {
-          expression: `${percentResult}%`,
-          result: percentResult,
-          timestamp: Date.now(),
-          stepNumber: newCalculationSteps.length,
-          operationType: 'operation',
-          displayValue: `${percentResult}%`
-        };
-      } else {
+      if (firstOperand !== 0) {
+        const percentValue = (firstOperand * currentNum) / 100;
+        newValue = percentValue.toString();
+        newIsNewNumber = true;
+        newLastOperation = null;
+        
         newCalculationSteps = [{
-          expression: `${percentResult}%`,
+          expression: percentValue.toString(),
+          result: percentValue,
+          timestamp: Date.now(),
+          stepNumber: 1,
+          operationType: 'number',
+          displayValue: percentValue.toString()
+        }];
+        
+        newLastOperand = null;
+      } else {
+        const percentResult = currentNum / 100;
+        newValue = percentResult.toString();
+        newIsNewNumber = true;
+        
+        newCalculationSteps = [{
+          expression: percentResult.toString(),
           result: percentResult,
           timestamp: Date.now(),
           stepNumber: 1,
           operationType: 'number',
-          displayValue: `${percentResult}%`
+          displayValue: percentResult.toString()
         }];
       }
-      newArticleCount = newCalculationSteps.length;
+    } else {
+      const percentResult = currentNum / 100;
+      newValue = percentResult.toString();
+      newIsNewNumber = true;
+      
+      newCalculationSteps = [{
+        expression: percentResult.toString(),
+        result: percentResult,
+        timestamp: Date.now(),
+        stepNumber: 1,
+        operationType: 'number',
+        displayValue: percentResult.toString()
+      }];
     }
   } else if (input === '√') {
     // Square root
@@ -688,12 +828,11 @@ export const processCalculatorInput = (
     newIsNewNumber = true;
   } else if (input === '.') {
     // Handle decimal point - route to appropriate pathway
-    const willBeCompound = isCompound;
     if (willBeCompound) {
       // Use compound calculation flow for decimal
       const compoundResult = processCompoundCalculation(
-        currentValue, input, newCalculationSteps, newLastOperation,
-        newIsNewNumber, newArticleCount, newGrandTotal, newTransactionHistory
+        currentValue, input, newCalculationSteps, newLastOperation, 
+        newIsNewNumber, newArticleCount
       );
       
       newValue = compoundResult.value;
@@ -701,13 +840,11 @@ export const processCalculatorInput = (
       newLastOperation = compoundResult.lastOperation;
       newIsNewNumber = compoundResult.isNewNumber;
       newArticleCount = compoundResult.articleCount;
-      newGrandTotal = compoundResult.grandTotal;
-      newTransactionHistory = compoundResult.transactionHistory;
     } else {
       // Use simple calculation flow for decimal
       const simpleResult = processSimpleCalculation(
-        currentValue, input, newCalculationSteps, newLastOperation,
-        newIsNewNumber, newArticleCount, newGrandTotal, newTransactionHistory
+        currentValue, input, newCalculationSteps, newLastOperation, 
+        newIsNewNumber, newArticleCount
       );
       
       newValue = simpleResult.value;
@@ -715,14 +852,12 @@ export const processCalculatorInput = (
       newLastOperation = simpleResult.lastOperation;
       newIsNewNumber = simpleResult.isNewNumber;
       newArticleCount = simpleResult.articleCount;
-      newGrandTotal = simpleResult.grandTotal;
-      newTransactionHistory = simpleResult.transactionHistory;
     }
   } else {
-    // Route to appropriate calculation flow
-    if (input === '*' || input === '/' || input === '×' || input === '÷') {
+    if (willBeCompound) {
+      // Use compound calculation flow
       const compoundResult = processCompoundCalculation(
-        currentValue, input, newCalculationSteps, newLastOperation,
+        currentValue, input, newCalculationSteps, newLastOperation, 
         newIsNewNumber, newArticleCount
       );
       
@@ -740,7 +875,7 @@ export const processCalculatorInput = (
     } else {
       // Use simple calculation flow
       const simpleResult = processSimpleCalculation(
-        currentValue, input, newCalculationSteps, newLastOperation,
+        currentValue, input, newCalculationSteps, newLastOperation, 
         newIsNewNumber, newArticleCount
       );
       
@@ -761,28 +896,14 @@ export const processCalculatorInput = (
   // Format display value - preserve decimal formatting
   if (newValue !== 'Error' && newValue !== '0.' && !isNaN(parseFloat(newValue))) {
     const num = parseFloat(newValue);
-    if (num > 999999999999 || (num < 0.000001 && num !== 0)) {
+    if (num.toString().length > 12) {
       newValue = num.toExponential(6);
     } else {
       // Preserve trailing decimal point for user feedback
       if (newValue.endsWith('.')) {
         newValue = num.toString() + '.';
       } else {
-        // Format to 2 decimal places if it has 1 decimal place, otherwise keep as is
-        const numStr = num.toString();
-        if (numStr.includes('.')) {
-          const decimalPart = numStr.split('.')[1];
-          if (decimalPart.length === 1) {
-            // 1 decimal place -> format to 2 decimal places (1.2 -> 1.20)
-            newValue = num.toFixed(2);
-          } else {
-            // Multiple decimal places or whole number -> keep as is
-            newValue = numStr;
-          }
-        } else {
-          // Whole number -> keep as is (100 stays 100, not 100.00)
-          newValue = numStr;
-        }
+        newValue = num.toString();
       }
     }
   }
