@@ -343,6 +343,7 @@ export const processCalculatorInput = (
         
         newLastOperand = null;
       } else {
+        newArticleCount = 3; // Step 1: first number, Step 2: compound operation, Step 3: result
         const percentResult = currentNum / 100;
         newValue = percentResult.toString();
         newIsNewNumber = true;
