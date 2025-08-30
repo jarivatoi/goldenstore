@@ -1247,6 +1247,37 @@ const CreditManagement: React.FC = () => {
         </div>
       )}
       {/* Settings and Delete Modals */}
+      {/* Centered Wobble Overlay */}
+      {showCenteredWobble && centeredWobbleClient && (
+        <div className="fixed inset-0 bg-black bg-opacity-30 flex items-center justify-center z-[9999] p-4 select-none">
+          <div className="relative">
+            {/* Close Button */}
+            <button
+              onClick={() => {
+                setShowCenteredWobble(false);
+                setCenteredWobbleClient(null);
+              }}
+              className="absolute -top-2 -right-2 w-8 h-8 bg-red-500 hover:bg-red-600 text-white rounded-full flex items-center justify-center shadow-lg z-10 transition-colors"
+            >
+              <X size={16} />
+            </button>
+            
+            {/* Wobbling Client Card */}
+            <div className="animate-wobble">
+              <ClientCard
+                client={centeredWobbleClient}
+                onLongPress={() => {}}
+                onQuickAdd={() => {}}
+                onResetCalculator={() => {}}
+                isLinked={false}
+                showWobble={false}
+                onCloseWobble={() => {}}
+              />
+            </div>
+          </div>
+        </div>
+      )}
+
       <CreditModals
         showSettings={showSettings}
         onCloseSettings={() => setShowSettings(false)}
