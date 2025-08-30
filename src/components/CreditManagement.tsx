@@ -1018,16 +1018,10 @@ const CreditManagement: React.FC = () => {
               9
             </button>
             <button
-              onClick={() => handleCalculatorInput('(')}
-              className="bg-blue-400 hover:bg-blue-500 text-white p-2 sm:p-3 rounded-lg font-bold text-xs sm:text-sm shadow-md border border-blue-500 flex items-center justify-center"
+              onClick={() => handleCalculatorInput('LINK')}
+              className="bg-blue-400 hover:bg-blue-500 text-white p-2 sm:p-3 rounded-lg font-bold text-xs sm:text-sm shadow-md border border-blue-500 flex items-center justify-center col-span-2"
             >
-              (
-            </button>
-            <button
-              onClick={() => handleCalculatorInput(')')}
-              className="bg-blue-400 hover:bg-blue-500 text-white p-2 sm:p-3 rounded-lg font-bold text-sm sm:text-lg shadow-md border border-blue-500 flex items-center justify-center"
-            >
-              )
+              Link
             </button>
 
             {/* Row 3: √, 4, 5, 6, ×, ÷ */}

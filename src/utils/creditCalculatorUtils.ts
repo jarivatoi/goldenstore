@@ -756,6 +756,11 @@ export const processCalculatorInput = (
       newValue = Math.sqrt(currentNum).toString();
     }
     newIsNewNumber = true;
+  } else if (input === 'LINK') {
+    // Link function - could be used for linking to client or other functionality
+    // For now, just keep current value
+    newValue = currentValue;
+    newIsNewNumber = false;
   } else if (input === '.') {
     // Handle decimal point - route to appropriate pathway
     const willBeCompound = isCompound;
