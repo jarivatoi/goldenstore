@@ -854,27 +854,23 @@ const CreditManagement: React.FC = () => {
               <div className="bg-blue-100 p-2 rounded-full">
                 <Calculator size={24} className="text-blue-600" />
               </div>
-              <h2 className="text-xl font-bold text-gray-800">Calculator</h2>
+              <h3 className="text-lg lg:text-xl font-semibold text-gray-800">Calculator +</h3>
             </button>
+            <div className="flex-1"></div>
             {linkedClient && (
               <>
-                <span className="text-sm text-gray-600">→</span>
+                <p className="text-xs lg:text-sm text-green-600 font-medium">
+                  Adding to: {linkedClient.name}
+                </p>
                 <button
-                  disabled={!linkedClient}
-                  onClick={() => {
-                    // Only handle unlinking when a client is linked
-                    if (linkedClient) {
-                      setLinkedClient(null);
-                    }
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    handleCalculatorCancel();
                   }}
-                  className={`px-3 py-1 rounded-full text-xs font-bold transition-colors ${
-                    linkedClient
-                      ? 'bg-red-500 hover:bg-red-600 text-white'
-                      : 'bg-gray-400 text-gray-600 cursor-not-allowed opacity-50'
-                  }`}
+                  className="px-2 py-1 text-xs bg-red-500 hover:bg-red-600 text-white rounded transition-colors"
                   title="Unlink client from calculator"
                 >
-                  {linkedClient ? 'UNLINK' : 'UNLINKED'}
+                  Unlink
                 </button>
               </>
             )}
@@ -1023,6 +1019,7 @@ const CreditManagement: React.FC = () => {
               9
             </button>
             <button
+              onClick={() => handleCalculatorInput('LINK')}
               onClick={() => handleCalculatorInput('CHECK←')}
               disabled={calculationSteps.length === 0}
               className="bg-purple-400 hover:bg-purple-500 disabled:bg-gray-300 disabled:text-gray-500 text-white p-2 sm:p-3 rounded-lg font-bold text-xs sm:text-sm shadow-md border border-purple-500 flex items-center justify-center"
