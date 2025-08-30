@@ -338,7 +338,7 @@ const ClientCard: React.FC<ClientCardProps> = ({ client, onLongPress, onQuickAdd
     <>
       <div
         ref={cardRef}
-        className={`flex-shrink-0 w-56 sm:w-64 mx-auto rounded-lg shadow-md p-3 sm:p-4 border hover:shadow-lg transition-all duration-300 cursor-pointer select-none transform hover:scale-105 min-h-[320px] ${getCardBackgroundColor()}`}
+        className={`flex-shrink-0 w-56 sm:w-64 mx-auto rounded-lg shadow-md p-3 sm:p-4 border hover:shadow-lg transition-all duration-300 cursor-pointer select-none transform hover:scale-105 min-h-[320px] relative ${getCardBackgroundColor()} ${showWobble ? 'animate-wobble' : ''}`}
         onTouchStart={handleTouchStart}
         onTouchEnd={handleTouchEnd}
         onMouseDown={handleMouseDown}
