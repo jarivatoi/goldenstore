@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { Calculator, Plus, X } from 'lucide-react';
+import { Calculator, Plus, X, CheckCircle } from 'lucide-react';
 import { useCredit } from '../context/CreditContext';
 import ClientDetailModal from './ClientDetailModal';
 import ClientSearchModal from './ClientSearchModal';
@@ -728,10 +728,10 @@ const CreditManagement: React.FC = () => {
       // Show wobble effect for the client that received the transaction
       setRecentTransactionClient(client);
       
-      // Auto-hide the wobble effect after 5 seconds
+      // Auto-hide the wobble effect after 8 seconds
       setTimeout(() => {
         setRecentTransactionClient(null);
-      }, 5000);
+      }, 8000);
     } catch (error) {
       throw error; // Re-throw to be caught by the modal
     }
@@ -1175,6 +1175,41 @@ const CreditManagement: React.FC = () => {
         />
       )}
 
+      {/* Centered Wobble Effect Overlay */}
+      {recentTransactionClient && (
+        <div className="fixed inset-0 bg-black bg-opacity-30 flex items-center justify-center z-[9999] pointer-events-none">
+          <div className="pointer-events-auto">
+            <div className={`w-64 bg-white rounded-lg shadow-2xl p-4 border-2 border-green-400 animate-wobble relative`}>
+              {/* Close Button */}
+              <button
+                onClick={() => setRecentTransactionClient(null)}
+                className="absolute -top-2 -right-2 w-8 h-8 bg-red-500 hover:bg-red-600 text-white rounded-full flex items-center justify-center shadow-lg border-2 border-white transition-colors z-10"
+              >
+                <X size={16} strokeWidth={3} />
+              </button>
+              
+              {/* Success Icon */}
+              <div className="flex items-center justify-center mb-3">
+                <div className="bg-green-100 p-3 rounded-full">
+                  <CheckCircle size={32} className="text-green-600" />
+                </div>
+              </div>
+              
+              {/* Client Info */}
+              <div className="text-center">
+                <h3 className="text-lg font-semibold text-gray-800 mb-1">{recentTransactionClient.name}</h3>
+                <p className="text-sm text-gray-600 mb-2">ID: {recentTransactionClient.id}</p>
+                <div className="bg-green-50 rounded-lg p-3 border border-green-200">
+                  <p className="text-sm text-green-700 font-medium">Transaction Added Successfully!</p>
+                  <p className="text-xs text-green-600 mt-1">
+                    New Balance: Rs {getClientTotalDebt(recentTransactionClient.id).toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
+                  </p>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
       {/* Settings and Delete Modals */}
       <CreditModals
         showSettings={showSettings}
