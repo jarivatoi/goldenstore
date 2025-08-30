@@ -1,5 +1,5 @@
 import React, { useState, useRef } from 'react';
-import { User, TrendingUp, Calendar, Plus, X } from 'lucide-react';
+import { User, TrendingUp, Calendar, Plus } from 'lucide-react';
 import { Client } from '../types';
 import { useCredit } from '../context/CreditContext';
 import ClientDetailModal from './ClientDetailModal';
@@ -338,7 +338,7 @@ const ClientCard: React.FC<ClientCardProps> = ({ client, onLongPress, onQuickAdd
     <>
       <div
         ref={cardRef}
-        className={`flex-shrink-0 w-56 sm:w-64 mx-auto rounded-lg shadow-md p-3 sm:p-4 border hover:shadow-lg transition-all duration-300 cursor-pointer select-none transform hover:scale-105 min-h-[320px] relative ${getCardBackgroundColor()} ${showWobble ? 'animate-wobble' : ''}`}
+        className={`flex-shrink-0 w-56 sm:w-64 mx-auto rounded-lg shadow-md p-3 sm:p-4 border hover:shadow-lg transition-all duration-300 cursor-pointer select-none transform hover:scale-105 min-h-[320px] ${getCardBackgroundColor()}`}
         onTouchStart={handleTouchStart}
         onTouchEnd={handleTouchEnd}
         onMouseDown={handleMouseDown}
@@ -357,20 +357,6 @@ const ClientCard: React.FC<ClientCardProps> = ({ client, onLongPress, onQuickAdd
           zIndex: 1
         }}
       >
-        {/* Close Button for Wobble Effect */}
-        {showWobble && onCloseWobble && (
-          <button
-            onClick={(e) => {
-              e.stopPropagation();
-              onCloseWobble();
-            }}
-            className="absolute top-2 right-2 w-8 h-8 bg-red-500 hover:bg-red-600 text-white rounded-full flex items-center justify-center shadow-lg z-10 transition-colors"
-            title="Close notification"
-          >
-            <X size={16} />
-          </button>
-        )}
-
         {/* Client Header */}
         <div className="flex items-center gap-2 sm:gap-3 mb-2 sm:mb-3">
           <div className="bg-blue-100 p-2 rounded-full flex-shrink-0">
