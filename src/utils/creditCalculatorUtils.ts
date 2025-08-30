@@ -924,7 +924,7 @@ const startAutoReplaySequence = (steps: CalculationStep[], lastOperation: string
         setTimeout(() => {
           window.dispatchEvent(new CustomEvent('autoReplayStep', {
             detail: {
-              displayValue: `=${calculationResult}`,
+             displayValue: `=${calculationResult}`,
               stepIndex: currentStepIndex,
               totalSteps: steps.length + 1, // Include result in total
               currentStep: currentStepIndex + 1,
@@ -939,6 +939,39 @@ const startAutoReplaySequence = (steps: CalculationStep[], lastOperation: string
             window.dispatchEvent(new CustomEvent('autoReplayComplete'));
           }, 1000);
         }, 1000);
+     } else if (hasCompletedCalculation) {
+       // For completed calculations, show the final result from the last step
+       setTimeout(() => {
+         const lastStep = steps[steps.length - 1];
+         let finalResult;
+         
+         if (lastStep.displayValue.includes('%')) {
+           // For percentage calculations, use the percentage result
+           finalResult = lastStep.result;
+         } else {
+           // For other completed calculations, evaluate the full expression
+           const isCompound = isCompoundCalculation(steps, null);
+           const expression = isCompound ? buildCompoundExpression(steps) : buildSimpleExpression(steps);
+           finalResult = evaluateExpression(expression);
+         }
+         
+         window.dispatchEvent(new CustomEvent('autoReplayStep', {
+           detail: {
+             displayValue: `=${finalResult}`,
+             stepIndex: currentStepIndex,
+             totalSteps: steps.length + 1,
+             currentStep: currentStepIndex + 1,
+             articleCount: steps.length
+           }
+         }));
+         
+         localStorage.setItem('currentCheckIndex', currentStepIndex.toString());
+         
+         // Complete the auto replay
+         setTimeout(() => {
+           window.dispatchEvent(new CustomEvent('autoReplayComplete'));
+         }, 1000);
+       }, 1000);
       } else {
         // No result to show, complete immediately
         window.dispatchEvent(new CustomEvent('autoReplayComplete'));
