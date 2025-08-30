@@ -796,10 +796,10 @@ const CreditManagement: React.FC = () => {
       // Show wobble effect for the client that received the transaction
       setRecentTransactionClient(client);
       
-      setDuplicateCard({ ...client, transactionAmount: amount, transactionDescription: description });
+      setDuplicateCard({ ...client, transactionAmount: amount, transactionDescription: description } as any);
       setTimeout(() => {
         setRecentTransactionClient(null);
-        setShowCenteredWobble(false);
+      }, 3000); // Increased to 3 seconds for better visibility
         setCenteredWobbleClient(null);
       }, 8000);
     } catch (error) {
