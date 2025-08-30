@@ -853,8 +853,12 @@ const CreditManagement: React.FC = () => {
             >
               <div className="bg-blue-100 p-2 rounded-full">
                 <Calculator size={24} className="text-blue-600" />
-                  {linkedClient ? 'UNLINK' : 'UNLINKED'}
-                </button>
+              </div>
+              <h2 className="text-xl font-bold text-gray-800">Calculator</h2>
+            </button>
+            {linkedClient && (
+              <>
+                <span className="text-sm text-gray-600">→</span>
                 <button
                   disabled={!linkedClient}
                   onClick={() => {
@@ -863,6 +867,7 @@ const CreditManagement: React.FC = () => {
                       setLinkedClient(null);
                     }
                   }}
+                  className={`px-3 py-1 rounded-full text-xs font-bold transition-colors ${
                     linkedClient
                       ? 'bg-red-500 hover:bg-red-600 text-white'
                       : 'bg-gray-400 text-gray-600 cursor-not-allowed opacity-50'
