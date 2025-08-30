@@ -76,6 +76,11 @@ const CreditManagement: React.FC = () => {
 
   const handleSearchChange = (query: string) => {
     setSearchQuery(query);
+    
+    // Auto switch to 'all' when user starts typing
+    if (query.trim() && !showAllClients) {
+      setShowAllClients(true);
+    }
     // Auto switch to 'all' when user starts typing
     if (query.trim() && !showAllClients) {
       setShowAllClients(true);
