@@ -931,20 +931,18 @@ const CreditManagement: React.FC = () => {
           {/* Calculator Buttons */}
           <div className="grid grid-cols-6 gap-1 sm:gap-2 mb-6 p-2 sm:p-4 bg-gray-200 rounded-lg border-2 border-gray-400 shadow-inner">
             {/* Row 0 - Top row: CHECK←, CHECK→ */}
-            <div className="col-span-6 grid grid-cols-2 gap-1 sm:gap-2 mb-1 sm:mb-2">
+            <div className="col-span-6 grid grid-cols-3 gap-1 sm:gap-2 mb-1 sm:mb-2">
               <button
-                onClick={() => handleCalculatorInput('CHECK←')}
-                disabled={calculationSteps.length === 0}
-                className="bg-purple-400 hover:bg-purple-500 disabled:bg-gray-300 disabled:text-gray-500 text-white p-2 sm:p-3 rounded-lg font-bold text-sm sm:text-xl shadow-md border border-purple-500 flex items-center justify-center"
+                onClick={() => handleCalculatorInput('LINK')}
+                className="bg-blue-400 hover:bg-blue-500 text-white p-2 sm:p-3 rounded-lg font-bold text-xs sm:text-sm shadow-md border border-blue-500 flex items-center justify-center col-span-2"
               >
-                ← CHECK
+                Link
               </button>
               <button
-                onClick={() => handleCalculatorInput('CHECK→')}
-                disabled={calculationSteps.length === 0}
-                className="bg-purple-400 hover:bg-purple-500 disabled:bg-gray-300 disabled:text-gray-500 text-white p-2 sm:p-3 rounded-lg font-bold text-sm sm:text-xl shadow-md border border-purple-500 flex items-center justify-center"
+                onClick={() => handleCalculatorInput('AUTO')}
+                className="bg-yellow-400 hover:bg-yellow-500 text-white p-2 sm:p-3 rounded-lg font-bold text-xs sm:text-sm shadow-md border border-yellow-500 flex items-center justify-center"
               >
-                CHECK →
+                AUTO
               </button>
             </div>
 
@@ -972,12 +970,6 @@ const CreditManagement: React.FC = () => {
               className="bg-blue-400 hover:bg-blue-500 text-white p-2 sm:p-3 rounded-lg font-bold text-xs sm:text-sm shadow-md border border-blue-500 flex items-center justify-center"
             >
               M+
-            </button>
-            <button
-              onClick={() => handleCalculatorInput('AUTO')}
-              className="bg-gray-400 hover:bg-gray-500 text-white p-2 sm:p-3 rounded-lg font-bold text-xs sm:text-sm shadow-md border border-gray-500 flex items-center justify-center"
-            >
-              AUTO
             </button>
             <button
               onClick={() => handleCalculatorInput('→')}
@@ -1012,10 +1004,18 @@ const CreditManagement: React.FC = () => {
               9
             </button>
             <button
-              onClick={() => handleCalculatorInput('LINK')}
-              className="bg-blue-400 hover:bg-blue-500 text-white p-2 sm:p-3 rounded-lg font-bold text-xs sm:text-sm shadow-md border border-blue-500 flex items-center justify-center col-span-2"
+              onClick={() => handleCalculatorInput('CHECK←')}
+              disabled={calculationSteps.length === 0}
+              className="bg-purple-400 hover:bg-purple-500 disabled:bg-gray-300 disabled:text-gray-500 text-white p-2 sm:p-3 rounded-lg font-bold text-xs sm:text-sm shadow-md border border-purple-500 flex items-center justify-center"
             >
-              Link
+              ← CHK
+            </button>
+            <button
+              onClick={() => handleCalculatorInput('CHECK→')}
+              disabled={calculationSteps.length === 0}
+              className="bg-purple-400 hover:bg-purple-500 disabled:bg-gray-300 disabled:text-gray-500 text-white p-2 sm:p-3 rounded-lg font-bold text-xs sm:text-sm shadow-md border border-purple-500 flex items-center justify-center"
+            >
+              CHK →
             </button>
 
             {/* Row 3: √, 4, 5, 6, ×, ÷ */}
