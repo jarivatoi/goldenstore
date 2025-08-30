@@ -863,14 +863,14 @@ const CreditManagement: React.FC = () => {
                   Adding to: {linkedClient.name}
                 </p>
                 <button
-                  onClick={(e) => {
-                    e.stopPropagation();
-                    handleCalculatorCancel();
-                  }}
-                  className="px-2 py-1 text-xs bg-red-500 hover:bg-red-600 text-white rounded transition-colors"
+                  disabled={!linkedClient}
+                  className={`col-span-2 p-3 rounded-lg font-semibold transition-colors text-sm ${
+                    linkedClient
+                      ? 'bg-red-500 hover:bg-red-600 text-white'
+                      : 'bg-gray-400 text-gray-600 cursor-not-allowed'
                   title="Unlink client from calculator"
                 >
-                  Unlink
+                  {linkedClient ? 'UNLINK' : 'UNLINKED'}
                 </button>
               </>
             )}
