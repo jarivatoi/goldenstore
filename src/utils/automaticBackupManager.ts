@@ -16,6 +16,7 @@ export interface BackupSchedule {
 
 export interface BackupStatus {
   lastBackup: Date | null;
+  lastManualBackup: Date | null;
   nextScheduled: Date | null;
   isEnabled: boolean;
   pendingBackups: number;
@@ -394,10 +395,34 @@ export class AutomaticBackupManager {
   }
 
   /**
+   * Get last manual backup date
+   */
+  private getLastManualBackupDate(): Date | null {
+    try {
+      const saved = localStorage.getItem('lastManualBackup');
+      return saved ? new Date(saved) : null;
+    } catch {
+      return null;
+    }
+  }
+
+  /**
+   * Set last manual backup date
+   */
+  public setLastManualBackupDate(date: Date): void {
+    try {
+      localStorage.setItem('lastManualBackup', date.toISOString());
+    } catch (error) {
+      console.warn('Failed to save last manual backup date:', error);
+    }
+  }
+
+  /**
    * Get backup status for UI
    */
   public getBackupStatus(): BackupStatus {
     const lastBackup = this.getLastBackupDate();
+    const lastManualBackup = this.getLastManualBackupDate();
     const pendingBackups = this.getPendingBackups();
     const lastError = this.getLastError();
     
@@ -413,6 +438,7 @@ export class AutomaticBackupManager {
 
     return {
       lastBackup,
+      lastManualBackup,
       nextScheduled: this.schedule.enabled ? nextScheduled : null,
       isEnabled: this.schedule.enabled,
       pendingBackups: pendingBackups.length,

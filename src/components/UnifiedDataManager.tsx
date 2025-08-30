@@ -41,11 +41,13 @@ const UnifiedDataManager: React.FC<UnifiedDataManagerProps> = ({ isOpen, onClose
   const [pendingExportData, setPendingExportData] = useState<any>(null);
   const [pendingImportData, setPendingImportData] = useState<any>(null);
   const [lastBackupDate, setLastBackupDate] = useState<Date | null>(null);
+  const [lastManualBackupDate, setLastManualBackupDate] = useState<Date | null>(null);
 
   // Load last backup date on component mount
   useEffect(() => {
     const backupStatus = automaticBackupManager.getBackupStatus();
     setLastBackupDate(backupStatus.lastBackup);
+    setLastManualBackupDate(backupStatus.lastManualBackup);
   }, []);
 
   if (!isOpen) return null;
@@ -261,6 +263,9 @@ const UnifiedDataManager: React.FC<UnifiedDataManagerProps> = ({ isOpen, onClose
       
       await SupabaseBackupManager.saveToSupabase(exportData, backupName);
       
+      // Update manual backup timestamp
+      automaticBackupManager.setLastManualBackupDate(new Date());
+      
       setModal({
         type: 'success',
         title: 'Server Backup Successful',
@@ -271,6 +276,7 @@ const UnifiedDataManager: React.FC<UnifiedDataManagerProps> = ({ isOpen, onClose
           // Update last backup date
           const backupStatus = automaticBackupManager.getBackupStatus();
           setLastBackupDate(backupStatus.lastBackup);
+          setLastManualBackupDate(backupStatus.lastManualBackup);
           onClose();
         }
       });
@@ -557,21 +563,46 @@ const UnifiedDataManager: React.FC<UnifiedDataManagerProps> = ({ isOpen, onClose
               {/* Auto Backup Settings */}
               <AutoBackupSettings />
 
-              {/* Last Backup Info */}
+              {/* Last Automatic Backup Info */}
               {lastBackupDate && (
+                <div className="mt-4 bg-blue-50 border border-blue-200 rounded-lg p-4 select-none">
+                  <div className="flex items-center gap-3 select-none">
+                    <div className="bg-blue-500 p-2 rounded-full select-none">
+                      <Database size={16} className="text-white" />
+                    </div>
+                    <div className="select-none">
+                      <h4 className="font-medium text-blue-800 select-none">Last Automatic Backup</h4>
+                      <p className="text-sm text-blue-700 select-none">
+                        {lastBackupDate.toLocaleDateString('en-GB', {
+                          day: '2-digit',
+                          month: 'short',
+                          year: 'numeric'
+                        }).replace(/\s/g, '-')} at {lastBackupDate.toLocaleTimeString('en-GB', {
+                          hour: '2-digit',
+                          minute: '2-digit',
+                          hour12: false
+                        })}
+                      </p>
+                    </div>
+                  </div>
+                </div>
+              )}
+
+              {/* Last Manual Backup Info */}
+              {lastManualBackupDate && (
                 <div className="mt-4 bg-green-50 border border-green-200 rounded-lg p-4 select-none">
                   <div className="flex items-center gap-3 select-none">
                     <div className="bg-green-500 p-2 rounded-full select-none">
                       <Database size={16} className="text-white" />
                     </div>
                     <div className="select-none">
-                      <h4 className="font-medium text-green-800 select-none">Last Backup</h4>
+                      <h4 className="font-medium text-green-800 select-none">Last Manual Backup</h4>
                       <p className="text-sm text-green-700 select-none">
-                        {lastBackupDate.toLocaleDateString('en-GB', {
+                        {lastManualBackupDate.toLocaleDateString('en-GB', {
                           day: '2-digit',
                           month: 'short',
                           year: 'numeric'
-                        }).replace(/\s/g, '-')} at {lastBackupDate.toLocaleTimeString('en-GB', {
+                        }).replace(/\s/g, '-')} at {lastManualBackupDate.toLocaleTimeString('en-GB', {
                           hour: '2-digit',
                           minute: '2-digit',
                           hour12: false
