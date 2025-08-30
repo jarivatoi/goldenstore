@@ -496,233 +496,235 @@ const UnifiedDataManager: React.FC<UnifiedDataManagerProps> = ({ isOpen, onClose
 
   return (
     createPortal(
-      <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center p-4 z-50 overflow-hidden select-none" style={{ height: '100vh' }}>
-        <div className="bg-white rounded-xl shadow-lg w-full max-w-md overflow-hidden select-none">
-          
-          {/* Header */}
-          <div className="flex justify-between items-center p-6 border-b border-gray-200 select-none">
-            <div className="flex items-center gap-3 select-none">
-              <div className="bg-blue-100 p-2 rounded-full select-none">
-                <Database size={20} className="text-blue-600" />
-              </div>
-              <h2 className="text-xl font-semibold text-gray-900 select-none">Database Manager</h2>
-            </div>
-            <button 
-              onClick={onClose}
-              className="text-gray-500 hover:text-gray-700 transition-colors select-none"
-            >
-              <X size={24} />
-            </button>
-          </div>
-
-          {/* Content */}
-          <div className="p-6 select-none">
-            <p className="text-sm text-gray-600 mb-6 select-none">
-              Manage your complete Golden Store database including Price List, Credit, Over Items, and Orders.
-            </p>
-
-            <div className="space-y-4 select-none">
-              {/* Export All Data */}
-              <button
-                onClick={handleExportAll}
-                disabled={isProcessing}
-                className="w-full flex items-center gap-4 p-4 bg-blue-50 hover:bg-blue-100 rounded-lg border border-blue-200 transition-colors disabled:opacity-50 select-none"
-              >
-                <div className="bg-blue-500 p-2 rounded-full select-none">
-                  <Download size={20} className="text-white" />
-                </div>
-                <div className="text-left flex-1 select-none">
-                  <h4 className="font-medium text-gray-800 select-none">Export Database</h4>
-                  <p className="text-sm text-gray-600 select-none">Save to local file or server backup</p>
-                </div>
-              </button>
-
-              {/* Import All Data */}
-              <button
-                onClick={handleImportAll}
-                disabled={isProcessing}
-                className="w-full flex items-center gap-4 p-4 bg-green-50 hover:bg-green-100 rounded-lg border border-green-200 transition-colors disabled:opacity-50 select-none"
-              >
-                <div className="bg-green-500 p-2 rounded-full select-none">
-                  <Upload size={20} className="text-white" />
-                </div>
-                <div className="text-left flex-1 select-none">
-                  <h4 className="font-medium text-gray-800 select-none">Import Database</h4>
-                  <p className="text-sm text-gray-600 select-none">Load from local file or server backup</p>
-                </div>
-              </button>
-            </div>
-
-            {/* Auto Backup Settings */}
-            <AutoBackupSettings />
-
-            {/* Last Backup Info */}
-            {lastBackupDate && (
-              <div className="mt-4 bg-green-50 border border-green-200 rounded-lg p-4 select-none">
-                <div className="flex items-center gap-3 select-none">
-                  <div className="bg-green-500 p-2 rounded-full select-none">
-                    <Database size={16} className="text-white" />
-                  </div>
-                  <div className="select-none">
-                    <h4 className="font-medium text-green-800 select-none">Last Backup</h4>
-                    <p className="text-sm text-green-700 select-none">
-                      {lastBackupDate.toLocaleDateString('en-GB', {
-                        day: '2-digit',
-                        month: 'short',
-                        year: 'numeric'
-                      }).replace(/\s/g, '-')} at {lastBackupDate.toLocaleTimeString('en-GB', {
-                        hour: '2-digit',
-                        minute: '2-digit',
-                        hour12: false
-                      })}
-                    </p>
-                  </div>
-                </div>
-              </div>
-            )}
-
-            {/* Warning */}
-            <div className="mt-6 bg-yellow-50 border border-yellow-200 rounded-lg p-4 select-none">
-              <div className="flex items-start gap-3 select-none">
-                <AlertTriangle size={20} className="text-yellow-600 flex-shrink-0 mt-0.5" />
-                <div className="select-none">
-                  <h4 className="font-medium text-yellow-800 mb-1 select-none">Important Notes</h4>
-                  <ul className="text-sm text-yellow-700 space-y-1 select-none">
-                    <li className="select-none">• <strong>Local:</strong> Downloads file to your device</li>
-                    <li className="select-none">• <strong>Server:</strong> Saves to cloud (overwrites old backup)</li>
-                    <li className="select-none">• Server backups can be accessed from any device</li>
-                    <li className="select-none">• Import will REPLACE all existing data</li>
-                  </ul>
-                </div>
-              </div>
-            </div>
-
-            {/* Processing State */}
-            {isProcessing && (
-              <div className="mt-4 text-center select-none">
-                <div className="inline-flex items-center gap-2 text-blue-600 select-none">
-                  <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-blue-600"></div>
-                  <span className="select-none">Processing...</span>
-                </div>
-              </div>
-            )}
-          </div>
-        </div>
-      </div>
-
-      {/* Modal Dialogs */}
-      {modal.type && createPortal(
-        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center p-4 z-[9999] overflow-hidden select-none" style={{ height: '100vh' }}>
+      <>
+        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center p-4 z-50 overflow-hidden select-none" style={{ height: '100vh' }}>
           <div className="bg-white rounded-xl shadow-lg w-full max-w-md overflow-hidden select-none">
             
-            {modal.type === 'storage-choice' ? (
-              <>
-                {/* Storage Choice Modal */}
-                <div className="flex justify-between items-center p-6 border-b border-gray-200 select-none">
-                  <h2 className="text-xl font-semibold text-gray-900 select-none">{modal.title}</h2>
-                  <button onClick={modal.onCancel} className="text-gray-500 hover:text-gray-700 transition-colors select-none">
-                    <X size={24} />
-                  </button>
+            {/* Header */}
+            <div className="flex justify-between items-center p-6 border-b border-gray-200 select-none">
+              <div className="flex items-center gap-3 select-none">
+                <div className="bg-blue-100 p-2 rounded-full select-none">
+                  <Database size={20} className="text-blue-600" />
                 </div>
-                
-                <div className="p-6 select-none">
-                  <p className="text-gray-700 mb-6 select-none">{modal.message}</p>
-                  
-                  <div className="space-y-3 select-none">
-                    {/* Local Storage Option */}
-                    <button
-                      onClick={modal.onLocalChoice}
-                      disabled={isProcessing}
-                      className="w-full flex items-center gap-4 p-4 bg-blue-50 hover:bg-blue-100 rounded-lg border border-blue-200 transition-colors disabled:opacity-50 select-none"
-                    >
-                      <div className="bg-blue-500 p-2 rounded-full select-none">
-                        <HardDrive size={20} className="text-white" />
-                      </div>
-                      <div className="text-left flex-1 select-none">
-                        <h4 className="font-medium text-gray-800 select-none">Local Device</h4>
-                        <p className="text-sm text-gray-600 select-none">Save/load from your device storage</p>
-                      </div>
-                    </button>
-                    
-                    {/* Server Storage Option */}
-                    <button
-                      onClick={modal.onServerChoice}
-                      disabled={isProcessing}
-                      className="w-full flex items-center gap-4 p-4 bg-green-50 hover:bg-green-100 rounded-lg border border-green-200 transition-colors disabled:opacity-50 select-none"
-                    >
-                      <div className="bg-green-500 p-2 rounded-full select-none">
-                        <Cloud size={20} className="text-white" />
-                      </div>
-                      <div className="text-left flex-1 select-none">
-                        <h4 className="font-medium text-gray-800 select-none">Server Backup</h4>
-                        <p className="text-sm text-gray-600 select-none">Save/load from cloud server</p>
-                      </div>
-                    </button>
-                  </div>
-                  
-                  {isProcessing && (
-                    <div className="mt-4 text-center select-none">
-                      <div className="inline-flex items-center gap-2 text-blue-600 select-none">
-                        <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-blue-600"></div>
-                        <span className="select-none">Processing...</span>
-                      </div>
-                    </div>
-                  )}
-                </div>
-              </>
-            ) : (
-              <>
-                {/* Standard Modal Header */}
-                <div className="flex justify-between items-center p-6 border-b border-gray-200 select-none">
-                  <div className="flex items-center gap-3 select-none">
-                    <div className={`p-2 rounded-full select-none ${
-                      modal.type === 'success' ? 'bg-green-100' :
-                      modal.type === 'error' ? 'bg-red-100' :
-                      'bg-yellow-100'
-                    }`}>
-                      {modal.type === 'success' ? (
-                        <Database size={20} className="text-green-600" />
-                      ) : modal.type === 'error' ? (
-                        <X size={20} className="text-red-600" />
-                      ) : (
-                        <AlertTriangle size={20} className="text-yellow-600" />
-                      )}
-                    </div>
-                    <h2 className="text-xl font-semibold text-gray-900 select-none">{modal.title}</h2>
-                  </div>
-                </div>
+                <h2 className="text-xl font-semibold text-gray-900 select-none">Database Manager</h2>
+              </div>
+              <button 
+                onClick={onClose}
+                className="text-gray-500 hover:text-gray-700 transition-colors select-none"
+              >
+                <X size={24} />
+              </button>
+            </div>
 
-                {/* Standard Modal Content */}
-                <div className="p-6 select-none">
-                  <p className="text-gray-700 whitespace-pre-line select-none">{modal.message}</p>
-                  
-                  <div className="flex gap-3 mt-6 select-none">
-                    {modal.type === 'confirm' && modal.onCancel && (
-                      <button
-                        onClick={modal.onCancel}
-                        className="flex-1 px-4 py-2 bg-gray-200 text-gray-800 rounded-lg hover:bg-gray-300 transition-colors select-none"
-                      >
-                        Cancel
-                      </button>
-                    )}
-                    <button
-                      onClick={modal.onConfirm}
-                      className={`${modal.type === 'confirm' ? 'flex-1' : 'w-full'} px-4 py-2 rounded-lg transition-colors select-none ${
-                        modal.type === 'success' ? 'bg-green-500 hover:bg-green-600 text-white' :
-                        modal.type === 'error' ? 'bg-red-500 hover:bg-red-600 text-white' :
-                        'bg-blue-500 hover:bg-blue-600 text-white'
-                      }`}
-                    >
-                      {modal.type === 'confirm' ? 'Continue' : 'OK'}
-                    </button>
+            {/* Content */}
+            <div className="p-6 select-none">
+              <p className="text-sm text-gray-600 mb-6 select-none">
+                Manage your complete Golden Store database including Price List, Credit, Over Items, and Orders.
+              </p>
+
+              <div className="space-y-4 select-none">
+                {/* Export All Data */}
+                <button
+                  onClick={handleExportAll}
+                  disabled={isProcessing}
+                  className="w-full flex items-center gap-4 p-4 bg-blue-50 hover:bg-blue-100 rounded-lg border border-blue-200 transition-colors disabled:opacity-50 select-none"
+                >
+                  <div className="bg-blue-500 p-2 rounded-full select-none">
+                    <Download size={20} className="text-white" />
+                  </div>
+                  <div className="text-left flex-1 select-none">
+                    <h4 className="font-medium text-gray-800 select-none">Export Database</h4>
+                    <p className="text-sm text-gray-600 select-none">Save to local file or server backup</p>
+                  </div>
+                </button>
+
+                {/* Import All Data */}
+                <button
+                  onClick={handleImportAll}
+                  disabled={isProcessing}
+                  className="w-full flex items-center gap-4 p-4 bg-green-50 hover:bg-green-100 rounded-lg border border-green-200 transition-colors disabled:opacity-50 select-none"
+                >
+                  <div className="bg-green-500 p-2 rounded-full select-none">
+                    <Upload size={20} className="text-white" />
+                  </div>
+                  <div className="text-left flex-1 select-none">
+                    <h4 className="font-medium text-gray-800 select-none">Import Database</h4>
+                    <p className="text-sm text-gray-600 select-none">Load from local file or server backup</p>
+                  </div>
+                </button>
+              </div>
+
+              {/* Auto Backup Settings */}
+              <AutoBackupSettings />
+
+              {/* Last Backup Info */}
+              {lastBackupDate && (
+                <div className="mt-4 bg-green-50 border border-green-200 rounded-lg p-4 select-none">
+                  <div className="flex items-center gap-3 select-none">
+                    <div className="bg-green-500 p-2 rounded-full select-none">
+                      <Database size={16} className="text-white" />
+                    </div>
+                    <div className="select-none">
+                      <h4 className="font-medium text-green-800 select-none">Last Backup</h4>
+                      <p className="text-sm text-green-700 select-none">
+                        {lastBackupDate.toLocaleDateString('en-GB', {
+                          day: '2-digit',
+                          month: 'short',
+                          year: 'numeric'
+                        }).replace(/\s/g, '-')} at {lastBackupDate.toLocaleTimeString('en-GB', {
+                          hour: '2-digit',
+                          minute: '2-digit',
+                          hour12: false
+                        })}
+                      </p>
+                    </div>
                   </div>
                 </div>
-              </>
-            )}
+              )}
+
+              {/* Warning */}
+              <div className="mt-6 bg-yellow-50 border border-yellow-200 rounded-lg p-4 select-none">
+                <div className="flex items-start gap-3 select-none">
+                  <AlertTriangle size={20} className="text-yellow-600 flex-shrink-0 mt-0.5" />
+                  <div className="select-none">
+                    <h4 className="font-medium text-yellow-800 mb-1 select-none">Important Notes</h4>
+                    <ul className="text-sm text-yellow-700 space-y-1 select-none">
+                      <li className="select-none">• <strong>Local:</strong> Downloads file to your device</li>
+                      <li className="select-none">• <strong>Server:</strong> Saves to cloud (overwrites old backup)</li>
+                      <li className="select-none">• Server backups can be accessed from any device</li>
+                      <li className="select-none">• Import will REPLACE all existing data</li>
+                    </ul>
+                  </div>
+                </div>
+              </div>
+
+              {/* Processing State */}
+              {isProcessing && (
+                <div className="mt-4 text-center select-none">
+                  <div className="inline-flex items-center gap-2 text-blue-600 select-none">
+                    <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-blue-600"></div>
+                    <span className="select-none">Processing...</span>
+                  </div>
+                </div>
+              )}
+            </div>
           </div>
         </div>
-        , document.body
-      )}
+
+        {/* Modal Dialogs */}
+        {modal.type && createPortal(
+          <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center p-4 z-[9999] overflow-hidden select-none" style={{ height: '100vh' }}>
+            <div className="bg-white rounded-xl shadow-lg w-full max-w-md overflow-hidden select-none">
+              
+              {modal.type === 'storage-choice' ? (
+                <>
+                  {/* Storage Choice Modal */}
+                  <div className="flex justify-between items-center p-6 border-b border-gray-200 select-none">
+                    <h2 className="text-xl font-semibold text-gray-900 select-none">{modal.title}</h2>
+                    <button onClick={modal.onCancel} className="text-gray-500 hover:text-gray-700 transition-colors select-none">
+                      <X size={24} />
+                    </button>
+                  </div>
+                  
+                  <div className="p-6 select-none">
+                    <p className="text-gray-700 mb-6 select-none">{modal.message}</p>
+                    
+                    <div className="space-y-3 select-none">
+                      {/* Local Storage Option */}
+                      <button
+                        onClick={modal.onLocalChoice}
+                        disabled={isProcessing}
+                        className="w-full flex items-center gap-4 p-4 bg-blue-50 hover:bg-blue-100 rounded-lg border border-blue-200 transition-colors disabled:opacity-50 select-none"
+                      >
+                        <div className="bg-blue-500 p-2 rounded-full select-none">
+                          <HardDrive size={20} className="text-white" />
+                        </div>
+                        <div className="text-left flex-1 select-none">
+                          <h4 className="font-medium text-gray-800 select-none">Local Device</h4>
+                          <p className="text-sm text-gray-600 select-none">Save/load from your device storage</p>
+                        </div>
+                      </button>
+                      
+                      {/* Server Storage Option */}
+                      <button
+                        onClick={modal.onServerChoice}
+                        disabled={isProcessing}
+                        className="w-full flex items-center gap-4 p-4 bg-green-50 hover:bg-green-100 rounded-lg border border-green-200 transition-colors disabled:opacity-50 select-none"
+                      >
+                        <div className="bg-green-500 p-2 rounded-full select-none">
+                          <Cloud size={20} className="text-white" />
+                        </div>
+                        <div className="text-left flex-1 select-none">
+                          <h4 className="font-medium text-gray-800 select-none">Server Backup</h4>
+                          <p className="text-sm text-gray-600 select-none">Save/load from cloud server</p>
+                        </div>
+                      </button>
+                    </div>
+                    
+                    {isProcessing && (
+                      <div className="mt-4 text-center select-none">
+                        <div className="inline-flex items-center gap-2 text-blue-600 select-none">
+                          <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-blue-600"></div>
+                          <span className="select-none">Processing...</span>
+                        </div>
+                      </div>
+                    )}
+                  </div>
+                </>
+              ) : (
+                <>
+                  {/* Standard Modal Header */}
+                  <div className="flex justify-between items-center p-6 border-b border-gray-200 select-none">
+                    <div className="flex items-center gap-3 select-none">
+                      <div className={`p-2 rounded-full select-none ${
+                        modal.type === 'success' ? 'bg-green-100' :
+                        modal.type === 'error' ? 'bg-red-100' :
+                        'bg-yellow-100'
+                      }`}>
+                        {modal.type === 'success' ? (
+                          <Database size={20} className="text-green-600" />
+                        ) : modal.type === 'error' ? (
+                          <X size={20} className="text-red-600" />
+                        ) : (
+                          <AlertTriangle size={20} className="text-yellow-600" />
+                        )}
+                      </div>
+                      <h2 className="text-xl font-semibold text-gray-900 select-none">{modal.title}</h2>
+                    </div>
+                  </div>
+
+                  {/* Standard Modal Content */}
+                  <div className="p-6 select-none">
+                    <p className="text-gray-700 whitespace-pre-line select-none">{modal.message}</p>
+                    
+                    <div className="flex gap-3 mt-6 select-none">
+                      {modal.type === 'confirm' && modal.onCancel && (
+                        <button
+                          onClick={modal.onCancel}
+                          className="flex-1 px-4 py-2 bg-gray-200 text-gray-800 rounded-lg hover:bg-gray-300 transition-colors select-none"
+                        >
+                          Cancel
+                        </button>
+                      )}
+                      <button
+                        onClick={modal.onConfirm}
+                        className={`${modal.type === 'confirm' ? 'flex-1' : 'w-full'} px-4 py-2 rounded-lg transition-colors select-none ${
+                          modal.type === 'success' ? 'bg-green-500 hover:bg-green-600 text-white' :
+                          modal.type === 'error' ? 'bg-red-500 hover:bg-red-600 text-white' :
+                          'bg-blue-500 hover:bg-blue-600 text-white'
+                        }`}
+                      >
+                        {modal.type === 'confirm' ? 'Continue' : 'OK'}
+                      </button>
+                    </div>
+                  </div>
+                </>
+              )}
+            </div>
+          </div>
+          , document.body
+        )}
+      </>
       , document.body
     )
   );
