@@ -244,7 +244,14 @@ const ClientGrid: React.FC<ClientGridProps> = ({
             <input
               type="text"
               value={searchQuery}
-              onChange={(e) => onSearchChange(e.target.value)}
+              onChange={(e) => {
+                const newQuery = e.target.value;
+                onSearchChange(newQuery);
+                // Auto-switch to show all clients when user starts typing
+                if (newQuery.trim() && !showAllClients) {
+                  onToggleAllClients();
+                }
+              }}
               placeholder="Search by client name or ID..."
               className={`block w-full pl-10 ${searchQuery ? 'pr-12' : 'pr-4'} py-3 lg:py-4 text-lg lg:text-xl border-2 border-gray-300 rounded-xl focus:outline-none focus:ring-3 focus:ring-blue-500 focus:border-blue-500 shadow-sm transition-all duration-200`}
             />
