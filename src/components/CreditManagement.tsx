@@ -777,6 +777,8 @@ const CreditManagement: React.FC = () => {
       await addTransaction(client, description, amount);
       
       // Force a re-render of the scrolling tabs to update text and reset timeline
+      setTimeout(() => {
+        setShowCenteredWobble(false);
       }, 3000);
       
       // Reset calculator state
