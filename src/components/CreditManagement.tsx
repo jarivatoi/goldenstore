@@ -868,6 +868,7 @@ const CreditManagement: React.FC = () => {
                     linkedClient
                       ? 'bg-red-500 hover:bg-red-600 text-white'
                       : 'bg-gray-400 text-gray-600 cursor-not-allowed'
+                  }`}
                   title="Unlink client from calculator"
                 >
                   {linkedClient ? 'UNLINK' : 'UNLINKED'}
@@ -921,7 +922,7 @@ const CreditManagement: React.FC = () => {
                     // Showing a calculation step
                     const actualStepNumber = currentStepIndex + 1;
                     const totalSteps = calculationSteps.length;
-                    return `STEP ${actualStepNumber}/${totalSteps}`;
+                    return \`STEP ${actualStepNumber}/${totalSteps}`;
                   } else {
                     // Fallback
                     return `RESULT`;
@@ -1019,7 +1020,6 @@ const CreditManagement: React.FC = () => {
               9
             </button>
             <button
-              onClick={() => handleCalculatorInput('LINK')}
               onClick={() => handleCalculatorInput('CHECK←')}
               disabled={calculationSteps.length === 0}
               className="bg-purple-400 hover:bg-purple-500 disabled:bg-gray-300 disabled:text-gray-500 text-white p-2 sm:p-3 rounded-lg font-bold text-xs sm:text-sm shadow-md border border-purple-500 flex items-center justify-center"
