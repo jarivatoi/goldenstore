@@ -836,27 +836,17 @@ export const processCalculatorInput = (
     const num = parseFloat(newValue);
     if (num > 999999999999 || (num < 0.000001 && num !== 0)) {
       newValue = num.toExponential(6);
-    } else {
-      // Preserve trailing decimal point for user feedback
-      if (newValue.endsWith('.')) {
-        newValue = num.toString() + '.';
+    } else if (input === '=' || input === 'ENTER') {
+      // Only format to 2 decimal places when showing final result
+      if (newValue.includes('.')) {
+        newValue = num.toFixed(2);
       } else {
-        // Format to 2 decimal places if it has 1 decimal place, otherwise keep as is
-        const numStr = num.toString();
-        if (numStr.includes('.')) {
-          const decimalPart = numStr.split('.')[1];
-          if (decimalPart.length === 1) {
-            // 1 decimal place -> format to 2 decimal places (1.2 -> 1.20)
-            newValue = num.toFixed(2);
-          } else {
-            // Multiple decimal places or whole number -> keep as is
-            newValue = numStr;
-          }
-        } else {
-          // Whole number -> keep as is (100 stays 100, not 100.00)
-          newValue = numStr;
-        }
+        newValue = num.toString();
       }
+    } else {
+      // During typing, preserve exact user input including decimals
+      // Don't format decimals until final result
+      newValue = newValue; // Keep as-is during input
     }
   }
 
