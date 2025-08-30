@@ -890,18 +890,6 @@ const CreditManagement: React.FC = () => {
                   {calculatorMemory !== 0 && (
                     <span className="text-green-400 font-bold">M</span>
                   )}
-                    <button
-                      onClick={() => handleCalculatorInput('CHECK←')}
-                      className="bg-gray-500 hover:bg-gray-600 text-white p-2 sm:p-3 rounded text-xs sm:text-sm font-semibold flex items-center justify-center"
-                    >
-                      CHECK←
-                    </button>
-                    <button
-                      onClick={() => handleCalculatorInput('CHECK→')}
-                      className="bg-gray-500 hover:bg-gray-600 text-white p-2 sm:p-3 rounded text-xs sm:text-sm font-semibold flex items-center justify-center"
-                    >
-                      CHECK→
-                    </button>
                 </div>
                 <div className="text-gray-400 font-mono">
                   {lastOperation && <span>OP: {lastOperation === '*' ? '×' : lastOperation === '/' ? '÷' : lastOperation}</span>}
@@ -924,18 +912,18 @@ const CreditManagement: React.FC = () => {
               
               {/* Secondary Display */}
               <div className="text-xs text-gray-400 font-mono mt-1 text-center">
+                {(() => {
+                  if (autoReplayActive && calculationSteps.length > 0) {
+                    const currentStepIndex = calculationSteps.findIndex(step => 
+                      step.result.toString() === calculatorValue
+                    );
+                    const totalSteps = calculationSteps.length;
+                    const actualStepNumber = currentStepIndex >= 0 ? currentStepIndex + 1 : totalSteps;
                     return `STEP ${actualStepNumber}/${totalSteps}`;
                   } else {
-                      className="bg-purple-500 hover:bg-purple-600 text-white p-2 sm:p-3 rounded text-xs sm:text-sm font-semibold flex items-center justify-center col-span-2"
                     return `RESULT`;
-                      Link
-                    </button>
-                    <button
-                      onClick={() => handleCalculatorInput('%')}
-                      className="bg-orange-500 hover:bg-orange-600 text-white p-2 sm:p-3 rounded text-xs sm:text-sm font-semibold flex items-center justify-center"
-                    >
-                      %
-                })() : 'READY'}
+                  }
+                })() || 'READY'}
               </div>
             </div>
           </div>
