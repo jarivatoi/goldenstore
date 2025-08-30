@@ -63,7 +63,8 @@ const CreditManagement: React.FC = () => {
   const [deleteAllPasscode, setDeleteAllPasscode] = useState('');
   
   // Transaction success state
-  const [recentTransactionClient, setRecentTransactionClient] = useState<Client | null>(null);
+  const [showCenteredWobble, setShowCenteredWobble] = useState(false);
+  const [centeredWobbleClient, setCenteredWobbleClient] = useState<Client | null>(null);
   
   // Mini calculator state
   const [miniCalculators, setMiniCalculators] = useState<Array<{
@@ -725,6 +726,10 @@ const CreditManagement: React.FC = () => {
       
       if (isNaN(amount) || !isFinite(amount) || amount < 0) {
         throw new Error('Please enter a valid amount');
+      // Show centered wobble effect
+      setCenteredWobbleClient(client);
+      setShowCenteredWobble(true);
+      
       }
       
       if (!description || !description.trim()) {
@@ -760,6 +765,8 @@ const CreditManagement: React.FC = () => {
       // Auto-hide the wobble effect after 8 seconds
       setTimeout(() => {
         setRecentTransactionClient(null);
+        setShowCenteredWobble(false);
+        setCenteredWobbleClient(null);
       }, 8000);
     } catch (error) {
       throw error; // Re-throw to be caught by the modal

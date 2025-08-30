@@ -23,19 +23,25 @@ const isMobileDevice = () => {
 let supabase: any = null;
 
 try {
+  console.log('🔧 Initializing Supabase client...');
+  
   // Validate configuration
   if (!supabaseUrl || !supabaseAnonKey) {
+    console.warn('⚠️ Supabase credentials missing');
     throw new Error('Supabase credentials are missing');
   }
 
   // Validate URL format
   if (!supabaseUrl.startsWith('https://') || !supabaseUrl.includes('.supabase.co')) {
+    console.error('❌ Invalid Supabase URL format:', supabaseUrl);
     throw new Error(`Invalid Supabase URL format: ${supabaseUrl}`);
   }
 
   // Mobile devices require special handling
   const isMobile = isMobileDevice();
   const isPWA = isMobilePWA();
+  
+  console.log('📱 Device detection:', { isMobile, isPWA });
   
   const mobileConfig = {
     auth: {
@@ -84,6 +90,7 @@ try {
           headers.set('Expires', '0');
         } else {
           headers.set('Cache-Control', 'no-cache');
+          headers.set('X-Client-Info', 'golden-store-desktop');
         }
         
         return fetch(url, {
@@ -110,8 +117,10 @@ try {
   };
 
   supabase = createClient(supabaseUrl, supabaseAnonKey, mobileConfig);
+  console.log('✅ Supabase client initialized successfully');
   
 } catch (error) {
+  console.error('❌ Supabase initialization failed:', error);
   supabase = null;
 }
 
