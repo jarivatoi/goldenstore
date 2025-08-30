@@ -687,7 +687,9 @@ const CreditManagement: React.FC = () => {
   const handleAddToClient = async (client: Client, description: string) => {
     try {
       
-      const amount = evaluateExpression(calculatorValue);
+      // Remove = sign if present (from AUTO results)
+      const cleanValue = calculatorValue.startsWith('=') ? calculatorValue.substring(1) : calculatorValue;
+      const amount = evaluateExpression(cleanValue);
       
       if (isNaN(amount) || !isFinite(amount) || amount < 0) {
         throw new Error('Please enter a valid amount');
@@ -778,7 +780,9 @@ const CreditManagement: React.FC = () => {
 
   // Helper function to safely evaluate calculator value
   const getCalculatorAmount = (): number => {
-    return evaluateExpression(calculatorValue);
+    // Remove = sign if present (from AUTO results)
+    const cleanValue = calculatorValue.startsWith('=') ? calculatorValue.substring(1) : calculatorValue;
+    return evaluateExpression(cleanValue);
   };
 
   // Database operations
