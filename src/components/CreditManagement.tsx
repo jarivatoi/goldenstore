@@ -799,6 +799,11 @@ const CreditManagement: React.FC = () => {
       setRecentTransactionClient(client);
       
       setDuplicateCard({ ...client, transactionAmount: amount, transactionDescription: description } as any);
+      
+      // Auto-close after 3 seconds
+      setTimeout(() => {
+        setDuplicateCard(null);
+      }, 3000);
       setTimeout(() => {
         setRecentTransactionClient(null);
       }, 3000); // Increased to 3 seconds for better visibility
