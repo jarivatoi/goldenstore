@@ -1333,7 +1333,7 @@ const CreditManagement: React.FC = () => {
               <div className="flex items-center justify-center mb-4">
                 <div className="bg-green-100 p-3 rounded-full">
                   <CheckCircle size={40} className="text-green-600" />
-                </div>
+            <div className="flex items-center justify-center gap-3 mb-3">
               </div>
               
               {/* Client Info */}
