@@ -65,6 +65,7 @@ const CreditManagement: React.FC = () => {
   // Transaction success state
   const [showCenteredWobble, setShowCenteredWobble] = useState(false);
   const [centeredWobbleClient, setCenteredWobbleClient] = useState<Client | null>(null);
+  const [recentTransactionClient, setRecentTransactionClient] = useState<Client | null>(null);
   
   // Mini calculator state
   const [miniCalculators, setMiniCalculators] = useState<Array<{
@@ -717,6 +718,10 @@ const CreditManagement: React.FC = () => {
     console.log(`Transaction from ${label}: Amount: Rs ${amount.toFixed(2)}, Description: ${description}`);
   };
 
+  const onCloseWobble = () => {
+    setRecentTransactionClient(null);
+  };
+
   const handleAddToClient = async (client: Client, description: string) => {
     try {
       
@@ -729,6 +734,7 @@ const CreditManagement: React.FC = () => {
       // Show centered wobble effect
       setCenteredWobbleClient(client);
       setShowCenteredWobble(true);
+      setRecentTransactionClient(client);
       
       }
       
@@ -886,7 +892,7 @@ const CreditManagement: React.FC = () => {
             onResetCalculator={handleResetCalculator}
             linkedClient={linkedClient}
             recentTransactionClient={recentTransactionClient}
-            onCloseWobble={() => setRecentTransactionClient(null)}
+            onCloseWobble={onCloseWobble}
           />
         </div>
 
