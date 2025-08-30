@@ -753,7 +753,7 @@ const CreditManagement: React.FC = () => {
   const handleAddToClient = async (client: Client, description: string) => {
     try {
       
-      // Remove = sign if present (from AUTO results)
+      if (isNaN(amount) || !isFinite(amount) || amount < 0) {
       const cleanValue = calculatorValue.startsWith('=') ? calculatorValue.substring(1) : calculatorValue;
       const amount = evaluateExpression(cleanValue);
       

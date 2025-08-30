@@ -112,7 +112,7 @@ const MiniCalculator: React.FC<MiniCalculatorProps> = ({
     }
 
     const amount = evaluateExpression(calculatorValue);
-    if (isNaN(amount) || !isFinite(amount) || amount <= 0) {
+    if (isNaN(amount) || !isFinite(amount) || amount < 0) {
       setError('Please enter a valid amount');
       return;
     }
