@@ -922,7 +922,7 @@ const CreditManagement: React.FC = () => {
                     // Showing a calculation step
                     const actualStepNumber = currentStepIndex + 1;
                     const totalSteps = calculationSteps.length;
-                    return \`STEP ${actualStepNumber}/${totalSteps}`;
+                    return `STEP ${actualStepNumber}/${totalSteps}`;
                   } else {
                     // Fallback
                     return `RESULT`;
