@@ -1,5 +1,5 @@
 import React, { useState, useRef } from 'react';
-import { User, TrendingUp, Calendar, Plus } from 'lucide-react';
+import { User, TrendingUp, Calendar, Plus, X } from 'lucide-react';
 import { Client } from '../types';
 import { useCredit } from '../context/CreditContext';
 import ClientDetailModal from './ClientDetailModal';
@@ -13,6 +13,8 @@ interface ClientCardProps {
   onQuickAdd?: (client: Client) => void;
   onResetCalculator?: () => void;
   isLinked?: boolean;
+  showWobble?: boolean;
+  onCloseWobble?: () => void;
 }
 
 /**
@@ -22,6 +24,7 @@ interface ClientCardProps {
  * Displays individual client information with swipe and long press interactions
  */
 const ClientCard: React.FC<ClientCardProps> = ({ client, onLongPress, onQuickAdd, onResetCalculator, isLinked = false }) => {
+const ClientCard: React.FC<ClientCardProps> = ({ client, onLongPress, onQuickAdd, onResetCalculator, isLinked = false, showWobble = false, onCloseWobble }) => {
   const { getClientTotalDebt, getClientBottlesOwed, getClientTransactions } = useCredit();
   const [showDetails, setShowDetails] = useState(false);
   const [showActions, setShowActions] = useState(false);
@@ -336,7 +339,7 @@ const ClientCard: React.FC<ClientCardProps> = ({ client, onLongPress, onQuickAdd
     <>
       <div
         ref={cardRef}
-        className={`flex-shrink-0 w-56 sm:w-64 mx-auto rounded-lg shadow-md p-3 sm:p-4 border hover:shadow-lg transition-all duration-300 cursor-pointer select-none transform hover:scale-105 min-h-[320px] ${getCardBackgroundColor()}`}
+        className={`flex-shrink-0 w-56 sm:w-64 mx-auto rounded-lg shadow-md p-3 sm:p-4 border hover:shadow-lg transition-all duration-300 cursor-pointer select-none transform hover:scale-105 min-h-[320px] relative ${getCardBackgroundColor()} ${showWobble ? 'animate-wobble' : ''}`}
         onTouchStart={handleTouchStart}
         onTouchEnd={handleTouchEnd}
         onMouseDown={handleMouseDown}
@@ -355,6 +358,20 @@ const ClientCard: React.FC<ClientCardProps> = ({ client, onLongPress, onQuickAdd
           zIndex: 1
         }}
       >
+        {/* Close Button for Wobble Effect */}
+        {showWobble && onCloseWobble && (
+          <button
+            onClick={(e) => {
+              e.stopPropagation();
+              onCloseWobble();
+            }}
+            className="absolute top-2 right-2 w-8 h-8 bg-red-500 hover:bg-red-600 text-white rounded-full flex items-center justify-center shadow-lg z-10 transition-colors"
+            title="Close notification"
+          >
+            <X size={16} />
+          </button>
+        )}
+
         {/* Client Header */}
         <div className="flex items-center gap-2 sm:gap-3 mb-2 sm:mb-3">
           <div className="bg-blue-100 p-2 rounded-full flex-shrink-0">

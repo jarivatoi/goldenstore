@@ -62,6 +62,9 @@ const CreditManagement: React.FC = () => {
   const [showDeleteAllConfirm, setShowDeleteAllConfirm] = useState(false);
   const [deleteAllPasscode, setDeleteAllPasscode] = useState('');
   
+  // Transaction success state
+  const [recentTransactionClient, setRecentTransactionClient] = useState<Client | null>(null);
+  
   // Mini calculator state
   const [miniCalculators, setMiniCalculators] = useState<Array<{
     id: string;
@@ -721,6 +724,14 @@ const CreditManagement: React.FC = () => {
       setIsCalculatorActive(false);
       setShowClientSearch(false);
       setLinkedClient(null);
+      
+      // Show wobble effect for the client that received the transaction
+      setRecentTransactionClient(client);
+      
+      // Auto-hide the wobble effect after 5 seconds
+      setTimeout(() => {
+        setRecentTransactionClient(null);
+      }, 5000);
     } catch (error) {
       throw error; // Re-throw to be caught by the modal
     }
@@ -838,6 +849,8 @@ const CreditManagement: React.FC = () => {
             onQuickAdd={handleQuickAdd}
             onResetCalculator={handleResetCalculator}
             linkedClient={linkedClient}
+            recentTransactionClient={recentTransactionClient}
+            onCloseWobble={() => setRecentTransactionClient(null)}
           />
         </div>
 

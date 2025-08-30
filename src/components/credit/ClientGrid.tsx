@@ -20,6 +20,8 @@ interface ClientGridProps {
   onQuickAdd: (client: Client) => void;
   onResetCalculator: () => void;
   linkedClient: Client | null;
+  recentTransactionClient: Client | null;
+  onCloseWobble: () => void;
 }
 
 /**
@@ -38,6 +40,8 @@ const ClientGrid: React.FC<ClientGridProps> = ({
   onQuickAdd,
   onResetCalculator,
   linkedClient
+  recentTransactionClient,
+  onCloseWobble
 }) => {
   const contentRef = useRef<HTMLDivElement>(null);
   const containerRef = useRef<HTMLDivElement>(null);
@@ -219,6 +223,8 @@ const ClientGrid: React.FC<ClientGridProps> = ({
                   onQuickAdd={handleQuickAdd}
                   onResetCalculator={onResetCalculator}
                   isLinked={linkedClient?.id === client.id}
+                  showWobble={recentTransactionClient?.id === client.id}
+                  onCloseWobble={onCloseWobble}
                 />
               ))
             )}
