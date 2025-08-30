@@ -110,7 +110,7 @@ const CreditManagement: React.FC = () => {
       window.removeEventListener('autoReplayStep', handleAutoReplayStep as EventListener);
       window.removeEventListener('autoReplayComplete', handleAutoReplayComplete as EventListener);
     };
-  }, []);
+  }, [linkedClient]);
 
   // Get filtered clients for tabs based on selected filter
   const getFilteredClientsForTabs = () => {
@@ -890,12 +890,9 @@ const CreditManagement: React.FC = () => {
                   {calculatorMemory !== 0 && (
                     <span className="text-green-400 font-bold">M</span>
                   )}
-                    <button
-                      onClick={() => handleCalculatorInput('LINK')}
-                      className="bg-purple-500 hover:bg-purple-600 text-white p-3 rounded-lg text-lg font-semibold transition-colors col-span-2 flex items-center justify-center"
-                    >
-                      Link
-                    </button>
+                </div>
+              </div>
+              
               {/* Main Display with inline counter */}
               <div className="text-2xl sm:text-3xl font-mono text-green-400 min-h-[3rem] flex items-center justify-between overflow-hidden bg-black rounded px-3 py-2">
                 {/* Article Count Circle - Left side */}
