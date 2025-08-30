@@ -936,18 +936,10 @@ const CreditManagement: React.FC = () => {
             {/* Row 0 - Top row: CHECK←, CHECK→ */}
             <div className="col-span-6 grid grid-cols-2 gap-1 sm:gap-2 mb-1 sm:mb-2">
               <button
-                onClick={() => handleCalculatorInput('CHECK←')}
-                disabled={calculationSteps.length === 0}
-                className="bg-purple-400 hover:bg-purple-500 disabled:bg-gray-300 disabled:text-gray-500 text-white p-2 sm:p-3 rounded-lg font-bold text-sm sm:text-xl shadow-md border border-purple-500 flex items-center justify-center"
+                onClick={() => handleCalculatorInput('LINK')}
+                className="bg-blue-400 hover:bg-blue-500 text-white p-2 sm:p-3 rounded-lg font-bold text-sm sm:text-xl shadow-md border border-blue-500 flex items-center justify-center col-span-2"
               >
-                ← CHECK
-              </button>
-              <button
-                onClick={() => handleCalculatorInput('CHECK→')}
-                disabled={calculationSteps.length === 0}
-                className="bg-purple-400 hover:bg-purple-500 disabled:bg-gray-300 disabled:text-gray-500 text-white p-2 sm:p-3 rounded-lg font-bold text-sm sm:text-xl shadow-md border border-purple-500 flex items-center justify-center"
-              >
-                CHECK →
+                Link
               </button>
             </div>
 
@@ -1016,9 +1008,18 @@ const CreditManagement: React.FC = () => {
             </button>
             <button
               onClick={() => handleCalculatorInput('LINK')}
-              className="bg-blue-400 hover:bg-blue-500 text-white p-2 sm:p-3 rounded-lg font-bold text-xs sm:text-sm shadow-md border border-blue-500 flex items-center justify-center col-span-2"
+              onClick={() => handleCalculatorInput('CHECK←')}
+              disabled={calculationSteps.length === 0}
+              className="bg-purple-400 hover:bg-purple-500 disabled:bg-gray-300 disabled:text-gray-500 text-white p-2 sm:p-3 rounded-lg font-bold text-xs sm:text-sm shadow-md border border-purple-500 flex items-center justify-center"
             >
-              Link
+              ← CHK
+            </button>
+            <button
+              onClick={() => handleCalculatorInput('CHECK→')}
+              disabled={calculationSteps.length === 0}
+              className="bg-purple-400 hover:bg-purple-500 disabled:bg-gray-300 disabled:text-gray-500 text-white p-2 sm:p-3 rounded-lg font-bold text-xs sm:text-sm shadow-md border border-purple-500 flex items-center justify-center"
+            >
+              CHK →
             </button>
 
             {/* Row 3: √, 4, 5, 6, ×, ÷ */}
