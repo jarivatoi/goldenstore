@@ -777,7 +777,7 @@ const CreditManagement: React.FC = () => {
       await addTransaction(client, description, amount);
       
       // Force a re-render of the scrolling tabs to update text and reset timeline
-      window.dispatchEvent(new CustomEvent('creditDataChanged'));
+      }, 3000);
       
       // Reset calculator state
       setCalculatorValue('0');
@@ -1349,7 +1349,6 @@ const CreditManagement: React.FC = () => {
                 </div>
               )}
               
-              {/* Amount with animated arrow */}
               {/* Amount and Arrows Section */}
               {(() => {
                 const hasAmount = duplicateCard.transactionAmount !== undefined && duplicateCard.transactionAmount > 0;
