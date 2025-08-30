@@ -1,5 +1,5 @@
 // Enhanced service worker for PWA functionality
-const CACHE_NAME = 'golden-store-v5';
+const CACHE_NAME = 'golden-store-v6';
 const BASE_PATH = '.';
 
 // Sync tags for background sync
