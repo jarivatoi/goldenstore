@@ -74,6 +74,14 @@ const CreditManagement: React.FC = () => {
     position: { x: number; y: number };
   }>>([]);
 
+  const handleSearchChange = (query: string) => {
+    setSearchQuery(query);
+    // Auto switch to 'all' when user starts typing
+    if (query.trim() && !showAllClients) {
+      setShowAllClients(true);
+    }
+  };
+
   // Listen for credit data changes to force re-render
   useEffect(() => {
     const handleCreditDataChanged = () => {
