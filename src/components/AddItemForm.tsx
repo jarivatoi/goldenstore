@@ -237,14 +237,14 @@ const AddItemForm: React.FC = () => {
                 id="itemName"
                 type="text"
                 value={name}
-               onChange={(e) => {
-                 // Auto-capitalize as user types
-                 const formatted = e.target.value
-                   .split(' ')
-                   .map(word => word.charAt(0).toUpperCase() + word.slice(1).toLowerCase())
-                   .join(' ');
-                 setName(formatted);
-               }}
+                onChange={(e) => {
+                  // Smart capitalization that handles parentheses
+                  const formatted = e.target.value.replace(/\b\w+/g, (word) => {
+                    // Don't capitalize words that are entirely within parentheses content
+                    return word.charAt(0).toUpperCase() + word.slice(1).toLowerCase();
+                  });
+                  setName(formatted);
+                }}
                 disabled={isSubmitting}
                 className="w-full px-4 py-3 text-lg border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 bg-white disabled:bg-gray-100 disabled:cursor-not-allowed"
                 placeholder="Enter item name"

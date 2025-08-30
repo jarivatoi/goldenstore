@@ -178,10 +178,10 @@ const OverManagement: React.FC = () => {
                 type="text"
                 value={newItemName}
                 onChange={(e) => {
-                  const formatted = e.target.value
-                    .split(' ')
-                    .map(word => word.charAt(0).toUpperCase() + word.slice(1).toLowerCase())
-                    .join(' ');
+                  // Smart capitalization that handles parentheses
+                  const formatted = e.target.value.replace(/\b\w+/g, (word) => {
+                    return word.charAt(0).toUpperCase() + word.slice(1).toLowerCase();
+                  });
                   setNewItemName(formatted);
                 }}
                 disabled={isSubmitting}

@@ -106,9 +106,9 @@ export const CreditProvider: React.FC<CreditProviderProps> = ({ children }) => {
     try {
       const formattedName = name
         .trim()
-        .split(' ')
-        .map(word => word.charAt(0).toUpperCase() + word.slice(1).toLowerCase())
-        .join(' ');
+        .replace(/\b\w+/g, (word) => {
+          return word.charAt(0).toUpperCase() + word.slice(1).toLowerCase();
+        });
       
       // Check for duplicate names (case-insensitive)
       const existingClient = clients.find(c => 
