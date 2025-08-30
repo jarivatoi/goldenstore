@@ -890,6 +890,18 @@ const CreditManagement: React.FC = () => {
                   {calculatorMemory !== 0 && (
                     <span className="text-green-400 font-bold">M</span>
                   )}
+                    <button
+                      onClick={() => handleCalculatorInput('CHECK←')}
+                      className="bg-gray-500 hover:bg-gray-600 text-white p-2 sm:p-3 rounded text-xs sm:text-sm font-semibold flex items-center justify-center"
+                    >
+                      CHECK←
+                    </button>
+                    <button
+                      onClick={() => handleCalculatorInput('CHECK→')}
+                      className="bg-gray-500 hover:bg-gray-600 text-white p-2 sm:p-3 rounded text-xs sm:text-sm font-semibold flex items-center justify-center"
+                    >
+                      CHECK→
+                    </button>
                 </div>
                 <div className="text-gray-400 font-mono">
                   {lastOperation && <span>OP: {lastOperation === '*' ? '×' : lastOperation === '/' ? '÷' : lastOperation}</span>}
@@ -912,23 +924,17 @@ const CreditManagement: React.FC = () => {
               
               {/* Secondary Display */}
               <div className="text-xs text-gray-400 font-mono mt-1 text-center">
-                {autoReplayActive ? (() => {
-                  const currentStepIndex = parseInt(localStorage.getItem('currentCheckIndex') || '0');
-                  const hasResult = calculationSteps.length > 0 && calculationSteps.some(step => step.isComplete);
-                  const totalPositions = hasResult ? calculationSteps.length + 1 : calculationSteps.length;
-                  
-                  if (hasResult && currentStepIndex === calculationSteps.length) {
-                    // Showing the result
-                    return `RESULT`;
-                  } else if (currentStepIndex < calculationSteps.length) {
-                    // Showing a calculation step
-                    const actualStepNumber = currentStepIndex + 1;
-                    const totalSteps = calculationSteps.length;
                     return `STEP ${actualStepNumber}/${totalSteps}`;
                   } else {
-                    // Fallback
+                      className="bg-purple-500 hover:bg-purple-600 text-white p-2 sm:p-3 rounded text-xs sm:text-sm font-semibold flex items-center justify-center col-span-2"
                     return `RESULT`;
-                  }
+                      Link
+                    </button>
+                    <button
+                      onClick={() => handleCalculatorInput('%')}
+                      className="bg-orange-500 hover:bg-orange-600 text-white p-2 sm:p-3 rounded text-xs sm:text-sm font-semibold flex items-center justify-center"
+                    >
+                      %
                 })() : 'READY'}
               </div>
             </div>
