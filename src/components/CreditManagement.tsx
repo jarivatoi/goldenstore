@@ -80,15 +80,6 @@ const CreditManagement: React.FC = () => {
     if (query.trim() && !showAllClients) {
       setShowAllClients(true);
     }
-    
-    // Auto switch to 'all' when user starts typing
-    if (query.trim() && !showAllClients) {
-      setShowAllClients(true);
-    }
-    // Auto switch to 'all' when user starts typing
-    if (query.trim() && !showAllClients) {
-      setShowAllClients(true);
-    }
   };
 
   // Listen for credit data changes to force re-render
