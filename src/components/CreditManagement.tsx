@@ -868,6 +868,16 @@ const CreditManagement: React.FC = () => {
                     handleCalculatorCancel();
                   }}
                   className="px-2 py-1 text-xs bg-red-500 hover:bg-red-600 text-white rounded transition-colors"
+                >
+                  Cancel
+                </button>
+              </>
+            )}
+          </div>
+
+          {/* Calculator Display */}
+          <div className="mb-4">
+            <div className="bg-black rounded-lg p-4 mb-2">
               {/* Main Display with inline counter */}
               <div className="text-2xl sm:text-3xl font-mono text-green-400 min-h-[3rem] flex items-center justify-between overflow-hidden bg-black rounded px-3 py-2">
                 {/* Article Count Circle - Left side */}
@@ -994,7 +1004,6 @@ const CreditManagement: React.FC = () => {
               9
             </button>
             <button
-              onClick={() => handleCalculatorInput('LINK')}
               onClick={() => handleCalculatorInput('CHECK←')}
               disabled={calculationSteps.length === 0}
               className="bg-purple-400 hover:bg-purple-500 disabled:bg-gray-300 disabled:text-gray-500 text-white p-2 sm:p-3 rounded-lg font-bold text-xs sm:text-sm shadow-md border border-purple-500 flex items-center justify-center"
