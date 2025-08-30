@@ -920,24 +920,9 @@ const CreditManagement: React.FC = () => {
           <div className="grid grid-cols-6 gap-1 sm:gap-2 mb-6 p-2 sm:p-4 bg-gray-200 rounded-lg border-2 border-gray-400 shadow-inner">
             {/* Row 0 - Top row: CHECK←, CHECK→ */}
             <div className="col-span-6 grid grid-cols-2 gap-1 sm:gap-2 mb-1 sm:mb-2">
-              <button
-                onClick={() => {
-                  if (linkedClient) {
-                    // Unlink client
-                    handleCalculatorCancel();
-                  } else {
-                    // Show client search to link
-                    setShowClientSearch(true);
-                  }
-                }}
-                className={`p-2 sm:p-3 rounded-lg font-bold text-sm sm:text-xl shadow-md border flex items-center justify-center ${
-                  linkedClient 
-                    ? 'bg-green-500 hover:bg-green-600 text-white border-green-600' 
-                    : 'bg-blue-400 hover:bg-blue-500 text-white border-blue-500'
-                }`}
-              >
-                {linkedClient ? `Linked: ${linkedClient.name}` : 'Link to Client'}
-              </button>
+              {/* Empty space where link button was */}
+              <div></div>
+              <div></div>
             </div>
 
             {/* Row 1: MU, MRC, M-, M+, →, AUTO */}
