@@ -776,7 +776,7 @@ const CreditManagement: React.FC = () => {
       // Show wobble effect for the client that received the transaction
       setRecentTransactionClient(client);
       
-      // Auto-hide the wobble effect after 8 seconds
+      setDuplicateCard({ ...client, transactionAmount: amount, transactionDescription: description });
       setTimeout(() => {
         setRecentTransactionClient(null);
         setShowCenteredWobble(false);
@@ -1294,7 +1294,7 @@ const CreditManagement: React.FC = () => {
 
       <CreditModals
         showSettings={showSettings}
-        onCloseSettings={() => setShowSettings(false)}
+          <div className="animate-pulsate bg-white rounded-lg shadow-2xl p-6 border-4 border-green-500 max-w-sm mx-4">
         onDeleteClient={handleDeleteClient}
         showDeleteConfirm={showDeleteConfirm}
         clientToDelete={clientToDelete}
@@ -1305,13 +1305,183 @@ const CreditManagement: React.FC = () => {
           setShowDeleteConfirm(false);
           setClientToDelete(null);
           setDeleteConfirmText('');
-        }}
-        showDeleteAllConfirm={showDeleteAllConfirm}
-        deleteAllPasscode={deleteAllPasscode}
-        onDeleteAllPasscodeChange={setDeleteAllPasscode}
-        onConfirmDeleteAll={confirmDeleteAllClients}
-        onCancelDeleteAll={() => {
-          setShowDeleteAllConfirm(false);
+              {/* Articles taken - larger font */}
+              {duplicateCard.transactionDescription && (
+                <div className="mb-3">
+                  <p className="text-lg font-semibold text-gray-800 leading-relaxed">
+                    {duplicateCard.transactionDescription}
+                  </p>
+                </div>
+              )}
+              
+              {/* Amount with animated arrow */}
+              {/* Amount and Arrows Section */}
+              {(() => {
+                const hasAmount = duplicateCard.transactionAmount !== undefined && duplicateCard.transactionAmount > 0;
+                const totalDebt = getClientTotalDebt(duplicateCard.id);
+                const hasDebt = totalDebt > 0;
+                
+                // Get returnable items for this client
+                const getReturnableItems = () => {
+                  const clientTransactions = getClientTransactions(duplicateCard.id);
+                  const returnableItems: {[key: string]: number} = {};
+                  
+                  clientTransactions.forEach(transaction => {
+                    if (transaction.type === 'payment' || transaction.description.toLowerCase().includes('returned')) {
+                      return;
+                    }
+                    
+                    const description = transaction.description.toLowerCase();
+                    if (!description.includes('chopine') && !description.includes('bouteille')) {
+                      return;
+                    }
+                    
+                    // Parse chopines
+                    const chopinePattern = /(\d+)\s+chopines?(?:\s+([^,]*))?/gi;
+                    let chopineMatch;
+                    while ((chopineMatch = chopinePattern.exec(description)) !== null) {
+                      const quantity = parseInt(chopineMatch[1]);
+                      const brand = chopineMatch[2]?.trim() || '';
+                      const key = brand ? `Chopine ${brand}` : 'Chopine';
+                      returnableItems[key] = (returnableItems[key] || 0) + quantity;
+                    }
+                    
+                    // Parse bouteilles
+                    const bouteillePattern = /(\d+)\s+(?:(\d+(?:\.\d+)?L)\s+)?bouteilles?(?:\s+([^,]*))?/gi;
+                    let bouteilleMatch;
+                    while ((bouteilleMatch = bouteillePattern.exec(description)) !== null) {
+                      const quantity = parseInt(bouteilleMatch[1]);
+                      const size = bouteilleMatch[2]?.trim() || '';
+                      const brand = bouteilleMatch[3]?.trim() || '';
+                      
+                      let key;
+                      if (size && brand) {
+                        key = `${size} ${brand}`;
+                      } else if (brand) {
+                        key = `Bouteille ${brand}`;
+                      } else if (size) {
+                        key = `${size} Bouteille`;
+                      } else {
+                        key = 'Bouteille';
+                      }
+                      returnableItems[key] = (returnableItems[key] || 0) + quantity;
+                    }
+                    
+                    // Handle items without explicit numbers
+                    if (description.includes('bouteille') && !bouteillePattern.test(description)) {
+                      const sizeMatch = description.match(/(\d+(?:\.\d+)?L)/i);
+                      const brandMatch = description.match(/bouteilles?\s+([^,]*)/i);
+                      const brand = brandMatch?.[1]?.trim() || '';
+                      
+                      let key;
+                      if (sizeMatch && brand) {
+                        key = `${sizeMatch[1]} ${brand}`;
+                      } else if (brand) {
+                        key = `Bouteille ${brand}`;
+                      } else if (sizeMatch) {
+                        key = `${sizeMatch[1]} Bouteille`;
+                      } else {
+                        key = 'Bouteille';
+                      }
+                      returnableItems[key] = (returnableItems[key] || 0) + 1;
+                    }
+                    
+                    if (description.includes('chopine') && !chopinePattern.test(description)) {
+                      const brandMatch = description.match(/chopines?\s+([^,]*)/i);
+                      const brand = brandMatch?.[1]?.trim() || '';
+                      const key = brand ? `Chopine ${brand}` : 'Chopine';
+                      returnableItems[key] = (returnableItems[key] || 0) + 1;
+                    }
+                  });
+                  
+                  // Calculate returned quantities
+                  const returnedQuantities: {[key: string]: number} = {};
+                  clientTransactions
+                    .filter(transaction => transaction.type === 'debt' && transaction.description.toLowerCase().includes('returned'))
+                    .forEach(transaction => {
+                      const description = transaction.description.toLowerCase();
+                      Object.keys(returnableItems).forEach(itemType => {
+                        if (description.includes(itemType.toLowerCase())) {
+                          const match = description.match(/returned:\s*(\d+)\s+/);
+                          if (match) {
+                            returnedQuantities[itemType] = (returnedQuantities[itemType] || 0) + parseInt(match[1]);
+                          }
+                        }
+                      });
+                    });
+                  
+                  // Calculate net returnable quantities
+                  const netReturnableItems: string[] = [];
+                  Object.entries(returnableItems).forEach(([itemType, total]) => {
+                    const returned = returnedQuantities[itemType] || 0;
+                    const remaining = Math.max(0, total - returned);
+                    if (remaining > 0) {
+                      netReturnableItems.push(`${remaining} ${itemType}${remaining > 1 ? 's' : ''}`);
+                    }
+                  });
+                  
+                  return netReturnableItems;
+                };
+                
+                const returnableItems = getReturnableItems();
+                const hasReturnables = returnableItems.length > 0;
+                
+                return (
+                  <div className="relative mb-3">
+                    {/* Amount Section - only show if amount > 0 */}
+                    {hasAmount && (
+                      <div className="mb-3">
+                        <p className="text-2xl font-bold text-green-600 mb-1">
+                          Rs {duplicateCard.transactionAmount!.toLocaleString('en-IN', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
+                        </p>
+                        
+                        {/* Arrow pointing to debt total - only show if debt > 0 */}
+                        {hasDebt && (
+                          <div className="flex items-center justify-center gap-2 mt-2">
+                            <div className="animate-bounce-horizontal text-green-600">
+                              <svg width="24" height="24" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+                                <path d="M5 12H19M19 12L12 5M19 12L12 19" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
+                              </svg>
+                            </div>
+                            <div className="bg-blue-500 text-white px-3 py-1 rounded-lg text-sm font-medium">
+                              Debt: Rs {totalDebt.toLocaleString('en-IN', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
+                            </div>
+                          </div>
+                        )}
+                      </div>
+                    )}
+                    
+                    {/* Returnables Section - show if client has returnables */}
+                    {hasReturnables && (
+                      <div className="mb-3">
+                        {/* Arrow pointing to returnables - only show if we also have amount */}
+                        {hasAmount && (
+                          <div className="flex items-center justify-center gap-2 mb-2">
+                            <div className="animate-bounce-horizontal text-orange-600">
+                              <svg width="24" height="24" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+                                <path d="M5 12H19M19 12L12 5M19 12L12 19" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
+                              </svg>
+                            </div>
+                            <div className="bg-orange-500 text-white px-3 py-1 rounded-lg text-sm font-medium">
+                              Returnables: {returnableItems.join(', ')}
+                            </div>
+                          </div>
+                        )}
+                        
+                        {/* Show returnables without arrow if no amount */}
+                        {!hasAmount && (
+                          <div className="bg-orange-100 border border-orange-300 rounded-lg p-3 mb-2">
+                            <p className="text-orange-800 font-medium text-sm mb-1">Total Returnables:</p>
+                            <p className="text-orange-700 text-sm">{returnableItems.join(', ')}</p>
+                          </div>
+                        )}
+                      </div>
+                    )}
+                  </div>
+                );
+              })()}
+              
+              <p className="text-sm text-green-700 font-medium">Transaction Added!</p>
           setDeleteAllPasscode('');
         }}
         onDeleteAllClients={handleDeleteAllClients}
