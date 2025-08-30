@@ -800,6 +800,7 @@ const CreditManagement: React.FC = () => {
       setTimeout(() => {
         setRecentTransactionClient(null);
       }, 3000); // Increased to 3 seconds for better visibility
+      setTimeout(() => {
         setCenteredWobbleClient(null);
       }, 8000);
     } catch (error) {
