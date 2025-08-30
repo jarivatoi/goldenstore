@@ -495,7 +495,7 @@ const UnifiedDataManager: React.FC<UnifiedDataManagerProps> = ({ isOpen, onClose
   };
 
   return (
-    <>
+    createPortal(
       <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center p-4 z-50 overflow-hidden select-none" style={{ height: '100vh' }}>
         <div className="bg-white rounded-xl shadow-lg w-full max-w-md overflow-hidden select-none">
           
@@ -723,7 +723,8 @@ const UnifiedDataManager: React.FC<UnifiedDataManagerProps> = ({ isOpen, onClose
         </div>
         , document.body
       )}
-    </>
+      , document.body
+    )
   );
 };
 

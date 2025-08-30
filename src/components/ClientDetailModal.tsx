@@ -279,7 +279,13 @@ const ClientDetailModal: React.FC<ClientDetailModalProps> = ({ client, onClose, 
                 <input
                   type="text"
                   value={editedName}
-                  onChange={(e) => setEditedName(e.target.value)}
+                  onChange={(e) => {
+                    // Smart capitalization that handles parentheses
+                    const formatted = e.target.value.replace(/\b\w+/g, (word) => {
+                      return word.charAt(0).toUpperCase() + word.slice(1).toLowerCase();
+                    });
+                    setEditedName(formatted);
+                  }}
                   className="text-2xl font-semibold text-gray-900 bg-transparent border-b-2 border-blue-500 focus:outline-none select-text"
                   disabled={isSaving}
                   autoFocus

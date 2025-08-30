@@ -116,7 +116,35 @@ const CreditManagement: React.FC = () => {
   }, [linkedClient]);
 
   // Get filtered clients for tabs based on selected filter
-  const getFilteredClientsForTabs = () => {
+    // Always search all clients, not just filtered ones
+    const searchResults = clients.filter(client => {
+      if (!searchQuery.trim()) return true;
+      
+      // Normalize function to remove accents and special characters
+      const normalize = (str: string): string => {
+        return str
+          .toLowerCase()
+          .normalize('NFD') // Decompose accented characters
+          .replace(/[\u0300-\u036f]/g, '') // Remove accent marks
+          .replace(/[^\w\s]/g, ''); // Remove other special characters except word chars and spaces
+      };
+      
+      // Check if query is numeric (for ID search)
+      const isNumericQuery = /^\d+$/.test(searchQuery.trim());
+      
+      if (isNumericQuery) {
+        // For numeric queries, format as G-prefix ID and do exact match
+        const paddedNumber = searchQuery.trim().padStart(3, '0');
+        const formattedId = `G${paddedNumber}`;
+        
+        return client.id === formattedId;
+      } else {
+        // For text queries, search by name or exact ID match
+        const normalizedQuery = normalize(searchQuery);
+        return normalize(client.name).includes(normalizedQuery) ||
+               client.id.toLowerCase() === searchQuery.toLowerCase();
+      }
+    });
     let baseClients = searchClients(''); // Don't apply search to scrolling tabs
     
     switch (clientFilter) {
