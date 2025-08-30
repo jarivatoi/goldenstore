@@ -855,19 +855,16 @@ const CreditManagement: React.FC = () => {
                 <Calculator size={24} className="text-blue-600" />
               </div>
               <h3 className="text-lg lg:text-xl font-semibold text-gray-800">Calculator +</h3>
-            </button>
-            <div className="flex-1"></div>
-            {linkedClient && (
-              <>
-                <p className="text-xs lg:text-sm text-green-600 font-medium">
-                  Adding to: {linkedClient.name}
-                </p>
+                    // Only handle unlinking when a client is linked
+                    if (linkedClient) {
+                      setLinkedClient(null);
+                    }
                 <button
                   disabled={!linkedClient}
-                  className={`col-span-2 p-3 rounded-lg font-semibold transition-colors text-sm ${
+                  className={`col-span-2 py-2 px-4 rounded-lg font-medium transition-colors cursor-pointer ${
                     linkedClient
                       ? 'bg-red-500 hover:bg-red-600 text-white'
-                      : 'bg-gray-400 text-gray-600 cursor-not-allowed'
+                      : 'bg-gray-400 text-gray-600 cursor-not-allowed opacity-50'
                   }`}
                   title="Unlink client from calculator"
                 >
