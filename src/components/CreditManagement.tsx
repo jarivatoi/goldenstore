@@ -116,6 +116,7 @@ const CreditManagement: React.FC = () => {
   }, [linkedClient]);
 
   // Get filtered clients for tabs based on selected filter
+  const getFilteredClientsForTabs = () => {
     // Always search all clients, not just filtered ones
     const searchResults = clients.filter(client => {
       if (!searchQuery.trim()) return true;
