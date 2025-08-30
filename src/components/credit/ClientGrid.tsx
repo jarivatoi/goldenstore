@@ -39,7 +39,7 @@ const ClientGrid: React.FC<ClientGridProps> = ({
   onClientLongPress,
   onQuickAdd,
   onResetCalculator,
-  linkedClient
+  linkedClient,
   recentTransactionClient,
   onCloseWobble
 }) => {
