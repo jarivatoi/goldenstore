@@ -225,6 +225,8 @@ const ClientGrid: React.FC<ClientGridProps> = ({
                   isLinked={linkedClient?.id === client.id}
                   showWobble={recentTransactionClient?.id === client.id}
                   onCloseWobble={onCloseWobble}
+                  showWobble={recentTransactionClient?.id === client.id}
+                  onCloseWobble={onCloseWobble}
                 />
               ))
             )}
