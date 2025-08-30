@@ -1199,7 +1199,7 @@ const CreditManagement: React.FC = () => {
           {/* Add Button */}
           <button
             onClick={() => setShowClientSearch(true)}
-            disabled={calculatorValue === 'Error' || calculatorValue === '0'}
+            disabled={calculatorValue === 'Error'}
             className={`w-full ${linkedClient ? 'bg-blue-500 hover:bg-blue-600' : 'bg-green-500 hover:bg-green-600'} disabled:bg-gray-300 disabled:cursor-not-allowed text-white p-4 rounded-lg font-semibold text-lg flex items-center justify-center gap-2`}
           >
             <Plus size={20} />
