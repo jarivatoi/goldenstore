@@ -74,6 +74,9 @@ const CreditManagement: React.FC = () => {
     position: { x: number; y: number };
   }>>([]);
 
+  // Duplicate card state
+  const [duplicateCard, setDuplicateCard] = useState<Client & { transactionAmount?: number; transactionDescription?: string } | null>(null);
+
   const handleSearchChange = (query: string) => {
     setSearchQuery(query);
     // Auto-switch to show all clients when user starts typing
@@ -356,19 +359,24 @@ const CreditManagement: React.FC = () => {
             }
             
             // Look for Bouteille items
-            const bouteillePattern = /(\d+)\s+(?:(\d+(?:\.\d+)?[Ll])\s+)?bouteilles?(?:\s+([^,]*))?/gi;
+            const bouteillePattern = /(\d+)\s+(?:(\d+(?:\.\d+)?[Ll])\s+)?bouteilles?(?:\s+([^,\(\)]*))?/gi;
             let bouteilleMatch;
             
             while ((bouteilleMatch = bouteillePattern.exec(description)) !== null) {
               const quantity = parseInt(bouteilleMatch[1]);
-              const size = bouteilleMatch[2]?.trim().replace(/l$/i, 'L') || '';
+              const size = bouteilleMatch[2]?.trim() || '';
               const brand = bouteilleMatch[3]?.trim() || '';
+              
+              // Capitalize brand name properly
+              const capitalizedBrand = brand ? brand.split(' ').map(word => 
+                word.charAt(0).toUpperCase() + word.slice(1).toLowerCase()
+              ).join(' ') : '';
               
               let key;
               if (size && brand) {
-                key = `${size} ${brand}`;
+                key = `${size} ${capitalizedBrand}`;
               } else if (brand) {
-                key = `Bouteille ${brand}`;
+                key = `Bouteille ${capitalizedBrand}`;
               } else if (size) {
                 key = `${size} Bouteille`;
               } else {
@@ -387,13 +395,18 @@ const CreditManagement: React.FC = () => {
               const brandMatch = description.match(/bouteilles?\s+([^,]*)/i);
               const brand = brandMatch?.[1]?.trim() || '';
               
+              // Capitalize brand name properly
+              const capitalizedBrand = brand ? brand.split(' ').map(word => 
+                word.charAt(0).toUpperCase() + word.slice(1).toLowerCase()
+              ).join(' ') : '';
+              
               let key;
               if (sizeMatch && brand) {
-                key = `${sizeMatch[0].replace(/l$/i, 'L')} ${brand}`;
+                key = `${sizeMatch[1].replace(/l$/i, 'L')} ${capitalizedBrand}`;
               } else if (brand) {
-                key = `Bouteille ${brand}`;
+                key = `Bouteille ${capitalizedBrand}`;
               } else if (sizeMatch) {
-                key = `${sizeMatch[0].replace(/l$/i, 'L')} Bouteille`;
+                key = `${sizeMatch[1].replace(/l$/i, 'L')} Bouteille`;
               } else {
                 key = 'Bouteille';
               }
@@ -407,7 +420,13 @@ const CreditManagement: React.FC = () => {
             if (description.includes('chopine') && !chopinePattern.test(description)) {
               const brandMatch = description.match(/chopines?\s+([^,]*)/i);
               const brand = brandMatch?.[1]?.trim() || '';
-              const key = brand ? `Chopine ${brand}` : 'Chopine';
+              
+              // Capitalize brand name properly
+              const capitalizedBrand = brand ? brand.split(' ').map(word => 
+                word.charAt(0).toUpperCase() + word.slice(1).toLowerCase()
+              ).join(' ') : '';
+              
+              const key = capitalizedBrand ? `Chopine ${capitalizedBrand}` : 'Chopine';
               
               if (!returnableItems[key]) {
                 returnableItems[key] = 0;
@@ -739,12 +758,12 @@ const CreditManagement: React.FC = () => {
       
       if (isNaN(amount) || !isFinite(amount) || amount < 0) {
         throw new Error('Please enter a valid amount');
+      }
+      
       // Show centered wobble effect
       setCenteredWobbleClient(client);
       setShowCenteredWobble(true);
       setRecentTransactionClient(client);
-      
-      }
       
       if (!description || !description.trim()) {
         throw new Error('Please enter a description');
@@ -1292,19 +1311,33 @@ const CreditManagement: React.FC = () => {
         </div>
       )}
 
-      <CreditModals
-        showSettings={showSettings}
-          <div className="animate-pulsate bg-white rounded-lg shadow-2xl p-6 border-4 border-green-500 max-w-sm mx-4">
-        onDeleteClient={handleDeleteClient}
-        showDeleteConfirm={showDeleteConfirm}
-        clientToDelete={clientToDelete}
-        deleteConfirmText={deleteConfirmText}
-        onDeleteConfirmTextChange={setDeleteConfirmText}
-        onConfirmDelete={confirmDeleteClient}
-        onCancelDelete={() => {
-          setShowDeleteConfirm(false);
-          setClientToDelete(null);
-          setDeleteConfirmText('');
+      {/* Duplicate Card Overlay */}
+      {duplicateCard && (
+        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-[9999] p-4 select-none">
+          <div className="relative">
+            {/* Close Button */}
+            <button
+              onClick={() => setDuplicateCard(null)}
+              className="absolute -top-2 -right-2 w-8 h-8 bg-red-500 hover:bg-red-600 text-white rounded-full flex items-center justify-center shadow-lg z-10 transition-colors"
+            >
+              <X size={16} />
+            </button>
+            
+            {/* Pulsating Success Card */}
+            <div className="animate-pulsate bg-white rounded-lg shadow-2xl p-6 border-4 border-green-500 max-w-sm mx-4">
+              {/* Success Icon */}
+              <div className="flex items-center justify-center mb-4">
+                <div className="bg-green-100 p-3 rounded-full">
+                  <CheckCircle size={40} className="text-green-600" />
+                </div>
+              </div>
+              
+              {/* Client Info */}
+              <div className="text-center mb-4">
+                <h3 className="text-xl font-bold text-gray-800 mb-1">{duplicateCard.name}</h3>
+                <p className="text-sm text-gray-600">ID: {duplicateCard.id}</p>
+              </div>
+              
               {/* Articles taken - larger font */}
               {duplicateCard.transactionDescription && (
                 <div className="mb-3">
@@ -1482,6 +1515,31 @@ const CreditManagement: React.FC = () => {
               })()}
               
               <p className="text-sm text-green-700 font-medium">Transaction Added!</p>
+            </div>
+          </div>
+        </div>
+      )}
+
+      <CreditModals
+        showSettings={showSettings}
+        onCloseSettings={() => setShowSettings(false)}
+        onDeleteClient={handleDeleteClient}
+        showDeleteConfirm={showDeleteConfirm}
+        clientToDelete={clientToDelete}
+        deleteConfirmText={deleteConfirmText}
+        onDeleteConfirmTextChange={setDeleteConfirmText}
+        onConfirmDelete={confirmDeleteClient}
+        onCancelDelete={() => {
+          setShowDeleteConfirm(false);
+          setClientToDelete(null);
+          setDeleteConfirmText('');
+        }}
+        showDeleteAllConfirm={showDeleteAllConfirm}
+        deleteAllPasscode={deleteAllPasscode}
+        onDeleteAllPasscodeChange={setDeleteAllPasscode}
+        onConfirmDeleteAll={confirmDeleteAllClients}
+        onCancelDeleteAll={() => {
+          setShowDeleteAllConfirm(false);
           setDeleteAllPasscode('');
         }}
         onDeleteAllClients={handleDeleteAllClients}
