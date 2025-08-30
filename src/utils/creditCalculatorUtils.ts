@@ -577,7 +577,7 @@ export const processCalculatorInput = (
       newIsNewNumber = true;
       
       setTimeout(() => {
-        startAutoReplaySequence(newCalculationSteps);
+        startAutoReplaySequence(newCalculationSteps, newLastOperation, newIsNewNumber);
       }, 500);
     } else {
       newValue = currentValue;
@@ -878,8 +878,26 @@ export const processCalculatorInput = (
 /**
  * Auto-replay sequence function
  */
-const startAutoReplaySequence = (steps: CalculationStep[]) => {
+const startAutoReplaySequence = (steps: CalculationStep[], lastOperation: string | null, isNewNumber: boolean) => {
   let currentStepIndex = 0;
+  
+  // Check if we have a completed calculation or need to calculate result
+  const hasCompletedCalculation = steps.some(step => step.isComplete);
+  let calculationResult: number | null = null;
+  
+  // If calculation is not complete, calculate the result
+  if (!hasCompletedCalculation && steps.length > 0) {
+    // Determine if it's compound or simple calculation
+    const isCompound = isCompoundCalculation(steps, lastOperation);
+    
+    if (isCompound) {
+      const expression = buildCompoundExpression(steps);
+      calculationResult = evaluateExpression(expression);
+    } else {
+      const expression = buildSimpleExpression(steps);
+      calculationResult = evaluateExpression(expression);
+    }
+  }
   
   const showNextStep = () => {
     if (currentStepIndex < steps.length) {
@@ -898,9 +916,31 @@ const startAutoReplaySequence = (steps: CalculationStep[]) => {
       localStorage.setItem('currentCheckIndex', currentStepIndex.toString());
       currentStepIndex++;
       
+      // Continue to next step or show result
       if (currentStepIndex < steps.length) {
         setTimeout(showNextStep, 1000);
+      } else if (calculationResult !== null) {
+        // Show the calculated result as final step
+        setTimeout(() => {
+          window.dispatchEvent(new CustomEvent('autoReplayStep', {
+            detail: {
+              displayValue: `=${calculationResult}`,
+              stepIndex: currentStepIndex,
+              totalSteps: steps.length + 1, // Include result in total
+              currentStep: currentStepIndex + 1,
+              articleCount: steps.length
+            }
+          }));
+          
+          localStorage.setItem('currentCheckIndex', currentStepIndex.toString());
+          
+          // Complete the auto replay
+          setTimeout(() => {
+            window.dispatchEvent(new CustomEvent('autoReplayComplete'));
+          }, 1000);
+        }, 1000);
       } else {
+        // No result to show, complete immediately
         window.dispatchEvent(new CustomEvent('autoReplayComplete'));
       }
     }
