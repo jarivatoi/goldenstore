@@ -837,10 +837,18 @@ export const processCalculatorInput = (
     if (num > 999999999999 || (num < 0.000001 && num !== 0)) {
       newValue = num.toExponential(6);
     } else if (input === '=' || input === 'ENTER') {
-      // Only format to 2 decimal places when showing final result
+      // Smart decimal formatting for final results
       if (newValue.includes('.')) {
-        newValue = num.toFixed(2);
+        const decimalPart = newValue.split('.')[1];
+        if (decimalPart && decimalPart.length === 1) {
+          // Only format 1 decimal place to 2 decimal places (1.2 -> 1.20)
+          newValue = num.toFixed(2);
+        } else {
+          // Keep longer decimals as-is (1.235 stays 1.235, 1.52648 stays 1.52648)
+          newValue = num.toString();
+        }
       } else {
+        // Whole numbers stay as whole numbers (10 stays 10, not 10.00)
         newValue = num.toString();
       }
     } else {
