@@ -868,31 +868,6 @@ const CreditManagement: React.FC = () => {
                     handleCalculatorCancel();
                   }}
                   className="px-2 py-1 text-xs bg-red-500 hover:bg-red-600 text-white rounded transition-colors"
-                  title="Unlink client from calculator"
-                >
-                  Unlink
-                </button>
-              </>
-            )}
-          </div>
-
-          {/* Calculator Display */}
-          <div className="mb-6">
-            <div className="bg-gray-800 rounded-lg p-4 text-right relative border-2 border-gray-400 shadow-inner">
-              {/* LCD Header */}
-              <div className="text-center mb-2">
-                <div className="text-xs text-gray-400 font-mono">GOLDEN STORE CALCULATOR</div>
-              </div>
-              
-              {/* Status Indicators */}
-              <div className="flex justify-between items-center mb-2 text-xs">
-                <div className="flex gap-2">
-                  {calculatorMemory !== 0 && (
-                    <span className="text-green-400 font-bold">M</span>
-                  )}
-                </div>
-              </div>
-              
               {/* Main Display with inline counter */}
               <div className="text-2xl sm:text-3xl font-mono text-green-400 min-h-[3rem] flex items-center justify-between overflow-hidden bg-black rounded px-3 py-2">
                 {/* Article Count Circle - Left side */}
