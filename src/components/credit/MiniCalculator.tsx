@@ -811,15 +811,15 @@ const MiniCalculator: React.FC<MiniCalculatorProps> = ({
             onTouchEnd={(e) => {
               e.stopPropagation();
               e.preventDefault();
-              if (calculatorValue !== '0' && calculatorValue !== 'Error') {
+              if (calculatorValue !== 'Error') {
                 setShowClientSearch(true);
               }
             }}
-            disabled={calculatorValue === '0' || calculatorValue === 'Error'}
+            disabled={calculatorValue === 'Error'}
             onClick={(e) => {
               e.stopPropagation();
               e.preventDefault();
-              if (calculatorValue !== '0' && calculatorValue !== 'Error') {
+              if (calculatorValue !== 'Error') {
                 setShowClientSearch(true);
               }
             }}

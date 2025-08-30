@@ -108,7 +108,7 @@ const ClientSearchModal: React.FC<ClientSearchModalProps> = ({
     }
 
     setError('');
-    setIsProcessing(true);
+    if (isNaN(amount) || !isFinite(amount) || amount < 0) {
     try {
       const newClient = await addClient(newClientName);
       onAddToClient(newClient, description.trim());
