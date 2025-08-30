@@ -936,10 +936,22 @@ const CreditManagement: React.FC = () => {
             {/* Row 0 - Top row: CHECK←, CHECK→ */}
             <div className="col-span-6 grid grid-cols-2 gap-1 sm:gap-2 mb-1 sm:mb-2">
               <button
-                onClick={() => handleCalculatorInput('LINK')}
-                className="bg-blue-400 hover:bg-blue-500 text-white p-2 sm:p-3 rounded-lg font-bold text-sm sm:text-xl shadow-md border border-blue-500 flex items-center justify-center col-span-2"
+                onClick={() => {
+                  if (linkedClient) {
+                    // Unlink client
+                    handleCalculatorCancel();
+                  } else {
+                    // Show client search to link
+                    setShowClientSearch(true);
+                  }
+                }}
+                className={`p-2 sm:p-3 rounded-lg font-bold text-sm sm:text-xl shadow-md border flex items-center justify-center ${
+                  linkedClient 
+                    ? 'bg-green-500 hover:bg-green-600 text-white border-green-600' 
+                    : 'bg-blue-400 hover:bg-blue-500 text-white border-blue-500'
+                }`}
               >
-                Link
+                {linkedClient ? `Linked: ${linkedClient.name}` : 'Link to Client'}
               </button>
             </div>
 
