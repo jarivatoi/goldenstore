@@ -108,7 +108,11 @@ const ClientSearchModal: React.FC<ClientSearchModalProps> = ({
     }
 
     setError('');
+    const amount = parseFloat(calculatorValue);
     if (isNaN(amount) || !isFinite(amount) || amount < 0) {
+      setError('Invalid amount');
+      return;
+    }
     try {
       const newClient = await addClient(newClientName);
       onAddToClient(newClient, description.trim());
@@ -470,9 +474,4 @@ const ClientSearchModal: React.FC<ClientSearchModalProps> = ({
   return createPortal(modalContent, document.body);
 };
 
-
-
-
-
-
-export default ClientSearchModal
+export default ClientSearchModal;
