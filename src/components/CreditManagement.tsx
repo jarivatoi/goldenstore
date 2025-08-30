@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { Calculator, Plus, X, CheckCircle } from 'lucide-react';
 import { useCredit } from '../context/CreditContext';
+import ClientCard from './ClientCard';
 import ClientDetailModal from './ClientDetailModal';
 import ClientSearchModal from './ClientSearchModal';
 import UnifiedDataManager from './UnifiedDataManager';
