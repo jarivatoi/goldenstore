@@ -1161,7 +1161,7 @@ const AddItemModal: React.FC<AddItemModalProps> = ({
                 onChange={(e) => setVatPercentage(e.target.value)}
                 min="0"
                 max="100"
-                step="0.01"
+                step="0.0001"
                 className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 bg-white select-text"
               />
               <p className="text-xs text-gray-500 mt-1 select-none">
@@ -1880,7 +1880,7 @@ const EditItemModal: React.FC<EditItemModalProps> = ({
                 onChange={(e) => setItemVatPercentage(e.target.value)}
                 min="0"
                 max="100"
-                step="0.01"
+                step="0.0001"
                 className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 bg-white select-text"
               />
               <p className="text-xs text-gray-500 mt-1 select-none">
