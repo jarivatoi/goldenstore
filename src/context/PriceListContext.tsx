@@ -59,7 +59,7 @@ import { useAuth } from './AuthContext';
  */
 interface PriceListContextType {
   items: PriceItem[];
-  addItem: (name: string, price: number, grossPrice: number) => Promise<void>;
+  addItem: (name: string, price: number, grossPrice?: number) => Promise<void>;
   updateItem: (id: string, name: string, price: number, grossPrice?: number) => Promise<void>;
   deleteItem: (id: string) => Promise<void>;
   importItems: (items: PriceItem[]) => Promise<void>;
@@ -438,7 +438,7 @@ export const PriceListProvider: React.FC<{ children: React.ReactNode }> = ({ chi
    * @returns Promise<void> - Resolves when item is added
    * @throws Error if database operation fails
    */
-  const addItem = async (name: string, price: number, grossPrice: number) => {
+  const addItem = async (name: string, price: number, grossPrice?: number) => {
     try {
       const capitalizedName = capitalizeWords(name);
       
@@ -451,15 +451,14 @@ export const PriceListProvider: React.FC<{ children: React.ReactNode }> = ({ chi
         throw new Error('Valid price is required');
       }
       
-      if (isNaN(grossPrice) || grossPrice <= 0) {
-        throw new Error('Valid gross price is required');
-      }
+      // Use 0 as default grossPrice if not provided (REMOVE VALIDATION)
+      const finalGrossPrice = grossPrice !== undefined ? grossPrice : 0;
       
       const newItem: PriceItem = {
         id: crypto.randomUUID(),
         name: capitalizedName,
         price,
-        grossPrice,
+        grossPrice: finalGrossPrice,
         createdAt: new Date()
       };
       
@@ -548,7 +547,7 @@ export const PriceListProvider: React.FC<{ children: React.ReactNode }> = ({ chi
         throw new Error('Item not found');
       }
       
-      // Use existing grossPrice if not provided
+      // Use existing grossPrice if not provided (REMOVE VALIDATION)
       const finalGrossPrice = grossPrice !== undefined ? grossPrice : existingItem.grossPrice;
       
       const updatedItem: PriceItem = {
