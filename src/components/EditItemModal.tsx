@@ -6,10 +6,16 @@ import { usePriceList } from '../context/PriceListContext';
 interface EditItemModalProps {
   item: PriceItem | null;
   onClose: () => void;
-  onSave: (id: string, name: string, price: number) => Promise<void>;
+  onSave: (id: string, name: string, price: number, grossPrice?: number) => Promise<void>;
+  requireGrossPrice?: boolean;
 }
 
-const EditItemModal: React.FC<EditItemModalProps> = ({ item, onClose, onSave }) => {
+const EditItemModal: React.FC<EditItemModalProps> = ({ 
+  item, 
+  onClose, 
+  onSave, 
+  requireGrossPrice = true 
+}) => {
   const { items } = usePriceList();
   const [name, setName] = useState('');
   const [price, setPrice] = useState('');
@@ -21,7 +27,7 @@ const EditItemModal: React.FC<EditItemModalProps> = ({ item, onClose, onSave }) 
     if (item) {
       setName(item.name);
       setPrice(item.price.toString());
-      setGrossPrice(item.grossPrice.toString());
+      setGrossPrice(item.grossPrice?.toString() || '');
     }
   }, [item]);
 
@@ -52,10 +58,13 @@ const EditItemModal: React.FC<EditItemModalProps> = ({ item, onClose, onSave }) 
       return;
     }
     
-    const grossPriceValue = parseFloat(grossPrice);
-    if (isNaN(grossPriceValue) || grossPriceValue <= 0) {
-      setError('Please enter a valid gross price');
-      return;
+    // Only validate gross price if requireGrossPrice is true
+    if (requireGrossPrice) {
+      const grossPriceValue = parseFloat(grossPrice);
+      if (isNaN(grossPriceValue) || grossPriceValue <= 0) {
+        setError('Please enter a valid gross price');
+        return;
+      }
     }
     
     try {
@@ -63,11 +72,31 @@ const EditItemModal: React.FC<EditItemModalProps> = ({ item, onClose, onSave }) 
       setError('');
       
       // Save with price rounded to 2 decimal places
-      await onSave(item.id, name.trim(), Math.round(priceValue * 100) / 100, Math.round(grossPriceValue * 100) / 100);
+      const grossPriceValue = grossPrice ? parseFloat(grossPrice) : undefined;
+      await onSave(
+        item.id, 
+        name.trim(), 
+        Math.round(priceValue * 100) / 100, 
+        grossPriceValue ? Math.round(grossPriceValue * 100) / 100 : undefined
+      );
     } catch (err) {
       setError('Failed to update item. Please try again.');
     } finally {
       setIsSubmitting(false);
+    }
+  };
+
+  const handlePriceChange = (value: string) => {
+    // Allow only numbers and decimal point
+    if (/^\d*\.?\d*$/.test(value)) {
+      setPrice(value);
+    }
+  };
+
+  const handleGrossPriceChange = (value: string) => {
+    // Allow only numbers and decimal point
+    if (/^\d*\.?\d*$/.test(value)) {
+      setGrossPrice(value);
     }
   };
 
@@ -109,34 +138,35 @@ const EditItemModal: React.FC<EditItemModalProps> = ({ item, onClose, onSave }) 
           
           <div className="mb-4">
             <label htmlFor="editItemPrice" className="block text-sm font-medium text-gray-700 mb-2 select-none">
-              Price (Rs)
+              Price (Rs) *
             </label>
             <input
               id="editItemPrice"
-              type="number"
+              type="text"
               value={price}
-              onChange={(e) => setPrice(e.target.value)}
-              step="0.01"
-              min="0.01"
+              onChange={(e) => handlePriceChange(e.target.value)}
               disabled={isSubmitting}
               className="w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 disabled:bg-gray-100 disabled:cursor-not-allowed"
+              placeholder="0.00"
             />
           </div>
           
           <div className="mb-4">
             <label htmlFor="editGrossPrice" className="block text-sm font-medium text-gray-700 mb-2 select-none">
-              Gross Price (Rs)
+              Gross Price (Rs) {requireGrossPrice ? '*' : ''}
             </label>
             <input
               id="editGrossPrice"
-              type="number"
+              type="text"
               value={grossPrice}
-              onChange={(e) => setGrossPrice(e.target.value)}
-              step="0.01"
-              min="0.01"
+              onChange={(e) => handleGrossPriceChange(e.target.value)}
               disabled={isSubmitting}
               className="w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 disabled:bg-gray-100 disabled:cursor-not-allowed"
+              placeholder="0.00"
             />
+            {!requireGrossPrice && (
+              <p className="text-gray-500 text-xs mt-1 select-none">Optional</p>
+            )}
           </div>
           
           {error && <p className="text-red-500 text-sm mb-4 select-none">{error}</p>}
