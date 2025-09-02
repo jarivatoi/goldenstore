@@ -14,7 +14,7 @@ const EditItemModal: React.FC<EditItemModalProps> = ({
   item, 
   onClose, 
   onSave, 
-  requireGrossPrice = true 
+  requireGrossPrice = false 
 }) => {
   const { items } = usePriceList();
   const [name, setName] = useState('');
