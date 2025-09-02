@@ -568,7 +568,7 @@ const ScrollingTabs: React.FC<ScrollingTabsProps> = ({
               return (
                 <div
                   key={client.id}
-                  className={`flex-shrink-0 px-4 py-2 rounded-lg border cursor-pointer h-25 min-w-fit flex items-center ${
+                  className={`flex-shrink-0 px-4 py-2 rounded-lg border cursor-pointer h-25 w-40 flex items-center ${
                     isDragging 
                       ? 'transition-none'
                       : 'transition-all duration-200'
@@ -743,20 +743,20 @@ const ScrollingTabs: React.FC<ScrollingTabsProps> = ({
                   onDoubleClick={() => onQuickAdd(client)}
                   onContextMenu={(e) => e.preventDefault()} // Prevent right-click menu
                 >
-                  <div className="text-center relative h-full flex flex-col justify-center">
+                  <div className="text-center relative h-full flex flex-col justify-center w-full">
                     {/* Client name with bottle icon if has returnables */}
                     <div className="flex items-center justify-center gap-1 mb-1">
-                      <div className="text-sm font-medium text-gray-800 truncate select-none">
+                      <div className="text-sm font-medium text-gray-800 truncate select-none max-w-[120px]" title={client.name}>
                         {client.name}
                       </div>
                     </div>
                     
                     {clientFilter === 'returnables' ? (
-                      <div className="text-xs font-semibold text-orange-600">
+                      <div className="text-xs font-semibold text-orange-600 max-w-[120px] truncate" title={currentReturnableItems}>
                         {currentReturnableItems || 'No returnables'}
                       </div>
                     ) : totalDebt === 0 ? (
-                      <div className="text-xs font-semibold text-orange-600">
+                      <div className="text-xs font-semibold text-orange-600 max-w-[120px] truncate" title={currentReturnableItems}>
                         {currentReturnableItems || 'No returnables'}
                       </div>
                     ) : (
@@ -767,7 +767,7 @@ const ScrollingTabs: React.FC<ScrollingTabsProps> = ({
                           </div>
                         }
                         backContent={
-                          <div className="text-xs font-semibold text-orange-600">
+                          <div className="text-xs font-semibold text-orange-600 max-w-[120px] truncate" title={currentReturnableItems}>
                             {currentReturnableItems || 'No returnables'}
                           </div>
                         }
@@ -777,7 +777,7 @@ const ScrollingTabs: React.FC<ScrollingTabsProps> = ({
                         className="w-full"
                       />
                     )}
-                    <div className="text-xs text-gray-500 mt-1 text-center">
+                    <div className="text-xs text-gray-500 mt-1 text-center max-w-[120px] truncate">
                       <FlipCard
                         frontContent={<span>{client.lastTransactionAt.toLocaleDateString('en-GB', {
                           day: '2-digit',
