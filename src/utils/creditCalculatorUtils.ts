@@ -1055,13 +1055,11 @@ const startAutoReplaySequence = (steps: CalculationStep[], lastOperation: string
     // Determine if it's compound or simple calculation
     const isCompound = isCompoundCalculation(steps, lastOperation);
     
-        console.log('📊 Adding decimal to existing number:', { newValue });
     if (isCompound) {
       const expression = buildCompoundExpression(steps);
       calculationResult = evaluateExpression(expression);
     } else {
       const expression = buildSimpleExpression(steps);
-          console.log('📊 Updating step with decimal:', { newValue, numericValue });
       calculationResult = evaluateExpression(expression);
     }
   }
@@ -1091,7 +1089,7 @@ const startAutoReplaySequence = (steps: CalculationStep[], lastOperation: string
         setTimeout(() => {
           window.dispatchEvent(new CustomEvent('autoReplayStep', {
             detail: {
-             displayValue: `=${calculationResult}`,
+              displayValue: `=${calculationResult}`,
               stepIndex: currentStepIndex,
               totalSteps: steps.length + 1, // Include result in total
               currentStep: currentStepIndex + 1,
@@ -1106,40 +1104,39 @@ const startAutoReplaySequence = (steps: CalculationStep[], lastOperation: string
             window.dispatchEvent(new CustomEvent('autoReplayComplete'));
           }, 1000);
         }, 1000);
-     } else if (hasCompletedCalculation) {
-       // For completed calculations, show the final result from the last step
-       setTimeout(() => {
-         const lastStep = steps[steps.length - 1];
-         let finalResult;
-         
-         if (lastStep.displayValue.includes('%')) {
-    console.log('📊 Equals in compound:', { calculationSteps: newCalculationSteps });
-           // For percentage calculations, use the percentage result
-           finalResult = lastStep.result;
-         } else {
-           // For other completed calculations, evaluate the full expression
-           const isCompound = isCompoundCalculation(steps, null);
-           const expression = isCompound ? buildCompoundExpression(steps) : buildSimpleExpression(steps);
-           finalResult = evaluateExpression(expression);
-         }
-         
-         window.dispatchEvent(new CustomEvent('autoReplayStep', {
-           detail: {
-             displayValue: `=${finalResult}`,
-             stepIndex: currentStepIndex,
-             totalSteps: steps.length + 1,
-             currentStep: currentStepIndex + 1,
-             articleCount: steps.length
-           }
-         }));
-         
-         localStorage.setItem('currentCheckIndex', currentStepIndex.toString());
-         
-         // Complete the auto replay
-         setTimeout(() => {
-           window.dispatchEvent(new CustomEvent('autoReplayComplete'));
-         }, 1000);
-       }, 1000);
+      } else if (hasCompletedCalculation) {
+        // For completed calculations, show the final result from the last step
+        setTimeout(() => {
+          const lastStep = steps[steps.length - 1];
+          let finalResult;
+          
+          if (lastStep.displayValue.includes('%')) {
+            // For percentage calculations, use the percentage result
+            finalResult = lastStep.result;
+          } else {
+            // For other completed calculations, evaluate the full expression
+            const isCompound = isCompoundCalculation(steps, null);
+            const expression = isCompound ? buildCompoundExpression(steps) : buildSimpleExpression(steps);
+            finalResult = evaluateExpression(expression);
+          }
+          
+          window.dispatchEvent(new CustomEvent('autoReplayStep', {
+            detail: {
+              displayValue: `=${finalResult}`,
+              stepIndex: currentStepIndex,
+              totalSteps: steps.length + 1,
+              currentStep: currentStepIndex + 1,
+              articleCount: steps.length
+            }
+          }));
+          
+          localStorage.setItem('currentCheckIndex', currentStepIndex.toString());
+          
+          // Complete the auto replay
+          setTimeout(() => {
+            window.dispatchEvent(new CustomEvent('autoReplayComplete'));
+          }, 1000);
+        }, 1000);
       } else {
         // No result to show, complete immediately
         window.dispatchEvent(new CustomEvent('autoReplayComplete'));
@@ -1148,5 +1145,4 @@ const startAutoReplaySequence = (steps: CalculationStep[], lastOperation: string
   };
   
   showNextStep();
-    console.log('📊 Operator in compound:', { input, currentNum, currentValue });
 };
