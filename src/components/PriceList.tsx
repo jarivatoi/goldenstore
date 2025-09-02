@@ -20,7 +20,6 @@ const PriceList: React.FC = () => {
     setEditingItem(item);
   };
   
-  // Update this function to make grossPrice optional
   const handleSave = async (id: string, name: string, price: number, grossPrice?: number) => {
     try {
       await updateItem(id, name, price, grossPrice);
@@ -125,7 +124,7 @@ const PriceList: React.FC = () => {
           item={editingItem}
           onClose={() => setEditingItem(null)}
           onSave={handleSave}
-          requireGrossPrice={false} // Add this prop to disable gross price requirement
+          requireGrossPrice={false}
         />
       )}
 
