@@ -48,7 +48,7 @@ import { useAuth } from './AuthContext';
  * 
  * CRUD METHODS:
  * @param addItem - Create new price item
- * @param updateItem - Modify existing price item
+ * @param updateItem - Modify existing price item (grossPrice is now optional)
  * @param deleteItem - Remove price item
  * @param importItems - Bulk replace all items
  * 
@@ -60,7 +60,7 @@ import { useAuth } from './AuthContext';
 interface PriceListContextType {
   items: PriceItem[];
   addItem: (name: string, price: number, grossPrice: number) => Promise<void>;
-  updateItem: (id: string, name: string, price: number, grossPrice: number) => Promise<void>;
+  updateItem: (id: string, name: string, price: number, grossPrice?: number) => Promise<void>;
   deleteItem: (id: string) => Promise<void>;
   importItems: (items: PriceItem[]) => Promise<void>;
   searchItems: (query: string) => PriceItem[];
@@ -522,7 +522,25 @@ export const PriceListProvider: React.FC<{ children: React.ReactNode }> = ({ chi
     }
   };
 
-  const updateItem = async (id: string, name: string, price: number, grossPrice: number) => {
+  /**
+   * UPDATE ITEM METHOD
+   * ==================
+   * 
+   * PURPOSE:
+   * Modifies an existing price item with optional gross price.
+   * Provides optimistic updates and handles both online and offline scenarios.
+   * 
+   * CHANGES:
+   * - Made grossPrice parameter optional
+   * - Removed gross price validation requirement
+   * - Maintains backward compatibility
+   * 
+   * @param id - ID of item to update
+   * @param name - New item name
+   * @param price - New item price
+   * @param grossPrice - Optional gross price (can be undefined)
+   */
+  const updateItem = async (id: string, name: string, price: number, grossPrice?: number) => {
     try {
       const capitalizedName = capitalizeWords(name);
       const existingItem = items.find(item => item.id === id);
@@ -530,11 +548,14 @@ export const PriceListProvider: React.FC<{ children: React.ReactNode }> = ({ chi
         throw new Error('Item not found');
       }
       
+      // Use existing grossPrice if not provided
+      const finalGrossPrice = grossPrice !== undefined ? grossPrice : existingItem.grossPrice;
+      
       const updatedItem: PriceItem = {
         ...existingItem,
         name: capitalizedName,
         price,
-        grossPrice,
+        grossPrice: finalGrossPrice,
         lastEditedAt: new Date()
       };
       
