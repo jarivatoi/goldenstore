@@ -1125,7 +1125,7 @@ const startAutoReplaySequence = (steps: CalculationStep[], lastOperation: string
          
          window.dispatchEvent(new CustomEvent('autoReplayStep', {
            detail: {
-             displayValue: `=${finalResult}`,
+             displayValue: `=${finalResult}+10`,
              stepIndex: currentStepIndex,
              totalSteps: steps.length + 1,
              currentStep: currentStepIndex + 1,
