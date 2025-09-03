@@ -523,7 +523,8 @@ export const OrderProvider: React.FC<{ children: React.ReactNode }> = ({ childre
             name: formattedName,
             unit_price: unitPrice,
             is_vat_nil: isVatNil,
-            vat_percentage: finalVatPercentage
+            vat_percentage: finalVatPercentage,
+            is_vat_included: finalIsVatIncluded
           })
           .eq('id', id);
         
