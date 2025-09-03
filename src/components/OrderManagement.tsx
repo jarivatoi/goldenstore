@@ -469,8 +469,6 @@ const OrderManagement: React.FC = () => {
                         setEditItemVatPercentage(item.vatPercentage.toString());
                         // Initialize VAT included state based on existing item
                         setEditItemVatIncluded(item.isVatNil && item.vatPercentage === 0);
-                        // Initialize VAT included state based on existing item
-                        setEditItemVatIncluded(item.isVatNil && item.vatPercentage === 0);
                         setShowEditItem(true);
                       }}
                       onDelete={() => handleDeleteItem(item)}
