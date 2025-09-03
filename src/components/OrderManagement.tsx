@@ -810,13 +810,15 @@ const ItemTemplateCard: React.FC<ItemTemplateCardProps> = ({
   const vatAmount = item.isVatNil ? 0 : (item.unitPrice * item.vatPercentage) / 100;
   const totalPrice = item.unitPrice + vatAmount;
 
+ // Check if VAT is included (when isVatNil is true and vatPercentage is 0)
+ const isVatIncluded = item.isVatNil && item.vatPercentage === 0;
   return (
     <div className="bg-blue-50 rounded-lg p-4 border border-blue-200 select-none">
       <div className="flex justify-between items-center select-none">
         <div className="select-none">
           <h5 className="font-medium text-gray-800 select-none">{item.name}</h5>
           <div className="text-sm text-gray-600 select-none">
-            {item.isVatIncluded ? (
+           {isVatIncluded ? (
               <p className="select-none">Rs {item.unitPrice.toLocaleString('en-IN', { minimumFractionDigits: 2, maximumFractionDigits: 2 })} (VAT Included)</p>
             ) : (
               <p className="select-none">Rs {item.unitPrice.toLocaleString('en-IN', { minimumFractionDigits: 2, maximumFractionDigits: 2 })} VAT({item.vatPercentage}%)(Rs {vatAmount.toLocaleString('en-IN', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}) → Rs {totalPrice.toLocaleString('en-IN', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</p>
@@ -1079,6 +1081,8 @@ interface AddItemModalProps {
   setItemName: (name: string) => void;
   itemPrice: string;
   setItemPrice: (price: string) => void;
+ newItemVatIncluded: boolean;
+ setNewItemVatIncluded: (included: boolean) => void;
   isSubmitting: boolean;
 }
 
@@ -1090,10 +1094,25 @@ const AddItemModal: React.FC<AddItemModalProps> = ({
   setItemName,
   itemPrice,
   setItemPrice,
+ newItemVatIncluded,
+ setNewItemVatIncluded,
   isSubmitting
 }) => {
   const [vatPercentage, setVatPercentage] = React.useState('15');
 
+ // Calculate VAT and total in real-time
+ const calculateVatAndTotal = () => {
+   const price = parseFloat(itemPrice) || 0;
+   const vatPercent = parseFloat(vatPercentage) || 0;
+   const isVatNil = vatPercent === 0 || newItemVatIncluded;
+   
+   const vatAmount = isVatNil || newItemVatIncluded ? 0 : (price * vatPercent) / 100;
+   const totalPrice = newItemVatIncluded ? price : price + vatAmount;
+   
+   onAdd(e, newItemVatIncluded, newItemVatIncluded ? 0 : vatPercent);
+ };
+ 
+ const { price, vatPercent, isVatNil, vatAmount, totalPrice } = calculateVatAndTotal();
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
     
@@ -1102,14 +1121,12 @@ const AddItemModal: React.FC<AddItemModalProps> = ({
       return;
     }
 
-    const price = parseFloat(itemPrice);
     if (isNaN(price) || price < 0) {
       alert('Please enter a valid price');
       return;
     }
 
-    const vatPercent = parseFloat(vatPercentage);
-    if (isNaN(vatPercent) || vatPercent < 0 || vatPercent > 100) {
+   if (!newItemVatIncluded && (isNaN(vatPercent) || vatPercent < 0 || vatPercent > 100)) {
       alert('Please enter a valid VAT percentage (0-100)');
       return;
     }
@@ -1181,13 +1198,66 @@ const AddItemModal: React.FC<AddItemModalProps> = ({
                 min="0"
                 max="100"
                 step="0.0001"
-                className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 bg-white select-text"
+               disabled={newItemVatIncluded}
+               className={`w-full px-4 py-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 select-text ${
+                 newItemVatIncluded ? 'bg-gray-100 text-gray-400 cursor-not-allowed' : 'bg-white'
+               }`}
               />
               <p className="text-xs text-gray-500 mt-1 select-none">
-                Enter 0 for VAT Nil items
+               {newItemVatIncluded ? 'VAT percentage disabled when VAT is included in price' : 'Enter 0 for VAT Nil items'}
               </p>
             </div>
             
+           {/* VAT Included Checkbox */}
+           <div className="mb-4 select-none">
+             <label className="flex items-center gap-3 cursor-pointer select-none">
+               <input
+                 type="checkbox"
+                 checked={newItemVatIncluded}
+                 onChange={(e) => {
+                   setNewItemVatIncluded(e.target.checked);
+                   if (e.target.checked) {
+                     setVatPercentage('0');
+                   } else {
+                     setVatPercentage('15');
+                   }
+                 }}
+                 className="w-4 h-4 text-blue-600 border-gray-300 rounded focus:ring-blue-500"
+               />
+               <div className="select-none">
+                 <span className="text-sm font-medium text-gray-700 select-none">VAT Included</span>
+                 <p className="text-xs text-gray-500 select-none">
+                   Check if the price already includes VAT (disables VAT percentage)
+                 </p>
+               </div>
+             </label>
+           </div>
+           
+           {/* Real-time calculation display */}
+           {price > 0 && (
+             <div className="mb-4 p-3 bg-gray-50 rounded-lg border border-gray-200 select-none">
+               <h4 className="text-sm font-medium text-gray-700 mb-2 select-none">Price Breakdown:</h4>
+               <div className="text-sm text-gray-600 space-y-1 select-none">
+                 <div className="flex justify-between select-none">
+                   <span className="select-none">Unit Price:</span>
+                   <span className="select-none">Rs {price.toLocaleString('en-IN', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</span>
+                 </div>
+                 <div className="flex justify-between select-none">
+                   <span className="select-none">
+                     {newItemVatIncluded ? 'VAT (Included):' : `VAT (${vatPercent}%):`}
+                   </span>
+                   <span className="select-none">
+                     {newItemVatIncluded ? 'Included in price' : isVatNil ? 'VAT Nil' : `Rs ${vatAmount.toLocaleString('en-IN', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`}
+                   </span>
+                 </div>
+                 <div className="flex justify-between font-medium text-gray-800 pt-1 border-t border-gray-300 select-none">
+                   <span className="select-none">Total Price:</span>
+                   <span className="select-none">Rs {totalPrice.toLocaleString('en-IN', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</span>
+                 </div>
+               </div>
+             </div>
+           )}
+           
             <div className="flex gap-3 select-none">
               <button
                 type="button"

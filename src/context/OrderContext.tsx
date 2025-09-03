@@ -451,7 +451,7 @@ export const OrderProvider: React.FC<{ children: React.ReactNode }> = ({ childre
         name: formattedName,
         unitPrice,
         isVatNil,
-        vatPercentage: categoryVatPercentage,
+       vatPercentage: isVatNil ? 0 : categoryVatPercentage,
         createdAt: new Date()
       };
       
