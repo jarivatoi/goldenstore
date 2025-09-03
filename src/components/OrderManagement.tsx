@@ -111,7 +111,7 @@ const OrderManagement: React.FC = () => {
   };
 
   // Handle add item template
-  const handleAddItem = async (e: React.FormEvent, isVatIncluded: boolean = false, vatPercentage: number = 15) => {
+  const handleAddItem = async (e: React.FormEvent) => {
     e.preventDefault();
     
     if (!selectedCategory || !newItemName.trim() || !newItemPrice.trim()) {
@@ -133,8 +133,8 @@ const OrderManagement: React.FC = () => {
     try {
       setIsSubmitting(true);
       // When VAT included is checked, set isVatNil to true and vatPercentage to 0
-      const finalIsVatNil = isVatIncluded || vatPercent === 0;
-      const finalVatPercentage = isVatIncluded ? 0 : vatPercent;
+      const finalIsVatNil = newItemVatIncluded || vatPercent === 0;
+      const finalVatPercentage = newItemVatIncluded ? 0 : vatPercent;
       
       await addItemTemplate(selectedCategory.id, newItemName.trim(), price, finalIsVatNil, finalVatPercentage);
       setNewItemName('');
@@ -1077,11 +1077,13 @@ const OrderCard: React.FC<OrderCardProps> = ({ order, itemTemplates, onDelete, o
 interface AddItemModalProps {
   category: OrderCategory;
   onClose: () => void;
-  onAdd: (e: React.FormEvent, isVatIncluded: boolean, vatPercentage: number) => void;
+  onAdd: (e: React.FormEvent) => void;
   itemName: string;
   setItemName: (name: string) => void;
   itemPrice: string;
   setItemPrice: (price: string) => void;
+  newItemVatIncluded: boolean;
+  setNewItemVatIncluded: (included: boolean) => void;
   itemVatIncluded: boolean;
   setItemVatIncluded: (included: boolean) => void;
   itemVatPercentage: string;

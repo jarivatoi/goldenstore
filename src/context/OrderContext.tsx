@@ -155,6 +155,7 @@ export const OrderProvider: React.FC<{ children: React.ReactNode }> = ({ childre
                 unitPrice: template.unit_price,
                 isVatNil: template.is_vat_nil || false,
                 vatPercentage: template.vat_percentage || 15,
+                isVatIncluded: template.is_vat_included || false,
                 createdAt: new Date(template.created_at)
               }));
               
@@ -451,7 +452,8 @@ export const OrderProvider: React.FC<{ children: React.ReactNode }> = ({ childre
         name: formattedName,
         unitPrice,
         isVatNil,
-       vatPercentage: isVatNil ? 0 : categoryVatPercentage,
+        vatPercentage: isVatNil ? 0 : categoryVatPercentage,
+        isVatIncluded: isVatNil && categoryVatPercentage === 0,
         createdAt: new Date()
       };
       
@@ -466,6 +468,7 @@ export const OrderProvider: React.FC<{ children: React.ReactNode }> = ({ childre
             unit_price: newItemTemplate.unitPrice,
             is_vat_nil: newItemTemplate.isVatNil,
             vat_percentage: newItemTemplate.vatPercentage,
+            is_vat_included: newItemTemplate.isVatIncluded,
             created_at: newItemTemplate.createdAt.toISOString()
           });
         
@@ -502,7 +505,8 @@ export const OrderProvider: React.FC<{ children: React.ReactNode }> = ({ childre
             name: formattedName,
             unit_price: unitPrice,
             is_vat_nil: isVatNil,
-            vat_percentage: vatPercentage || 15
+            vat_percentage: vatPercentage || 15,
+            is_vat_included: isVatNil && (vatPercentage || 15) === 0
           })
           .eq('id', id);
         
@@ -510,12 +514,26 @@ export const OrderProvider: React.FC<{ children: React.ReactNode }> = ({ childre
         
         // Update local state
         setItemTemplates(prev => prev.map(temp => 
-          temp.id === id ? { ...temp, name: formattedName, unitPrice, isVatNil, vatPercentage: vatPercentage || 15 } : temp
+          temp.id === id ? { 
+            ...temp, 
+            name: formattedName, 
+            unitPrice, 
+            isVatNil, 
+            vatPercentage: vatPercentage || 15,
+            isVatIncluded: isVatNil && (vatPercentage || 15) === 0
+          } : temp
         ));
       } else {
         // Fallback to localStorage
         const updatedTemplates = itemTemplates.map(temp => 
-          temp.id === id ? { ...temp, name: formattedName, unitPrice, isVatNil, vatPercentage: vatPercentage || 15 } : temp
+          temp.id === id ? { 
+            ...temp, 
+            name: formattedName, 
+            unitPrice, 
+            isVatNil, 
+            vatPercentage: vatPercentage || 15,
+            isVatIncluded: isVatNil && (vatPercentage || 15) === 0
+          } : temp
         );
         setItemTemplates(updatedTemplates);
         localStorage.setItem('orderItemTemplates', JSON.stringify(updatedTemplates.map(template => ({
