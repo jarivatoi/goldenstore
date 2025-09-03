@@ -1033,7 +1033,7 @@ const OrderCard: React.FC<OrderCardProps> = ({ order, itemTemplates, onDelete, o
                 <X size={14} />
               </button>
             </div>
-          </div>
+        {editingTemplate && (
         ))}
       </div>
 
