@@ -496,10 +496,25 @@ export const OrderProvider: React.FC<{ children: React.ReactNode }> = ({ childre
 
   const updateItemTemplate = async (id: string, name: string, unitPrice: number, isVatNil: boolean, vatPercentage?: number, isVatIncluded?: boolean): Promise<void> => {
     try {
+     console.log('🔍 updateItemTemplate called with:', {
+       id,
+       name,
+       unitPrice,
+       isVatNil,
+       vatPercentage,
+       isVatIncluded
+     });
+     
       const formattedName = formatName(name);
       const finalVatPercentage = vatPercentage || 15;
       const finalIsVatIncluded = isVatIncluded || false;
       
+     console.log('🔍 Final values for update:', {
+       formattedName,
+       finalVatPercentage,
+       finalIsVatIncluded
+     });
+     
       if (supabase) {
         // Update in Supabase
         const { error } = await supabase
@@ -525,6 +540,8 @@ export const OrderProvider: React.FC<{ children: React.ReactNode }> = ({ childre
             isVatIncluded: finalIsVatIncluded
           } : temp
         ));
+       
+       console.log('✅ Updated itemTemplates state with isVatIncluded:', finalIsVatIncluded);
       } else {
         // Fallback to localStorage
         const updatedTemplates = itemTemplates.map(temp => 
@@ -543,6 +560,8 @@ export const OrderProvider: React.FC<{ children: React.ReactNode }> = ({ childre
           isVatIncluded: template.isVatIncluded || false,
           createdAt: template.createdAt.toISOString()
         }))));
+       
+       console.log('✅ Updated localStorage with isVatIncluded:', finalIsVatIncluded);
       }
     } catch (err) {
       setError('Failed to update item template');

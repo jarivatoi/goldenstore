@@ -1905,18 +1905,7 @@ const EditItemModal: React.FC<EditItemModalProps> = ({
     }
 
     try {
-      console.log('🔍 handleEditSave called with template:', item);
-      console.log('🔍 Current edit states:', {
-        editName: itemName,
-        editUnitPrice: itemPrice,
-        editIsVatNil: isVatNil,
-        editVatPercentage: vatPercent,
-        editIsVatIncluded: itemVatIncluded
-      });
-      
       await onSave(item, itemName.trim(), price, itemVatIncluded, itemVatIncluded ? 0 : vatPercent);
-      
-      console.log('✅ updateItemTemplate completed successfully');
     } catch (err) {
       alert(err instanceof Error ? err.message : 'Failed to update item');
     }
