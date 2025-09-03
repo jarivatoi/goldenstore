@@ -1029,13 +1029,14 @@ const OrderCard: React.FC<OrderCardProps> = ({ order, itemTemplates, onDelete, o
                 onClick={() => removeOrderItem(item.id)}
                 className="text-red-500 hover:text-red-700 p-1 ml-1 select-none"
                 title="Remove item from order"
-              >
+        {editingTemplate && editingTemplate.id && (
                 <X size={14} />
               </button>
             </div>
           </div>
         ))}
       </div>
+                    console.log('🔍 Closing edit modal');
 
       {/* Add Items Modal */}
       {showAddItems && (
