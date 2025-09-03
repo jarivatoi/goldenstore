@@ -59,6 +59,7 @@ const OrderManagement: React.FC = () => {
   const [editItemPrice, setEditItemPrice] = useState('');
   const [editItemVatPercentage, setEditItemVatPercentage] = useState('15');
   const [editItemVatIncluded, setEditItemVatIncluded] = useState(false);
+  const [editItemVatNil, setEditItemVatNil] = useState(false);
   const [showDeleteItemModal, setShowDeleteItemModal] = useState(false);
   const [itemToDelete, setItemToDelete] = useState<OrderItemTemplate | null>(null);
   
