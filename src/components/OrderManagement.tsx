@@ -563,6 +563,7 @@ const OrderManagement: React.FC = () => {
             setEditItemName('');
             setEditItemPrice('');
             setEditItemVatPercentage('15');
+            setNewItemVatIncluded(false);
             setEditItemVatIncluded(false);
           }}
           onSave={handleEditItem}
