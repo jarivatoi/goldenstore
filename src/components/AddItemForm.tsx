@@ -116,6 +116,11 @@ const AddItemForm: React.FC = () => {
       return;
     }
     
+    if (!grossPrice || grossPrice.trim().length === 0) {
+      setError('Please enter a gross price');
+      return;
+    }
+    
     // Validate item name
     if (!name.trim()) {
       setError('Please enter an item name');
@@ -139,9 +144,8 @@ const AddItemForm: React.FC = () => {
       return;
     }
     
-    // Parse gross price (optional)
-    const grossPriceValue = grossPrice.trim() ? parseFloat(grossPrice) : undefined;
-    if (grossPriceValue !== undefined && (isNaN(grossPriceValue) || grossPriceValue <= 0)) {
+    const grossPriceValue = parseFloat(grossPrice);
+    if (isNaN(grossPriceValue) || grossPriceValue <= 0) {
       setError('Please enter a valid gross price');
       return;
     }
@@ -267,7 +271,7 @@ const AddItemForm: React.FC = () => {
             
             <div className="mb-4 select-none">
               <label htmlFor="grossPrice" className="block text-base font-medium text-gray-700 mb-2 select-none">
-                Gross Price (Rs) <span className="text-gray-500 text-sm">(Optional)</span>
+                Gross Price (Rs)
               </label>
               <input
                 id="grossPrice"

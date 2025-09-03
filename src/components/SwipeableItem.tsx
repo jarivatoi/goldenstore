@@ -575,9 +575,7 @@ const SwipeableItem: React.FC<SwipeableItemProps> = ({ item, onEdit, onDelete })
                   maxWidth: '100%'
                 }}
               >
-                {!isNaN(item.grossPrice) && item.grossPrice > 0 && (
-                  <>Gross Price: Rs {item.grossPrice.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</>
-                )}
+                Gross Price: Rs {item.grossPrice.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
               </div>
               {/* Last edited date display */}
               {item.lastEditedAt && (
