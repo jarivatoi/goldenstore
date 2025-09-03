@@ -494,9 +494,11 @@ export const OrderProvider: React.FC<{ children: React.ReactNode }> = ({ childre
     }
   };
 
-  const updateItemTemplate = async (id: string, name: string, unitPrice: number, isVatNil: boolean, vatPercentage?: number): Promise<void> => {
+  const updateItemTemplate = async (id: string, name: string, unitPrice: number, isVatNil: boolean, vatPercentage?: number, isVatIncluded?: boolean): Promise<void> => {
     try {
       const formattedName = formatName(name);
+      const finalVatPercentage = vatPercentage || 15;
+      const finalIsVatIncluded = isVatIncluded !== undefined ? isVatIncluded : (isVatNil && finalVatPercentage === 0);
       
       if (supabase) {
         // Update in Supabase
@@ -506,7 +508,7 @@ export const OrderProvider: React.FC<{ children: React.ReactNode }> = ({ childre
             name: formattedName,
             unit_price: unitPrice,
             is_vat_nil: isVatNil,
-            vat_percentage: vatPercentage || 15
+            vat_percentage: finalVatPercentage
           })
           .eq('id', id);
         
@@ -519,8 +521,8 @@ export const OrderProvider: React.FC<{ children: React.ReactNode }> = ({ childre
             name: formattedName, 
             unitPrice, 
             isVatNil, 
-            vatPercentage: vatPercentage || 15,
-            isVatIncluded: isVatNil && (vatPercentage || 15) === 0
+            vatPercentage: finalVatPercentage,
+            isVatIncluded: finalIsVatIncluded
           } : temp
         ));
       } else {
@@ -531,13 +533,14 @@ export const OrderProvider: React.FC<{ children: React.ReactNode }> = ({ childre
             name: formattedName, 
             unitPrice, 
             isVatNil, 
-            vatPercentage: vatPercentage || 15,
-            isVatIncluded: isVatNil && (vatPercentage || 15) === 0
+            vatPercentage: finalVatPercentage,
+            isVatIncluded: finalIsVatIncluded
           } : temp
         );
         setItemTemplates(updatedTemplates);
         localStorage.setItem('orderItemTemplates', JSON.stringify(updatedTemplates.map(template => ({
           ...template,
+          isVatIncluded: template.isVatIncluded,
           createdAt: template.createdAt.toISOString()
         }))));
       }
