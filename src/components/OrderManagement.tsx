@@ -1376,13 +1376,15 @@ const CreateOrderModal: React.FC<CreateOrderModalProps> = ({ category, itemTempl
       await onAdd(category.id, new Date(orderDate), itemsWithQuantity);
       onClose();
     } catch (err) {
+       setEditItemVatIncluded(template.isVatIncluded || false);
       // Check if it's a duplicate order error
       if (err instanceof Error && err.message.includes('already exists for')) {
         // Extract date from error message for display
         const formattedDate = new Date(orderDate).toLocaleDateString('en-GB', {
-          day: '2-digit',
+         isVatIncluded: template.isVatIncluded || false,
           month: 'short',
-          year: 'numeric'
+         editItemVatIncluded: template.isVatIncluded || false,
+         editItemVatNil: template.isVatNil || false
         });
         
         // Show duplicate order modal instead of generic alert
@@ -1465,7 +1467,6 @@ const CreateOrderModal: React.FC<CreateOrderModalProps> = ({ category, itemTempl
                     {itemTemplates.map((template) => (
                       <tr key={template.id} className="hover:bg-gray-50 select-none">
                         <td className="border border-gray-300 px-4 py-2 select-none">
-                               setEditItemVatIncluded(false); // Clear VAT included when VAT nil is selected
                           <div className="select-none">
                             <div className="font-medium text-gray-800 select-none">{template.name}</div>
                             <div className="text-sm text-gray-600">
