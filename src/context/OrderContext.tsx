@@ -257,7 +257,6 @@ export const OrderProvider: React.FC<{ children: React.ReactNode }> = ({ childre
           const storedTemplates = localStorage.getItem('orderItemTemplates');
           const transformedTemplates: OrderItemTemplate[] = storedTemplates ? JSON.parse(storedTemplates).map((template: any) => ({
             ...template,
-            isVatIncluded: template.isVatIncluded || ((template.isVatNil || false) && (template.vatPercentage || 15) === 0),
             createdAt: new Date(template.createdAt)
           })) : [];
           
@@ -407,6 +406,7 @@ export const OrderProvider: React.FC<{ children: React.ReactNode }> = ({ childre
         
         localStorage.setItem('orderItemTemplates', JSON.stringify(updatedTemplates.map(template => ({
           ...template,
+          isVatIncluded: template.isVatIncluded,
           createdAt: template.createdAt.toISOString()
         }))));
         
