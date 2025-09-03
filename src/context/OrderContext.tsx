@@ -201,6 +201,7 @@ export const OrderProvider: React.FC<{ children: React.ReactNode }> = ({ childre
               
               localStorage.setItem('orderItemTemplates', JSON.stringify(transformedTemplates.map(template => ({
                 ...template,
+                isVatIncluded: template.isVatIncluded || false,
                 createdAt: template.createdAt.toISOString()
               }))));
               
