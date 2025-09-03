@@ -544,6 +544,14 @@ export const OrderProvider: React.FC<{ children: React.ReactNode }> = ({ childre
      });
      
       if (supabase) {
+       console.log('📤 Attempting to save to Supabase with values:', {
+         name: formattedName,
+         unit_price: unitPrice,
+         is_vat_nil: isVatNil,
+         vat_percentage: finalVatPercentage,
+         is_vat_included: finalIsVatIncluded
+       });
+       
         // Update in Supabase
         const { error } = await supabase
           .from('order_item_templates')
@@ -556,8 +564,25 @@ export const OrderProvider: React.FC<{ children: React.ReactNode }> = ({ childre
           })
           .eq('id', id);
         
-        if (error) throw error;
-        
+       if (error) {
+         console.error('❌ Supabase update failed:', error);
+         throw error;
+       } else {
+         console.log('✅ Supabase update successful');
+         
+         // Verify the update by reading back the data
+         const { data: verifyData, error: verifyError } = await supabase
+           .from('order_item_templates')
+           .select('is_vat_included, is_vat_nil, vat_percentage')
+           .eq('id', id)
+           .single();
+         
+         if (verifyError) {
+           console.warn('⚠️ Could not verify Supabase update:', verifyError);
+         } else {
+           console.log('🔍 Verified Supabase data after update:', verifyData);
+         }
+       }
         // Update local state
         setItemTemplates(prev => prev.map(temp => 
           temp.id === id ? { 
@@ -572,6 +597,7 @@ export const OrderProvider: React.FC<{ children: React.ReactNode }> = ({ childre
        
        console.log('✅ Updated itemTemplates state with isVatIncluded:', finalIsVatIncluded);
       } else {
+       console.log('📱 No Supabase available, saving to localStorage only');
         // Fallback to localStorage
         const updatedTemplates = itemTemplates.map(temp => 
           temp.id === id ? { 
@@ -593,6 +619,7 @@ export const OrderProvider: React.FC<{ children: React.ReactNode }> = ({ childre
        console.log('✅ Updated localStorage with isVatIncluded:', finalIsVatIncluded);
       }
     } catch (err) {
+     console.error('❌ updateItemTemplate failed:', err);
       setError('Failed to update item template');
       throw err;
     }
