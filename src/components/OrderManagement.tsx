@@ -518,6 +518,8 @@ const OrderManagement: React.FC = () => {
           setItemName={setNewItemName}
           itemPrice={newItemPrice}
           setItemPrice={setNewItemPrice}
+          newItemVatIncluded={newItemVatIncluded}
+          setNewItemVatIncluded={setNewItemVatIncluded}
           itemVatIncluded={newItemVatIncluded}
           setItemVatIncluded={setNewItemVatIncluded}
           itemVatPercentage={newItemVatPercentage}
@@ -1099,6 +1101,8 @@ const AddItemModal: React.FC<AddItemModalProps> = ({
   setItemName,
   itemPrice,
   setItemPrice,
+  newItemVatIncluded,
+  setNewItemVatIncluded,
   itemVatIncluded,
   setItemVatIncluded,
   itemVatPercentage,
@@ -1109,10 +1113,10 @@ const AddItemModal: React.FC<AddItemModalProps> = ({
   const calculateVatAndTotal = () => {
     const price = parseFloat(itemPrice) || 0;
     const vatPercent = parseFloat(itemVatPercentage) || 0;
-    const isVatNil = vatPercent === 0 || itemVatIncluded;
+    const isVatNil = vatPercent === 0 || newItemVatIncluded;
     
-    const vatAmount = isVatNil || itemVatIncluded ? 0 : (price * vatPercent) / 100;
-    const totalPrice = itemVatIncluded ? price : price + vatAmount;
+    const vatAmount = isVatNil || newItemVatIncluded ? 0 : (price * vatPercent) / 100;
+    const totalPrice = newItemVatIncluded ? price : price + vatAmount;
     
     return { price, vatPercent, isVatNil, vatAmount, totalPrice };
   };
@@ -1120,25 +1124,7 @@ const AddItemModal: React.FC<AddItemModalProps> = ({
   const { price, vatPercent, isVatNil, vatAmount, totalPrice } = calculateVatAndTotal();
 
   const handleSubmit = (e: React.FormEvent) => {
-    e.preventDefault();
-    
-    if (!itemName.trim()) {
-      alert('Please enter an item name');
-      return;
-    }
-
-    if (isNaN(price) || price < 0) {
-      alert('Please enter a valid price');
-      return;
-    }
-
-    if (!itemVatIncluded && (isNaN(vatPercent) || vatPercent < 0 || vatPercent > 100)) {
-      alert('Please enter a valid VAT percentage (0-100)');
-      return;
-    }
-
-    // Call the onAdd function with VAT included status
-    onAdd(e, itemVatIncluded, itemVatIncluded ? 0 : vatPercent);
+    onAdd(e);
   };
 
   return (
