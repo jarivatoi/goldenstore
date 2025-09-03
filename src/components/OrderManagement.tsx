@@ -516,6 +516,8 @@ const OrderManagement: React.FC = () => {
           setItemName={setNewItemName}
           itemPrice={newItemPrice}
           setItemPrice={setNewItemPrice}
+          newItemVatIncluded={newItemVatIncluded}
+          setNewItemVatIncluded={setNewItemVatIncluded}
           isSubmitting={isSubmitting}
         />
       )}
