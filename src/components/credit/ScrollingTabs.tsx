@@ -55,9 +55,29 @@ const ScrollingTabs: React.FC<ScrollingTabsProps> = ({
   // Listen for credit data changes to force re-render
   React.useEffect(() => {
     const handleCreditDataChanged = (event) => {
-      // Completely ignore all creditDataChanged events to prevent timeline interference
-      // Timeline should only restart when clients are actually added/removed
-      return;
+      console.log('🔄 Credit data changed, restarting timeline...');
+      
+      // Kill existing timeline
+      if (timelineRef.current) {
+        timelineRef.current.kill();
+        timelineRef.current = null;
+      }
+      
+      // Kill existing draggable
+      if (draggableRef.current) {
+        draggableRef.current.forEach(d => d.kill());
+        draggableRef.current = null;
+      }
+      
+      // Clear any stored position
+      pausedPositionRef.current = null;
+      
+      // Restart timeline after a short delay to ensure DOM updates
+      setTimeout(() => {
+        if (sortedClients.length > 0) {
+          setupContinuousScroll();
+        }
+      }, 100);
     };
 
     // Handle long press to show client details
