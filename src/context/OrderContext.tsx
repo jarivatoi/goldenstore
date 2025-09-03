@@ -427,7 +427,7 @@ export const OrderProvider: React.FC<{ children: React.ReactNode }> = ({ childre
       .sort((a, b) => a.name.localeCompare(b.name));
   };
 
-  const addItemTemplate = async (categoryId: string, name: string, unitPrice: number, isVatNil: boolean = false): Promise<OrderItemTemplate> => {
+  const addItemTemplate = async (categoryId: string, name: string, unitPrice: number, isVatNil: boolean = false, isVatIncluded: boolean = false): Promise<OrderItemTemplate> => {
     try {
       const formattedName = formatName(name);
       
@@ -451,6 +451,7 @@ export const OrderProvider: React.FC<{ children: React.ReactNode }> = ({ childre
         name: formattedName,
         unitPrice,
         isVatNil,
+        isVatIncluded,
         vatPercentage: categoryVatPercentage,
         createdAt: new Date()
       };
@@ -465,6 +466,7 @@ export const OrderProvider: React.FC<{ children: React.ReactNode }> = ({ childre
             name: newItemTemplate.name,
             unit_price: newItemTemplate.unitPrice,
             is_vat_nil: newItemTemplate.isVatNil,
+            is_vat_included: newItemTemplate.isVatIncluded,
             vat_percentage: newItemTemplate.vatPercentage,
             created_at: newItemTemplate.createdAt.toISOString()
           });

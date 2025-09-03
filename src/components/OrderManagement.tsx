@@ -1376,15 +1376,13 @@ const CreateOrderModal: React.FC<CreateOrderModalProps> = ({ category, itemTempl
       await onAdd(category.id, new Date(orderDate), itemsWithQuantity);
       onClose();
     } catch (err) {
-       setEditItemVatIncluded(template.isVatIncluded || false);
       // Check if it's a duplicate order error
       if (err instanceof Error && err.message.includes('already exists for')) {
         // Extract date from error message for display
         const formattedDate = new Date(orderDate).toLocaleDateString('en-GB', {
-         isVatIncluded: template.isVatIncluded || false,
+          day: '2-digit',
           month: 'short',
-         editItemVatIncluded: template.isVatIncluded || false,
-         editItemVatNil: template.isVatNil || false
+          year: 'numeric'
         });
         
         // Show duplicate order modal instead of generic alert
