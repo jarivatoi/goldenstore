@@ -506,8 +506,8 @@ export const OrderProvider: React.FC<{ children: React.ReactNode }> = ({ childre
      });
      
       const formattedName = formatName(name);
-      const finalVatPercentage = vatPercentage || 15;
-      const finalIsVatIncluded = isVatIncluded || false;
+      const finalVatPercentage = isVatNil ? 0 : (vatPercentage || 15);
+      const finalIsVatIncluded = isVatIncluded !== undefined ? isVatIncluded : false;
       
      console.log('🔍 Final values for update:', {
        formattedName,
