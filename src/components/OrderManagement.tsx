@@ -468,12 +468,14 @@ const OrderManagement: React.FC = () => {
                         setEditItemPrice(item.unitPrice.toString());
                         setEditItemVatPercentage(item.vatPercentage.toString());
                         // Initialize VAT included state based on existing item
-                         console.log('🔍 VAT is included in price - keeping VAT percentage');
-                         // When VAT is included, we keep the VAT percentage but don't add extra VAT
-                         // Don't set isVatNil to true - that's for VAT exempt items
+                        setEditItemVatIncluded(item.isVatNil && item.vatPercentage === 0);
+                        setShowEditItem(true);
+                        
                         console.log('🔍 Edit form state after setting:', {
-                         console.log('🔍 VAT is not included - will be added separately');
-                         // When VAT is not included, we'll add VAT on top of the price
+                          editItemName: item.name,
+                          editItemPrice: item.unitPrice.toString(),
+                          editItemVatPercentage: item.vatPercentage.toString(),
+                          editItemVatIncluded: item.isVatNil && item.vatPercentage === 0
                         });
                       }}
                       onDelete={() => handleDeleteItem(item)}
