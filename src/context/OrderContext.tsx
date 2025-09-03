@@ -155,9 +155,17 @@ export const OrderProvider: React.FC<{ children: React.ReactNode }> = ({ childre
                 unitPrice: template.unit_price,
                 isVatNil: template.is_vat_nil || false,
                 vatPercentage: template.vat_percentage || 15,
-                isVatIncluded: template.is_vat_included || false,
+                isVatIncluded: template.is_vat_included !== undefined ? template.is_vat_included : false,
                 createdAt: new Date(template.created_at)
               }));
+              
+              console.log('🔍 Loaded templates from Supabase:', transformedTemplates.map(t => ({
+                id: t.id,
+                name: t.name,
+                isVatIncluded: t.isVatIncluded,
+                isVatNil: t.isVatNil,
+                vatPercentage: t.vatPercentage
+              })));
               
               // Load orders with items
               const { data: ordersData, error: ordersError } = await supabase
@@ -230,8 +238,17 @@ export const OrderProvider: React.FC<{ children: React.ReactNode }> = ({ childre
             const storedTemplates = localStorage.getItem('orderItemTemplates');
             const transformedTemplates: OrderItemTemplate[] = storedTemplates ? JSON.parse(storedTemplates).map((template: any) => ({
               ...template,
+              isVatIncluded: template.isVatIncluded !== undefined ? template.isVatIncluded : false,
               createdAt: new Date(template.createdAt)
             })) : [];
+            
+            console.log('🔍 Loaded templates from localStorage (fallback):', transformedTemplates.map(t => ({
+              id: t.id,
+              name: t.name,
+              isVatIncluded: t.isVatIncluded,
+              isVatNil: t.isVatNil,
+              vatPercentage: t.vatPercentage
+            })));
             
             const storedOrders = localStorage.getItem('orders');
             const transformedOrders: Order[] = storedOrders ? JSON.parse(storedOrders).map((order: any) => ({
@@ -257,8 +274,17 @@ export const OrderProvider: React.FC<{ children: React.ReactNode }> = ({ childre
           const storedTemplates = localStorage.getItem('orderItemTemplates');
           const transformedTemplates: OrderItemTemplate[] = storedTemplates ? JSON.parse(storedTemplates).map((template: any) => ({
             ...template,
+            isVatIncluded: template.isVatIncluded !== undefined ? template.isVatIncluded : false,
             createdAt: new Date(template.createdAt)
           })) : [];
+          
+          console.log('🔍 Loaded templates from localStorage (no Supabase):', transformedTemplates.map(t => ({
+            id: t.id,
+            name: t.name,
+            isVatIncluded: t.isVatIncluded,
+            isVatNil: t.isVatNil,
+            vatPercentage: t.vatPercentage
+          })));
           
           const storedOrders = localStorage.getItem('orders');
           const transformedOrders: Order[] = storedOrders ? JSON.parse(storedOrders).map((order: any) => ({
