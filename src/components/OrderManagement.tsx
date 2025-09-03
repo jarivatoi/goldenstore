@@ -461,12 +461,13 @@ const OrderManagement: React.FC = () => {
                           isVatIncluded: item.isVatIncluded,
                           isVatNil: item.isVatNil,
                           vatPercentage: item.vatPercentage
-                         console.log('🔍 Set VAT included to true and VAT nil to false');
-                         setEditItemVatIncluded(true);
-                         setEditItemVatNil(false);
+                        });
+                        console.log('🔍 Set VAT included to true and VAT nil to false');
+                        setEditItemVatIncluded(true);
+                        setEditItemVatNil(false);
                         setEditItemName(item.name);
-                         console.log('🔍 Set VAT included to false');
-                         setEditItemVatIncluded(false);
+                        console.log('🔍 Set VAT included to false');
+                        setEditItemVatIncluded(false);
                         setEditItemVatIncluded(item.isVatNil && item.vatPercentage === 0);
                       }}
                       onDelete={() => handleDeleteItem(item)}
