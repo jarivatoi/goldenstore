@@ -1819,34 +1819,6 @@ const EditOrderModal: React.FC<EditOrderModalProps> = ({ order, itemTemplates, o
                       />
                     </div>
                   </div>
-                ))}
-              </div>
-            )}
-          </div>
-
-          <div className="p-6 border-t bg-gray-50 select-none">
-            <div className="flex justify-between items-center mb-4 select-none">
-              <span className="text-xl font-semibold text-gray-800 select-none">Total Amount:</span>
-              <span className="text-2xl font-bold text-green-600 select-none">Rs {totalCost.toLocaleString('en-IN', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</span>
-            </div>
-            
-            <div className="flex gap-3 select-none">
-              <button
-                type="button"
-                onClick={onClose}
-                disabled={isSubmitting}
-                className="flex-1 px-4 py-2 border border-gray-300 rounded-lg text-gray-700 hover:bg-gray-50 select-none"
-              >
-                Cancel
-              </button>
-              <button
-                type="submit"
-                disabled={isSubmitting || itemTemplates.length === 0 || totalCost === 0}
-                className={`flex-1 px-4 py-2 rounded-lg transition-colors select-none ${
-                  totalCost === 0
-                    ? 'bg-gray-300 text-gray-500 cursor-not-allowed'
-                    : 'bg-green-500 text-white hover:bg-green-600'
-                }`}
               >
                 {isSubmitting ? 'Updating...' : 'Update Order'}
               </button>
