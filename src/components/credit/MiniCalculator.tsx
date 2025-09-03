@@ -3,7 +3,6 @@ import { createPortal } from 'react-dom';
 import { X, Edit2, Check, Calculator, Plus, Minus, Maximize2 } from 'lucide-react';
 import { gsap } from 'gsap';
 import { DraggableCalculator } from '../../lib/draggableCalculator.js';
-import { processCalculatorInput, evaluateExpression } from '../../utils/creditCalculatorUtils';
 import ClientSearchModal from '../ClientSearchModal';
 
 interface MiniCalculatorProps {
@@ -28,8 +27,10 @@ const MiniCalculator: React.FC<MiniCalculatorProps> = ({
   onAddToClient
 }) => {
   const [calculatorValue, setCalculatorValue] = useState('0');
-  const [calculatorMemory, setCalculatorMemory] = useState(0);
-  const [isCalculatorActive, setIsCalculatorActive] = useState(false);
+  const [memory, setMemory] = useState(0);
+  const [lastOperation, setLastOperation] = useState<string | null>(null);
+  const [lastOperand, setLastOperand] = useState<number | null>(null);
+  const [isNewNumber, setIsNewNumber] = useState(true);
   const [label, setLabel] = useState(initialLabel);
   const [isEditingLabel, setIsEditingLabel] = useState(false);
   const [editedLabel, setEditedLabel] = useState(label);
@@ -84,11 +85,85 @@ const MiniCalculator: React.FC<MiniCalculatorProps> = ({
     };
   }, [initialPosition, id, isVisible]);
 
-  const handleCalculatorInput = (value: string) => {
-    const result = processCalculatorInput(calculatorValue, value, calculatorMemory);
-    setCalculatorValue(result.value);
-    setCalculatorMemory(result.memory);
-    setIsCalculatorActive(result.isActive);
+  // Simple calculator logic for mini calculator
+  const handleCalculatorInput = (input: string) => {
+    const currentNumber = parseFloat(calculatorValue) || 0;
+    
+    if (input >= '0' && input <= '9') {
+      if (isNewNumber || calculatorValue === '0') {
+        setCalculatorValue(input);
+        setIsNewNumber(false);
+      } else {
+        setCalculatorValue(calculatorValue + input);
+      }
+    } else if (input === '.') {
+      if (isNewNumber) {
+        setCalculatorValue('0.');
+        setIsNewNumber(false);
+      } else if (!calculatorValue.includes('.')) {
+        setCalculatorValue(calculatorValue + '.');
+      }
+    } else if (input === 'C' || input === 'AC') {
+      setCalculatorValue('0');
+      setMemory(0);
+      setLastOperation(null);
+      setLastOperand(null);
+      setIsNewNumber(true);
+    } else if (input === 'CE') {
+      setCalculatorValue('0');
+      setIsNewNumber(true);
+    } else if (input === '⌫') {
+      if (calculatorValue.length > 1) {
+        setCalculatorValue(calculatorValue.slice(0, -1));
+      } else {
+        setCalculatorValue('0');
+        setIsNewNumber(true);
+      }
+    } else if (['+', '-', '*', '/'].includes(input)) {
+      if (lastOperation && !isNewNumber) {
+        // Perform pending operation
+        const result = performOperation(lastOperand || 0, currentNumber, lastOperation);
+        setCalculatorValue(result.toString());
+        setLastOperand(result);
+      } else {
+        setLastOperand(currentNumber);
+      }
+      setLastOperation(input);
+      setIsNewNumber(true);
+    } else if (input === '=') {
+      if (lastOperation && lastOperand !== null) {
+        const result = performOperation(lastOperand, currentNumber, lastOperation);
+        setCalculatorValue(result.toString());
+        setLastOperation(null);
+        setLastOperand(null);
+        setIsNewNumber(true);
+      }
+    } else if (input === 'M+') {
+      setMemory(memory + currentNumber);
+    } else if (input === 'MR' || input === 'MC') {
+      if (input === 'MR') {
+        setCalculatorValue(memory.toString());
+        setIsNewNumber(true);
+      }
+      if (input === 'MC') {
+        setMemory(0);
+      }
+    }
+  };
+
+  const performOperation = (operand1: number, operand2: number, operation: string): number => {
+    switch (operation) {
+      case '+':
+        return operand1 + operand2;
+      case '-':
+        return operand1 - operand2;
+      case '*':
+        return operand1 * operand2;
+      case '/':
+        return operand2 !== 0 ? operand1 / operand2 : 0;
+      default:
+        return operand2;
+    }
   };
 
   const handleSaveLabel = () => {
@@ -111,7 +186,7 @@ const MiniCalculator: React.FC<MiniCalculatorProps> = ({
       return;
     }
 
-    const amount = evaluateExpression(calculatorValue);
+    const amount = parseFloat(calculatorValue);
     if (isNaN(amount) || !isFinite(amount) || amount < 0) {
       setError('Please enter a valid amount');
       return;
@@ -313,7 +388,7 @@ const MiniCalculator: React.FC<MiniCalculatorProps> = ({
         }}
       >
         <div className="bg-gray-100 rounded-lg p-3 text-right relative">
-          {calculatorMemory !== 0 && (
+          {memory !== 0 && (
             <div className="absolute top-1 left-2 text-xs text-blue-600 font-semibold">
               M
             </div>
@@ -333,9 +408,9 @@ const MiniCalculator: React.FC<MiniCalculatorProps> = ({
             <div className="text-lg font-mono font-bold text-blue-800">
               {calculatorValue}
             </div>
-            {calculatorMemory !== 0 && (
+            {memory !== 0 && (
               <div className="text-xs text-blue-600 font-semibold">
-                Memory: {calculatorMemory}
+                Memory: {memory}
               </div>
             )}
           </div>
@@ -847,12 +922,15 @@ const MiniCalculator: React.FC<MiniCalculatorProps> = ({
           }}
           onAddToClient={async (client, description) => {
             try {
-              const amount = evaluateExpression(calculatorValue);
+              const amount = parseFloat(calculatorValue);
               await onAddToClient(amount, description, label);
               
               // Reset calculator and form
               setCalculatorValue('0');
-              setIsCalculatorActive(false);
+              setMemory(0);
+              setLastOperation(null);
+              setLastOperand(null);
+              setIsNewNumber(true);
               setShowClientSearch(false);
               setError('');
             } catch (err) {
