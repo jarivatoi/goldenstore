@@ -498,7 +498,7 @@ export const OrderProvider: React.FC<{ children: React.ReactNode }> = ({ childre
     try {
       const formattedName = formatName(name);
       const finalVatPercentage = vatPercentage || 15;
-      const finalIsVatIncluded = isVatIncluded !== undefined ? isVatIncluded : (isVatNil && finalVatPercentage === 0);
+      const finalIsVatIncluded = isVatIncluded || false;
       
       if (supabase) {
         // Update in Supabase
@@ -540,7 +540,7 @@ export const OrderProvider: React.FC<{ children: React.ReactNode }> = ({ childre
         setItemTemplates(updatedTemplates);
         localStorage.setItem('orderItemTemplates', JSON.stringify(updatedTemplates.map(template => ({
           ...template,
-          isVatIncluded: template.isVatIncluded,
+          isVatIncluded: template.isVatIncluded || false,
           createdAt: template.createdAt.toISOString()
         }))));
       }
