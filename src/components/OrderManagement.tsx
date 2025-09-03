@@ -42,6 +42,7 @@ const OrderManagement: React.FC = () => {
   const [newItemPrice, setNewItemPrice] = useState('');
   const [newItemVatNil, setNewItemVatNil] = useState(false);
   const [newItemVatPercentage, setNewItemVatPercentage] = useState('15');
+  const [newItemVatIncluded, setNewItemVatIncluded] = useState(false);
   const [editingCategory, setEditingCategory] = useState<OrderCategory | null>(null);
   const [editingItem, setEditingItem] = useState<OrderItemTemplate | null>(null);
   const [editingOrder, setEditingOrder] = useState<Order | null>(null);
@@ -110,7 +111,7 @@ const OrderManagement: React.FC = () => {
   };
 
   // Handle add item template
-  const handleAddItem = async (e: React.FormEvent, isVatNil: boolean = false, vatPercentage: number = 15) => {
+  const handleAddItem = async (e: React.FormEvent, isVatIncluded: boolean = false, vatPercentage: number = 15) => {
     e.preventDefault();
     
     if (!selectedCategory || !newItemName.trim() || !newItemPrice.trim()) {
@@ -131,10 +132,15 @@ const OrderManagement: React.FC = () => {
     }
     try {
       setIsSubmitting(true);
-      await addItemTemplate(selectedCategory.id, newItemName.trim(), price, vatPercent === 0, vatPercent);
+      // When VAT included is checked, set isVatNil to true and vatPercentage to 0
+      const finalIsVatNil = isVatIncluded || vatPercent === 0;
+      const finalVatPercentage = isVatIncluded ? 0 : vatPercent;
+      
+      await addItemTemplate(selectedCategory.id, newItemName.trim(), price, finalIsVatNil, finalVatPercentage);
       setNewItemName('');
       setNewItemPrice('');
       setNewItemVatPercentage('15');
+      setNewItemVatIncluded(false);
       setShowAddItem(false);
       
       // Show success modal instead of browser alert
