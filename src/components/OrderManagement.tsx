@@ -812,7 +812,7 @@ const ItemTemplateCard: React.FC<ItemTemplateCardProps> = ({
   const totalPrice = item.unitPrice + vatAmount;
   
   // Check if VAT is included (when isVatNil is true and vatPercentage is 0)
-  const isItemVatIncluded = item.isVatNil && item.vatPercentage === 0;
+  const itemHasVatIncluded = item.isVatNil && item.vatPercentage === 0;
 
  // Check if VAT is included (when isVatNil is true and vatPercentage is 0)
  const isVatIncluded = item.isVatNil && item.vatPercentage === 0;
@@ -822,7 +822,7 @@ const ItemTemplateCard: React.FC<ItemTemplateCardProps> = ({
         <div className="select-none">
           <h5 className="font-medium text-gray-800 select-none">{item.name}</h5>
           <div className="text-sm text-gray-600 select-none">
-            {isItemVatIncluded ? (
+            {itemHasVatIncluded ? (
               <p className="select-none">Rs {item.unitPrice.toLocaleString('en-IN', { minimumFractionDigits: 2, maximumFractionDigits: 2 })} (VAT Included)</p>
             ) : (
               <p className="select-none">Rs {item.unitPrice.toLocaleString('en-IN', { minimumFractionDigits: 2, maximumFractionDigits: 2 })} VAT({item.vatPercentage}%)(Rs {vatAmount.toLocaleString('en-IN', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}) → Rs {totalPrice.toLocaleString('en-IN', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</p>
