@@ -455,6 +455,14 @@ const OrderManagement: React.FC = () => {
                       key={item.id}
                       item={item}
                       onEdit={() => {
+                        console.log('🔍 Setting edit form with template:', {
+                          id: item.id,
+                          name: item.name,
+                          isVatIncluded: item.isVatIncluded,
+                          isVatNil: item.isVatNil,
+                          vatPercentage: item.vatPercentage
+                        });
+                        
                         setEditingItem(item);
                         setEditItemName(item.name);
                         setEditItemPrice(item.unitPrice.toString());
@@ -462,6 +470,12 @@ const OrderManagement: React.FC = () => {
                         // Initialize VAT included state based on existing item
                         setEditItemVatIncluded(item.isVatNil && item.vatPercentage === 0);
                         setShowEditItem(true);
+                        
+                        console.log('🔍 Edit form state after setting:', {
+                          editIsVatIncluded: item.isVatIncluded || false,
+                          editIsVatNil: item.isVatNil,
+                          editVatPercentage: item.vatPercentage
+                        });
                       }}
                       onDelete={() => handleDeleteItem(item)}
                     />
