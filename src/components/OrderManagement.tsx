@@ -1082,8 +1082,6 @@ interface AddItemModalProps {
   setItemName: (name: string) => void;
   itemPrice: string;
   setItemPrice: (price: string) => void;
-  newItemVatIncluded: boolean;
-  setNewItemVatIncluded: (included: boolean) => void;
   itemVatIncluded: boolean;
   setItemVatIncluded: (included: boolean) => void;
   itemVatPercentage: string;
@@ -1743,17 +1741,9 @@ const EditOrderModal: React.FC<EditOrderModalProps> = ({ order, itemTemplates, o
               <div className="text-center py-12 select-none">
                 <div className="bg-red-50 p-6 rounded-lg border border-red-200 select-none">
                   <h4 className="text-lg font-medium text-red-800 mb-2 select-none">No Items Available</h4>
-                           checked={editIsVatIncluded}
+                  <p className="text-red-700 select-none">
                     Cannot edit this order because there are no items in this category.
-                             const isChecked = e.target.checked;
-                             setEditIsVatIncluded(isChecked);
-                             if (isChecked) {
-                               setEditIsVatNil(true);
-                               setEditVatPercentage(0);
-                             } else {
-                               setEditIsVatNil(false);
-                               setEditVatPercentage(15);
-                             }
+                  </p>
                 </div>
               </div>
             ) : (
@@ -1777,7 +1767,7 @@ const EditOrderModal: React.FC<EditOrderModalProps> = ({ order, itemTemplates, o
                           onChange={(e) => updateOrderItem(item.id, 'quantity', parseInt(e.target.value) || 0)}
                           onFocus={(e) => e.target.select()}
                           className="w-16 px-2 py-1 border border-gray-300 rounded focus:outline-none focus:ring-2 focus:ring-blue-500 placeholder-gray-400 select-text"
-                         disabled={editIsVatIncluded}
+                          placeholder="0"
                           style={{ textAlign: 'center' }}
                         />
                         <button
