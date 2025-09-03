@@ -467,13 +467,7 @@ export const CreditProvider: React.FC<CreditProviderProps> = ({ children }) => {
             }
           : client
       );
-      
-      // Move the updated client to the end of the array (most recent)
-      const updatedClient = updatedClients.find(c => c.id === clientId);
-      const otherClients = updatedClients.filter(c => c.id !== clientId);
-      const reorderedClients = updatedClient ? [...otherClients, updatedClient] : updatedClients;
-      
-      setClients(reorderedClients);
+      setClients(updatedClients);
       
       // Save to localStorage
       localStorage.setItem('creditPayments', JSON.stringify(updatedPayments.map(payment => ({
@@ -486,7 +480,7 @@ export const CreditProvider: React.FC<CreditProviderProps> = ({ children }) => {
         date: transaction.date.toISOString()
       }))));
       
-      localStorage.setItem('creditClients', JSON.stringify(reorderedClients.map(client => ({
+      localStorage.setItem('creditClients', JSON.stringify(updatedClients.map(client => ({
         ...client,
         createdAt: client.createdAt.toISOString(),
         lastTransactionAt: client.lastTransactionAt.toISOString()
@@ -582,10 +576,16 @@ export const CreditProvider: React.FC<CreditProviderProps> = ({ children }) => {
           ? { ...client, bottlesOwed: newBottles, lastTransactionAt: new Date() }
           : client
       );
-      setClients(updatedClients);
+      
+      // Move the updated client to the end of the array (most recent)
+      const updatedClient = updatedClients.find(c => c.id === clientId);
+      const otherClients = updatedClients.filter(c => c.id !== clientId);
+      const reorderedClients = updatedClient ? [...otherClients, updatedClient] : updatedClients;
+      
+      setClients(reorderedClients);
       
       // Save to localStorage
-      localStorage.setItem('creditClients', JSON.stringify(updatedClients.map(client => ({
+      localStorage.setItem('creditClients', JSON.stringify(reorderedClients.map(client => ({
         ...client,
         createdAt: client.createdAt.toISOString(),
         lastTransactionAt: client.lastTransactionAt.toISOString()
