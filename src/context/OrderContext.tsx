@@ -155,14 +155,12 @@ export const OrderProvider: React.FC<{ children: React.ReactNode }> = ({ childre
                 unitPrice: template.unit_price,
                 isVatNil: template.is_vat_nil || false,
                 vatPercentage: template.vat_percentage || 15,
-                isVatIncluded: template.is_vat_included !== undefined ? template.is_vat_included : false,
                 createdAt: new Date(template.created_at)
               }));
               
               console.log('🔍 Loaded templates from Supabase:', transformedTemplates.map(t => ({
                 id: t.id,
                 name: t.name,
-                isVatIncluded: t.isVatIncluded,
                 isVatNil: t.isVatNil,
                 vatPercentage: t.vatPercentage
               })));
@@ -209,7 +207,6 @@ export const OrderProvider: React.FC<{ children: React.ReactNode }> = ({ childre
               
               localStorage.setItem('orderItemTemplates', JSON.stringify(transformedTemplates.map(template => ({
                 ...template,
-                isVatIncluded: template.isVatIncluded || false,
                 createdAt: template.createdAt.toISOString()
               }))));
               
@@ -238,14 +235,12 @@ export const OrderProvider: React.FC<{ children: React.ReactNode }> = ({ childre
             const storedTemplates = localStorage.getItem('orderItemTemplates');
             const transformedTemplates: OrderItemTemplate[] = storedTemplates ? JSON.parse(storedTemplates).map((template: any) => ({
               ...template,
-              isVatIncluded: template.isVatIncluded !== undefined ? template.isVatIncluded : false,
               createdAt: new Date(template.createdAt)
             })) : [];
             
             console.log('🔍 Loaded templates from localStorage (fallback):', transformedTemplates.map(t => ({
               id: t.id,
               name: t.name,
-              isVatIncluded: t.isVatIncluded,
               isVatNil: t.isVatNil,
               vatPercentage: t.vatPercentage
             })));
@@ -274,14 +269,12 @@ export const OrderProvider: React.FC<{ children: React.ReactNode }> = ({ childre
           const storedTemplates = localStorage.getItem('orderItemTemplates');
           const transformedTemplates: OrderItemTemplate[] = storedTemplates ? JSON.parse(storedTemplates).map((template: any) => ({
             ...template,
-            isVatIncluded: template.isVatIncluded !== undefined ? template.isVatIncluded : false,
             createdAt: new Date(template.createdAt)
           })) : [];
           
           console.log('🔍 Loaded templates from localStorage (no Supabase):', transformedTemplates.map(t => ({
             id: t.id,
             name: t.name,
-            isVatIncluded: t.isVatIncluded,
             isVatNil: t.isVatNil,
             vatPercentage: t.vatPercentage
           })));
@@ -432,7 +425,6 @@ export const OrderProvider: React.FC<{ children: React.ReactNode }> = ({ childre
         
         localStorage.setItem('orderItemTemplates', JSON.stringify(updatedTemplates.map(template => ({
           ...template,
-          isVatIncluded: template.isVatIncluded,
           createdAt: template.createdAt.toISOString()
         }))));
         
@@ -481,7 +473,6 @@ export const OrderProvider: React.FC<{ children: React.ReactNode }> = ({ childre
         unitPrice,
         isVatNil,
         vatPercentage: isVatNil ? 0 : categoryVatPercentage,
-        isVatIncluded: isVatNil && categoryVatPercentage === 0,
         createdAt: new Date()
       };
       
@@ -520,27 +511,23 @@ export const OrderProvider: React.FC<{ children: React.ReactNode }> = ({ childre
     }
   };
 
-  const updateItemTemplate = async (id: string, name: string, unitPrice: number, isVatNil: boolean, vatPercentage?: number, isVatIncluded?: boolean): Promise<void> => {
+  const updateItemTemplate = async (id: string, name: string, unitPrice: number, isVatNil: boolean, vatPercentage?: number): Promise<void> => {
     try {
      console.log('🔍 updateItemTemplate called with:', {
        id,
        name,
        unitPrice,
        isVatNil,
-       vatPercentage,
-       isVatIncluded
+       vatPercentage
      });
      
       const formattedName = formatName(name);
       // When VAT is included, keep the percentage as-is, when VAT nil, set to 0
       const finalVatPercentage = isVatNil ? 0 : (vatPercentage || 15);
-      // Use the passed isVatIncluded value directly - don't override it
-      const finalIsVatIncluded = isVatIncluded === true; // Explicit true check
       
      console.log('🔍 Final values for update:', {
        formattedName,
-       finalVatPercentage,
-       finalIsVatIncluded
+       finalVatPercentage
      });
      
       if (supabase) {
@@ -548,8 +535,7 @@ export const OrderProvider: React.FC<{ children: React.ReactNode }> = ({ childre
          name: formattedName,
          unit_price: unitPrice,
          is_vat_nil: isVatNil,
-         vat_percentage: finalVatPercentage,
-         is_vat_included: finalIsVatIncluded
+         vat_percentage: finalVatPercentage
        });
        
         // Update in Supabase
@@ -559,8 +545,7 @@ export const OrderProvider: React.FC<{ children: React.ReactNode }> = ({ childre
             name: formattedName,
             unit_price: unitPrice,
             is_vat_nil: isVatNil,
-            vat_percentage: finalVatPercentage,
-            is_vat_included: finalIsVatIncluded
+            vat_percentage: finalVatPercentage
           })
           .eq('id', id);
         
@@ -573,7 +558,7 @@ export const OrderProvider: React.FC<{ children: React.ReactNode }> = ({ childre
          // Verify the update by reading back the data
          const { data: verifyData, error: verifyError } = await supabase
            .from('order_item_templates')
-           .select('is_vat_included, is_vat_nil, vat_percentage')
+           .select('is_vat_nil, vat_percentage')
            .eq('id', id)
            .single();
          
@@ -590,12 +575,11 @@ export const OrderProvider: React.FC<{ children: React.ReactNode }> = ({ childre
             name: formattedName, 
             unitPrice, 
             isVatNil, 
-            vatPercentage: finalVatPercentage,
-            isVatIncluded: finalIsVatIncluded
+            vatPercentage: finalVatPercentage
           } : temp
         ));
        
-       console.log('✅ Updated itemTemplates state with isVatIncluded:', finalIsVatIncluded);
+       console.log('✅ Updated itemTemplates state');
       } else {
        console.log('📱 No Supabase available, saving to localStorage only');
         // Fallback to localStorage
@@ -605,18 +589,16 @@ export const OrderProvider: React.FC<{ children: React.ReactNode }> = ({ childre
             name: formattedName, 
             unitPrice, 
             isVatNil, 
-            vatPercentage: finalVatPercentage,
-            isVatIncluded: finalIsVatIncluded
+            vatPercentage: finalVatPercentage
           } : temp
         );
         setItemTemplates(updatedTemplates);
         localStorage.setItem('orderItemTemplates', JSON.stringify(updatedTemplates.map(template => ({
           ...template,
-          isVatIncluded: template.isVatIncluded === true, // Explicit boolean conversion
           createdAt: template.createdAt.toISOString()
         }))));
        
-       console.log('✅ Updated localStorage with isVatIncluded:', finalIsVatIncluded);
+       console.log('✅ Updated localStorage');
       }
     } catch (err) {
      console.error('❌ updateItemTemplate failed:', err);

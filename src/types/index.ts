@@ -178,7 +178,6 @@ export interface OrderItemTemplate {
   isVatNil: boolean; // Whether item is VAT exempt
   vatPercentage: number; // VAT percentage (default 15)
   createdAt: Date; // When template was created
-  isVatIncluded?: boolean; // Whether VAT is included in the price
 }
 
 /**
