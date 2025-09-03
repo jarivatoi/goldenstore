@@ -1886,11 +1886,13 @@ const EditItemModal: React.FC<EditItemModalProps> = ({
   setItemVatIncluded,
   isSubmitting
 }) => {
+
   // Calculate VAT and total in real-time
   const calculateVatAndTotal = () => {
     const price = parseFloat(itemPrice) || 0;
     const vatPercent = parseFloat(itemVatPercentage) || 0;
     const isVatNil = vatPercent === 0 || itemVatIncluded;
+    
     const vatAmount = isVatNil || itemVatIncluded ? 0 : (price * vatPercent) / 100;
     const totalPrice = itemVatIncluded ? price : price + vatAmount;
     
