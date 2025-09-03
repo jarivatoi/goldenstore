@@ -469,7 +469,6 @@ export const OrderProvider: React.FC<{ children: React.ReactNode }> = ({ childre
             unit_price: newItemTemplate.unitPrice,
             is_vat_nil: newItemTemplate.isVatNil,
             vat_percentage: newItemTemplate.vatPercentage,
-            is_vat_included: newItemTemplate.isVatIncluded,
             created_at: newItemTemplate.createdAt.toISOString()
           });
         
@@ -506,8 +505,7 @@ export const OrderProvider: React.FC<{ children: React.ReactNode }> = ({ childre
             name: formattedName,
             unit_price: unitPrice,
             is_vat_nil: isVatNil,
-            vat_percentage: vatPercentage || 15,
-            is_vat_included: isVatNil && (vatPercentage || 15) === 0
+            vat_percentage: vatPercentage || 15
           })
           .eq('id', id);
         
