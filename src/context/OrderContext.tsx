@@ -532,8 +532,10 @@ export const OrderProvider: React.FC<{ children: React.ReactNode }> = ({ childre
      });
      
       const formattedName = formatName(name);
+      // When VAT is included, keep the percentage as-is, when VAT nil, set to 0
       const finalVatPercentage = isVatNil ? 0 : (vatPercentage || 15);
-      const finalIsVatIncluded = isVatIncluded !== undefined ? isVatIncluded : false;
+      // Use the passed isVatIncluded value directly - don't override it
+      const finalIsVatIncluded = isVatIncluded === true; // Explicit true check
       
      console.log('🔍 Final values for update:', {
        formattedName,
@@ -584,7 +586,7 @@ export const OrderProvider: React.FC<{ children: React.ReactNode }> = ({ childre
         setItemTemplates(updatedTemplates);
         localStorage.setItem('orderItemTemplates', JSON.stringify(updatedTemplates.map(template => ({
           ...template,
-          isVatIncluded: template.isVatIncluded || false,
+          isVatIncluded: template.isVatIncluded === true, // Explicit boolean conversion
           createdAt: template.createdAt.toISOString()
         }))));
        
