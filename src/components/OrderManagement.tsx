@@ -1082,8 +1082,6 @@ interface AddItemModalProps {
   setItemName: (name: string) => void;
   itemPrice: string;
   setItemPrice: (price: string) => void;
-  newItemVatIncluded: boolean;
-  setNewItemVatIncluded: (included: boolean) => void;
   itemVatIncluded: boolean;
   setItemVatIncluded: (included: boolean) => void;
   itemVatPercentage: string;
