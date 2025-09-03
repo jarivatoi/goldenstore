@@ -1459,6 +1459,13 @@ const CreateOrderModal: React.FC<CreateOrderModalProps> = ({ category, itemTempl
                         <td className="border border-gray-300 px-4 py-2 select-none">
                           <div className="select-none">
                             <div className="font-medium text-gray-800 select-none">{template.name}</div>
+                            <div className="text-sm text-gray-600">
+                              Rs {template.unitPrice.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })} {
+                                template.isVatIncluded ? '(VAT Included)' :
+                                template.isVatNil ? '(VAT Nil)' : 
+                                `VAT(${template.vatPercentage}%)(Rs${(template.unitPrice * template.vatPercentage / 100).toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })})->Rs ${(template.unitPrice + (template.unitPrice * template.vatPercentage / 100)).toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`
+                              }
+                            </div>
                           </div>
                         </td>
                         <td className="border border-gray-300 px-4 py-2 select-none">
