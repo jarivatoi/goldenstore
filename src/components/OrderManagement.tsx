@@ -1198,11 +1198,15 @@ const AddItemModal: React.FC<AddItemModalProps> = ({
                   type="checkbox"
                   checked={itemVatIncluded}
                   onChange={(e) => {
-                    setItemVatIncluded(e.target.checked);
-                    if (e.target.checked) {
+                    const isChecked = e.target.checked;
+                    console.log('🔍 VAT Included checkbox changed:', isChecked);
+                    setItemVatIncluded(isChecked);
+                    if (isChecked) {
                       setItemVatPercentage('0');
+                      console.log('🔍 Set VAT nil to true and percentage to 0');
                     } else {
                       setItemVatPercentage('15');
+                      console.log('🔍 Set VAT nil to false and percentage to 15');
                     }
                   }}
                   className="w-4 h-4 text-blue-600 border-gray-300 rounded focus:ring-blue-500"
@@ -1970,11 +1974,15 @@ const EditItemModal: React.FC<EditItemModalProps> = ({
                   type="checkbox"
                   checked={itemVatIncluded}
                   onChange={(e) => {
-                    setItemVatIncluded(e.target.checked);
-                    if (e.target.checked) {
+                    const isChecked = e.target.checked;
+                    console.log('🔍 VAT Included checkbox changed:', isChecked);
+                    setItemVatIncluded(isChecked);
+                    if (isChecked) {
                       setItemVatPercentage('0');
+                      console.log('🔍 Set VAT nil to true and percentage to 0');
                     } else {
                       setItemVatPercentage('15');
+                      console.log('🔍 Set VAT nil to false and percentage to 15');
                     }
                   }}
                   className="w-4 h-4 text-blue-600 border-gray-300 rounded focus:ring-blue-500"
