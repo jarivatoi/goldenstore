@@ -164,9 +164,9 @@ const OrderManagement: React.FC = () => {
   };
 
   // Handle edit item template
-  const handleEditItem = async (item: OrderItemTemplate, newName: string, newPrice: number, isVatNil: boolean, isVatIncluded: boolean, newVatPercentage: number) => {
+  const handleEditItem = async (item: OrderItemTemplate, newName: string, newPrice: number, isVatNil: boolean, newVatPercentage: number) => {
     try {
-      await updateItemTemplate(item.id, newName, newPrice, isVatNil, isVatIncluded, newVatPercentage);
+      await updateItemTemplate(item.id, newName, newPrice, isVatNil, newVatPercentage);
       setEditingItem(null);
       setShowEditItem(false);
       setEditItemName('');
@@ -1757,7 +1757,7 @@ interface EditItemModalProps {
   category: OrderCategory;
   item: OrderItemTemplate;
   onClose: () => void;
-  onSave: (item: OrderItemTemplate, newName: string, newPrice: number, isVatNil: boolean, isVatIncluded: boolean, newVatPercentage: number) => Promise<void>;
+  onSave: (item: OrderItemTemplate, newName: string, newPrice: number, isVatNil: boolean, newVatPercentage: number) => Promise<void>;
   itemName: string;
   setItemName: (name: string) => void;
   itemPrice: string;
@@ -1795,7 +1795,7 @@ const EditItemModal: React.FC<EditItemModalProps> = ({
     return { price, vatPercent, isVatNil: vatNil, vatAmount, totalPrice };
   };
   
-  const { price, vatPercent, vatAmount, totalPrice } = calculateVatAndTotal();
+  const { price, vatPercent, isVatNil: vatNil, vatAmount, totalPrice } = calculateVatAndTotal();
 
   // Handle VAT toggle changes
   const handleVatIncludedChange = (checked: boolean) => {
@@ -1834,7 +1834,7 @@ const EditItemModal: React.FC<EditItemModalProps> = ({
     }
 
     try {
-      await onSave(item, itemName.trim(), price, isVatNil, isVatIncluded, vatPercent);
+      await onSave(item, itemName.trim(), price, vatNil, vatPercent);
     } catch (err) {
       alert(err instanceof Error ? err.message : 'Failed to update item');
     }
@@ -1966,7 +1966,7 @@ const EditItemModal: React.FC<EditItemModalProps> = ({
                   <div className="flex justify-between select-none">
                     <span className="select-none">VAT ({vatPercent}%):</span>
                     <span className="select-none">
-                       {isVatNil ? 'VAT Nil' : 
+                       {vatNil ? 'VAT Nil' : 
                         isVatIncluded ? 'VAT Included' : 
                        `Rs ${vatAmount.toLocaleString('en-IN', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`}
                     </span>
