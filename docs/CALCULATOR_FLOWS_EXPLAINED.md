@@ -175,7 +175,7 @@ Is New Number: true
 ```
 Input: "3"
 Display: "3"
-Article Count: 2 (incremented for new number)
+Article Count: 1 (unchanged - numbers after × or ÷ don't increment count)
 Calculation Steps: [
   {
     expression: "5",
@@ -199,7 +199,7 @@ Calculation Steps: [
 ```
 Input: "="
 Display: "15"
-Article Count: 2 (unchanged - represents total items in calculation)
+Article Count: 1 (unchanged - represents quantity of items)
 Expression Built: "5*3"
 Final Result: 15
 All Steps Marked: isComplete = true
@@ -209,10 +209,9 @@ Transaction History: [...previous, 15]
 
 ### Counter Logic for Compound Calculations
 - **First number**: Article count = 1
-- **Multiplication operator**: Article count = first number value (quantity)
-- **Division operator**: Article count = first number value (total quantity)
-- **Subsequent numbers**: Article count unchanged (represents unit price/divisor)
-- **Final result**: Article count represents quantity of items
+- **Multiplication/Division operators**: Article count unchanged
+- **Numbers after × or ÷**: Article count unchanged (represents unit price/divisor)
+- **Final result**: Article count = 1 (represents one calculation result)
 
 ---
 

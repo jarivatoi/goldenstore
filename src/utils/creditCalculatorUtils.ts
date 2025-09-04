@@ -419,7 +419,8 @@ const processCompoundCalculation = (
           isComplete: false,
           operator: newLastOperation
         });
-        newArticleCount = newCalculationSteps.length;
+        // Don't increment article count for numbers after × or ÷ in compound calculations
+        // Keep the existing article count
       }
       newValue = input;
       newIsNewNumber = false;
