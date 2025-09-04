@@ -1900,7 +1900,7 @@ const EditItemModal: React.FC<EditItemModalProps> = ({
                   <div className="flex justify-between select-none">
                     <span className="select-none">VAT ({vatPercent}%):</span>
                     <span className="select-none">
-                      {isVatNil ? 'VAT Nil' : \`Rs ${vatAmount.toLocaleString('en-IN', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`}
+                       {isVatNil ? 'VAT Nil' : `Rs ${vatAmount.toLocaleString('en-IN', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`}
                     </span>
                   </div>
                   <div className="flex justify-between font-medium text-gray-800 pt-1 border-t border-gray-300 select-none">
