@@ -1079,7 +1079,7 @@ const CreditManagement: React.FC = () => {
             </button>
             <button
               onClick={() => handleCalculatorInput('→')}
-              className="bg-gray-400 hover:bg-gray-500 text-white p-2 sm:p-3 rounded-lg font-bold text-xs sm:text-sm shadow-md border border-gray-500 flex items-center justify-center"
+             className="bg-red-500 hover:bg-red-600 text-white p-2 sm:p-3 rounded-lg font-bold text-xs sm:text-sm shadow-md border border-red-600 flex items-center justify-center"
             >
               ⌫
             </button>
