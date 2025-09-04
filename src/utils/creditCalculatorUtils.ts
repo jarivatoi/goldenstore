@@ -963,7 +963,7 @@ export const processCalculatorInput = (
       newValue = percentResult.toString();
       newLastOperation = null; // Clear operation since calculation is complete
       newIsNewNumber = true;
-      newArticleCount = 2;
+      newArticleCount = 1; // Keep article count at 1 for percentage calculations
     } else {
       // Simple percentage calculation
       const percentResult = Math.round((currentNum / 100) * 100) / 100;
@@ -991,7 +991,7 @@ export const processCalculatorInput = (
           isComplete: true // Mark as complete since percentage calculation is finished
         }];
       }
-      newArticleCount = newCalculationSteps.length;
+      newArticleCount = 1; // Keep article count at 1 for percentage calculations
     }
   } else if (input === '√') {
     // Square root
@@ -999,7 +999,33 @@ export const processCalculatorInput = (
     if (currentNum < 0) {
       newValue = 'Error';
     } else {
-      newValue = Math.sqrt(currentNum).toString();
+      const sqrtResult = Math.sqrt(currentNum);
+      newValue = sqrtResult.toString();
+      
+      // Create or update calculation step for square root
+      if (newCalculationSteps.length === 0) {
+        // First operation - create initial step
+        newCalculationSteps = [{
+          expression: `√${currentNum}`,
+          result: sqrtResult,
+          timestamp: Date.now(),
+          stepNumber: 1,
+          operationType: 'number',
+          displayValue: `√${currentNum}=${sqrtResult}`,
+          isComplete: true
+        }];
+        newArticleCount = 1;
+      } else {
+        // Update last step to show square root operation
+        const lastStep = newCalculationSteps[newCalculationSteps.length - 1];
+        lastStep.expression = `√${currentNum}`;
+        lastStep.result = sqrtResult;
+        lastStep.displayValue = `√${currentNum}=${sqrtResult}`;
+        lastStep.isComplete = true;
+      }
+      
+      // Clear any pending operation since square root completes the current number
+      newLastOperation = null;
     }
     newIsNewNumber = true;
   } else if (input === 'LINK') {
