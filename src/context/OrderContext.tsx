@@ -159,9 +159,25 @@ export const OrderProvider: React.FC<{ children: React.ReactNode }> = ({ childre
                 createdAt: new Date(template.created_at)
               }));
               
-              console.log('🔍 RELOAD DEBUG - Raw Supabase templates data:', templatesData);
-              console.log('🔍 RELOAD DEBUG - Transformed templates:', transformedTemplates);
-              console.log('🔍 RELOAD DEBUG - Benson template after transform:', transformedTemplates.find(t => t.name === 'Benson'));
+              // Debug specific VAT Included values
+              const bensonRaw = templatesData?.find((t: any) => t.name === 'Benson');
+              const bensonTransformed = transformedTemplates.find(t => t.name === 'Benson');
+              
+              console.log('🔍 RELOAD DEBUG - Benson RAW from Supabase:', {
+                id: bensonRaw?.id,
+                name: bensonRaw?.name,
+                is_vat_included: bensonRaw?.is_vat_included,
+                is_vat_nil: bensonRaw?.is_vat_nil,
+                vat_percentage: bensonRaw?.vat_percentage
+              });
+              
+              console.log('🔍 RELOAD DEBUG - Benson TRANSFORMED:', {
+                id: bensonTransformed?.id,
+                name: bensonTransformed?.name,
+                isVatIncluded: bensonTransformed?.isVatIncluded,
+                isVatNil: bensonTransformed?.isVatNil,
+                vatPercentage: bensonTransformed?.vatPercentage
+              });
               
               // Load orders with items
               const { data: ordersData, error: ordersError } = await supabase
