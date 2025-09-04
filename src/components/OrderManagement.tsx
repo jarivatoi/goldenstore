@@ -57,6 +57,8 @@ const OrderManagement: React.FC = () => {
   const [editItemName, setEditItemName] = useState('');
   const [editItemPrice, setEditItemPrice] = useState('');
   const [editItemVatPercentage, setEditItemVatPercentage] = useState('15');
+  const [editItemVatIncluded, setEditItemVatIncluded] = useState(false);
+  const [editItemVatNil, setEditItemVatNil] = useState(false);
   const [showDeleteItemModal, setShowDeleteItemModal] = useState(false);
   const [itemToDelete, setItemToDelete] = useState<OrderItemTemplate | null>(null);
   
@@ -447,6 +449,8 @@ const OrderManagement: React.FC = () => {
                         setEditItemName(item.name);
                         setEditItemPrice(item.unitPrice.toString());
                         setEditItemVatPercentage(item.vatPercentage.toString());
+                        setEditItemVatIncluded(item.isVatIncluded || false);
+                        setEditItemVatNil(item.isVatNil || false);
                         setShowEditItem(true);
                       }}
                       onDelete={() => handleDeleteItem(item)}
@@ -535,6 +539,10 @@ const OrderManagement: React.FC = () => {
             setEditItemName('');
             setEditItemPrice('');
             setEditItemVatPercentage('15');
+            setEditItemVatIncluded(false);
+            setEditItemVatNil(false);
+            setEditItemVatIncluded(false);
+            setEditItemVatNil(false);
           }}
           onSave={handleEditItem}
           itemName={editItemName}
@@ -1764,6 +1772,10 @@ interface EditItemModalProps {
   setItemPrice: (price: string) => void;
   itemVatPercentage: string;
   setItemVatPercentage: (vat: string) => void;
+  itemVatIncluded: boolean;
+  setItemVatIncluded: (included: boolean) => void;
+  itemVatNil: boolean;
+  setItemVatNil: (nil: boolean) => void;
   isSubmitting: boolean;
 }
 
@@ -1778,6 +1790,10 @@ const EditItemModal: React.FC<EditItemModalProps> = ({
   setItemPrice,
   itemVatPercentage,
   setItemVatPercentage,
+   itemVatIncluded,
+   setItemVatIncluded,
+   itemVatNil,
+   setItemVatNil,
   isSubmitting
 }) => {
   const [isVatIncluded, setIsVatIncluded] = useState(item.isVatIncluded || false);
