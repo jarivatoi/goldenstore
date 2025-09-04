@@ -1261,9 +1261,9 @@ const CreditManagement: React.FC = () => {
         <ClientSearchModal
           calculatorValue={calculatorValue}
           onClose={handleResetCalculatorAndDescription}
+          onResetCalculator={handleResetCalculatorFromModal}
           onAddToClient={handleAddToClient}
           linkedClient={linkedClient}
-          onResetCalculator={handleResetCalculator}
         />
       )}
 
