@@ -168,6 +168,14 @@ const OrderManagement: React.FC = () => {
   // Handle edit item template
   const handleEditItem = async (item: OrderItemTemplate, newName: string, newPrice: number, isVatNil: boolean, isVatIncluded: boolean, newVatPercentage: number) => {
     try {
+      console.log('🔧 handleEditItem called with:', {
+        itemId: item.id,
+        newName,
+        newPrice,
+        isVatNil,
+        isVatIncluded,
+        newVatPercentage
+      });
       await updateItemTemplate(item.id, newName, newPrice, isVatNil, isVatIncluded, newVatPercentage);
       setEditingItem(null);
       setShowEditItem(false);
@@ -1765,7 +1773,7 @@ interface EditItemModalProps {
   category: OrderCategory;
   item: OrderItemTemplate;
   onClose: () => void;
-  onSave: (item: OrderItemTemplate, newName: string, newPrice: number, isVatNil: boolean, newVatPercentage: number) => Promise<void>;
+  onSave: (item: OrderItemTemplate, newName: string, newPrice: number, isVatNil: boolean, isVatIncluded: boolean, newVatPercentage: number) => Promise<void>;
   itemName: string;
   setItemName: (name: string) => void;
   itemPrice: string;
