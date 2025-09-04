@@ -282,6 +282,29 @@ const processSimpleCalculation = (
   } else if (input === '+' || input === '-') {
     // Handle + and - operators
     console.log('📊 Operator pressed - preserving articleCount:', newArticleCount);
+    
+    // Calculate intermediate result if we have calculation steps
+    if (newCalculationSteps.length > 0) {
+      // Mark all previous steps as complete for intermediate calculation
+      const stepsForCalculation = newCalculationSteps.map(step => ({ ...step, isComplete: true }));
+      
+      // Determine if it's compound or simple calculation
+      const isCompound = isCompoundCalculation(stepsForCalculation, newLastOperation);
+      
+      let intermediateResult: number;
+      if (isCompound) {
+        const expression = buildCompoundExpression(stepsForCalculation);
+        intermediateResult = evaluateExpression(expression);
+      } else {
+        const expression = buildSimpleExpression(stepsForCalculation);
+        intermediateResult = evaluateExpression(expression);
+      }
+      
+      // Update display to show intermediate result
+      newValue = intermediateResult.toString();
+      console.log('📊 Intermediate result calculated:', intermediateResult);
+    }
+    
     // Store the operator and ensure article count is preserved
     newLastOperation = input;
     newIsNewNumber = true;
@@ -470,7 +493,30 @@ const processCompoundCalculation = (
       }
     }
   } else if (input === '*' || input === '/' || input === '+' || input === '-') {
-    // Handle all operators
+    // Handle all operators with intermediate calculation
+    
+    // Calculate intermediate result if we have calculation steps
+    if (newCalculationSteps.length > 0) {
+      // Mark all previous steps as complete for intermediate calculation
+      const stepsForCalculation = newCalculationSteps.map(step => ({ ...step, isComplete: true }));
+      
+      // Determine if it's compound or simple calculation
+      const isCompound = isCompoundCalculation(stepsForCalculation, newLastOperation);
+      
+      let intermediateResult: number;
+      if (isCompound) {
+        const expression = buildCompoundExpression(stepsForCalculation);
+        intermediateResult = evaluateExpression(expression);
+      } else {
+        const expression = buildSimpleExpression(stepsForCalculation);
+        intermediateResult = evaluateExpression(expression);
+      }
+      
+      // Update display to show intermediate result
+      newValue = intermediateResult.toString();
+      console.log('📊 Intermediate result calculated:', intermediateResult);
+    }
+    
     newLastOperation = input;
     newIsNewNumber = true;
   } else if (input === '=' || input === 'ENTER') {
