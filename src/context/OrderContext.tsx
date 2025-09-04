@@ -249,8 +249,19 @@ export const OrderProvider: React.FC<{ children: React.ReactNode }> = ({ childre
             const storedTemplates = localStorage.getItem('orderItemTemplates');
             const transformedTemplates: OrderItemTemplate[] = storedTemplates ? JSON.parse(storedTemplates).map((template: any) => ({
               ...template,
+              isVatIncluded: template.isVatIncluded || false,
               createdAt: new Date(template.createdAt)
             })) : [];
+            
+            // Debug localStorage fallback data
+            const bensonFromStorage = transformedTemplates.find(t => t.name === 'Benson');
+            console.log('🔍 RELOAD DEBUG - Benson from localStorage (fallback):', {
+              id: bensonFromStorage?.id,
+              name: bensonFromStorage?.name,
+              isVatIncluded: bensonFromStorage?.isVatIncluded,
+              isVatNil: bensonFromStorage?.isVatNil,
+              vatPercentage: bensonFromStorage?.vatPercentage
+            });
             
             const storedOrders = localStorage.getItem('orders');
             const transformedOrders: Order[] = storedOrders ? JSON.parse(storedOrders).map((order: any) => ({
