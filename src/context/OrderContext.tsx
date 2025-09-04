@@ -159,26 +159,6 @@ export const OrderProvider: React.FC<{ children: React.ReactNode }> = ({ childre
                 createdAt: new Date(template.created_at)
               }));
               
-              // Debug specific VAT Included values
-              const bensonRaw = templatesData?.find((t: any) => t.name === 'Benson');
-              const bensonTransformed = transformedTemplates.find(t => t.name === 'Benson');
-              
-              console.log('🔍 RELOAD DEBUG - Benson RAW from Supabase:', {
-                id: bensonRaw?.id,
-                name: bensonRaw?.name,
-                is_vat_included: bensonRaw?.is_vat_included,
-                is_vat_nil: bensonRaw?.is_vat_nil,
-                vat_percentage: bensonRaw?.vat_percentage
-              });
-              
-              console.log('🔍 RELOAD DEBUG - Benson TRANSFORMED:', {
-                id: bensonTransformed?.id,
-                name: bensonTransformed?.name,
-                isVatIncluded: bensonTransformed?.isVatIncluded,
-                isVatNil: bensonTransformed?.isVatNil,
-                vatPercentage: bensonTransformed?.vatPercentage
-              });
-              
               // Load orders with items
               const { data: ordersData, error: ordersError } = await supabase
                 .from('orders')
@@ -252,16 +232,6 @@ export const OrderProvider: React.FC<{ children: React.ReactNode }> = ({ childre
               isVatIncluded: template.isVatIncluded || false,
               createdAt: new Date(template.createdAt)
             })) : [];
-            
-            // Debug localStorage fallback data
-            const bensonFromStorage = transformedTemplates.find(t => t.name === 'Benson');
-            console.log('🔍 RELOAD DEBUG - Benson from localStorage (fallback):', {
-              id: bensonFromStorage?.id,
-              name: bensonFromStorage?.name,
-              isVatIncluded: bensonFromStorage?.isVatIncluded,
-              isVatNil: bensonFromStorage?.isVatNil,
-              vatPercentage: bensonFromStorage?.vatPercentage
-            });
             
             const storedOrders = localStorage.getItem('orders');
             const transformedOrders: Order[] = storedOrders ? JSON.parse(storedOrders).map((order: any) => ({
@@ -526,28 +496,9 @@ export const OrderProvider: React.FC<{ children: React.ReactNode }> = ({ childre
 
   const updateItemTemplate = async (id: string, name: string, unitPrice: number, isVatNil: boolean, isVatIncluded: boolean, vatPercentage?: number): Promise<void> => {
     try {
-      console.log('🔍 updateItemTemplate called with:', {
-        id,
-        name,
-        unitPrice,
-        isVatNil,
-        isVatIncluded,
-        vatPercentage
-      });
-      
       const formattedName = formatName(name);
       
-      console.log('🔍 After formatting name:', formattedName);
-      
       if (supabase) {
-        console.log('🔍 Updating in Supabase with values:', {
-          name: formattedName,
-          unit_price: unitPrice,
-          is_vat_nil: isVatNil === true,
-          is_vat_included: isVatIncluded === true,
-          vat_percentage: vatPercentage ?? 15
-        });
-        
         // Update in Supabase
         const { error } = await supabase
           .from('order_item_templates')
@@ -562,11 +513,7 @@ export const OrderProvider: React.FC<{ children: React.ReactNode }> = ({ childre
         
         if (error) throw error;
         
-        console.log('🔍 Supabase update successful');
-        
         // Update local state
-        console.log('🔍 Before local state update, current itemTemplates:', itemTemplates.find(t => t.id === id));
-        
         setItemTemplates(prev => prev.map(temp => 
           temp.id === id ? { 
             ...temp, 
@@ -577,17 +524,7 @@ export const OrderProvider: React.FC<{ children: React.ReactNode }> = ({ childre
             vatPercentage: vatPercentage ?? 15 
           } : temp
         ));
-        
-        console.log('🔍 Local state update completed');
       } else {
-        console.log('🔍 Updating in localStorage with values:', {
-          name: formattedName,
-          unitPrice,
-          isVatNil: isVatNil === true,
-          isVatIncluded: isVatIncluded === true,
-          vatPercentage: vatPercentage ?? 15
-        });
-        
         // Fallback to localStorage
         const updatedTemplates = itemTemplates.map(temp => 
           temp.id === id ? { 
@@ -605,19 +542,8 @@ export const OrderProvider: React.FC<{ children: React.ReactNode }> = ({ childre
           isVatIncluded: template.isVatIncluded,
           createdAt: template.createdAt.toISOString()
         }))));
-        
-        console.log('🔍 UPDATE DEBUG - Saving updated templates to localStorage:', updatedTemplates.map(template => ({
-          ...template,
-          isVatIncluded: template.isVatIncluded,
-          createdAt: template.createdAt.toISOString()
-        })));
-        
-        console.log('🔍 localStorage update completed');
       }
-      
-      console.log('🔍 updateItemTemplate completed successfully');
     } catch (err) {
-      console.error('🔍 updateItemTemplate failed:', err);
       setError('Failed to update item template');
       throw err;
     }
