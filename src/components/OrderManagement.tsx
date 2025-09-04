@@ -168,6 +168,15 @@ const OrderManagement: React.FC = () => {
   // Handle edit item template
   const handleEditItem = async (item: OrderItemTemplate, newName: string, newPrice: number, isVatNil: boolean, isVatIncluded: boolean, newVatPercentage: number) => {
     try {
+      console.log('🔍 handleEditItem called with:', {
+        itemId: item.id,
+        newName,
+        newPrice,
+        isVatNil,
+        isVatIncluded,
+        newVatPercentage
+      });
+      
       console.log('🔧 handleEditItem called with:', {
         itemId: item.id,
         newName,
@@ -177,12 +186,18 @@ const OrderManagement: React.FC = () => {
         newVatPercentage
       });
       await updateItemTemplate(item.id, newName, newPrice, isVatNil, isVatIncluded, newVatPercentage);
+      
+      console.log('🔍 updateItemTemplate call completed');
+      
       setEditingItem(null);
       setShowEditItem(false);
       setEditItemName('');
       setEditItemPrice('');
       setEditItemVatPercentage('15');
+      
+      console.log('🔍 handleEditItem completed successfully');
     } catch (err) {
+      console.error('🔍 handleEditItem failed:', err);
       alert('Failed to update item');
     }
   };
@@ -1842,6 +1857,14 @@ const EditItemModal: React.FC<EditItemModalProps> = ({
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     
+    console.log('🔍 EditItemModal handleSubmit called with local state:', {
+      itemName,
+      itemPrice,
+      isVatNil,
+      isVatIncluded,
+      itemVatPercentage
+    });
+    
     if (!itemName.trim()) {
       alert('Please enter an item name');
       return;
@@ -1858,8 +1881,20 @@ const EditItemModal: React.FC<EditItemModalProps> = ({
     }
 
     try {
+      console.log('🔍 About to call onSave with:', {
+        item,
+        itemName: itemName.trim(),
+        price,
+        isVatNil,
+        isVatIncluded,
+        vatPercent
+      });
+      
       await onSave(item, itemName.trim(), price, vatNil, vatPercent);
+      
+      console.log('🔍 onSave completed successfully');
     } catch (err) {
+      console.error('🔍 onSave failed:', err);
       alert(err instanceof Error ? err.message : 'Failed to update item');
     }
   };
