@@ -465,17 +465,6 @@ const processCompoundCalculation = (
     }
   } else if (input === '*' || input === '/' || input === '+' || input === '-') {
     // Handle all operators
-    const currentNum = parseFloat(currentValue);
-    
-    if (!isNaN(currentNum) && currentNum > 0 && (input === '*' || input === '/')) {
-      if (input === '*') {
-        newArticleCount = Math.floor(currentNum);
-      } else if (input === '/') {
-        // Division: quantity ÷ price per unit
-        newArticleCount = Math.floor(currentNum);
-      }
-    }
-    
     newLastOperation = input;
     newIsNewNumber = true;
   } else if (input === '=' || input === 'ENTER') {

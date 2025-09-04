@@ -166,7 +166,7 @@ Calculation Steps: [
 ```
 Input: "×" (or "*")
 Display: "5"
-Article Count: 5 (set to quantity value)
+Article Count: 1 (unchanged - operators don't change count)
 Last Operation: "*"
 Is New Number: true
 ```
@@ -175,7 +175,7 @@ Is New Number: true
 ```
 Input: "3"
 Display: "3"
-Article Count: 5 (unchanged - represents quantity)
+Article Count: 2 (incremented for new number)
 Calculation Steps: [
   {
     expression: "5",
@@ -199,7 +199,7 @@ Calculation Steps: [
 ```
 Input: "="
 Display: "15"
-Article Count: 5 (unchanged - still represents quantity)
+Article Count: 2 (unchanged - represents total items in calculation)
 Expression Built: "5*3"
 Final Result: 15
 All Steps Marked: isComplete = true
@@ -272,9 +272,9 @@ Input Sequence: 10 + 20 + 30 =
 Input Sequence: 5 × 3 =
 
 5      → Article Count: 1  (Initial quantity input)
-×      → Article Count: 5  (Set to quantity value)
-3      → Article Count: 5  (Unchanged - represents unit price)
-=      → Article Count: 5  (Final count: 5 articles)
+×      → Article Count: 1  (Operators don't change count)
+3      → Article Count: 2  (New number increments count)
+=      → Article Count: 2  (Final count: 2 items in calculation)
 ```
 
 ### Building Numbers (Multi-digit)
@@ -527,11 +527,9 @@ else if (lastOperation && isNewNumber && !isCompound) {
 }
 
 // Rule 3: Multiplication sets count to quantity (Compound Flow)
-else if (input === '*' || input === '×') {
-  articleCount = parseFloat(currentValue);
-}
+// REMOVED: Operators no longer change article count
 
-// Rule 4: Building existing number doesn't change count
+// Rule 3: Building existing number doesn't change count
 else if (!isNewNumber) {
   // articleCount unchanged
 }
@@ -549,10 +547,10 @@ else if (!isNewNumber) {
 - Running totals: "Previous balance + New charges - Payments"
 
 **Compound Flow Use Cases:**
-- Quantity pricing: "8 cigarette packs × Rs 12 each"
-- Bulk calculations: "50 bottles × Rs 15 each"
+- Quantity pricing: "8 cigarette packs × Rs 12 each" (2 items: quantity and price)
+- Bulk calculations: "50 bottles × Rs 15 each" (2 items: quantity and price)
 - Percentage calculations: "Rs 1000 × 15% VAT"
-- Division scenarios: "Rs 100 bill ÷ 4 people"
+- Division scenarios: "Rs 100 bill ÷ 4 people" (2 items: total and divisor)
 
 ### Article Count Business Meaning
 
@@ -561,8 +559,8 @@ else if (!isNewNumber) {
 - Useful for inventory counting
 
 **Compound Flow**: Article count = **quantity of same item**
-- 8 identical products → Article count: 8  
-- Useful for bulk pricing
+- Quantity × Price → Article count: 2 (quantity and price are 2 separate items)
+- Useful for understanding calculation complexity
 
 ---
 
