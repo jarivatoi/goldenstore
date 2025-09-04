@@ -164,9 +164,9 @@ const OrderManagement: React.FC = () => {
   };
 
   // Handle edit item template
-  const handleEditItem = async (item: OrderItemTemplate, newName: string, newPrice: number, isVatNil: boolean, newVatPercentage: number) => {
+  const handleEditItem = async (item: OrderItemTemplate, newName: string, newPrice: number, isVatNil: boolean, isVatIncluded: boolean, newVatPercentage: number) => {
     try {
-      await updateItemTemplate(item.id, newName, newPrice, isVatNil, newVatPercentage);
+      await updateItemTemplate(item.id, newName, newPrice, isVatNil, isVatIncluded, newVatPercentage);
       setEditingItem(null);
       setShowEditItem(false);
       setEditItemName('');
@@ -798,9 +798,11 @@ const ItemTemplateCard: React.FC<ItemTemplateCardProps> = ({
           <h5 className="font-medium text-gray-800 select-none">{item.name}</h5>
           <div className="text-sm text-gray-600 select-none">
             {item.isVatNil ? (
-              <p className="select-none">Rs {item.unitPrice.toLocaleString('en-IN', { minimumFractionDigits: 2, maximumFractionDigits: 2 })} VAT Nil → Rs {item.unitPrice.toLocaleString('en-IN', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</p>
+              <p className="text-red-600 select-none">Rs {item.unitPrice.toLocaleString('en-IN', { minimumFractionDigits: 2, maximumFractionDigits: 2 })} (VAT Exempt)</p>
+            ) : item.isVatIncluded ? (
+              <p className="text-green-600 select-none">Rs {item.unitPrice.toLocaleString('en-IN', { minimumFractionDigits: 2, maximumFractionDigits: 2 })} (VAT Included)</p>
             ) : (
-              <p className="select-none">Rs {item.unitPrice.toLocaleString('en-IN', { minimumFractionDigits: 2, maximumFractionDigits: 2 })} VAT({item.vatPercentage}%)(Rs {vatAmount.toLocaleString('en-IN', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}) → Rs {totalPrice.toLocaleString('en-IN', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</p>
+              <p className="select-none">Rs {item.unitPrice.toLocaleString('en-IN', { minimumFractionDigits: 2, maximumFractionDigits: 2 })} ({item.vatPercentage}% VAT)</p>
             )}
           </div>
         </div>
@@ -1780,19 +1782,41 @@ const EditItemModal: React.FC<EditItemModalProps> = ({
   setItemVatPercentage,
   isSubmitting
 }) => {
+  const [isVatIncluded, setIsVatIncluded] = useState(item.isVatIncluded || false);
+  const [isVatNil, setIsVatNil] = useState(item.isVatNil || false);
+
   // Calculate VAT and total in real-time
   const calculateVatAndTotal = () => {
     const price = parseFloat(itemPrice) || 0;
     const vatPercent = parseFloat(itemVatPercentage) || 0;
-    const isVatNil = vatPercent === 0;
+    const vatNil = isVatNil || vatPercent === 0;
     
-    const vatAmount = isVatNil ? 0 : (price * vatPercent) / 100;
+    const vatAmount = vatNil ? 0 : (price * vatPercent) / 100;
     const totalPrice = price + vatAmount;
     
-    return { price, vatPercent, isVatNil, vatAmount, totalPrice };
+    return { price, vatPercent, isVatNil: vatNil, vatAmount, totalPrice };
   };
   
   const { price, vatPercent, isVatNil, vatAmount, totalPrice } = calculateVatAndTotal();
+
+  // Handle VAT toggle changes
+  const handleVatIncludedChange = (checked: boolean) => {
+    setIsVatIncluded(checked);
+    if (checked) {
+      setIsVatNil(false); // Disable VAT Nil when VAT Included is enabled
+    }
+  };
+
+  const handleVatNilChange = (checked: boolean) => {
+    setIsVatNil(checked);
+    if (checked) {
+      setIsVatIncluded(false); // Disable VAT Included when VAT Nil is enabled
+      setItemVatPercentage('0');
+    } else {
+      setItemVatPercentage('15'); // Reset to default when VAT Nil is disabled
+    }
+  };
+
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     
@@ -1812,7 +1836,7 @@ const EditItemModal: React.FC<EditItemModalProps> = ({
     }
 
     try {
-      await onSave(item, itemName.trim(), price, isVatNil, vatPercent);
+      await onSave(item, itemName.trim(), price, isVatNil, isVatIncluded, vatPercent);
     } catch (err) {
       alert(err instanceof Error ? err.message : 'Failed to update item');
     }
@@ -1870,6 +1894,45 @@ const EditItemModal: React.FC<EditItemModalProps> = ({
               />
             </div>
             
+            {/* VAT Toggles */}
+            <div className="mb-4 space-y-3 select-none">
+              {/* VAT Exempt Toggle */}
+              <div className="flex items-center justify-between select-none">
+                <label className="text-sm font-medium text-gray-700 select-none">
+                  VAT Exempt
+                </label>
+                <label className="relative inline-flex items-center cursor-pointer select-none">
+                  <input
+                    type="checkbox"
+                    checked={isVatNil}
+                    onChange={(e) => handleVatNilChange(e.target.checked)}
+                    className="sr-only"
+                  />
+                  <div className={`w-11 h-6 rounded-full transition-colors ${isVatNil ? 'bg-red-500' : 'bg-gray-300'}`}>
+                    <div className={`w-5 h-5 bg-white rounded-full shadow transform transition-transform ${isVatNil ? 'translate-x-5' : 'translate-x-0'} mt-0.5 ml-0.5`} />
+                  </div>
+                </label>
+              </div>
+
+              {/* VAT Included Toggle */}
+              <div className="flex items-center justify-between select-none">
+                <label className="text-sm font-medium text-gray-700 select-none">
+                  VAT Included
+                </label>
+                <label className="relative inline-flex items-center cursor-pointer select-none">
+                  <input
+                    type="checkbox"
+                    checked={isVatIncluded}
+                    onChange={(e) => handleVatIncludedChange(e.target.checked)}
+                    className="sr-only"
+                  />
+                  <div className={`w-11 h-6 rounded-full transition-colors ${isVatIncluded ? 'bg-green-500' : 'bg-gray-300'}`}>
+                    <div className={`w-5 h-5 bg-white rounded-full shadow transform transition-transform ${isVatIncluded ? 'translate-x-5' : 'translate-x-0'} mt-0.5 ml-0.5`} />
+                  </div>
+                </label>
+              </div>
+            </div>
+
             <div className="mb-4 select-none">
               <label className="block text-sm font-medium text-gray-700 mb-2 select-none">
                 VAT (%)
@@ -1881,10 +1944,15 @@ const EditItemModal: React.FC<EditItemModalProps> = ({
                 min="0"
                 max="100"
                 step="0.0001"
-                className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 bg-white select-text"
+                disabled={isVatIncluded || isVatNil}
+                className={`w-full px-4 py-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 select-text ${
+                  isVatIncluded || isVatNil ? 'bg-gray-100 text-gray-500 cursor-not-allowed' : 'bg-white'
+                }`}
               />
               <p className="text-xs text-gray-500 mt-1 select-none">
-                Enter 0 for VAT Nil items
+                {isVatIncluded ? 'VAT percentage is disabled when VAT is included' : 
+                 isVatNil ? 'VAT percentage is disabled for VAT exempt items' : 
+                 'Enter 0 for VAT Nil items'}
               </p>
             </div>
             
@@ -1900,6 +1968,8 @@ const EditItemModal: React.FC<EditItemModalProps> = ({
                   <div className="flex justify-between select-none">
                     <span className="select-none">VAT ({vatPercent}%):</span>
                     <span className="select-none">
+                       {isVatNil ? 'VAT Nil' : 
+                        isVatIncluded ? 'VAT Included' : 
                        {isVatNil ? 'VAT Nil' : `Rs ${vatAmount.toLocaleString('en-IN', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`}
                     </span>
                   </div>
