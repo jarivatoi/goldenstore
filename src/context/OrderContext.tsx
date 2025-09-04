@@ -205,15 +205,8 @@ export const OrderProvider: React.FC<{ children: React.ReactNode }> = ({ childre
               
               localStorage.setItem('orderItemTemplates', JSON.stringify(transformedTemplates.map(template => ({
                 ...template,
-                isVatIncluded: template.isVatIncluded,
                 createdAt: template.createdAt.toISOString()
               }))));
-              
-              console.log('🔍 RELOAD DEBUG - Saving to localStorage:', transformedTemplates.map(template => ({
-                ...template,
-                isVatIncluded: template.isVatIncluded,
-                createdAt: template.createdAt.toISOString()
-              })));
               
               localStorage.setItem('orders', JSON.stringify(transformedOrders.map(order => ({
                 ...order,
@@ -582,8 +575,15 @@ export const OrderProvider: React.FC<{ children: React.ReactNode }> = ({ childre
         setItemTemplates(updatedTemplates);
         localStorage.setItem('orderItemTemplates', JSON.stringify(updatedTemplates.map(template => ({
           ...template,
+          isVatIncluded: template.isVatIncluded,
           createdAt: template.createdAt.toISOString()
         }))));
+        
+        console.log('🔍 UPDATE DEBUG - Saving updated templates to localStorage:', updatedTemplates.map(template => ({
+          ...template,
+          isVatIncluded: template.isVatIncluded,
+          createdAt: template.createdAt.toISOString()
+        })));
         
         console.log('🔍 localStorage update completed');
       }
