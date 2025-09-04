@@ -166,7 +166,7 @@ Calculation Steps: [
 ```
 Input: "×" (or "*")
 Display: "5"
-Article Count: 1 (unchanged - operators don't change count)
+Article Count: 1  (Unchanged - operators don't change count)
 Last Operation: "*"
 Is New Number: true
 ```
@@ -175,7 +175,7 @@ Is New Number: true
 ```
 Input: "3"
 Display: "3"
-Article Count: 1 (unchanged - numbers after × or ÷ don't increment count)
+Article Count: 1  (Unchanged - numbers after × or ÷ don't increment)
 Calculation Steps: [
   {
     expression: "5",

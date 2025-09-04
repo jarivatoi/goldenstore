@@ -158,7 +158,10 @@ const processSimpleCalculation = (
         });
       } else if (newLastOperation && newIsNewNumber) {
         // After operator, create new step: +20, +30, -10, etc.
-        newArticleCount = newCalculationSteps.length + 1;
+        // Only increment counter for + and - operators (not × or ÷)
+        if (newLastOperation === '+' || newLastOperation === '-') {
+          newArticleCount = newCalculationSteps.length + 1;
+        }
         console.log('📊 After operator - setting articleCount to:', newArticleCount);
         
         // Handle the case where input might be a decimal like "0.4"
@@ -403,6 +406,10 @@ const processCompoundCalculation = (
         newArticleCount = 1;
       } else if (newLastOperation && newIsNewNumber) {
         // After any operator, create new step
+        // Only increment counter for + and - operators (not × or ÷)
+        if (newLastOperation === '+' || newLastOperation === '-') {
+          newArticleCount = newCalculationSteps.length + 1;
+        }
         const numericValue = parseFloat(input) || 0;
         console.log('📊 After operator in compound:', { input, numericValue, lastOperation: newLastOperation });
         
@@ -419,8 +426,6 @@ const processCompoundCalculation = (
           isComplete: false,
           operator: newLastOperation
         });
-        // Don't increment article count for numbers after × or ÷ in compound calculations
-        // Keep the existing article count
       }
       newValue = input;
       newIsNewNumber = false;
