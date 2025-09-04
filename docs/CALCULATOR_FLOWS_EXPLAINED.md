@@ -272,8 +272,8 @@ Input Sequence: 5 × 3 =
 
 5      → Article Count: 1  (Initial quantity input)
 ×      → Article Count: 1  (Operators don't change count)
-3      → Article Count: 2  (New number increments count)
-=      → Article Count: 2  (Final count: 2 items in calculation)
+3      → Article Count: 1  (Numbers after × or ÷ don't increment count)
+=      → Article Count: 1  (Final count: 1 calculation result)
 ```
 
 ### Building Numbers (Multi-digit)
