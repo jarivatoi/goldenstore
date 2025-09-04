@@ -437,13 +437,22 @@ Article Count: 1 → 1 → 1 → 1 → 1 → 1
 Meaning: Still building the same number (1 item)
 ```
 
-### Scenario 4: Percentage Calculation
+### Scenario 4: Mixed Calculation
+**User Action**: 1 item + (2 items × Rs 3 each) + 5 more items
+```
+User Input: 1 + 2 × 3 + 5 =
+Display Shows: "1" → "+2" → "×3" → "+5" → "=12"
+Article Count: 1 → 2 → 2 → 3 → 3
+Meaning: 3 separate values combined (1 + 6 + 5 = 12)
+```
+
+### Scenario 5: Percentage Calculation
 **User Action**: 10% of Rs 200
 ```
 User Input: 200 × 10 % =
 Display Shows: "200" → "×10" → "20" → "20"
-Article Count: 1 → 200 → 200 → 200
-Meaning: 200 articles, 10% calculation = Rs 20
+Article Count: 1 → 1 → 1 → 1
+Meaning: 1 calculation result (10% of Rs 200 = Rs 20)
 ```
 
 ---
