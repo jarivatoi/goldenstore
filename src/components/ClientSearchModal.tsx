@@ -63,10 +63,8 @@ const ClientSearchModal: React.FC<ClientSearchModalProps> = ({
 
   // Handle close with reset
   const handleClose = () => {
-    // Unlink client when modal closes
-    if (onResetCalculator) {
-      onResetCalculator();
-    }
+    // Don't reset calculator or unlink client - just close modal
+    // This preserves the calculator value and client link
     onClose();
   };
 
