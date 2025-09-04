@@ -1680,6 +1680,11 @@ const EditOrderModal: React.FC<EditOrderModalProps> = ({ order, itemTemplates, o
                           onChange={(e) => updateOrderItem(item.id, 'quantity', parseInt(e.target.value) || 0)}
                           onFocus={(e) => e.target.select()}
                           className="w-16 px-2 py-1 border border-gray-300 rounded focus:outline-none focus:ring-2 focus:ring-blue-500 placeholder-gray-400 select-text"
+                              // When VAT is exempt, automatically set VAT included to false
+                              if (e.target.checked) {
+                                setEditIsVatIncluded(false);
+                                console.log('🔍 Auto-set VAT included to false when VAT exempt is true');
+                              }
                           placeholder="0"
                           style={{ textAlign: 'center' }}
                         />
@@ -1705,12 +1710,48 @@ const EditOrderModal: React.FC<EditOrderModalProps> = ({ order, itemTemplates, o
                       <span className={`font-medium select-none ${!item.isAvailable ? 'line-through text-gray-400' : ''}`}>
                         Rs {item.totalPrice.toLocaleString('en-IN', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
                       </span>
-                      <input
-                        type="checkbox"
-                        checked={item.isAvailable}
+                        disabled={editIsVatNil || editIsVatIncluded}
+                        className={`w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 ${
+                          (editIsVatNil || editIsVatIncluded) ? 'bg-gray-100 text-gray-500 cursor-not-allowed' : ''
                         onChange={(e) => updateOrderItem(item.id, 'isAvailable', e.target.checked)}
                         className="w-4 h-4"
                       />
+                      <p className="text-xs text-gray-500 mt-1">
+                        {editIsVatNil ? 'Disabled - Item is VAT exempt' : 
+                         editIsVatIncluded ? 'Disabled - VAT is included in price' : 
+                         'Enter VAT percentage for this item'}
+                      </p>
+                    </div>
+                    
+                    {/* VAT Included Toggle */}
+                    <div className="mb-4">
+                      <div className="flex items-center justify-between">
+                        <label className="text-sm font-medium text-gray-700">
+                          VAT Included
+                        </label>
+                        <label className="relative inline-flex items-center cursor-pointer">
+                          <input
+                            type="checkbox"
+                            checked={editIsVatIncluded}
+                            onChange={(e) => {
+                              console.log('🔍 VAT included toggle changed to:', e.target.checked);
+                              setEditIsVatIncluded(e.target.checked);
+                              // When VAT is included, automatically set VAT nil to false
+                              if (e.target.checked) {
+                                setEditIsVatNil(false);
+                                console.log('🔍 Auto-set VAT nil to false when VAT included is true');
+                              }
+                            }}
+                            className="sr-only"
+                          />
+                          <div className={`w-11 h-6 rounded-full transition-colors ${editIsVatIncluded ? 'bg-blue-500' : 'bg-gray-300'}`}>
+                            <div className={`w-5 h-5 bg-white rounded-full shadow transform transition-transform ${editIsVatIncluded ? 'translate-x-5' : 'translate-x-0'} mt-0.5 ml-0.5`} />
+                          </div>
+                        </label>
+                      </div>
+                      <p className="text-xs text-gray-500 mt-1">
+                        {editIsVatIncluded ? 'VAT is included in the unit price' : 'VAT will be calculated separately'}
+                      </p>
                     </div>
                   </div>
                 ))}
