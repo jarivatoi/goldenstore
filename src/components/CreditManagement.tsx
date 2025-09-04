@@ -11,6 +11,7 @@ import CreditHeader from './credit/CreditHeader';
 import ClientGrid from './credit/ClientGrid';
 import CreditModals from './credit/CreditModals';
 import MiniCalculator from './credit/MiniCalculator';
+import Carousel3D from './credit/Carousel3D';
 import { Client } from '../types';
 import { processCalculatorInput, evaluateExpression } from '../utils/creditCalculatorUtils';
 import { exportCompleteDatabase, importCompleteDatabase } from '../utils/creditDataUtils';
@@ -931,7 +932,7 @@ const CreditManagement: React.FC = () => {
           />
 
           {/* Auto-scrolling Client Tabs */}
-          <ScrollingTabs
+          <Carousel3D
             clients={tabClients}
             linkedClient={linkedClient}
             onQuickAdd={handleQuickAdd}
@@ -940,6 +941,8 @@ const CreditManagement: React.FC = () => {
             getClientTotalDebt={getClientTotalDebt}
             onResetCalculator={handleResetCalculator}
             sortOption={sortOption}
+            recentTransactionClient={recentTransactionClient}
+            onCloseWobble={onCloseWobble}
           />
           
           {/* Client Grid */}
