@@ -205,8 +205,15 @@ export const OrderProvider: React.FC<{ children: React.ReactNode }> = ({ childre
               
               localStorage.setItem('orderItemTemplates', JSON.stringify(transformedTemplates.map(template => ({
                 ...template,
+                isVatIncluded: template.isVatIncluded,
                 createdAt: template.createdAt.toISOString()
               }))));
+              
+              console.log('🔍 RELOAD DEBUG - Saving to localStorage:', transformedTemplates.map(template => ({
+                ...template,
+                isVatIncluded: template.isVatIncluded,
+                createdAt: template.createdAt.toISOString()
+              })));
               
               localStorage.setItem('orders', JSON.stringify(transformedOrders.map(order => ({
                 ...order,
@@ -233,14 +240,8 @@ export const OrderProvider: React.FC<{ children: React.ReactNode }> = ({ childre
             const storedTemplates = localStorage.getItem('orderItemTemplates');
             const transformedTemplates: OrderItemTemplate[] = storedTemplates ? JSON.parse(storedTemplates).map((template: any) => ({
               ...template,
-              isVatIncluded: template.isVatIncluded || false,
               createdAt: new Date(template.createdAt)
             })) : [];
-            
-            console.log('🔍 RELOAD DEBUG - Raw localStorage templates data:', storedTemplates);
-            console.log('🔍 RELOAD DEBUG - Parsed localStorage templates:', JSON.parse(storedTemplates || '[]'));
-            console.log('🔍 RELOAD DEBUG - Transformed localStorage templates:', transformedTemplates);
-            console.log('🔍 RELOAD DEBUG - Benson template from localStorage:', transformedTemplates.find(t => t.name === 'Benson'));
             
             const storedOrders = localStorage.getItem('orders');
             const transformedOrders: Order[] = storedOrders ? JSON.parse(storedOrders).map((order: any) => ({
