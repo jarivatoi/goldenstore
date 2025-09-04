@@ -728,6 +728,10 @@ const CreditManagement: React.FC = () => {
     setShowClientSearch(false);
   };
 
+  const handleResetCalculatorFromModal = () => {
+    handleResetCalculator();
+  };
+
   const handleResetCalculatorAndDescription = () => {
     setCalculatorValue('0');
     setCalculatorMemory(0);
