@@ -493,28 +493,62 @@ const processCompoundCalculation = (
       }
     }
   } else if (input === '*' || input === '/' || input === '+' || input === '-') {
-    // Handle all operators with intermediate calculation
+    // Handle operators - only calculate intermediate result for + and - in compound calculations
     
-    // Only calculate intermediate result for + and - operators, not for * and /
+    // For compound calculations with mixed operators (e.g., 25+5×3+10)
     if (newCalculationSteps.length > 0 && (input === '+' || input === '-')) {
-      // Mark all previous steps as complete for intermediate calculation
-      const stepsForCalculation = newCalculationSteps.map(step => ({ ...step, isComplete: true }));
+      // Check if we have a multiplication/division sub-expression to evaluate
+      const hasMultiplyDivide = newCalculationSteps.some(step => 
+        step.operator === '*' || step.operator === '/'
+      );
       
-      // Determine if it's compound or simple calculation
-      const isCompound = isCompoundCalculation(stepsForCalculation, newLastOperation);
-      
-      let intermediateResult: number;
-      if (isCompound) {
-        const expression = buildCompoundExpression(stepsForCalculation);
-        intermediateResult = evaluateExpression(expression);
-      } else {
-        const expression = buildSimpleExpression(stepsForCalculation);
-        intermediateResult = evaluateExpression(expression);
+      if (hasMultiplyDivide) {
+        // Find the last multiplication/division operation and evaluate it
+        let lastMultDivIndex = -1;
+        for (let i = newCalculationSteps.length - 1; i >= 0; i--) {
+          if (newCalculationSteps[i].operator === '*' || newCalculationSteps[i].operator === '/') {
+            lastMultDivIndex = i;
+            break;
+          }
+        }
+        
+        if (lastMultDivIndex > 0) {
+          // Get the operands for the multiplication/division
+          const leftOperand = newCalculationSteps[lastMultDivIndex - 1].result;
+          const rightOperand = newCalculationSteps[lastMultDivIndex].result;
+          const operator = newCalculationSteps[lastMultDivIndex].operator;
+          
+          // Calculate the sub-expression result
+          let subResult: number;
+          if (operator === '*') {
+            subResult = leftOperand * rightOperand;
+          } else if (operator === '/') {
+            subResult = rightOperand !== 0 ? leftOperand / rightOperand : 0;
+          } else {
+            subResult = rightOperand;
+          }
+          
+          // Replace the multiplication/division steps with a single evaluated step
+          const beforeSteps = newCalculationSteps.slice(0, lastMultDivIndex - 1);
+          const afterSteps = newCalculationSteps.slice(lastMultDivIndex + 1);
+          
+          const evaluatedStep: CalculationStep = {
+            expression: `(${leftOperand}${operator === '*' ? '×' : '÷'}${rightOperand})`,
+            result: subResult,
+            timestamp: Date.now(),
+            stepNumber: lastMultDivIndex,
+            operationType: 'operation',
+            displayValue: `+(${leftOperand}${operator === '*' ? '×' : '÷'}${rightOperand})=${subResult}`,
+            isComplete: false,
+            operator: '+'
+          };
+          
+          newCalculationSteps = [...beforeSteps, evaluatedStep, ...afterSteps];
+          
+          // Update display to show the sub-result
+          newValue = subResult.toString();
+        }
       }
-      
-      // Update display to show intermediate result
-      newValue = intermediateResult.toString();
-      console.log('📊 Intermediate result calculated:', intermediateResult);
     }
     
     newLastOperation = input;
