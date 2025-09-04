@@ -545,8 +545,10 @@ const processCompoundCalculation = (
           
           newCalculationSteps = [...beforeSteps, evaluatedStep, ...afterSteps];
           
-          // Update display to show the sub-result
-          newValue = subResult.toString();
+          // Calculate and display the cumulative result up to this point
+          const cumulativeExpression = buildSimpleExpression([...beforeSteps, evaluatedStep]);
+          const cumulativeResult = evaluateExpression(cumulativeExpression);
+          newValue = cumulativeResult.toString();
         }
       }
     }
