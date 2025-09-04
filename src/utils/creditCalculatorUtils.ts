@@ -961,9 +961,21 @@ export const processCalculatorInput = (
       
       // Show the percentage result (10) in display
       newValue = percentResult.toString();
-      newLastOperation = null; // Clear operation since calculation is complete
+      newLastOperation = null; // Keep operation cleared
       newIsNewNumber = true;
       newArticleCount = 1; // Keep article count at 1 for percentage calculations
+      
+      // Store the percentage result as the current base value for next operations
+      // Replace the calculation steps with a single step containing the percentage result
+      newCalculationSteps = [{
+        expression: percentResult.toString(),
+        result: percentResult,
+        timestamp: Date.now(),
+        stepNumber: 1,
+        operationType: 'number',
+        displayValue: percentResult.toString(),
+        isComplete: false // Mark as incomplete so it can be used in further calculations
+      }];
     } else {
       // Simple percentage calculation
       const percentResult = Math.round((currentNum / 100) * 100) / 100;
@@ -971,24 +983,25 @@ export const processCalculatorInput = (
       newIsNewNumber = true;
       
       if (newCalculationSteps.length > 0) {
-        newCalculationSteps[newCalculationSteps.length - 1] = {
-          expression: `${percentResult}%`,
-          result: percentResult,
-          timestamp: Date.now(),
-          stepNumber: newCalculationSteps.length,
-          operationType: 'operation',
-          displayValue: `${percentResult}%`,
-          isComplete: true // Mark as complete since percentage calculation is finished
-        };
-      } else {
+        // Replace all steps with the percentage result as a new base value
         newCalculationSteps = [{
-          expression: `${percentResult}%`,
+          expression: percentResult.toString(),
           result: percentResult,
           timestamp: Date.now(),
           stepNumber: 1,
           operationType: 'number',
-          displayValue: `${percentResult}%`,
-          isComplete: true // Mark as complete since percentage calculation is finished
+          displayValue: percentResult.toString(),
+          isComplete: false // Mark as incomplete so it can be used in further calculations
+        }];
+      } else {
+        newCalculationSteps = [{
+          expression: percentResult.toString(),
+          result: percentResult,
+          timestamp: Date.now(),
+          stepNumber: 1,
+          operationType: 'number',
+          displayValue: percentResult.toString(),
+          isComplete: false // Mark as incomplete so it can be used in further calculations
         }];
       }
       newArticleCount = 1; // Keep article count at 1 for percentage calculations
@@ -1002,27 +1015,17 @@ export const processCalculatorInput = (
       const sqrtResult = Math.sqrt(currentNum);
       newValue = sqrtResult.toString();
       
-      // Create or update calculation step for square root
-      if (newCalculationSteps.length === 0) {
-        // First operation - create initial step
-        newCalculationSteps = [{
-          expression: `√${currentNum}`,
-          result: sqrtResult,
-          timestamp: Date.now(),
-          stepNumber: 1,
-          operationType: 'number',
-          displayValue: `√${currentNum}=${sqrtResult}`,
-          isComplete: true
-        }];
-        newArticleCount = 1;
-      } else {
-        // Update last step to show square root operation
-        const lastStep = newCalculationSteps[newCalculationSteps.length - 1];
-        lastStep.expression = `√${currentNum}`;
-        lastStep.result = sqrtResult;
-        lastStep.displayValue = `√${currentNum}=${sqrtResult}`;
-        lastStep.isComplete = true;
-      }
+      // Replace calculation steps with the square root result as a new base value
+      newCalculationSteps = [{
+        expression: sqrtResult.toString(),
+        result: sqrtResult,
+        timestamp: Date.now(),
+        stepNumber: 1,
+        operationType: 'number',
+        displayValue: sqrtResult.toString(),
+        isComplete: false // Mark as incomplete so it can be used in further calculations
+      }];
+      newArticleCount = 1;
       
       // Clear any pending operation since square root completes the current number
       newLastOperation = null;
