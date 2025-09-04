@@ -16,8 +16,8 @@ interface OrderContextType {
   // Item Templates
   itemTemplates: OrderItemTemplate[];
   getItemTemplatesByCategory: (categoryId: string) => OrderItemTemplate[];
-  addItemTemplate: (categoryId: string, name: string, unitPrice: number) => Promise<OrderItemTemplate>;
-  updateItemTemplate: (id: string, name: string, unitPrice: number) => Promise<void>;
+  addItemTemplate: (categoryId: string, name: string, unitPrice: number, isVatNil?: boolean, isVatIncluded?: boolean, vatPercentage?: number) => Promise<OrderItemTemplate>;
+  updateItemTemplate: (id: string, name: string, unitPrice: number, isVatNil?: boolean, isVatIncluded?: boolean, vatPercentage?: number) => Promise<void>;
   deleteItemTemplate: (id: string) => Promise<void>;
   
   // Orders
@@ -428,12 +428,13 @@ export const OrderProvider: React.FC<{ children: React.ReactNode }> = ({ childre
   };
 
   const addItemTemplate = async (categoryId: string, name: string, unitPrice: number, isVatNil: boolean = false, isVatIncluded: boolean = false): Promise<OrderItemTemplate> => {
+  const addItemTemplate = async (categoryId: string, name: string, unitPrice: number, isVatNil: boolean = false, isVatIncluded: boolean = false, vatPercentage?: number): Promise<OrderItemTemplate> => {
     try {
       const formattedName = formatName(name);
       
       // Get category's VAT percentage
       const category = categories.find(c => c.id === categoryId);
-      const categoryVatPercentage = category?.vatPercentage || 15;
+      const finalVatPercentage = vatPercentage || category?.vatPercentage || 15;
       
       // Check for duplicates within category
       const existingTemplate = itemTemplates.find(temp => 
@@ -452,7 +453,7 @@ export const OrderProvider: React.FC<{ children: React.ReactNode }> = ({ childre
         unitPrice,
         isVatNil,
         isVatIncluded,
-        vatPercentage: categoryVatPercentage,
+        vatPercentage: finalVatPercentage,
         createdAt: new Date()
       };
       
@@ -467,7 +468,7 @@ export const OrderProvider: React.FC<{ children: React.ReactNode }> = ({ childre
             unit_price: newItemTemplate.unitPrice,
             is_vat_nil: newItemTemplate.isVatNil,
             is_vat_included: newItemTemplate.isVatIncluded,
-            vat_percentage: newItemTemplate.vatPercentage,
+            vat_percentage: finalVatPercentage,
             created_at: newItemTemplate.createdAt.toISOString()
           });
         
