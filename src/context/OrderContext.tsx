@@ -255,6 +255,7 @@ export const OrderProvider: React.FC<{ children: React.ReactNode }> = ({ childre
           const storedTemplates = localStorage.getItem('orderItemTemplates');
           const transformedTemplates: OrderItemTemplate[] = storedTemplates ? JSON.parse(storedTemplates).map((template: any) => ({
             ...template,
+            isVatIncluded: template.isVatIncluded || false,
             createdAt: new Date(template.createdAt)
           })) : [];
           
