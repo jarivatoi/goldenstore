@@ -546,8 +546,24 @@ const processCompoundCalculation = (
           newCalculationSteps = [...beforeSteps, evaluatedStep, ...afterSteps];
           
           // Calculate and display the cumulative result up to this point
-          const cumulativeExpression = buildSimpleExpression([...beforeSteps, evaluatedStep]);
+          // Build cumulative expression including all steps up to this point
+          let cumulativeExpression = '';
+          for (const step of [...beforeSteps, evaluatedStep]) {
+            if (step.operationType === 'number') {
+              cumulativeExpression += step.result;
+            } else if (step.operationType === 'operation') {
+              // For the evaluated step, use + operator and the sub-result
+              if (step.displayValue.includes('(') && step.displayValue.includes(')=')) {
+                cumulativeExpression += '+' + step.result;
+              } else {
+                cumulativeExpression += step.expression;
+              }
+            }
+          }
+          
+          console.log('🔧 Cumulative expression for display:', cumulativeExpression);
           const cumulativeResult = evaluateExpression(cumulativeExpression);
+          console.log('🔧 Cumulative result for display:', cumulativeResult);
           newValue = cumulativeResult.toString();
         }
       }
