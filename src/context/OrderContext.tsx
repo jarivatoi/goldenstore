@@ -519,7 +519,6 @@ export const OrderProvider: React.FC<{ children: React.ReactNode }> = ({ childre
             unitPrice, 
             isVatNil: isVatNil === true, 
             isVatIncluded: isVatIncluded === true, 
-            isVatIncluded: isVatIncluded === true, 
             vatPercentage: vatPercentage ?? 15 
           } : temp
         ));
@@ -531,7 +530,6 @@ export const OrderProvider: React.FC<{ children: React.ReactNode }> = ({ childre
             name: formattedName, 
             unitPrice, 
             isVatNil: isVatNil === true, 
-            isVatIncluded: isVatIncluded === true, 
             isVatIncluded: isVatIncluded === true, 
             vatPercentage: vatPercentage ?? 15 
           } : temp
