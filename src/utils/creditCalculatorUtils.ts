@@ -160,7 +160,7 @@ const processSimpleCalculation = (
         // After operator, create new step: +20, +30, -10, etc.
         // Only increment counter for + and - operators (not × or ÷)
         if (newLastOperation === '+' || newLastOperation === '-') {
-          newArticleCount = newCalculationSteps.length + 1;
+          newArticleCount++;
         }
         console.log('📊 After operator - setting articleCount to:', newArticleCount);
         
@@ -408,7 +408,7 @@ const processCompoundCalculation = (
         // After any operator, create new step
         // Only increment counter for + and - operators (not × or ÷)
         if (newLastOperation === '+' || newLastOperation === '-') {
-          newArticleCount = newCalculationSteps.length + 1;
+          newArticleCount++;
         }
         const numericValue = parseFloat(input) || 0;
         console.log('📊 After operator in compound:', { input, numericValue, lastOperation: newLastOperation });

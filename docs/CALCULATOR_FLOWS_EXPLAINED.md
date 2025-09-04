@@ -360,12 +360,14 @@ Input: 100 × 10% =
 ```
 Input: 5 × 3 + 2 =
 
-5      → Article Count: 1    (Initial)
-×      → Article Count: 5    (Set to quantity)
-3      → Article Count: 5    (Unit price)
-+      → Article Count: 5    (Operator - compound flow continues)
-2      → Article Count: 6    (New item in compound calculation)
-=      → Article Count: 6    (Final count)
+1      → Article Count: 1    (First item)
++      → Article Count: 1    (Operator doesn't change count)
+2      → Article Count: 2    (Second item - increment because after +)
+×      → Article Count: 2    (Operator doesn't change count)
+3      → Article Count: 2    (Unit price - no increment because after ×)
++      → Article Count: 2    (Operator doesn't change count)
+5      → Article Count: 3    (Third item - increment because after +)
+=      → Article Count: 3    (Final count: 3 distinct items)
 ```
 
 ---
@@ -443,7 +445,7 @@ Meaning: Still building the same number (1 item)
 User Input: 1 + 2 × 3 + 5 =
 Display Shows: "1" → "+2" → "×3" → "+5" → "=12"
 Article Count: 1 → 2 → 2 → 3 → 3
-Meaning: 3 separate values combined (1 + 6 + 5 = 12)
+Meaning: 3 distinct items combined (1 + (2×3) + 5 = 12)
 ```
 
 ### Scenario 5: Percentage Calculation
