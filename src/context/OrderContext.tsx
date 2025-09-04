@@ -513,12 +513,26 @@ export const OrderProvider: React.FC<{ children: React.ReactNode }> = ({ childre
         
         // Update local state
         setItemTemplates(prev => prev.map(temp => 
-          temp.id === id ? { ...temp, name: formattedName, unitPrice, isVatNil: isVatNil === true, isVatIncluded: isVatIncluded === true, vatPercentage: vatPercentage ?? 15 } : temp
+          temp.id === id ? { 
+            ...temp, 
+            name: formattedName, 
+            unitPrice, 
+            isVatNil: isVatNil === true, 
+            isVatIncluded: isVatIncluded === true, 
+            vatPercentage: vatPercentage ?? 15 
+          } : temp
         ));
       } else {
         // Fallback to localStorage
         const updatedTemplates = itemTemplates.map(temp => 
-          temp.id === id ? { ...temp, name: formattedName, unitPrice, isVatNil: isVatNil === true, isVatIncluded: isVatIncluded === true, vatPercentage: vatPercentage ?? 15 } : temp
+          temp.id === id ? { 
+            ...temp, 
+            name: formattedName, 
+            unitPrice, 
+            isVatNil: isVatNil === true, 
+            isVatIncluded: isVatIncluded === true, 
+            vatPercentage: vatPercentage ?? 15 
+          } : temp
         );
         setItemTemplates(updatedTemplates);
         localStorage.setItem('orderItemTemplates', JSON.stringify(updatedTemplates.map(template => ({
