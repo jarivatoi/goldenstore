@@ -467,7 +467,7 @@ export const OrderProvider: React.FC<{ children: React.ReactNode }> = ({ childre
             unit_price: newItemTemplate.unitPrice,
             is_vat_nil: newItemTemplate.isVatNil,
             is_vat_included: newItemTemplate.isVatIncluded,
-            vat_percentage: finalVatPercentage,
+            vat_percentage: newItemTemplate.vatPercentage,
             created_at: newItemTemplate.createdAt.toISOString()
           });
         
