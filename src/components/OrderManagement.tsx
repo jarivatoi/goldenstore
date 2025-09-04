@@ -1890,7 +1890,7 @@ const EditItemModal: React.FC<EditItemModalProps> = ({
         vatPercent
       });
       
-      await onSave(item, itemName.trim(), price, vatNil, vatPercent);
+      await onSave(item, itemName.trim(), price, isVatNil, isVatIncluded, vatPercent);
       
       console.log('🔍 onSave completed successfully');
     } catch (err) {
