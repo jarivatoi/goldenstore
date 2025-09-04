@@ -1759,7 +1759,7 @@ interface EditItemModalProps {
   category: OrderCategory;
   item: OrderItemTemplate;
   onClose: () => void;
-  onSave: (item: OrderItemTemplate, newName: string, newPrice: number, isVatNil: boolean, newVatPercentage: number) => Promise<void>;
+  onSave: (item: OrderItemTemplate, newName: string, newPrice: number, isVatNil: boolean, isVatIncluded: boolean, newVatPercentage: number) => Promise<void>;
   itemName: string;
   setItemName: (name: string) => void;
   itemPrice: string;
@@ -1797,7 +1797,7 @@ const EditItemModal: React.FC<EditItemModalProps> = ({
     return { price, vatPercent, isVatNil: vatNil, vatAmount, totalPrice };
   };
   
-  const { price, vatPercent, isVatNil, vatAmount, totalPrice } = calculateVatAndTotal();
+  const { price, vatPercent, vatAmount, totalPrice } = calculateVatAndTotal();
 
   // Handle VAT toggle changes
   const handleVatIncludedChange = (checked: boolean) => {
@@ -1970,7 +1970,7 @@ const EditItemModal: React.FC<EditItemModalProps> = ({
                     <span className="select-none">
                        {isVatNil ? 'VAT Nil' : 
                         isVatIncluded ? 'VAT Included' : 
-                       {isVatNil ? 'VAT Nil' : `Rs ${vatAmount.toLocaleString('en-IN', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`}
+                       `Rs ${vatAmount.toLocaleString('en-IN', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`}
                     </span>
                   </div>
                   <div className="flex justify-between font-medium text-gray-800 pt-1 border-t border-gray-300 select-none">
