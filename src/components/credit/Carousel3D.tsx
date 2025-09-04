@@ -1,6 +1,6 @@
 import React, { useRef, useEffect, useState } from 'react';
 import { gsap } from 'gsap';
-import { ChevronLeft, ChevronRight } from 'lucide-react';
+import { Draggable } from '../../lib/draggable.js';
 import { Client } from '../../types';
 import ClientCard from '../ClientCard';
 
@@ -28,90 +28,76 @@ const Carousel3D: React.FC<Carousel3DProps> = ({
   recentTransactionClient,
   onCloseWobble
 }) => {
-  const carouselRef = useRef<HTMLDivElement>(null);
-  const [currentIndex, setCurrentIndex] = useState(0);
-  const [isAnimating, setIsAnimating] = useState(false);
-  const rotationAngle = useRef(0);
-
-  // Calculate angle between cards
-  const angleStep = clients.length > 0 ? 360 / clients.length : 0;
-  const radius = 280; // Distance from center
+  const containerRef = useRef<HTMLDivElement>(null);
+  const ringRef = useRef<HTMLDivElement>(null);
+  const draggerRef = useRef<HTMLDivElement>(null);
+  const [isInitialized, setIsInitialized] = useState(false);
+  let xPos = 0;
 
   useEffect(() => {
-    if (!carouselRef.current || clients.length === 0) return;
+    if (!containerRef.current || !ringRef.current || !draggerRef.current || clients.length === 0) return;
 
-    const carousel = carouselRef.current;
-    const cards = carousel.querySelectorAll('.carousel-card');
+    const ring = ringRef.current;
+    const dragger = draggerRef.current;
+    const cards = ring.querySelectorAll('.carousel-card');
 
-    // Set up 3D perspective
-    gsap.set(carousel, {
-      transformStyle: "preserve-3d",
-      perspective: 1000
-    });
+    if (cards.length === 0) return;
 
-    // Position cards in 3D space
-    cards.forEach((card, index) => {
-      const angle = index * angleStep;
-      const x = Math.sin(angle * Math.PI / 180) * radius;
-      const z = Math.cos(angle * Math.PI / 180) * radius;
-      
-      gsap.set(card, {
-        transformStyle: "preserve-3d",
-        rotationY: angle,
-        x: x,
-        z: z,
-        transformOrigin: "center center"
+    // Calculate rotation angle for each card
+    const angleStep = 360 / clients.length;
+
+    // Initialize GSAP timeline
+    const tl = gsap.timeline();
+    
+    tl.set(dragger, { opacity: 0 }) // Make drag layer invisible
+      .set(ring, { rotationY: 180 }) // Set initial rotation
+      .set('.carousel-card', {
+        rotateY: (i) => i * -angleStep,
+        transformOrigin: '50% 50% 500px',
+        z: -500,
+        backfaceVisibility: 'hidden'
+      })
+      .from('.carousel-card', {
+        duration: 1.5,
+        y: 200,
+        opacity: 0,
+        stagger: 0.1,
+        ease: 'expo'
       });
-    });
 
-    // Set initial rotation
-    gsap.set(carousel, {
-      rotationY: rotationAngle.current
-    });
-
-  }, [clients.length, angleStep]);
-
-  const rotateCarousel = (direction: 'next' | 'prev') => {
-    if (isAnimating || clients.length <= 1) return;
-
-    setIsAnimating(true);
-    
-    const newIndex = direction === 'next' 
-      ? (currentIndex + 1) % clients.length
-      : (currentIndex - 1 + clients.length) % clients.length;
-    
-    const rotationDelta = direction === 'next' ? -angleStep : angleStep;
-    rotationAngle.current += rotationDelta;
-
-    gsap.to(carouselRef.current, {
-      rotationY: rotationAngle.current,
-      duration: 0.8,
-      ease: "power2.inOut",
-      onComplete: () => {
-        setCurrentIndex(newIndex);
-        setIsAnimating(false);
+    // Create draggable functionality
+    const draggableInstance = Draggable.create(dragger, {
+      onDragStart: (e) => {
+        if (e.touches) e.clientX = e.touches[0].clientX;
+        xPos = Math.round(e.clientX);
+      },
+      
+      onDrag: (e) => {
+        if (e.touches) e.clientX = e.touches[0].clientX;
+        
+        gsap.to(ring, {
+          rotationY: '-=' + ((Math.round(e.clientX) - xPos) % 360),
+          duration: 0.3,
+          ease: "power2.out"
+        });
+        
+        xPos = Math.round(e.clientX);
+      },
+      
+      onDragEnd: () => {
+        gsap.set(dragger, { x: 0, y: 0 }); // Reset drag layer
       }
     });
-  };
 
-  const goToCard = (index: number) => {
-    if (isAnimating || index === currentIndex) return;
+    setIsInitialized(true);
 
-    setIsAnimating(true);
-    
-    const targetRotation = -index * angleStep;
-    rotationAngle.current = targetRotation;
-
-    gsap.to(carouselRef.current, {
-      rotationY: targetRotation,
-      duration: 1,
-      ease: "power2.inOut",
-      onComplete: () => {
-        setCurrentIndex(index);
-        setIsAnimating(false);
+    return () => {
+      if (draggableInstance && draggableInstance[0]) {
+        draggableInstance[0].kill();
       }
-    });
-  };
+      tl.kill();
+    };
+  }, [clients.length]);
 
   if (clients.length === 0) {
     return (
@@ -131,98 +117,85 @@ const Carousel3D: React.FC<Carousel3DProps> = ({
         <h3 className="text-lg font-semibold text-gray-800">Client Cards</h3>
         <div className="flex items-center gap-2">
           <span className="text-sm text-gray-500">
-            {currentIndex + 1} of {clients.length}
+            {clients.length} client{clients.length !== 1 ? 's' : ''}
           </span>
         </div>
       </div>
 
       {/* 3D Carousel Container */}
-      <div className="relative h-96 overflow-hidden">
-        {/* Navigation Buttons */}
-        {clients.length > 1 && (
-          <>
-            <button
-              onClick={() => rotateCarousel('prev')}
-              disabled={isAnimating}
-              className="absolute left-4 top-1/2 -translate-y-1/2 z-20 bg-white/90 hover:bg-white shadow-lg rounded-full p-3 transition-all duration-200 disabled:opacity-50 disabled:cursor-not-allowed"
+      <div 
+        ref={containerRef}
+        className="relative mx-auto"
+        style={{
+          perspective: '2000px',
+          width: '300px',
+          height: '400px'
+        }}
+      >
+        {/* Ring Container */}
+        <div
+          ref={ringRef}
+          id="ring"
+          className="w-full h-full"
+          style={{
+            transformStyle: 'preserve-3d',
+            position: 'absolute'
+          }}
+        >
+          {clients.map((client, index) => (
+            <div
+              key={client.id}
+              className="carousel-card absolute w-64 h-80"
+              style={{
+                transformStyle: 'preserve-3d',
+                left: '50%',
+                top: '50%',
+                transform: 'translate(-50%, -50%)'
+              }}
             >
-              <ChevronLeft size={24} className="text-gray-700" />
-            </button>
-            
-            <button
-              onClick={() => rotateCarousel('next')}
-              disabled={isAnimating}
-              className="absolute right-4 top-1/2 -translate-y-1/2 z-20 bg-white/90 hover:bg-white shadow-lg rounded-full p-3 transition-all duration-200 disabled:opacity-50 disabled:cursor-not-allowed"
-            >
-              <ChevronRight size={24} className="text-gray-700" />
-            </button>
-          </>
-        )}
-
-        {/* 3D Carousel */}
-        <div className="relative w-full h-full flex items-center justify-center">
-          <div
-            ref={carouselRef}
-            className="relative w-64 h-80"
-            style={{
-              transformStyle: "preserve-3d",
-              perspective: "1000px"
-            }}
-          >
-            {clients.map((client, index) => (
-              <div
-                key={client.id}
-                className="carousel-card absolute top-0 left-0 w-full h-full cursor-pointer"
-                style={{
-                  transformStyle: "preserve-3d",
-                  backfaceVisibility: "hidden"
-                }}
-                onClick={() => {
-                  if (index !== currentIndex) {
-                    goToCard(index);
-                  }
-                }}
-              >
-                <div className="w-full h-full transform hover:scale-105 transition-transform duration-200">
-                  <ClientCard
-                    client={client}
-                    onLongPress={() => {}}
-                    onQuickAdd={onQuickAdd}
-                    onResetCalculator={onResetCalculator}
-                    isLinked={linkedClient?.id === client.id}
-                    showWobble={recentTransactionClient?.id === client.id}
-                    onCloseWobble={onCloseWobble}
-                  />
-                </div>
-              </div>
-            ))}
-          </div>
-        </div>
-      </div>
-
-      {/* Dot Indicators */}
-      {clients.length > 1 && (
-        <div className="flex justify-center gap-2 mt-6">
-          {clients.map((_, index) => (
-            <button
-              key={index}
-              onClick={() => goToCard(index)}
-              disabled={isAnimating}
-              className={`w-3 h-3 rounded-full transition-all duration-200 ${
-                index === currentIndex
-                  ? 'bg-blue-500 scale-125'
-                  : 'bg-gray-300 hover:bg-gray-400'
-              }`}
-            />
+              <ClientCard
+                client={client}
+                onLongPress={() => {}}
+                onQuickAdd={onQuickAdd}
+                onResetCalculator={onResetCalculator}
+                isLinked={linkedClient?.id === client.id}
+                showWobble={recentTransactionClient?.id === client.id}
+                onCloseWobble={onCloseWobble}
+              />
+            </div>
           ))}
         </div>
-      )}
 
-      {/* Auto-rotation toggle (optional) */}
-      <div className="flex justify-center mt-4">
-        <div className="text-xs text-gray-500 bg-gray-100 px-3 py-1 rounded-full">
-          3D Carousel • {clients.length} client{clients.length !== 1 ? 's' : ''}
-        </div>
+        {/* Invisible Drag Layer */}
+        <div
+          ref={draggerRef}
+          id="dragger"
+          className="absolute inset-0 cursor-grab active:cursor-grabbing"
+          style={{
+            zIndex: 10,
+            background: 'transparent'
+          }}
+        />
+
+        {/* Vignette Effect */}
+        <div 
+          className="vignette absolute pointer-events-none"
+          style={{
+            width: '1400px',
+            height: '100%',
+            left: '50%',
+            transform: 'translateX(-50%)',
+            background: 'linear-gradient(to left, rgba(0,0,0,0.3) 12%, rgba(0,0,0,0) 40%, rgba(0,0,0,0) 60%, rgba(0,0,0,0.3) 88%)',
+            zIndex: 5
+          }}
+        />
+      </div>
+
+      {/* Instructions */}
+      <div className="text-center mt-4">
+        <p className="text-xs text-gray-500">
+          Drag to rotate • {clients.length} client{clients.length !== 1 ? 's' : ''}
+        </p>
       </div>
     </div>
   );
