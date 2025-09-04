@@ -945,22 +945,21 @@ export const processCalculatorInput = (
       const baseValue = newCalculationSteps[0].result; // 100
       const percentageValue = currentNum; // 10
       
-      // Calculate percentage: 100 × (10/100) = 10, then add to base: 100 + 10 = 110
-      const percentageAmount = Math.round((baseValue * (percentageValue / 100)) * 100) / 100;
-      const percentResult = baseValue + percentageAmount; // Add percentage to base
+      // Calculate percentage: 100 × (10/100) = 10
+      const percentResult = Math.round((baseValue * (percentageValue / 100)) * 100) / 100;
       
       // Update step 2 to show the percentage calculation
       newCalculationSteps[1] = {
-        expression: `(${baseValue}+${baseValue}×${percentageValue}%)`,
+        expression: `(${baseValue}×${percentageValue}%)`,
         result: percentResult,
         timestamp: Date.now(),
         stepNumber: 2,
         operationType: 'operation',
-        displayValue: `(${baseValue}+${percentageAmount})=${percentResult}`,
+        displayValue: `(${baseValue}×${percentageValue}%)=${percentResult}`,
         isComplete: true // Mark as complete since percentage calculation is finished
       };
       
-      // Show the percentage result (110) in display
+      // Show the percentage result (10) in display
       newValue = percentResult.toString();
       newLastOperation = null; // Keep operation cleared
       newIsNewNumber = true;
