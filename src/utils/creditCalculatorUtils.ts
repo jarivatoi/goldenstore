@@ -495,8 +495,8 @@ const processCompoundCalculation = (
   } else if (input === '*' || input === '/' || input === '+' || input === '-') {
     // Handle all operators with intermediate calculation
     
-    // Calculate intermediate result if we have calculation steps
-    if (newCalculationSteps.length > 0) {
+    // Only calculate intermediate result for + and - operators, not for * and /
+    if (newCalculationSteps.length > 0 && (input === '+' || input === '-')) {
       // Mark all previous steps as complete for intermediate calculation
       const stepsForCalculation = newCalculationSteps.map(step => ({ ...step, isComplete: true }));
       
