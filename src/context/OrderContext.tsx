@@ -154,9 +154,14 @@ export const OrderProvider: React.FC<{ children: React.ReactNode }> = ({ childre
                 name: template.name,
                 unitPrice: template.unit_price,
                 isVatNil: template.is_vat_nil || false,
+                isVatIncluded: template.is_vat_included || false,
                 vatPercentage: template.vat_percentage || 15,
                 createdAt: new Date(template.created_at)
               }));
+              
+              console.log('🔍 RELOAD DEBUG - Raw Supabase templates data:', templatesData);
+              console.log('🔍 RELOAD DEBUG - Transformed templates:', transformedTemplates);
+              console.log('🔍 RELOAD DEBUG - Benson template after transform:', transformedTemplates.find(t => t.name === 'Benson'));
               
               // Load orders with items
               const { data: ordersData, error: ordersError } = await supabase
@@ -255,7 +260,6 @@ export const OrderProvider: React.FC<{ children: React.ReactNode }> = ({ childre
           const storedTemplates = localStorage.getItem('orderItemTemplates');
           const transformedTemplates: OrderItemTemplate[] = storedTemplates ? JSON.parse(storedTemplates).map((template: any) => ({
             ...template,
-            isVatIncluded: template.isVatIncluded || false,
             createdAt: new Date(template.createdAt)
           })) : [];
           
