@@ -427,7 +427,6 @@ export const OrderProvider: React.FC<{ children: React.ReactNode }> = ({ childre
       .sort((a, b) => a.name.localeCompare(b.name));
   };
 
-  const addItemTemplate = async (categoryId: string, name: string, unitPrice: number, isVatNil: boolean = false, isVatIncluded: boolean = false): Promise<OrderItemTemplate> => {
   const addItemTemplate = async (categoryId: string, name: string, unitPrice: number, isVatNil: boolean = false, isVatIncluded: boolean = false, vatPercentage?: number): Promise<OrderItemTemplate> => {
     try {
       const formattedName = formatName(name);
