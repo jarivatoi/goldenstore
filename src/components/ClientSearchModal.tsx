@@ -77,7 +77,7 @@ const ClientSearchModal: React.FC<ClientSearchModalProps> = ({
     setSearchQuery('');
     setShowAddClient(false);
     setNewClientName(linkedClient?.name || '');
-    // Reset calculator and unlink client when X button is pressed
+    // Only reset calculator when X button is pressed, not when going back
     if (onResetCalculator) {
       onResetCalculator();
     }

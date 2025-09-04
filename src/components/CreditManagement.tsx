@@ -870,8 +870,8 @@ const CreditManagement: React.FC = () => {
       setDeleteAllPasscode('');
       setShowSettings(false);
       
-      // Reset calculator state
-      handleResetCalculator();
+      // Don't reset calculator - preserve state for potential additional transactions
+      // User can manually reset if needed
     } catch (error) {
       console.error('Failed to delete all clients:', error);
     }
