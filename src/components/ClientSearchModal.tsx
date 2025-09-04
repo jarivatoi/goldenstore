@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import { createPortal } from 'react-dom';
-import { X, Search, Plus, User } from 'lucide-react';
+import { X, Search, Plus, User, ArrowLeft } from 'lucide-react';
 import { useCredit } from '../context/CreditContext';
 import { Client } from '../types';
 
@@ -233,13 +233,24 @@ const ClientSearchModal: React.FC<ClientSearchModalProps> = ({
             </h2>
             <p className="text-gray-600 select-none">Amount: Rs {calculatorValue}</p>
           </div>
-          <button 
-            onClick={handleXClose}
-            className="flex-shrink-0 w-20 h-20 flex items-center justify-center text-white bg-blue-600 hover:bg-blue-700 rounded-full transition-colors shadow-xl border-4 border-yellow-400 z-50 select-none"
-           style={{ minWidth: '64px', minHeight: '64px' }}
-          >
-            <X size={36} strokeWidth={4} />
-          </button>
+          <div className="flex items-center gap-3 select-none">
+            <button 
+              onClick={handleClose}
+              className="flex-shrink-0 w-20 h-20 flex items-center justify-center text-white bg-green-600 hover:bg-green-700 rounded-full transition-colors shadow-xl border-4 border-yellow-400 z-50 select-none"
+              style={{ minWidth: '64px', minHeight: '64px' }}
+              title="Back to Calculator"
+            >
+              <ArrowLeft size={36} strokeWidth={4} />
+            </button>
+            <button 
+              onClick={handleXClose}
+              className="flex-shrink-0 w-20 h-20 flex items-center justify-center text-white bg-blue-600 hover:bg-blue-700 rounded-full transition-colors shadow-xl border-4 border-yellow-400 z-50 select-none"
+              style={{ minWidth: '64px', minHeight: '64px' }}
+              title="Close and Reset"
+            >
+              <X size={36} strokeWidth={4} />
+            </button>
+          </div>
         </div>
 
         {/* Content */}
