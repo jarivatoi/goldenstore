@@ -166,7 +166,7 @@ const OrderManagement: React.FC = () => {
   // Handle edit item template
   const handleEditItem = async (item: OrderItemTemplate, newName: string, newPrice: number, isVatNil: boolean, newVatPercentage: number) => {
     try {
-      await updateItemTemplate(item.id, newName, newPrice, isVatNil, newVatPercentage);
+      await updateItemTemplate(item.id, newName, newPrice, isVatNil, false, newVatPercentage);
       setEditingItem(null);
       setShowEditItem(false);
       setEditItemName('');
