@@ -216,6 +216,7 @@ export type Database = {
           name: string;
           unit_price: number;
           is_vat_nil?: boolean | null;
+          is_vat_included?: boolean | null;
           vat_percentage?: number | null;
           created_at?: string | null;
         };
@@ -225,6 +226,7 @@ export type Database = {
           name?: string;
           unit_price?: number;
           is_vat_nil?: boolean | null;
+          is_vat_included?: boolean | null;
           vat_percentage?: number | null;
           created_at?: string | null;
         };
