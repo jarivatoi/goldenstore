@@ -496,6 +496,15 @@ export const OrderProvider: React.FC<{ children: React.ReactNode }> = ({ childre
     try {
       const formattedName = formatName(name);
       
+      console.log('🔧 updateItemTemplate called with:', {
+        id,
+        name: formattedName,
+        unitPrice,
+        isVatNil,
+        isVatIncluded,
+        vatPercentage
+      });
+      
       if (supabase) {
         // Update in Supabase
         const { error } = await supabase
@@ -511,6 +520,8 @@ export const OrderProvider: React.FC<{ children: React.ReactNode }> = ({ childre
         
         if (error) throw error;
         
+        console.log('🔧 Supabase update successful, updating local state...');
+        
         // Update local state
         setItemTemplates(prev => prev.map(temp => 
           temp.id === id ? { 
@@ -522,6 +533,8 @@ export const OrderProvider: React.FC<{ children: React.ReactNode }> = ({ childre
             vatPercentage: vatPercentage ?? 15 
           } : temp
         ));
+        
+        console.log('🔧 Local state updated successfully');
       } else {
         // Fallback to localStorage
         const updatedTemplates = itemTemplates.map(temp => 
@@ -541,6 +554,7 @@ export const OrderProvider: React.FC<{ children: React.ReactNode }> = ({ childre
         }))));
       }
     } catch (err) {
+      console.error('🔧 updateItemTemplate error:', err);
       setError('Failed to update item template');
       throw err;
     }
