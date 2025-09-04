@@ -818,9 +818,6 @@ const ItemTemplateCard: React.FC<ItemTemplateCardProps> = ({
   const [editPrice, setEditPrice] = useState(item.unitPrice.toString());
   const [editVatNil, setEditVatNil] = useState(item.isVatNil);
 
-  // Calculate VAT amount and total price based on current item values
-  const vatAmount = item.isVatNil ? 0 : (item.unitPrice * item.vatPercentage) / 100;
-  const totalPrice = item.unitPrice + vatAmount;
 
   return (
     <div className="bg-blue-50 rounded-lg p-4 border border-blue-200 select-none">
@@ -828,10 +825,18 @@ const ItemTemplateCard: React.FC<ItemTemplateCardProps> = ({
         <div className="select-none">
           <h5 className="font-medium text-gray-800 select-none">{item.name}</h5>
           <div className="text-sm text-gray-600 select-none">
-            {item.isVatNil ? (
-              <p className="select-none">Rs {item.unitPrice.toLocaleString('en-IN', { minimumFractionDigits: 2, maximumFractionDigits: 2 })} VAT Nil → Rs {item.unitPrice.toLocaleString('en-IN', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</p>
+            {item.isVatIncluded ? (
+              <p className="select-none">Rs {item.unitPrice.toLocaleString('en-IN', { minimumFractionDigits: 2, maximumFractionDigits: 2 })} (VAT Included)</p>
+            ) : item.isVatNil ? (
+              <p className="select-none">Rs {item.unitPrice.toLocaleString('en-IN', { minimumFractionDigits: 2, maximumFractionDigits: 2 })} (VAT Nil)</p>
             ) : (
-              <p className="select-none">Rs {item.unitPrice.toLocaleString('en-IN', { minimumFractionDigits: 2, maximumFractionDigits: 2 })} VAT({item.vatPercentage}%)(Rs {vatAmount.toLocaleString('en-IN', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}) → Rs {totalPrice.toLocaleString('en-IN', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</p>
+              (() => {
+                const vatAmount = (item.unitPrice * item.vatPercentage) / 100;
+                const totalPrice = item.unitPrice + vatAmount;
+                return (
+                  <p className="select-none">Rs {item.unitPrice.toLocaleString('en-IN', { minimumFractionDigits: 2, maximumFractionDigits: 2 })} VAT({item.vatPercentage}%)(Rs {vatAmount.toLocaleString('en-IN', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}) → Rs {totalPrice.toLocaleString('en-IN', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</p>
+                );
+              })()
             )}
           </div>
         </div>
