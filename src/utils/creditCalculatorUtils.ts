@@ -274,7 +274,7 @@ const processSimpleCalculation = (
             lastStep.displayValue = `${operator}${newValue}`;
             lastStep.expression = `${lastStep.operator || operator}${newValue}`;
             lastStep.result = parseFloat(newValue);
-            lastStep.isComplete: false;
+            lastStep.isComplete = false;
           }
         }
       }
