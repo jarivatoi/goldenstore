@@ -266,7 +266,7 @@ const processSimpleCalculation = (
             lastStep.displayValue = newValue;
             lastStep.expression = newValue;
             lastStep.result = parseFloat(newValue);
-            lastStep.isComplete = false;
+            lastStep.isComplete: false;
           } else if (lastStep.operationType === 'operation') {
             const operator = lastStep.operator === '*' ? '×' : 
                             lastStep.operator === '/' ? '÷' : 
@@ -274,7 +274,7 @@ const processSimpleCalculation = (
             lastStep.displayValue = `${operator}${newValue}`;
             lastStep.expression = `${lastStep.operator || operator}${newValue}`;
             lastStep.result = parseFloat(newValue);
-            lastStep.isComplete = false;
+            lastStep.isComplete: false;
           }
         }
       }
@@ -553,7 +553,7 @@ const processCompoundCalculation = (
               cumulativeExpression += step.result;
             } else if (step.operationType === 'operation') {
               // For the evaluated step, use + operator and the sub-result
-              if (step.displayValue.includes('') && step.displayValue.includes(')=')) {
+              if (step.displayValue.includes('(') && step.displayValue.includes(')=')) {
                 cumulativeExpression += '+' + step.result;
               } else {
                 cumulativeExpression += step.expression;
@@ -1258,7 +1258,7 @@ const startAutoReplaySequence = (steps: CalculationStep[], lastOperation: string
               currentStep: currentStepIndex + 1,
               articleCount: steps.length
             }
-          });
+          }));
           
           localStorage.setItem('currentCheckIndex', currentStepIndex.toString());
           
