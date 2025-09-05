@@ -1264,7 +1264,7 @@ const startAutoReplaySequence = (steps: CalculationStep[], lastOperation: string
           
           // Complete the auto replay
           setTimeout(() => {
-            window.dispatchEvent(new CustomEvent('autoReplayComplete'));
+            window.dispatchEvent(new CustomEvent('autoReplayComplete')); 
           }, 1000);
         }, 1000);
       } else {
