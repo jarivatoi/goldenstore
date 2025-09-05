@@ -266,7 +266,7 @@ const processSimpleCalculation = (
             lastStep.displayValue = newValue;
             lastStep.expression = newValue;
             lastStep.result = parseFloat(newValue);
-            lastStep.isComplete: false;
+            lastStep.isComplete = false;
           } else if (lastStep.operationType === 'operation') {
             const operator = lastStep.operator === '*' ? '×' : 
                             lastStep.operator === '/' ? '÷' : 
