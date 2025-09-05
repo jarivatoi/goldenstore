@@ -553,7 +553,7 @@ const processCompoundCalculation = (
               cumulativeExpression += step.result;
             } else if (step.operationType === 'operation') {
               // For the evaluated step, use + operator and the sub-result
-              if (step.displayValue.includes('(') && step.displayValue.includes(')=')) {
+              if (step.displayValue.includes('') && step.displayValue.includes(')=')) {
                 cumulativeExpression += '+' + step.result;
               } else {
                 cumulativeExpression += step.expression;
@@ -936,54 +936,39 @@ export const processCalculatorInput = (
   } else if (input === '%') {
     // Percentage calculation
     const currentNum = getCurrentNumber();
+    
     // Handle percentage calculation for compound operations
-    if (newLastOperation === '*' && newCalculationSteps.length >= 2) {
+    if (newLastOperation === '*' || newLastOperation === '×') {
       // For 100×10%, we have:
       // Step 1: "100" (base value)
       // Step 2: "×10" (percentage value)
       
-      const baseValue = newCalculationSteps[0].result; // 100
-      const percentageValue = currentNum; // 10
-      
-      // Calculate percentage: 100 × (10/100) = 10
-      const percentResult = Math.round((baseValue * (percentageValue / 100)) * 100) / 100;
-      
-      // Update step 2 to show the percentage calculation
-      newCalculationSteps[1] = {
-        expression: `(${baseValue}×${percentageValue}%)`,
-        result: percentResult,
-        timestamp: Date.now(),
-        stepNumber: 2,
-        operationType: 'operation',
-        displayValue: `(${baseValue}×${percentageValue}%)=${percentResult}`,
-        isComplete: true // Mark as complete since percentage calculation is finished
-      };
-      
-      // Show the percentage result (10) in display
-      newValue = percentResult.toString();
-      newLastOperation = null; // Keep operation cleared
-      newIsNewNumber = true;
-      newArticleCount = 1; // Keep article count at 1 for percentage calculations
-      
-      // Store the percentage result as the current base value for next operations
-      // Replace the calculation steps with a single step containing the percentage result
-      newCalculationSteps = [{
-        expression: percentResult.toString(),
-        result: percentResult,
-        timestamp: Date.now(),
-        stepNumber: 1,
-        operationType: 'number',
-        displayValue: percentResult.toString(),
-        isComplete: false // Mark as incomplete so it can be used in further calculations
-      }];
-    } else {
-      // Simple percentage calculation
-      const percentResult = Math.round((currentNum / 100) * 100) / 100;
-      newValue = percentResult.toString();
-      newIsNewNumber = true;
-      
-      if (newCalculationSteps.length > 0) {
-        // Replace all steps with the percentage result as a new base value
+      if (newCalculationSteps.length >= 2) {
+        const baseValue = newCalculationSteps[0].result; // 100
+        const percentageValue = currentNum; // 10
+        
+        // Calculate percentage: 100 × (10/100) = 10
+        const percentResult = Math.round((baseValue * (percentageValue / 100)) * 100) / 100;
+        
+        // Update step 2 to show the percentage calculation
+        newCalculationSteps[1] = {
+          expression: `(${baseValue}×${percentageValue}%)`,
+          result: percentResult,
+          timestamp: Date.now(),
+          stepNumber: 2,
+          operationType: 'operation',
+          displayValue: `(${baseValue}×${percentageValue}%)=${percentResult}`,
+          isComplete: true // Mark as complete since percentage calculation is finished
+        };
+        
+        // Show the percentage result (10) in display
+        newValue = percentResult.toString();
+        newLastOperation = null; // Keep operation cleared
+        newIsNewNumber = true;
+        newArticleCount = 1; // Keep article count at 1 for percentage calculations
+        
+        // Store the percentage result as the current base value for next operations
+        // Replace the calculation steps with a single step containing the percentage result
         newCalculationSteps = [{
           expression: percentResult.toString(),
           result: percentResult,
@@ -994,6 +979,12 @@ export const processCalculatorInput = (
           isComplete: false // Mark as incomplete so it can be used in further calculations
         }];
       } else {
+        // Simple percentage calculation if we don't have enough steps
+        const percentResult = Math.round((currentNum / 100) * 100) / 100;
+        newValue = percentResult.toString();
+        newIsNewNumber = true;
+        
+        // Replace all steps with the percentage result as a new base value
         newCalculationSteps = [{
           expression: percentResult.toString(),
           result: percentResult,
@@ -1001,10 +992,27 @@ export const processCalculatorInput = (
           stepNumber: 1,
           operationType: 'number',
           displayValue: percentResult.toString(),
-          isComplete: false // Mark as incomplete so it can be used in further calculations
+          isComplete: false
         }];
+        newArticleCount = 1;
       }
-      newArticleCount = 1; // Keep article count at 1 for percentage calculations
+    } else {
+      // Simple percentage calculation for other operations
+      const percentResult = Math.round((currentNum / 100) * 100) / 100;
+      newValue = percentResult.toString();
+      newIsNewNumber = true;
+      
+      // Replace all steps with the percentage result as a new base value
+      newCalculationSteps = [{
+        expression: percentResult.toString(),
+        result: percentResult,
+        timestamp: Date.now(),
+        stepNumber: 1,
+        operationType: 'number',
+        displayValue: percentResult.toString(),
+        isComplete: false
+      }];
+      newArticleCount = 1;
     }
   } else if (input === '√') {
     // Square root
@@ -1250,7 +1258,7 @@ const startAutoReplaySequence = (steps: CalculationStep[], lastOperation: string
               currentStep: currentStepIndex + 1,
               articleCount: steps.length
             }
-          }));
+          });
           
           localStorage.setItem('currentCheckIndex', currentStepIndex.toString());
           
