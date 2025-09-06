@@ -1371,13 +1371,25 @@ const startAutoReplaySequence = (steps: CalculationStep[], lastOperation: string
   
   // Check if we have a completed calculation or need to calculate result
   const hasCompletedCalculation = steps.some(step => step.isComplete);
+  
+  // Enhanced compound detection for auto replay
+  const isCompound = isCompoundCalculation(steps, lastOperation);
+  
+  console.log('🔍 Auto replay detection:', {
+    hasCompletedCalculation,
+    isCompound,
+    steps: steps.map(s => ({
+      operator: s.operator,
+      expression: s.expression,
+      displayValue: s.displayValue,
+      isComplete: s.isComplete
+    }))
+  });
+  
   let calculationResult: number | null = null;
   
   // If calculation is not complete, calculate the result
   if (!hasCompletedCalculation && steps.length > 0) {
-    // Determine if it's compound or simple calculation
-    const isCompound = isCompoundCalculation(steps, lastOperation);
-    
     if (isCompound) {
       const expression = buildCompoundExpression(steps);
       calculationResult = evaluateExpression(expression);
@@ -1391,13 +1403,17 @@ const startAutoReplaySequence = (steps: CalculationStep[], lastOperation: string
     if (currentStepIndex < steps.length) {
       const step = steps[currentStepIndex];
       
+      // For compound calculations, show the actual step display values
+      let displayValue = step.displayValue;
+      
       window.dispatchEvent(new CustomEvent('autoReplayStep', {
         detail: {
-          displayValue: step.displayValue,
+          displayValue: displayValue,
           stepIndex: currentStepIndex,
           totalSteps: steps.length,
           currentStep: currentStepIndex + 1,
-          articleCount: step.operationType === 'result' ? currentStepIndex : currentStepIndex + 1
+          articleCount: step.operationType === 'result' ? currentStepIndex : currentStepIndex + 1,
+          isCompound: isCompound // Pass compound flag for UI handling
         }
       }));
       
@@ -1416,7 +1432,8 @@ const startAutoReplaySequence = (steps: CalculationStep[], lastOperation: string
               stepIndex: currentStepIndex,
               totalSteps: steps.length + 1, // Include result in total
               currentStep: currentStepIndex + 1,
-              articleCount: steps.length
+              articleCount: steps.length,
+              isCompound: isCompound
             }
           }));
           
@@ -1438,7 +1455,6 @@ const startAutoReplaySequence = (steps: CalculationStep[], lastOperation: string
             finalResult = lastStep.result;
           } else {
             // For other completed calculations, evaluate the full expression
-            const isCompound = isCompoundCalculation(steps, null);
             const expression = isCompound ? buildCompoundExpression(steps) : buildSimpleExpression(steps);
             finalResult = evaluateExpression(expression);
           }
@@ -1449,7 +1465,8 @@ const startAutoReplaySequence = (steps: CalculationStep[], lastOperation: string
               stepIndex: currentStepIndex,
               totalSteps: steps.length + 1,
               currentStep: currentStepIndex + 1,
-              articleCount: steps.length
+              articleCount: steps.length,
+              isCompound: isCompound
             }
           }));
           
