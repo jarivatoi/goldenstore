@@ -1020,7 +1020,7 @@ export const processCalculatorInput = (
     if (currentNum < 0) {
       newValue = 'Error';
     } else {
-      const sqrtResult = Math.sqrt(currentNum)+50;
+      const sqrtResult = Math.sqrt(currentNum);
       newValue = sqrtResult.toString();
       
       // Replace calculation steps with the square root result as a new base value
