@@ -1118,4 +1118,4 @@ const startAutoReplaySequence = (steps: CalculationStep[], lastOperation: string
   };
   
   showNextStep();
-};
+}; 
