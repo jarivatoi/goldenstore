@@ -760,22 +760,28 @@ export const processCalculatorInput = (
   } else if (input === 'GT') {
     newValue = newGrandTotal.toString();
     newIsNewNumber = true;
-  } else if (input === 'AUTO') {
-    if (newCalculationSteps.length > 0) {
-      autoReplayActive = true;
-      
-      // Build summarized steps for display
-      const summarizedSteps = buildSummarizedSteps(newCalculationSteps);
-      
-      newValue = summarizedSteps[0].displayValue;
-      newIsNewNumber = true;
-      
-      setTimeout(() => {
-        startAutoReplaySequence(summarizedSteps, newLastOperation, newIsNewNumber);
-      }, 500);
-    } else {
-      newValue = currentValue;
-    }
+} else if (input === 'AUTO') {
+  // AUTO REPLAY - replay transaction history
+  if (newCalculationSteps.length > 0) {
+    autoReplayActive = true;
+    
+    // Build summarized steps for display (group compound operations)
+    const summarizedSteps = buildSummarizedSteps(newCalculationSteps);
+    
+    console.log('🔍 Summarized steps for auto replay:', summarizedSteps.map(s => s.displayValue));
+    
+    // Show first step immediately
+    newValue = summarizedSteps[0].displayValue;
+    newIsNewNumber = true;
+    
+    // Start auto replay sequence with summarized steps
+    setTimeout(() => {
+      startAutoReplaySequence(summarizedSteps);
+    }, 500);
+  } else {
+    newValue = currentValue;
+  }
+}
   } else if (input === 'CHECK→') {
     if (newCalculationSteps.length > 0) {
       let currentStepIndex = parseInt(localStorage.getItem('currentCheckIndex') || '-1');
