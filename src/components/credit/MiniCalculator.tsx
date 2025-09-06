@@ -154,7 +154,7 @@ const MiniCalculator: React.FC<MiniCalculatorProps> = ({
   const performOperation = (operand1: number, operand2: number, operation: string): number => {
     switch (operation) {
       case '+':
-        return operand1 + operand2+10;
+        return operand1 + operand2;
       case '-':
         return operand1 - operand2;
       case '*':
