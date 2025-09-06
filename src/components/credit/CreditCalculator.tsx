@@ -1076,18 +1076,18 @@ export const processCalculatorInput = (
 /**
  * Auto-replay sequence function with summarized steps
  */
-const startAutoReplaySequence = (steps: CalculationStep[], lastOperation: string | null, isNewNumber: boolean) => {
+const startAutoReplaySequence = (summarizedSteps: CalculationStep[]) => {
   let currentStepIndex = 0;
   
   const showNextStep = () => {
-    if (currentStepIndex < steps.length) {
-      const step = steps[currentStepIndex];
+    if (currentStepIndex < summarizedSteps.length) {
+      const step = summarizedSteps[currentStepIndex];
       
       window.dispatchEvent(new CustomEvent('autoReplayStep', {
         detail: {
           displayValue: step.displayValue,
           stepIndex: currentStepIndex,
-          totalSteps: steps.length,
+          totalSteps: summarizedSteps.length,
           currentStep: currentStepIndex + 1,
           articleCount: step.stepNumber,
           isCompound: true
@@ -1096,11 +1096,11 @@ const startAutoReplaySequence = (steps: CalculationStep[], lastOperation: string
       
       currentStepIndex++;
       
-      if (currentStepIndex < steps.length) {
+      if (currentStepIndex < summarizedSteps.length) {
         setTimeout(showNextStep, 1000);
       } else {
         // Show final result
-        const expression = buildCompoundExpression(steps);
+        const expression = buildCompoundExpression(summarizedSteps);
         const result = evaluateExpression(expression);
         
         setTimeout(() => {
@@ -1108,9 +1108,9 @@ const startAutoReplaySequence = (steps: CalculationStep[], lastOperation: string
             detail: {
               displayValue: `=${result}`,
               stepIndex: currentStepIndex,
-              totalSteps: steps.length + 1,
+              totalSteps: summarizedSteps.length + 1,
               currentStep: currentStepIndex + 1,
-              articleCount: steps.length,
+              articleCount: summarizedSteps.length,
               isCompound: true
             }
           }));
@@ -1124,4 +1124,4 @@ const startAutoReplaySequence = (steps: CalculationStep[], lastOperation: string
   };
   
   showNextStep();
-}; 
+};
