@@ -583,6 +583,8 @@ const buildSummarizedSteps = (steps: CalculationStep[]): CalculationStep[] => {
   const summarizedSteps: CalculationStep[] = [];
   let currentStepNumber = 1;
   
+  console.log('🔍 Building summarized steps from:', steps.map(s => s.displayValue));
+  
   for (let i = 0; i < steps.length; i++) {
     const step = steps[i];
     
@@ -602,7 +604,7 @@ const buildSummarizedSteps = (steps: CalculationStep[]): CalculationStep[] => {
           const nextNumberStep = i + 1 < steps.length ? steps[i + 1] : null;
           
           if (previousStep.operationType === 'number' && nextNumberStep && nextNumberStep.operationType === 'number') {
-            // Create compound operation display: +(5×3)=15
+            // Create compound operation display: +(2×3)=6
             const leftOperand = previousStep.result;
             const rightOperand = nextNumberStep.result;
             const operator = step.operator === '*' ? '×' : '÷';
@@ -616,7 +618,7 @@ const buildSummarizedSteps = (steps: CalculationStep[]): CalculationStep[] => {
             
             // Find the addition/subtraction operator that precedes this compound operation
             let addSubOperator = '+';
-            for (let j = i - 2; j >= 0; j--) {
+            for (let j = i - 1; j >= 0; j--) {
               if (steps[j].operationType === 'operation' && 
                   (steps[j].operator === '+' || steps[j].operator === '-')) {
                 addSubOperator = steps[j].operator;
@@ -651,6 +653,7 @@ const buildSummarizedSteps = (steps: CalculationStep[]): CalculationStep[] => {
     }
   }
   
+  console.log('🔍 Summarized steps result:', summarizedSteps.map(s => s.displayValue));
   return summarizedSteps; 
 };
 
