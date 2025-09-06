@@ -997,21 +997,44 @@ export const processCalculatorInput = (
     // Grand Total - show accumulated grand total
     newValue = newGrandTotal.toString();
     newIsNewNumber = true;
-  } else if (input === 'AUTO') {
-    // AUTO REPLAY - replay transaction history
-    if (newCalculationSteps.length > 0) {
-      autoReplayActive = true;
-      localStorage.setItem('currentCheckIndex', '0');
+} else if (input === 'AUTO') {
+  // AUTO REPLAY - replay transaction history
+  if (newCalculationSteps.length > 0) {
+    autoReplayActive = true;
+    localStorage.setItem('currentCheckIndex', '0');
+    
+    // Enhanced auto replay for compound calculations
+    const isCompound = isCompoundCalculation(newCalculationSteps, newLastOperation);
+    
+    console.log('🔍 AUTO replay triggered:', {
+      steps: newCalculationSteps.length,
+      isCompound,
+      stepsDetail: newCalculationSteps.map(s => ({
+        displayValue: s.displayValue,
+        operator: s.operator,
+        isComplete: s.isComplete
+      }))
+    });
+    
+    // Start auto replay with the correct steps
+    if (isCompound) {
+      // For compound calculations, show the actual calculation steps
       newValue = newCalculationSteps[0].displayValue;
-      newIsNewNumber = true;
-      
-      setTimeout(() => {
-        startAutoReplaySequence(newCalculationSteps, newLastOperation, newIsNewNumber);
-      }, 500);
     } else {
-      newValue = currentValue;
+      // For simple calculations, show the first step
+      newValue = newCalculationSteps[0].displayValue;
     }
-  } else if (input === 'CHECK→') {
+    
+    newIsNewNumber = true;
+    
+    // Start auto replay sequence
+    setTimeout(() => {
+      startAutoReplaySequence(newCalculationSteps, newLastOperation, newIsNewNumber);
+    }, 500);
+  } else {
+    newValue = currentValue;
+  }
+} else if (input === 'CHECK→') {
     // Check forward - cycle through all steps
     if (newCalculationSteps.length > 0) {
       // Enhanced check navigation - cycle through all steps
