@@ -1143,4 +1143,4 @@ const startAutoReplaySequence = (summarizedSteps: CalculationStep[]) => {
   };
   
   showNextStep();
-};
+}; 
