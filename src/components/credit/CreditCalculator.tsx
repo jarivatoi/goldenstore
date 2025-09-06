@@ -781,7 +781,7 @@ export const processCalculatorInput = (
   } else {
     newValue = currentValue;
   }
-}
+
   } else if (input === 'CHECK→') {
     if (newCalculationSteps.length > 0) {
       let currentStepIndex = parseInt(localStorage.getItem('currentCheckIndex') || '-1');
