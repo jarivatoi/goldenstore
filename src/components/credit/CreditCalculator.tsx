@@ -781,7 +781,7 @@ export const processCalculatorInput = (
     // Build summarized steps for display (group compound operations)
     const summarizedSteps = buildSummarizedSteps(newCalculationSteps);
     
-    console.log('🔍 Summarized steps for auto replay:', summarizedSteps.map(s => s.displayValue));
+    console.log('🔍 AUTO replay with summarized steps:', summarizedSteps.map(s => s.displayValue));
     
     // Show first step immediately
     newValue = summarizedSteps[0].displayValue;
