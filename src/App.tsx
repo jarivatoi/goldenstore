@@ -48,13 +48,15 @@ import { OverProvider } from './context/OverContext';
 import OrderManagement from './components/OrderManagement';
 import { OrderProvider } from './context/OrderContext';
 import LoadingSpinner from './components/LoadingSpinner';
-import SyncStatusIndicator from './components/SyncStatusIndicator';
 import OnDeviceConsole from './components/OnDeviceConsole';
+import SupabaseStatusIndicator from './components/SupabaseStatusIndicator';
+import AutoBackupStatusIndicator from './components/AutoBackupStatusIndicator';
+import { automaticBackupManager } from './utils/automaticBackupManager';
 
 function MainAppContent() {
   const [activeTab, setActiveTab] = useState<'Over' | 'PriceList' | 'Order' | 'Credit'>(() => {
     const savedTab = localStorage.getItem('activeTab');
-    return (savedTab as 'Over' | 'PriceList' | 'Order' | 'Credit') || 'PriceList';
+    return (savedTab as 'Over' | 'PriceList' | 'Order' | 'Credit') || 'Credit';
   });
   const { signOut } = useAuth();
 
@@ -179,9 +181,15 @@ function MainAppContent() {
     <div className="min-h-screen bg-gray-50 flex flex-col w-full">
       {/* Header with Sign Out */}
       <div className="bg-white border-b border-gray-200 p-4 flex items-center">
-        <div className="flex items-center gap-4 flex-1">
-          <h1 className="text-xl font-semibold text-gray-900">Golden Store</h1>
-          <SyncStatusIndicator />
+        <div className="w-7"></div> {/* Spacer to balance the right side */}
+        <div className="flex items-center justify-center flex-1">
+          <h1 className="text-xl font-semibold text-gray-900 text-center">
+            <span className="select-none">Golden Store</span>
+          </h1>
+        </div>
+        <div className="flex items-center">
+          <SupabaseStatusIndicator className="ml-3" />
+          <AutoBackupStatusIndicator className="ml-3" />
         </div>
       </div>
       

@@ -60,6 +60,7 @@ export interface DeviceInfo {
 export class SyncEngine {
   private deviceId: string;
   private isOnline: boolean = navigator.onLine;
+  private realtimeConnectionStatus: 'connecting' | 'subscribed' | 'channel_error' | 'timed_out' | 'closed' | 'offline' = 'offline';
   private syncQueue: QueuedSync[] = [];
   private eventListeners: Map<SyncEventType, Set<Function>> = new Map();
   private realtimeChannel: any = null;
@@ -84,7 +85,6 @@ export class SyncEngine {
    * ==============
    */
   private initializeEngine(): void {
-    console.log('🔄 Initializing Sync Engine for device:', this.deviceId);
     
     // Load offline queue from localStorage
     this.loadOfflineQueue();
@@ -126,14 +126,12 @@ export class SyncEngine {
    */
   private setupNetworkMonitoring(): void {
     window.addEventListener('online', () => {
-      console.log('📶 Device came online');
       this.isOnline = true;
       this.initializeRealtimeConnection();
       this.processSyncQueue();
     });
 
     window.addEventListener('offline', () => {
-      console.log('📵 Device went offline');
       this.isOnline = false;
       this.disconnectRealtime();
     });
@@ -146,7 +144,7 @@ export class SyncEngine {
   private initializeRealtimeConnection(): void {
     if (!supabase || this.realtimeChannel) return;
 
-    console.log('🔗 Establishing real-time connection');
+    this.realtimeConnectionStatus = 'connecting';
     
     this.realtimeChannel = supabase
       .channel('sync_channel')
@@ -175,7 +173,15 @@ export class SyncEngine {
         (payload: any) => this.handleRealtimeEvent('order_items_changed', payload)
       )
       .subscribe((status: string) => {
-        console.log('📡 Real-time connection status:', status);
+        if (status === 'SUBSCRIBED') {
+          this.realtimeConnectionStatus = 'subscribed';
+        } else if (status === 'CHANNEL_ERROR') {
+          this.realtimeConnectionStatus = 'channel_error';
+        } else if (status === 'TIMED_OUT') {
+          this.realtimeConnectionStatus = 'timed_out';
+        } else if (status === 'CLOSED') {
+          this.realtimeConnectionStatus = 'closed';
+        }
       });
   }
 
@@ -197,7 +203,6 @@ export class SyncEngine {
       deviceId: payload.deviceId || 'unknown'
     };
 
-    console.log('📨 Received sync event:', syncEvent);
     
     // Apply conflict resolution
     if (this.shouldApplyEvent(syncEvent)) {
@@ -231,12 +236,10 @@ export class SyncEngine {
 
   private attemptMerge(event: SyncEvent): boolean {
     // Simple merge strategy - could be enhanced based on data structure
-    console.log('🔀 Attempting to merge event:', event);
     return true; // For now, always apply
   }
 
   private queueForManualResolution(event: SyncEvent): void {
-    console.log('⚠️ Conflict requires manual resolution:', event);
     // Store in conflict resolution queue
     const conflicts = JSON.parse(localStorage.getItem('syncConflicts') || '[]');
     conflicts.push(event);
@@ -264,7 +267,6 @@ export class SyncEngine {
       deviceId: this.deviceId
     };
 
-    console.log('📤 Broadcasting change:', syncEvent);
 
     if (this.isOnline && supabase) {
       // Send immediately if online
@@ -324,7 +326,6 @@ export class SyncEngine {
       // This is handled by the individual context providers
       return true;
     } catch (error) {
-      console.error('❌ Failed to send sync event:', error);
       this.queueSyncEvent(event, 1); // High priority retry
       return false;
     }
@@ -349,7 +350,6 @@ export class SyncEngine {
     // Also queue in service worker for background sync
     this.queueInServiceWorker(event);
     
-    console.log('📋 Queued sync event for offline processing:', event.type);
   }
 
   private queueInServiceWorker(event: SyncEvent): void {
@@ -368,7 +368,6 @@ export class SyncEngine {
   private async processSyncQueue(): Promise<void> {
     if (!this.isOnline || this.syncQueue.length === 0) return;
 
-    console.log(`🔄 Processing ${this.syncQueue.length} queued sync events`);
 
     // Sort by priority and timestamp
     this.syncQueue.sort((a, b) => {
@@ -391,7 +390,6 @@ export class SyncEngine {
         if (failedItem.retryCount < this.maxRetries) {
           this.syncQueue.push(failedItem);
         } else {
-          console.error('❌ Max retries exceeded for sync item:', failedItem.id);
         }
       }
     });
@@ -407,9 +405,7 @@ export class SyncEngine {
   private async processSyncItem(queued: QueuedSync): Promise<void> {
     try {
       await this.sendSyncEvent(queued.event);
-      console.log('✅ Successfully processed queued sync:', queued.id);
     } catch (error) {
-      console.error('❌ Failed to process queued sync:', queued.id, error);
       throw error;
     }
   }
@@ -422,7 +418,6 @@ export class SyncEngine {
     try {
       localStorage.setItem('syncQueue', JSON.stringify(this.syncQueue));
     } catch (error) {
-      console.error('❌ Failed to save sync queue:', error);
     }
   }
 
@@ -431,10 +426,8 @@ export class SyncEngine {
       const saved = localStorage.getItem('syncQueue');
       if (saved) {
         this.syncQueue = JSON.parse(saved);
-        console.log(`📋 Loaded ${this.syncQueue.length} items from offline queue`);
       }
     } catch (error) {
-      console.error('❌ Failed to load sync queue:', error);
       this.syncQueue = [];
     }
   }
@@ -464,7 +457,6 @@ export class SyncEngine {
         try {
           callback(event);
         } catch (error) {
-          console.error('❌ Error in sync event listener:', error);
         }
       });
     }
@@ -536,10 +528,13 @@ export class SyncEngine {
     };
   }
 
+  public getRealtimeConnectionStatus(): 'connecting' | 'subscribed' | 'channel_error' | 'timed_out' | 'closed' | 'offline' {
+    return this.realtimeConnectionStatus;
+  }
+
   public clearQueue(): void {
     this.syncQueue = [];
     this.saveOfflineQueue();
-    console.log('🗑️ Sync queue cleared');
   }
 
   /**
@@ -550,7 +545,7 @@ export class SyncEngine {
     if (this.realtimeChannel) {
       this.realtimeChannel.unsubscribe();
       this.realtimeChannel = null;
-      console.log('🔌 Real-time connection disconnected');
+      this.realtimeConnectionStatus = 'offline';
     }
   }
 
@@ -566,7 +561,6 @@ export class SyncEngine {
     }
     
     this.eventListeners.clear();
-    console.log('🛑 Sync Engine destroyed');
   }
 }
 

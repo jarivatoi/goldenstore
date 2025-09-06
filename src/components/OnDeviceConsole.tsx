@@ -80,14 +80,7 @@ const OnDeviceConsole: React.FC = () => {
   };
 
   if (!isVisible) {
-    return (
-      <div 
-        className="fixed bottom-4 right-4 bg-black text-white px-3 py-2 rounded-lg text-xs z-50 opacity-50"
-        onClick={() => setIsVisible(true)}
-      >
-        Debug ({logs.length})
-      </div>
-    );
+    return null; // Hide the debug button completely
   }
 
   return (
