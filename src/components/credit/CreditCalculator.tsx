@@ -1,5 +1,5 @@
 /**
- * CREDIT CALCULATOR UTILITIES 
+ * CREDIT CALCULATOR UTILITIES
  * ===========================
  * 
  * Utility functions for calculator operations and expression evaluation
@@ -172,7 +172,7 @@ const processSimpleCalculation = (
           expression: `${newLastOperation}${displayInput}`,
           result: numericValue,
           timestamp: Date.now(),
-  stepNumber: newArticleCount,
+          stepNumber: newArticleCount,
           operationType: 'operation',
           displayValue: `${newLastOperation}${displayInput}`,
           isComplete: false,
@@ -391,7 +391,7 @@ const processCompoundCalculation = (
 
   // If we have no calculation steps but a current value and we're getting an operator,
   // we need to create the first step with the current value
-  if (newCalculationSteps.length === 0 && (input === '*' || input === '/' || input === '+' || input === '-')) {
+  if (newCalculationSteps.length === 0 && (input === '*' || input === '/' || input === '+' || input === '-' || input === '×' || input === '÷')) {
     const currentNum = parseFloat(currentValue);
     if (!isNaN(currentNum)) {
       console.log('📊 Creating first step from current value:', currentValue, currentNum);
@@ -492,9 +492,9 @@ const processCompoundCalculation = (
         newValue = currentValue + '.';
       }
     }
-  } else if (input === '*' || input === '/' || input === '×' || input === '÷') {
-    // Handle multiplication and division operators
-    console.log('📊 * or / operator pressed in compound calculation');
+  } else if (input === '*' || input === '×') {
+    // Handle multiplication operator
+    console.log('📊 * or × operator pressed in compound calculation');
     
     // Calculate intermediate result before allowing next operation
     if (newCalculationSteps.length > 0) {
@@ -520,19 +520,60 @@ const processCompoundCalculation = (
     
     // Now add the new operation step
     newCalculationSteps.push({
-      expression: `${input}`,
+      expression: `*`,
       result: 0,
       timestamp: Date.now(),
       stepNumber: newCalculationSteps.length + 1,
       operationType: 'operation',
-      displayValue: `${input}`,
+      displayValue: `×`,
       isComplete: false,
-      operator: input
+      operator: '*'
     });
     
-    newLastOperation = input;
+    newLastOperation = '*';
     newIsNewNumber = true;
-    console.log('📊 Updated calculation steps after * or / operation:', newCalculationSteps);
+    console.log('📊 Updated calculation steps after * operation:', newCalculationSteps);
+  } else if (input === '/' || input === '÷') {
+    // Handle division operator
+    console.log('📊 / or ÷ operator pressed in compound calculation');
+    
+    // Calculate intermediate result before allowing next operation
+    if (newCalculationSteps.length > 0) {
+      // Build and evaluate the expression with proper precedence
+      const expression = buildCompoundExpression(newCalculationSteps);
+      const intermediateResult = evaluateExpression(expression);
+      
+      // Update display to show intermediate result
+      newValue = intermediateResult.toString();
+      console.log('📊 Intermediate result calculated:', intermediateResult);
+      
+      // Replace all steps with the intermediate result as a new base value
+      newCalculationSteps = [{
+        expression: intermediateResult.toString(),
+        result: intermediateResult,
+        timestamp: Date.now(),
+        stepNumber: 1,
+        operationType: 'number',
+        displayValue: intermediateResult.toString(),
+        isComplete: false
+      }];
+    }
+    
+    // Now add the new operation step
+    newCalculationSteps.push({
+      expression: `/`,
+      result: 0,
+      timestamp: Date.now(),
+      stepNumber: newCalculationSteps.length + 1,
+      operationType: 'operation',
+      displayValue: `÷`,
+      isComplete: false,
+      operator: '/'
+    });
+    
+    newLastOperation = '/';
+    newIsNewNumber = true;
+    console.log('📊 Updated calculation steps after / operation:', newCalculationSteps);
   } else if (input === '+' || input === '-') {
     // Handle + and - operators in compound calculations
     console.log('📊 + or - operator pressed in compound calculation');
@@ -863,9 +904,35 @@ export const processCalculatorInput = (
       newIsNewNumber = true;
     }
   } else if (input === 'MU') {
-    // Mark Up - add current number to memory
+    // Mark Up - calculate markup percentage
     const currentNum = getCurrentNumber();
-    newMemory += currentNum;
+    if (newCalculationSteps.length >= 2) {
+      // For markup calculation: (Selling Price - Cost Price) / Cost Price * 100
+      const costPrice = newCalculationSteps[0].result;
+      const sellingPrice = currentNum;
+      
+      if (costPrice !== 0) {
+        const markupPercent = ((sellingPrice - costPrice) / costPrice) * 100;
+        newValue = markupPercent.toFixed(2);
+        
+        // Create markup calculation step
+        newCalculationSteps = [{
+          expression: `(${sellingPrice}-${costPrice})/${costPrice}*100`,
+          result: markupPercent,
+          timestamp: Date.now(),
+          stepNumber: 1,
+          operationType: 'operation',
+          displayValue: `MU=${markupPercent.toFixed(2)}%`,
+          isComplete: true
+        }];
+      } else {
+        newValue = 'Error';
+      }
+    } else {
+      // If not enough steps, just add to memory (fallback behavior)
+      newMemory += currentNum;
+    }
+    newIsNewNumber = true;
   } else if (input === 'MRC') {
     // Memory Recall/Clear
     if (memory === 0) {
