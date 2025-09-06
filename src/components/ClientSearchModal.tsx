@@ -278,7 +278,7 @@ const ClientSearchModal: React.FC<ClientSearchModalProps> = ({
                 // Auto-capitalize as user types while preserving spacing
                 const value = e.target.value;
                // Auto-capitalize first letter of each word and add space after comma
-               let formatted = value.replace(/\b\w/g, (char) => char.toUpperCase());
+               let formatted = value.replace(/(^|\s)\w/g, (char) => char.toUpperCase());
                // Add space after comma if not already present
                 setDescription(formatted);
               }}
