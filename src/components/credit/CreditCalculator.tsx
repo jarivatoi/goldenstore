@@ -651,7 +651,7 @@ const buildSummarizedSteps = (steps: CalculationStep[]): CalculationStep[] => {
     }
   }
   
-  return summarizedSteps;
+  return summarizedSteps; 
 };
 
 /**
