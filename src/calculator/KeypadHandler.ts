@@ -50,7 +50,7 @@ export class KeypadHandler {
    */
   public static initializeState(): KeypadState {
     return {
-      display: '0',
+      display: '1',
       memory: 0,
       grandTotal: 0,
       lastOperation: null,
