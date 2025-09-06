@@ -581,7 +581,7 @@ const isCompoundCalculation = (calculationSteps: CalculationStep[], lastOperatio
  */
 const buildSummarizedSteps = (steps: CalculationStep[]): CalculationStep[] => {
   const summarizedSteps: CalculationStep[] = [];
-  let currentStep = 1;
+  let currentStepNumber = 1;
   
   for (let i = 0; i < steps.length; i++) {
     const step = steps[i];
@@ -590,14 +590,14 @@ const buildSummarizedSteps = (steps: CalculationStep[]): CalculationStep[] => {
       // Add number step as-is
       summarizedSteps.push({
         ...step,
-        stepNumber: currentStep++,
+        stepNumber: currentStepNumber++,
         displayValue: step.displayValue
       });
     } else if (step.operationType === 'operation') {
-      // For operation steps, check if it's part of a compound operation
+      // Check if this is a multiplication/division operation
       if (step.operator === '*' || step.operator === '/' || step.operator === '×' || step.operator === '÷') {
-        // This is a multiplication/division operation
-        if (i > 0 && summarizedSteps.length > 0) {
+        // This is a compound operation - group it with the previous number
+        if (summarizedSteps.length > 0) {
           const previousStep = summarizedSteps[summarizedSteps.length - 1];
           const nextNumberStep = i + 1 < steps.length ? steps[i + 1] : null;
           
@@ -614,16 +614,26 @@ const buildSummarizedSteps = (steps: CalculationStep[]): CalculationStep[] => {
               subResult = rightOperand !== 0 ? leftOperand / rightOperand : 0;
             }
             
+            // Find the addition/subtraction operator that precedes this compound operation
+            let addSubOperator = '+';
+            for (let j = i - 2; j >= 0; j--) {
+              if (steps[j].operationType === 'operation' && 
+                  (steps[j].operator === '+' || steps[j].operator === '-')) {
+                addSubOperator = steps[j].operator;
+                break;
+              }
+            }
+            
             // Update the previous step to show the compound operation
             summarizedSteps[summarizedSteps.length - 1] = {
-              expression: `(${leftOperand}${operator}${rightOperand})`,
+              expression: `${addSubOperator}(${leftOperand}${operator}${rightOperand})`,
               result: subResult,
               timestamp: Date.now(),
-              stepNumber: currentStep++,
+              stepNumber: currentStepNumber++,
               operationType: 'operation',
-              displayValue: `+(${leftOperand}${operator}${rightOperand})=${subResult}`,
+              displayValue: `${addSubOperator}(${leftOperand}${operator}${rightOperand})=${subResult}`,
               isComplete: true,
-              operator: '+'
+              operator: addSubOperator
             };
             
             // Skip the next number step since we've already processed it
@@ -634,7 +644,7 @@ const buildSummarizedSteps = (steps: CalculationStep[]): CalculationStep[] => {
         // For addition/subtraction, add as-is
         summarizedSteps.push({
           ...step,
-          stepNumber: currentStep++,
+          stepNumber: currentStepNumber++,
           displayValue: step.displayValue
         });
       }
