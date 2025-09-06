@@ -1,5 +1,5 @@
 /**
- * CREDIT CALCULATOR UTILITIES
+ * CREDIT CALCULATOR UTILITIES 
  * ===========================
  * 
  * Utility functions for calculator operations and expression evaluation
