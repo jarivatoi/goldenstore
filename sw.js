@@ -1,14 +1,13 @@
 // Enhanced service worker for PWA functionality
-const CACHE_NAME = 'golden-store-v6';
-const BASE_PATH = '.';
+const CACHE_NAME = 'golden-price-list-v4';
+const BASE_PATH = '/goldenpricelist';
 
 // Sync tags for background sync
 const SYNC_TAGS = {
   PRICE_ITEMS: 'price-items-sync',
   CREDIT_DATA: 'credit-data-sync',
   OVER_ITEMS: 'over-items-sync',
-  ORDER_DATA: 'order-data-sync',
-  AUTO_BACKUP: 'auto-backup-sync'
+  ORDER_DATA: 'order-data-sync'
 };
 
 // Files to cache for offline functionality
@@ -127,8 +126,6 @@ self.addEventListener('sync', (event) => {
     event.waitUntil(syncOverItems());
   } else if (event.tag === SYNC_TAGS.ORDER_DATA) {
     event.waitUntil(syncOrderData());
-  } else if (event.tag === SYNC_TAGS.AUTO_BACKUP) {
-    event.waitUntil(syncAutoBackup());
   }
 });
 
@@ -212,28 +209,6 @@ async function syncOrderData() {
     }
   } catch (error) {
     console.error('❌ Background sync failed for order data:', error);
-  }
-}
-
-// Auto Backup Sync Function
-async function syncAutoBackup() {
-  try {
-    console.log('🔄 Processing automatic backup...');
-    
-    // Import the backup manager (this would need to be adapted for service worker)
-    // For now, we'll post a message to the main thread to handle the backup
-    const clients = await self.clients.matchAll();
-    
-    clients.forEach(client => {
-      client.postMessage({
-        type: 'PROCESS_AUTO_BACKUP',
-        timestamp: Date.now()
-      });
-    });
-    
-    console.log('✅ Auto backup sync message sent to main thread');
-  } catch (error) {
-    console.error('❌ Auto backup sync failed:', error);
   }
 }
 
