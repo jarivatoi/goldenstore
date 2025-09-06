@@ -170,7 +170,7 @@ const processSimpleCalculation = (
         
         newCalculationSteps.push({
           expression: `${newLastOperation}${displayInput}`,
-          result: numericValue,
+  result: numericValue,
           timestamp: Date.now(),
           stepNumber: newArticleCount,
           operationType: 'operation',
@@ -761,14 +761,13 @@ const buildCompoundExpression = (steps: CalculationStep[]): string => {
 };
 
 /**
- * Determine if calculation is compound
- * Simple: Only + and - operators
- * Compound: Any × or ÷ operators
+ * Enhanced function to determine if calculation is compound
+ * Now properly detects compound operations even in completed calculations
  */
 const isCompoundCalculation = (calculationSteps: CalculationStep[], lastOperation: string | null): boolean => {
   // Check if any step contains multiplication or division
   for (const step of calculationSteps) {
-    // Check expression
+    // Check expression for multiplication/division symbols (including completed calculations)
     if (step.expression.includes('*') || 
         step.expression.includes('/') || 
         step.expression.includes('×') || 
@@ -776,22 +775,46 @@ const isCompoundCalculation = (calculationSteps: CalculationStep[], lastOperatio
       return true;
     }
     
-    // Check operator property
+    // Check operator property (works for both active and completed operations)
     if (step.operator === '*' || step.operator === '/' || step.operator === '×' || step.operator === '÷') {
       return true;
     }
     
-    // Check display value (for completed calculations)
+    // Check display value for multiplication/division symbols (including completed calculations)
     if (step.displayValue && (step.displayValue.includes('×') || step.displayValue.includes('÷'))) {
       return true;
     }
     
-    // For completed calculations, check if the step represents a multiplication/division operation
+    // For completed calculations, also check if the mathematical structure suggests compound operations
     if (step.isComplete && step.operationType === 'operation') {
+      // Check if this step involves multiplication/division in any form
       if (step.displayValue && (step.displayValue.includes('×') || step.displayValue.includes('÷'))) {
         return true;
       }
+      
+      // Check if the expression suggests compound operations
+      if (step.expression && (step.expression.includes('*') || step.expression.includes('/') || 
+          step.expression.includes('×') || step.expression.includes('÷'))) {
+        return true;
+      }
     }
+  }
+  
+  // Check if we have mixed operations that suggest compound calculation
+  const hasAdditionSubtraction = calculationSteps.some(step => 
+    step.operator === '+' || step.operator === '-' ||
+    step.expression.includes('+') || step.expression.includes('-')
+  );
+  
+  const hasMultiplicationDivision = calculationSteps.some(step => 
+    step.operator === '*' || step.operator === '/' || step.operator === '×' || step.operator === '÷' ||
+    step.expression.includes('*') || step.expression.includes('/') || 
+    step.expression.includes('×') || step.expression.includes('÷')
+  );
+  
+  // If we have both addition/subtraction AND multiplication/division, it's compound
+  if (hasAdditionSubtraction && hasMultiplicationDivision) {
+    return true;
   }
   
   // Check if current operation is × or ÷
@@ -1231,11 +1254,28 @@ export const processCalculatorInput = (
     let willBeCompound = input === '*' || input === '/' || input === '×' || input === '÷' || 
                         isCompoundCalculation(newCalculationSteps, newLastOperation);
     
-    // Special handling for = key - treat it like the previous operator
+    // Special handling for = key - ensure it uses the same logic as operators
     if (input === '=' || input === 'ENTER') {
       // If we have existing steps, use the same type as the existing calculation
+      // Enhanced detection that works for both completed and active calculations
       if (newCalculationSteps.length > 0) {
         willBeCompound = isCompoundCalculation(newCalculationSteps, newLastOperation);
+        
+        // Additional check: if we have mixed operations, treat as compound
+        const hasAddSub = newCalculationSteps.some(step => 
+          step.operator === '+' || step.operator === '-' ||
+          step.expression.includes('+') || step.expression.includes('-')
+        );
+        
+        const hasMulDiv = newCalculationSteps.some(step => 
+          step.operator === '*' || step.operator === '/' || step.operator === '×' || step.operator === '÷' ||
+          step.expression.includes('*') || step.expression.includes('/') || 
+          step.expression.includes('×') || step.expression.includes('÷')
+        );
+        
+        if (hasAddSub && hasMulDiv) {
+          willBeCompound = true;
+        }
       }
     }
     
