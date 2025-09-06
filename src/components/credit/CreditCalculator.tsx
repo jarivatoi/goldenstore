@@ -1092,7 +1092,6 @@ export const processCalculatorInput = (
 
 const startAutoReplaySequence = (summarizedSteps: CalculationStep[]) => {
   let currentStepIndex = 0;
-  fwefe
   console.log('🔍 Starting auto replay with steps:', summarizedSteps.map(s => s.displayValue));
   
   const showNextStep = () => {
