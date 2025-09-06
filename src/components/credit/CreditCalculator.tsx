@@ -309,32 +309,49 @@ const processSimpleCalculation = (
     newLastOperation = input;
     newIsNewNumber = true;
     // CRITICAL: Don't modify newArticleCount here - preserve existing count
-  } else if (input === '=' || input === 'ENTER') {
-    // Handle equals - check if we already have a completed calculation
-    if (newCalculationSteps.length > 0 && newCalculationSteps.some(step => step.isComplete)) {
-      // Already have a completed calculation (like percentage), just keep the current value
-      // Don't recalculate or change anything
-      newValue = currentValue;
-      newIsNewNumber = true;
-    } else if (newCalculationSteps.length > 0) {
-      // Calculate result for incomplete operations
-      // Mark all previous steps as complete
-      newCalculationSteps.forEach(step => {
-        step.isComplete = true;
-      });
-      
-      const expression = buildSimpleExpression(newCalculationSteps);
-      result = evaluateExpression(expression);
-      
+ 
+} else if (input === '=' || input === 'ENTER') {
+  // Handle equals for compound operations
+  if (newCalculationSteps.length > 0 && newCalculationSteps.some(step => step.isComplete)) {
+    // Already have a completed calculation (like percentage), just keep the current value
+    newValue = currentValue;
+    newIsNewNumber = true;
+  } else if (newCalculationSteps.length > 0) {
+    // Calculate result for incomplete compound operations
+    // BUT DON'T mark steps as complete - preserve them for auto replay
+    const expression = buildCompoundExpression(newCalculationSteps);
+    result = evaluateExpression(expression);
+    
+    // Format the result properly for display
+    if (result % 1 === 0) {
+      // Whole number - display without decimals
       newValue = result.toString();
-      newLastOperation = null;
-      newIsNewNumber = true;
-      newArticleCount = newCalculationSteps.length; // Keep same article count, don't increment
-      
-      // Add to grand total and transaction history
-      newGrandTotal += result;
-      newTransactionHistory.push(result);
     } else {
+      // Decimal number - round to reasonable precision and remove trailing zeros
+      newValue = parseFloat(result.toFixed(10)).toString();
+    }
+    
+    // Add a result step instead of marking all steps as complete
+    newCalculationSteps.push({
+      expression: `=${result}`,
+      result: result,
+      timestamp: Date.now(),
+      stepNumber: newCalculationSteps.length + 1,
+      operationType: 'result',
+      displayValue: `=${result}`,
+      isComplete: true
+    });
+    
+    newLastOperation = null;
+    newIsNewNumber = true;
+    
+    // Add to grand total and transaction history
+    newGrandTotal += result;
+    newTransactionHistory.push(result);
+  }
+} 
+    
+    else {
       // No calculation steps, just keep current value
       newValue = currentValue;
       newIsNewNumber = true;
