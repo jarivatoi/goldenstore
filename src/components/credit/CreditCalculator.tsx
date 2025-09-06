@@ -1249,73 +1249,85 @@ export const processCalculatorInput = (
       newGrandTotal = simpleResult.grandTotal;
       newTransactionHistory = simpleResult.transactionHistory;
     }
-  } else {
-    // Route to appropriate calculation flow
-    let willBeCompound = input === '*' || input === '/' || input === '×' || input === '÷' || 
-                        isCompoundCalculation(newCalculationSteps, newLastOperation);
-    
-    // Special handling for = key - ensure it uses the same logic as operators
-    if (input === '=' || input === 'ENTER') {
-      // If we have existing steps, use the same type as the existing calculation
-      // Enhanced detection that works for both completed and active calculations
-      if (newCalculationSteps.length > 0) {
-        willBeCompound = isCompoundCalculation(newCalculationSteps, newLastOperation);
-        
-        // Additional check: if we have mixed operations, treat as compound
-        const hasAddSub = newCalculationSteps.some(step => 
-          step.operator === '+' || step.operator === '-' ||
-          step.expression.includes('+') || step.expression.includes('-')
-        );
-        
-        const hasMulDiv = newCalculationSteps.some(step => 
-          step.operator === '*' || step.operator === '/' || step.operator === '×' || step.operator === '÷' ||
-          step.expression.includes('*') || step.expression.includes('/') || 
-          step.expression.includes('×') || step.expression.includes('÷')
-        );
-        
-        if (hasAddSub && hasMulDiv) {
-          willBeCompound = true;
-        }
-      }
-    }
-    
-    if (willBeCompound) {
-      const compoundResult = processCompoundCalculation(
-        currentValue, input, newCalculationSteps, newLastOperation,
-        newIsNewNumber, newArticleCount
+ // In the processCalculatorInput function, find the section that handles the calculation flow
+// and replace it with this enhanced version:
+
+} else {
+  // Route to appropriate calculation flow
+  let willBeCompound = input === '*' || input === '/' || input === '×' || input === '÷' || 
+                      isCompoundCalculation(newCalculationSteps, newLastOperation);
+  
+  // Special handling for = key - ensure compound calculations are always detected
+  if (input === '=' || input === 'ENTER') {
+    // Enhanced compound detection that works for completed calculations
+    if (newCalculationSteps.length > 0) {
+      // Check if we have any multiplication/division operations in the history
+      const hasMultiplicationDivision = newCalculationSteps.some(step => 
+        step.operator === '*' || step.operator === '/' || step.operator === '×' || step.operator === '÷' ||
+        step.expression.includes('*') || step.expression.includes('/') || 
+        step.expression.includes('×') || step.expression.includes('÷') ||
+        step.displayValue.includes('×') || step.displayValue.includes('÷')
       );
       
-      newValue = compoundResult.value;
-      newCalculationSteps = compoundResult.calculationSteps;
-      newLastOperation = compoundResult.lastOperation;
-      newIsNewNumber = compoundResult.isNewNumber;
-      newArticleCount = compoundResult.articleCount;
-      
-      if (compoundResult.result !== undefined) {
-        newGrandTotal += compoundResult.result;
-        newTransactionHistory.push(compoundResult.result);
-        localStorage.setItem('currentCheckIndex', '-1');
-      }
-    } else {
-      // Use simple calculation flow
-      const simpleResult = processSimpleCalculation(
-        currentValue, input, newCalculationSteps, newLastOperation,
-        newIsNewNumber, newArticleCount
+      // Check if we have mixed operations (both +- and ×÷)
+      const hasAdditionSubtraction = newCalculationSteps.some(step => 
+        step.operator === '+' || step.operator === '-' ||
+        step.expression.includes('+') || step.expression.includes('-')
       );
       
-      newValue = simpleResult.value;
-      newCalculationSteps = simpleResult.calculationSteps;
-      newLastOperation = simpleResult.lastOperation;
-      newIsNewNumber = simpleResult.isNewNumber;
-      newArticleCount = simpleResult.articleCount;
+      // If we have multiplication/division OR mixed operations, treat as compound
+      willBeCompound = hasMultiplicationDivision || (hasAdditionSubtraction && hasMultiplicationDivision);
       
-      if (simpleResult.result !== undefined) {
-        newGrandTotal += simpleResult.result;
-        newTransactionHistory.push(simpleResult.result);
-        localStorage.setItem('currentCheckIndex', '-1');
-      }
+      console.log('📊 = key compound detection:', {
+        hasMultiplicationDivision,
+        hasAdditionSubtraction,
+        willBeCompound,
+        steps: newCalculationSteps.map(s => ({
+          operator: s.operator,
+          expression: s.expression,
+          displayValue: s.displayValue
+        }))
+      });
     }
   }
+  
+  if (willBeCompound) {
+    const compoundResult = processCompoundCalculation(
+      currentValue, input, newCalculationSteps, newLastOperation,
+      newIsNewNumber, newArticleCount
+    );
+    
+    newValue = compoundResult.value;
+    newCalculationSteps = compoundResult.calculationSteps;
+    newLastOperation = compoundResult.lastOperation;
+    newIsNewNumber = compoundResult.isNewNumber;
+    newArticleCount = compoundResult.articleCount;
+    
+    if (compoundResult.result !== undefined) {
+      newGrandTotal += compoundResult.result;
+      newTransactionHistory.push(compoundResult.result);
+      localStorage.setItem('currentCheckIndex', '-1');
+    }
+  } else {
+    // Use simple calculation flow
+    const simpleResult = processSimpleCalculation(
+      currentValue, input, newCalculationSteps, newLastOperation,
+      newIsNewNumber, newArticleCount
+    );
+    
+    newValue = simpleResult.value;
+    newCalculationSteps = simpleResult.calculationSteps;
+    newLastOperation = simpleResult.lastOperation;
+    newIsNewNumber = simpleResult.isNewNumber;
+    newArticleCount = simpleResult.articleCount;
+    
+    if (simpleResult.result !== undefined) {
+      newGrandTotal += simpleResult.result;
+      newTransactionHistory.push(simpleResult.result);
+      localStorage.setItem('currentCheckIndex', '-1');
+    }
+  }
+}
           console.log('📊 Created first decimal step');
 
   // Format display value - preserve decimal formatting
