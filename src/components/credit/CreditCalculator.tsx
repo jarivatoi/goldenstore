@@ -1386,117 +1386,78 @@ export const processCalculatorInput = (
 const startAutoReplaySequence = (steps: CalculationStep[], lastOperation: string | null, isNewNumber: boolean) => {
   let currentStepIndex = 0;
   
-  // Check if we have a completed calculation or need to calculate result
-  const hasCompletedCalculation = steps.some(step => step.isComplete);
-  
   // Enhanced compound detection for auto replay
   const isCompound = isCompoundCalculation(steps, lastOperation);
   
-  console.log('🔍 Auto replay detection:', {
-    hasCompletedCalculation,
+  console.log('🔍 Auto replay sequence started:', {
+    totalSteps: steps.length,
     isCompound,
     steps: steps.map(s => ({
-      operator: s.operator,
-      expression: s.expression,
       displayValue: s.displayValue,
-      isComplete: s.isComplete
+      operator: s.operator,
+      isComplete: s.isComplete,
+      operationType: s.operationType
     }))
   });
-  
-  let calculationResult: number | null = null;
-  
-  // If calculation is not complete, calculate the result
-  if (!hasCompletedCalculation && steps.length > 0) {
-    if (isCompound) {
-      const expression = buildCompoundExpression(steps);
-      calculationResult = evaluateExpression(expression);
-    } else {
-      const expression = buildSimpleExpression(steps);
-      calculationResult = evaluateExpression(expression);
-    }
-  }
   
   const showNextStep = () => {
     if (currentStepIndex < steps.length) {
       const step = steps[currentStepIndex];
       
-      // For compound calculations, show the actual step display values
-      let displayValue = step.displayValue;
+      console.log('🔍 Showing auto replay step:', {
+        index: currentStepIndex,
+        displayValue: step.displayValue,
+        operationType: step.operationType
+      });
       
       window.dispatchEvent(new CustomEvent('autoReplayStep', {
         detail: {
-          displayValue: displayValue,
+          displayValue: step.displayValue,
           stepIndex: currentStepIndex,
           totalSteps: steps.length,
           currentStep: currentStepIndex + 1,
           articleCount: step.operationType === 'result' ? currentStepIndex : currentStepIndex + 1,
-          isCompound: isCompound // Pass compound flag for UI handling
+          isCompound: isCompound
         }
       }));
       
       localStorage.setItem('currentCheckIndex', currentStepIndex.toString());
       currentStepIndex++;
       
-      // Continue to next step or show result
+      // Continue to next step
       if (currentStepIndex < steps.length) {
         setTimeout(showNextStep, 1000);
-      } else if (calculationResult !== null) {
-        // Show calculated result
-        setTimeout(() => {
-          window.dispatchEvent(new CustomEvent('autoReplayStep', {
-            detail: {
-              displayValue: `=${calculationResult}`,
-              stepIndex: currentStepIndex,
-              totalSteps: steps.length + 1, // Include result in total
-              currentStep: currentStepIndex + 1,
-              articleCount: steps.length,
-              isCompound: isCompound
-            }
-          }));
-          
-          localStorage.setItem('currentCheckIndex', currentStepIndex.toString());
-          
-          // Complete the auto replay
-          setTimeout(() => {
-            window.dispatchEvent(new CustomEvent('autoReplayComplete'));
-          }, 1000);
-        }, 1000);
-      } else if (hasCompletedCalculation) {
-        // For completed calculations, show the final result from the last step
-        setTimeout(() => {
-          const lastStep = steps[steps.length - 1];
-          let finalResult;
-          
-          if (lastStep.displayValue.includes('%')) {
-            // For percentage calculations, use the percentage result
-            finalResult = lastStep.result;
-          } else {
-            // For other completed calculations, evaluate the full expression
-            const expression = isCompound ? buildCompoundExpression(steps) : buildSimpleExpression(steps);
-            finalResult = evaluateExpression(expression);
-          }
-          
-          window.dispatchEvent(new CustomEvent('autoReplayStep', {
-            detail: {
-              displayValue: `=${finalResult}`,
-              stepIndex: currentStepIndex,
-              totalSteps: steps.length + 1,
-              currentStep: currentStepIndex + 1,
-              articleCount: steps.length,
-              isCompound: isCompound
-            }
-          }));
-          
-          localStorage.setItem('currentCheckIndex', currentStepIndex.toString());
-          
-          // Complete the auto replay
-          setTimeout(() => {
-            window.dispatchEvent(new CustomEvent('autoReplayComplete'));
-          }, 1000);
-        }, 1000);
       } else {
-        // No result to show, complete immediately
-        window.dispatchEvent(new CustomEvent('autoReplayComplete'));
+        // Show final result if available
+        const hasResultStep = steps.some(s => s.operationType === 'result');
+        if (!hasResultStep) {
+          // Calculate and show result
+          const expression = isCompound ? buildCompoundExpression(steps) : buildSimpleExpression(steps);
+          const result = evaluateExpression(expression);
+          
+          setTimeout(() => {
+            window.dispatchEvent(new CustomEvent('autoReplayStep', {
+              detail: {
+                displayValue: `=${result}`,
+                stepIndex: currentStepIndex,
+                totalSteps: steps.length + 1,
+                currentStep: currentStepIndex + 1,
+                articleCount: steps.length,
+                isCompound: isCompound
+              }
+            }));
+            
+            // Complete the auto replay
+            setTimeout(() => {
+              window.dispatchEvent(new CustomEvent('autoReplayComplete'));
+            }, 1000);
+          }, 1000);
+        } else {
+          // Complete the auto replay
+          setTimeout(() => {
+            window.dispatchEvent(new CustomEvent('autoReplayComplete'));
+          }, 1000);
+        }
       }
     }
   };
