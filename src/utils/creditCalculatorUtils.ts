@@ -44,7 +44,7 @@ interface ArticleCountState {
  * Initialize calculator state
  */
 export const initCalculatorState = (): CalculatorState & { articleCount: number } => ({
-  display: '0',
+  display: '1',
   memory: 0,
   grandTotal: 0,
   lastOperation: null,
