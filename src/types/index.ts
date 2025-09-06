@@ -176,7 +176,6 @@ export interface OrderItemTemplate {
   name: string; // Product name (e.g., "Matinee", "Palmal")
   unitPrice: number; // Default unit price
   isVatNil: boolean; // Whether item is VAT exempt
-  isVatIncluded: boolean; // Whether VAT is included in the price
   vatPercentage: number; // VAT percentage (default 15)
   createdAt: Date; // When template was created
 }

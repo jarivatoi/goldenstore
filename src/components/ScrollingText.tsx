@@ -74,6 +74,7 @@ export const ScrollingText: React.FC<ScrollingTextProps> = ({
           easing: enhancedEasing
         });
         
+        console.log('🎬 Started enhanced TweenMax animation for text:', currentText);
         
         // Add scroll detection
         const handleScroll = () => {
@@ -98,6 +99,7 @@ export const ScrollingText: React.FC<ScrollingTextProps> = ({
         scrollListenerRef.current = handleScroll;
       } else {
         setNeedsScrolling(false);
+        console.log('✅ Text fits in container, no animation needed');
       }
     };
 
@@ -147,17 +149,8 @@ export const ScrollingText: React.FC<ScrollingTextProps> = ({
     return () => {
       // Clean up scroll listener on unmount
       if (scrollListenerRef.current) {
-        // Remove the filtered scroll handler
-        const filteredScrollHandler = scrollListenerRef.current;
-        window.removeEventListener('scroll', filteredScrollHandler as any, { passive: true } as any);
-        
-        // Remove scroll listeners from parent elements
-        let parent = containerRef.current?.parentElement;
-        while (parent && parent !== document.body) {
-          parent.removeEventListener('scroll', scrollListenerRef.current as any, { passive: true } as any);
-          parent = parent.parentElement;
-        }
-        
+        window.removeEventListener('scroll', scrollListenerRef.current, { passive: true } as any);
+        document.removeEventListener('scroll', scrollListenerRef.current, { passive: true } as any);
         scrollListenerRef.current = null;
       }
       

@@ -5,16 +5,12 @@ import { useCredit } from '../context/CreditContext';
 import ClientDetailModal from './ClientDetailModal';
 import ClientActionModal from './ClientActionModal';
 import { ScrollingText } from './ScrollingText';
-import FlipCard from './credit/FlipCard';
 
 interface ClientCardProps {
   client: Client;
   onLongPress: () => void;
   onQuickAdd?: (client: Client) => void;
   onResetCalculator?: () => void;
-  isLinked?: boolean;
-  showWobble?: boolean;
-  onCloseWobble?: () => void;
 }
 
 /**
@@ -23,27 +19,14 @@ interface ClientCardProps {
  * 
  * Displays individual client information with swipe and long press interactions
  */
-const ClientCard: React.FC<ClientCardProps> = ({ client, onLongPress, onQuickAdd, onResetCalculator, isLinked = false, showWobble = false, onCloseWobble }) => {
-  const { getClientTotalDebt, getClientBottlesOwed, getClientTransactions } = useCredit();
+const ClientCard: React.FC<ClientCardProps> = ({ client, onLongPress, onQuickAdd, onResetCalculator }) => {
+  const { getClientTotalDebt, getClientBottlesOwed } = useCredit();
   const [showDetails, setShowDetails] = useState(false);
   const [showActions, setShowActions] = useState(false);
-  const [forceUpdate, setForceUpdate] = useState(0);
-  
-  // Listen for credit data changes to force re-render
-  React.useEffect(() => {
-    const handleCreditDataChanged = () => {
-      setForceUpdate(prev => prev + 1);
-    };
-
-    window.addEventListener('creditDataChanged', handleCreditDataChanged);
-    
-    return () => {
-      window.removeEventListener('creditDataChanged', handleCreditDataChanged);
-    };
-  }, []);
   
   // Get returnable items for scrolling display
-  const getReturnableItemsText = React.useMemo((): string => {
+  const getReturnableItemsText = (): string => {
+    const { getClientTransactions } = useCredit();
     const clientTransactions = getClientTransactions(client.id);
     
     const returnableItems: {[key: string]: number} = {};
@@ -68,11 +51,7 @@ const ClientCard: React.FC<ClientCardProps> = ({ client, onLongPress, onQuickAdd
       while ((chopineMatch = chopinePattern.exec(description)) !== null) {
         const quantity = parseInt(chopineMatch[1]);
         const brand = chopineMatch[2]?.trim() || '';
-        // Capitalize brand name properly
-        const capitalizedBrand = brand ? brand.split(' ').map(word => 
-          word.charAt(0).toUpperCase() + word.slice(1).toLowerCase()
-        ).join(' ') : '';
-        const key = capitalizedBrand ? `Chopine ${capitalizedBrand}` : 'Chopine';
+        const key = brand ? `Chopine ${brand}` : 'Chopine';
         
         if (!returnableItems[key]) {
           returnableItems[key] = 0;
@@ -81,24 +60,19 @@ const ClientCard: React.FC<ClientCardProps> = ({ client, onLongPress, onQuickAdd
       }
       
       // Look for Bouteille items
-      const bouteillePattern = /(\d+)\s+(?:(\d+(?:\.\d+)?[Ll])\s+)?bouteilles?(?:\s+([^,\(\)]*))?/gi;
+      const bouteillePattern = /(\d+)\s+(?:(\d+(?:\.\d+)?L)\s+)?bouteilles?(?:\s+([^,]*))?/gi;
       let bouteilleMatch;
       
       while ((bouteilleMatch = bouteillePattern.exec(description)) !== null) {
         const quantity = parseInt(bouteilleMatch[1]);
-        const size = bouteilleMatch[2]?.trim().replace(/l$/i, 'L') || '';
+        const size = bouteilleMatch[2]?.trim() || '';
         const brand = bouteilleMatch[3]?.trim() || '';
         
-        // Capitalize brand name properly
-        const capitalizedBrand = brand ? brand.split(' ').map(word => 
-          word.charAt(0).toUpperCase() + word.slice(1).toLowerCase()
-        ).join(' ') : '';
-        
         let key;
-        if (size && capitalizedBrand) {
-          key = `${size} ${capitalizedBrand}`;
-        } else if (capitalizedBrand) {
-          key = `Bouteille ${capitalizedBrand}`;
+        if (size && brand) {
+          key = `${size} ${brand}`;
+        } else if (brand) {
+          key = `Bouteille ${brand}`;
         } else if (size) {
           key = `${size} Bouteille`;
         } else {
@@ -113,22 +87,17 @@ const ClientCard: React.FC<ClientCardProps> = ({ client, onLongPress, onQuickAdd
       
       // Handle items without explicit numbers (assume quantity 1)
       if (description.includes('bouteille') && !bouteillePattern.test(description)) {
-        const sizeMatch = description.match(/(\d+(?:\.\d+)?[Ll])/i);
+        const sizeMatch = description.match(/(\d+(?:\.\d+)?L)/i);
         const brandMatch = description.match(/bouteilles?\s+([^,]*)/i);
         const brand = brandMatch?.[1]?.trim() || '';
         
-        // Capitalize brand name properly
-        const capitalizedBrand = brand ? brand.split(' ').map(word => 
-          word.charAt(0).toUpperCase() + word.slice(1).toLowerCase()
-        ).join(' ') : '';
-        
         let key;
-        if (sizeMatch && capitalizedBrand) {
-          key = `${sizeMatch[1].replace(/l$/i, 'L')} ${capitalizedBrand}`;
-        } else if (capitalizedBrand) {
-          key = `Bouteille ${capitalizedBrand}`;
+        if (sizeMatch && brand) {
+          key = `${sizeMatch[1]} ${brand}`;
+        } else if (brand) {
+          key = `Bouteille ${brand}`;
         } else if (sizeMatch) {
-          key = `${sizeMatch[1].replace(/l$/i, 'L')} Bouteille`;
+          key = `${sizeMatch[1]} Bouteille`;
         } else {
           key = 'Bouteille';
         }
@@ -142,13 +111,7 @@ const ClientCard: React.FC<ClientCardProps> = ({ client, onLongPress, onQuickAdd
       if (description.includes('chopine') && !chopinePattern.test(description)) {
         const brandMatch = description.match(/chopines?\s+([^,]*)/i);
         const brand = brandMatch?.[1]?.trim() || '';
-        
-        // Capitalize brand name properly
-        const capitalizedBrand = brand ? brand.split(' ').map(word => 
-          word.charAt(0).toUpperCase() + word.slice(1).toLowerCase()
-        ).join(' ') : '';
-        
-        const key = capitalizedBrand ? `Chopine ${capitalizedBrand}` : 'Chopine';
+        const key = brand ? `Chopine ${brand}` : 'Chopine';
         
         if (!returnableItems[key]) {
           returnableItems[key] = 0;
@@ -189,81 +152,29 @@ const ClientCard: React.FC<ClientCardProps> = ({ client, onLongPress, onQuickAdd
             !transaction.description.toLowerCase().includes('returned') &&
             transaction.description.toLowerCase().includes(itemType.toLowerCase().split(' ')[0])
           )
-          .sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime())[0];
-        
-        const transactionDate = recentTransaction ? new Date(recentTransaction.date) : new Date();
+          .sort((a, b) => new Date(b.date || Date.now()).getTime() - new Date(a.date || Date.now()).getTime())[0];
+        const transactionDate = recentTransaction ? new Date(recentTransaction.date || Date.now()) : new Date();
         const dateStr = transactionDate.toLocaleDateString('en-GB', {
           day: '2-digit',
-          month: 'short',
+          month: '2-digit',
           year: 'numeric'
-        }).replace(/\s/g, '-');
-        
-        // Format the display text properly
-        let displayText = '';
-        let dateText = '';
-        let timeText = '';
-        
-        // Format date and time for flip card
-        const formattedDate = transactionDate.toLocaleDateString('en-GB', {
-          day: '2-digit',
-          month: '2-digit'
         });
-        
-        const formattedTime = transactionDate.toLocaleTimeString('en-GB', {
-          hour: '2-digit',
-          minute: '2-digit',
-          hour12: false
-        });
-        
-        if (itemType.includes('Chopine')) {
-          // For Chopine items: "8 Chopines beer" (with pluralization for display)
-          const brand = itemType.replace('Chopine', '').trim();
-          if (brand) {
-            displayText = `${remaining} Chopine${remaining > 1 ? 's' : ''} ${brand}`;
-          } else {
-            displayText = `${remaining} Chopine${remaining > 1 ? 's' : ''}`;
-          }
-        } else if (itemType.includes('Bouteille')) {
-          // For Bouteille items: check if it has a size (like "1.5L Green")
-          const sizeMatch = itemType.match(/(\d+(?:\.\d+)?L)/i);
-          if (sizeMatch) {
-            // For sized bottles like "1.5L Green" -> "3 (1.5L Green)"
-            displayText = `${remaining} (${itemType})`;
-          } else {
-            // For regular bottles like "Bouteille Green" -> "3 Bouteille Green"
-            const brand = itemType.replace('Bouteille', '').trim();
-            if (brand) {
-              displayText = `${remaining} Bouteille ${brand}`;
-            } else {
-              displayText = `${remaining} Bouteille`;
-            }
-          }
-        } else {
-          // For other items: use parentheses format
-          displayText = `${remaining} (${itemType})`;
-        }
-        
-        // Create the returnable item with flip card for date
-        netReturnableItems.push({
-          text: displayText,
-          date: formattedDate,
-          time: formattedTime
-        });
+        netReturnableItems.push(`${remaining} ${itemType}${remaining > 1 ? 's' : ''} (${dateStr})`);
       }
     });
     
-    return netReturnableItems;
-  }, [client.id, getClientTransactions, forceUpdate]);
+    return netReturnableItems.length > 0 ? netReturnableItems.join(', ') : '';
+  };
   
-  const returnableItemsText = getReturnableItemsText;
+  const returnableItemsText = getReturnableItemsText();
   const [startY, setStartY] = useState(0);
   const [startX, setStartX] = useState(0);
   const [currentY, setCurrentY] = useState(0);
   const [currentX, setCurrentX] = useState(0);
+  const [isDragging, setIsDragging] = useState(false);
+  const [isMouseDown, setIsMouseDown] = useState(false);
   const longPressTimer = useRef<NodeJS.Timeout | null>(null);
   const cardRef = useRef<HTMLDivElement>(null);
-  const lastTapRef = useRef<number>(0);
-  const tapCountRef = useRef<number>(0);
 
   const totalDebt = getClientTotalDebt(client.id);
   const bottlesOwed = getClientBottlesOwed(client.id);
@@ -279,72 +190,190 @@ const ClientCard: React.FC<ClientCardProps> = ({ client, onLongPress, onQuickAdd
   // Touch event handlers
   const handleTouchStart = (e: React.TouchEvent) => {
     const touch = e.touches[0];
+    setStartY(touch.clientY);
+    setStartX(touch.clientX);
+    setCurrentY(touch.clientY);
+    setCurrentX(touch.clientX);
+    setIsDragging(false);
     
     longPressTimer.current = setTimeout(() => {
-      setShowDetails(true);
-    }, 2000); // 2000ms for long press
+      if (!isDragging) {
+        setShowDetails(true);
+      }
+    }, 500); // 500ms for long press
+  };
+
+  const handleTouchMove = (e: React.TouchEvent) => {
+    if (!startY) return; // Ensure we have a start position
+    
+    const touch = e.touches[0];
+    setCurrentY(touch.clientY);
+    setCurrentX(touch.clientX);
+    
+    const deltaY = startY - touch.clientY;
+    
+    // Detect swipe direction
+    if (Math.abs(deltaY) > 20) {
+      setIsDragging(true);
+      e.preventDefault(); // Prevent scrolling when we detect a swipe
+      
+      if (longPressTimer.current) {
+        clearTimeout(longPressTimer.current);
+      }
+      
+      // Swipe up detection
+      if (deltaY > 60) {
+        setShowActions(true);
+      }
+    }
   };
 
   const handleTouchEnd = () => {
     if (longPressTimer.current) {
       clearTimeout(longPressTimer.current);
     }
-    
-    // Handle double tap for iPhone
-    const now = Date.now();
-    const timeSinceLastTap = now - lastTapRef.current;
-    
-    if (timeSinceLastTap < 300 && timeSinceLastTap > 0) {
-      // Double tap detected
-      tapCountRef.current += 1;
-      if (tapCountRef.current === 2) {
-        setShowActions(true);
-        tapCountRef.current = 0;
-      }
-    } else {
-      // Single tap or first tap of potential double tap
-      tapCountRef.current = 1;
-      setTimeout(() => {
-        tapCountRef.current = 0;
-      }, 300);
-    }
-    
-    lastTapRef.current = now;
+    setIsDragging(false);
+    setStartY(0);
+    setStartX(0);
+    setCurrentY(0);
+    setCurrentX(0);
   };
 
   // Mouse event handlers for desktop
   const handleMouseDown = (e: React.MouseEvent) => {
     if (e.button !== 0) return; // Only left mouse button
     
+    setIsMouseDown(true);
+    setStartY(e.clientY);
+    setStartX(e.clientX);
+    setCurrentY(e.clientY);
+    setCurrentX(e.clientX);
+    setIsDragging(false);
+    setCurrentY(e.clientY);
+    setCurrentX(e.clientX);
+    
     longPressTimer.current = setTimeout(() => {
-      setShowDetails(true);
-    }, 2000);
+      if (!isDragging) {
+        setShowDetails(true);
+      }
+    }, 500);
     
     e.preventDefault(); // Prevent text selection
+  };
+
+  const handleMouseMove = (e: React.MouseEvent) => {
+    if (!isMouseDown) return;
+    
+    setCurrentY(e.clientY);
+    setCurrentX(e.clientX);
+    
+    const deltaY = startY - e.clientY; // Positive when moving up
+    const totalMovement = Math.abs(deltaY);
+    
+    // Detect any significant movement in any direction
+    if (totalMovement > 8) {
+      setIsDragging(true);
+      if (longPressTimer.current) {
+        clearTimeout(longPressTimer.current);
+      }
+      
+      // Upward movement - show actions
+      if (deltaY > 25) {
+        setShowActions(true);
+        setIsMouseDown(false);
+        setIsDragging(false);
+      }
+    }
   };
 
   const handleMouseUp = () => {
     if (longPressTimer.current) {
       clearTimeout(longPressTimer.current);
     }
+    setIsMouseDown(false);
+    setIsDragging(false);
+    setStartY(0);
+    setStartX(0);
+    setCurrentY(0);
+    setCurrentX(0);
   };
 
-  // Handle double click to show actions
-  const handleDoubleClick = () => {
-    setShowActions(true);
+  // Global mouse event handlers
+  React.useEffect(() => {
+    const handleGlobalMouseMove = (e: MouseEvent) => {
+      if (!isMouseDown) return;
+      
+      setCurrentY(e.clientY);
+      setCurrentX(e.clientX);
+      
+      const deltaY = startY - e.clientY; // Positive when moving up
+      const totalMovement = Math.abs(deltaY);
+      
+      // Detect any significant movement
+      if (totalMovement > 5) {
+        setIsDragging(true);
+        if (longPressTimer.current) {
+          clearTimeout(longPressTimer.current);
+        }
+        
+        // Upward movement - show actions
+        if (deltaY > 20) {
+          setShowActions(true);
+          setIsMouseDown(false);
+          setIsDragging(false);
+        }
+      }
+    };
+
+    const handleGlobalMouseUp = () => {
+      if (longPressTimer.current) {
+        clearTimeout(longPressTimer.current);
+      }
+      setIsMouseDown(false);
+      setIsDragging(false);
+      setStartY(0);
+      setStartX(0);
+      setCurrentY(0);
+      setCurrentX(0);
+    };
+
+    if (isMouseDown) {
+      document.addEventListener('mousemove', handleGlobalMouseMove);
+      document.addEventListener('mouseup', handleGlobalMouseUp);
+      
+      return () => {
+        document.removeEventListener('mousemove', handleGlobalMouseMove);
+        document.removeEventListener('mouseup', handleGlobalMouseUp);
+      };
+    }
+  }, [isMouseDown, startY, startX]);
+
+  // Wheel event handler for trackpad/mouse wheel
+  const handleWheel = (e: React.WheelEvent) => {
+    // Handle both vertical and horizontal wheel movements
+    const isVerticalScroll = Math.abs(e.deltaY) > Math.abs(e.deltaX);
+    
+    // Vertical scroll up (trackpad swipe up)
+    if (isVerticalScroll && e.deltaY < -40) {
+      setShowActions(true);
+      e.preventDefault();
+    }
   };
 
   return (
     <>
       <div
         ref={cardRef}
-        className={`flex-shrink-0 w-56 sm:w-64 mx-auto rounded-lg shadow-md p-3 sm:p-4 border hover:shadow-lg transition-all duration-300 cursor-pointer select-none transform hover:scale-105 min-h-[320px] relative ${getCardBackgroundColor()} ${showWobble ? 'animate-wobble' : ''}`}
+        className={`flex-shrink-0 w-56 sm:w-64 rounded-lg shadow-md p-3 sm:p-4 border hover:shadow-lg transition-all duration-300 cursor-pointer select-none transform hover:scale-105 ${getCardBackgroundColor()}`}
         onTouchStart={handleTouchStart}
+        onTouchMove={handleTouchMove}
         onTouchEnd={handleTouchEnd}
         onMouseDown={handleMouseDown}
+        onMouseMove={handleMouseMove}
         onMouseUp={handleMouseUp}
         onMouseLeave={handleMouseUp}
-        onDoubleClick={handleDoubleClick}
+        onWheel={handleWheel}
+        onClick={() => !isDragging && setShowDetails(true)}
         style={{
           userSelect: 'none',
           WebkitUserSelect: 'none',
@@ -353,30 +382,28 @@ const ClientCard: React.FC<ClientCardProps> = ({ client, onLongPress, onQuickAdd
           WebkitTouchCallout: 'none',
           WebkitTapHighlightColor: 'transparent',
           touchAction: 'pan-x pan-y',
-          cursor: 'pointer',
-          zIndex: 1
+          cursor: isMouseDown ? 'grabbing' : 'grab'
         }}
       >
         {/* Client Header */}
         <div className="flex items-center gap-2 sm:gap-3 mb-2 sm:mb-3">
-          <div className="bg-blue-100 p-2 rounded-full flex-shrink-0">
+          <div className="bg-blue-100 p-2 rounded-full">
             <User size={18} className="text-blue-600 sm:w-5 sm:h-5" />
           </div>
-          <div className="flex-1 text-center min-w-0">
-            <h3 className="font-semibold text-gray-800 text-sm sm:text-base">{client.name}</h3>
+          <div className="flex-1">
+            <h3 className="font-semibold text-gray-800 truncate text-sm sm:text-base">{client.name}</h3>
             <p className="text-xs sm:text-sm text-gray-500">ID: {client.id}</p>
           </div>
-          <div className="w-10 flex-shrink-0"></div>
         </div>
 
         {/* Debt Amount */}
-        <div className="mb-2 sm:mb-3 text-center">
+        <div className="mb-2 sm:mb-3">
           <div className="flex items-center gap-2 mb-1">
             <TrendingUp size={14} className="text-red-500 sm:w-4 sm:h-4" />
             <span className="text-xs sm:text-sm text-gray-600">Outstanding</span>
           </div>
           <p className="text-xl sm:text-2xl font-bold text-red-600">
-            Rs {totalDebt.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
+            Rs {totalDebt.toLocaleString('en-IN', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
           </p>
           {(bottlesOwed.beer > 0 || bottlesOwed.guinness > 0 || bottlesOwed.malta > 0 || bottlesOwed.coca > 0 || bottlesOwed.chopines > 0) && (
             <p className="text-xs text-orange-600 mt-1">
@@ -394,61 +421,39 @@ const ClientCard: React.FC<ClientCardProps> = ({ client, onLongPress, onQuickAdd
             <button
               onClick={(e) => {
                 e.stopPropagation();
-                if (!isLinked) {
-                  onQuickAdd(client);
-                }
+                onQuickAdd(client);
               }}
-              className={`w-full py-2 px-3 rounded-lg transition-colors flex items-center justify-center gap-2 text-sm font-medium ${
-                isLinked
-                  ? 'bg-gray-300 text-gray-500 cursor-not-allowed'
-                  : 'bg-green-500 hover:bg-green-600 text-white'
-              }`}
-              disabled={isLinked}
+              className="w-full bg-green-500 hover:bg-green-600 text-white py-2 px-3 rounded-lg transition-colors flex items-center justify-center gap-2 text-sm font-medium"
             >
               <Plus size={16} />
-              {isLinked ? 'Linked to Calculator' : 'Quick Add'}
+              Quick Add
             </button>
           </div>
         )}
 
         {/* Returnable Items or Last Transaction Date */}
         <div className="text-xs sm:text-sm text-gray-500 min-h-[3rem] flex flex-col justify-end">
-          {returnableItemsText.length > 0 ? (
+          {returnableItemsText ? (
             <div className="mb-2">
               <ScrollingText 
-                className="text-orange-600 font-medium text-sm"
+                text={`Returnable: ${returnableItemsText}`}
+                className="text-orange-600 font-medium"
                 pauseDuration={0.5}
                 scrollDuration={2.5}
                 easing="power1.inOut"
-              >
-                {returnableItemsText.map((item, index) => (
-                  <span key={index}>
-                    {index > 0 && ', '}
-                    {item.text} (
-                    <FlipCard
-                      frontContent={<span>{item.date}</span>}
-                      backContent={<span>{item.time}</span>}
-                      shouldFlip={true}
-                      flipDuration={0.6}
-                      flipDelay={2}
-                      className="inline-block"
-                    />
-                    )
-                  </span>
-                ))}
-              </ScrollingText>
+              />
             </div>
           ) : (
             <div className="mb-2 h-5"></div>
           )}
-          <div className="flex items-center gap-2 h-4">
-            <Calendar size={12} className="sm:w-3.5 sm:h-3.5 flex-shrink-0" />
-            <span className="text-xs sm:text-sm text-gray-500">
+          <div className="flex items-center gap-2">
+            <Calendar size={12} className="sm:w-3.5 sm:h-3.5" />
+            <span>
               {client.lastTransactionAt.toLocaleDateString('en-GB', {
                 day: '2-digit',
-                month: 'short',
+                month: '2-digit',
                 year: 'numeric'
-              }).replace(/\s/g, '-')} {client.lastTransactionAt.toLocaleTimeString('en-GB', {
+              })} {client.lastTransactionAt.toLocaleTimeString('en-GB', {
                 hour: '2-digit',
                 minute: '2-digit',
                 hour12: false
@@ -460,13 +465,8 @@ const ClientCard: React.FC<ClientCardProps> = ({ client, onLongPress, onQuickAdd
         {/* Swipe Indicator */}
         <div className="mt-2 sm:mt-3 text-center">
           <div className="inline-block w-8 h-1 bg-gray-300 rounded-full"></div>
-          <div className="absolute left-0 right-0 mt-1">
-            <div className="text-xs text-gray-400 hidden sm:block text-center">
-              <p className="select-none">Double click for actions</p>
-              <p className="select-none">Long press for details</p>
-            </div>
-            <p className="text-xs text-gray-400 sm:hidden text-center select-none">Double click for actions</p>
-          </div>
+          <p className="text-xs text-gray-400 mt-1 hidden sm:block">↑ Actions | Long press for details</p>
+          <p className="text-xs text-gray-400 mt-1 sm:hidden">↑ Actions</p>
         </div>
       </div>
 
@@ -484,9 +484,7 @@ const ClientCard: React.FC<ClientCardProps> = ({ client, onLongPress, onQuickAdd
         <ClientActionModal
           client={client}
           onClose={() => setShowActions(false)}
-          onQuickAdd={onQuickAdd}
           onResetCalculator={onResetCalculator}
-          onViewDetails={() => setShowDetails(true)}
         />
       )}
     </>

@@ -121,7 +121,7 @@ const Header: React.FC = () => {
       const url = URL.createObjectURL(dataBlob);
       const link = document.createElement('a');
       link.href = url;
-      link.download = `GoldenStore_${dateString}.json`;
+      link.download = `Goldenpricelist_${dateString}.json`;
       
       // Temporarily add to DOM, click, and remove
       document.body.appendChild(link);
@@ -257,7 +257,7 @@ const Header: React.FC = () => {
       {/* Sticky Header: Stays at top during scroll */}
       <div className="w-full px-6 py-4 flex items-center justify-center relative">
         {/* Centered Title: Main app branding */}
-        <h1 className="text-2xl font-semibold text-gray-900">Golden Store</h1>
+        <h1 className="text-2xl font-semibold text-gray-900">Golden Price List</h1>
         
         {/* Menu Button: Positioned absolutely to the right */}
         <div className="absolute right-6">

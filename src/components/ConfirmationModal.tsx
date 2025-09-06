@@ -17,7 +17,7 @@ const ConfirmationModal: React.FC<ConfirmationModalProps> = ({
   title,
   message,
   confirmText = 'Confirm',
-  cancelText,
+  cancelText = 'Cancel',
   onConfirm,
   onCancel,
   type = 'danger'
@@ -56,39 +56,43 @@ const ConfirmationModal: React.FC<ConfirmationModalProps> = ({
   const styles = getTypeStyles();
 
   return (
-    <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center p-4 z-50 select-none">
-      <div className="bg-white rounded-xl shadow-lg w-full max-w-sm overflow-hidden animate-fade-in select-none">
-        <div className="p-6 select-none">
+    <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center p-4 z-50">
+      <div className="bg-white rounded-xl shadow-lg w-full max-w-sm overflow-hidden animate-fade-in">
+        <div className="p-6">
           {/* Icon and close button */}
-          <div className="flex items-start justify-between mb-4 select-none">
+          <div className="flex items-start justify-between mb-4">
             <div className={`${styles.iconBg} p-3 rounded-full`}>
               <AlertTriangle className={`${styles.iconColor}`} size={24} />
             </div>
+            <button 
+              onClick={onCancel}
+              className="text-gray-400 hover:text-gray-600 transition-colors"
+            >
+              <X size={20} />
+            </button>
           </div>
 
           {/* Content */}
-          <div className="mb-6 select-none">
-            <h3 className="text-lg font-semibold text-gray-900 mb-2 select-none">
+          <div className="mb-6">
+            <h3 className="text-lg font-semibold text-gray-900 mb-2">
               {title}
             </h3>
-            <p className="text-gray-600 text-sm leading-relaxed select-none">
+            <p className="text-gray-600 text-sm leading-relaxed">
               {message}
             </p>
           </div>
 
           {/* Action buttons */}
-          <div className="flex gap-3 select-none">
-            {cancelText && (
-              <button
-                onClick={onCancel}
-                className="flex-1 px-4 py-2 border border-gray-300 rounded-lg text-gray-700 bg-white hover:bg-gray-50 transition-colors duration-200 font-medium select-none"
-              >
-                {cancelText}
-              </button>
-            )}
+          <div className="flex gap-3">
+            <button
+              onClick={onCancel}
+              className="flex-1 px-4 py-2 border border-gray-300 rounded-lg text-gray-700 bg-white hover:bg-gray-50 transition-colors duration-200 font-medium"
+            >
+              {cancelText}
+            </button>
             <button
               onClick={onConfirm}
-              className={`${cancelText ? 'flex-1' : 'w-full'} px-4 py-2 text-white rounded-lg transition-colors duration-200 font-medium focus:outline-none focus:ring-2 focus:ring-offset-2 ${styles.confirmBtn} select-none`}
+              className={`flex-1 px-4 py-2 text-white rounded-lg transition-colors duration-200 font-medium focus:outline-none focus:ring-2 focus:ring-offset-2 ${styles.confirmBtn}`}
             >
               {confirmText}
             </button>
