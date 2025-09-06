@@ -1249,10 +1249,7 @@ export const processCalculatorInput = (
       newGrandTotal = simpleResult.grandTotal;
       newTransactionHistory = simpleResult.transactionHistory;
     }
- // In the processCalculatorInput function, find the section that handles the calculation flow
-// and replace it with this enhanced version:
-
-} else {
+ } else {
   // Route to appropriate calculation flow
   let willBeCompound = input === '*' || input === '/' || input === '×' || input === '÷' || 
                       isCompoundCalculation(newCalculationSteps, newLastOperation);
@@ -1266,21 +1263,14 @@ export const processCalculatorInput = (
         step.operator === '*' || step.operator === '/' || step.operator === '×' || step.operator === '÷' ||
         step.expression.includes('*') || step.expression.includes('/') || 
         step.expression.includes('×') || step.expression.includes('÷') ||
-        step.displayValue.includes('×') || step.displayValue.includes('÷')
+        (step.displayValue && (step.displayValue.includes('×') || step.displayValue.includes('÷')))
       );
       
-      // Check if we have mixed operations (both +- and ×÷)
-      const hasAdditionSubtraction = newCalculationSteps.some(step => 
-        step.operator === '+' || step.operator === '-' ||
-        step.expression.includes('+') || step.expression.includes('-')
-      );
-      
-      // If we have multiplication/division OR mixed operations, treat as compound
-      willBeCompound = hasMultiplicationDivision || (hasAdditionSubtraction && hasMultiplicationDivision);
+      // If we have multiplication/division operations, treat as compound
+      willBeCompound = hasMultiplicationDivision;
       
       console.log('📊 = key compound detection:', {
         hasMultiplicationDivision,
-        hasAdditionSubtraction,
         willBeCompound,
         steps: newCalculationSteps.map(s => ({
           operator: s.operator,
