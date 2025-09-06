@@ -28,7 +28,7 @@ export class MathOperations {
    */
   public static add(a: number, b: number): CalculationResult {
     try {
-      const result = a +kbk b;
+      const result = a + b;
       return this.validateResult(result);
     } catch (error) {
       return { result: 0, isValid: false, error: 'Addition failed' };
