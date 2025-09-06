@@ -1092,9 +1092,13 @@ export const processCalculatorInput = (
 const startAutoReplaySequence = (summarizedSteps: CalculationStep[]) => {
   let currentStepIndex = 0;
   
+  console.log('🔍 Starting auto replay with steps:', summarizedSteps.map(s => s.displayValue));
+  
   const showNextStep = () => {
     if (currentStepIndex < summarizedSteps.length) {
       const step = summarizedSteps[currentStepIndex];
+      
+      console.log('🔍 Showing auto replay step:', currentStepIndex, step.displayValue);
       
       window.dispatchEvent(new CustomEvent('autoReplayStep', {
         detail: {
@@ -1115,6 +1119,8 @@ const startAutoReplaySequence = (summarizedSteps: CalculationStep[]) => {
         // Show final result
         const expression = buildCompoundExpression(summarizedSteps);
         const result = evaluateExpression(expression);
+        
+        console.log('🔍 Showing final result:', result);
         
         setTimeout(() => {
           window.dispatchEvent(new CustomEvent('autoReplayStep', {
