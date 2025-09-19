@@ -294,9 +294,10 @@ const ClientActionModal: React.FC<ClientActionModalProps> = ({ client, onClose, 
       // Show duplicate card for successful return processing
       window.dispatchEvent(new CustomEvent('showDuplicateCard', {
         detail: { 
-          client: client, 
+          ...client,
           isAccountClear: false,
-          message: `${itemsBeingReturned} returned successfully!`
+          message: `${itemsBeingReturned} returned successfully!`,
+          transactionDescription: `Returned: ${itemsBeingReturned} (chopine/bouteille items)`
         }
       }));
       
@@ -320,6 +321,16 @@ const ClientActionModal: React.FC<ClientActionModalProps> = ({ client, onClose, 
     try {
       // Add a return transaction with zero amount and unique description
       await addTransaction(client, returnDescription, 0);
+      
+      // Show duplicate card with transaction description to trigger arrows
+      window.dispatchEvent(new CustomEvent('showDuplicateCard', {
+        detail: { 
+          ...client,
+          isAccountClear: false,
+          message: `${returnQuantity} ${itemType}${returnQuantity > 1 ? 's' : ''} returned successfully!`,
+          transactionDescription: `Returned: ${returnQuantity} ${itemType}${returnQuantity > 1 ? 's' : ''} (chopine/bouteille item)`
+        }
+      }));
       
     } catch (error) {
       throw error;
@@ -507,7 +518,8 @@ const ClientActionModal: React.FC<ClientActionModalProps> = ({ client, onClose, 
                           detail: { 
                             client: client, 
                             isAccountClear: true,
-                            message: 'Account settled successfully!'
+                            message: 'Account settled successfully!',
+                            transactionDescription: 'Account settled (no returnables)'
                           }
                         }));
                       });
@@ -781,6 +793,12 @@ const ClientActionModal: React.FC<ClientActionModalProps> = ({ client, onClose, 
               ? `This will mark all returnable containers as returned.`
               : `This will mark ${settleAction.quantity} ${settleAction.itemType}${(settleAction.quantity || 0) > 1 ? 's' : ''} as returned.`
           }
+          clientName={client.name}
+          clientId={client.id}
+          outstandingDebt={totalDebt.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
+          remainingItems={Object.entries(availableItems)
+            .map(([itemType, data]) => `${data.total} ${itemType}`)
+            .join(', ')}
           onConfirm={async () => {
             try {
               setIsProcessing(true);
@@ -799,9 +817,10 @@ const ClientActionModal: React.FC<ClientActionModalProps> = ({ client, onClose, 
                 // Show duplicate card for successful return settlement
                 window.dispatchEvent(new CustomEvent('showDuplicateCard', {
                   detail: { 
-                    client: client, 
+                    ...client,
                     isAccountClear: false,
-                    message: 'All returnables settled successfully!'
+                    message: 'All returnables settled successfully!',
+                    transactionDescription: 'Returned all returnable items (chopine/bouteille items)'
                   }
                 }));
               } else if (settleAction.itemType && settleAction.quantity) {
@@ -811,9 +830,10 @@ const ClientActionModal: React.FC<ClientActionModalProps> = ({ client, onClose, 
                 // Show duplicate card for successful individual return settlement
                 window.dispatchEvent(new CustomEvent('showDuplicateCard', {
                   detail: { 
-                    client: client, 
+                    ...client,
                     isAccountClear: false,
-                    message: `${settleAction.quantity} ${settleAction.itemType}${(settleAction.quantity || 0) > 1 ? 's' : ''} returned successfully!`
+                    message: `${settleAction.quantity} ${settleAction.itemType}${(settleAction.quantity || 0) > 1 ? 's' : ''} returned successfully!`,
+                    transactionDescription: `Returned: ${settleAction.quantity} ${settleAction.itemType}${(settleAction.quantity || 0) > 1 ? 's' : ''} (chopine/bouteille item)`
                   }
                 }));
               }
@@ -918,7 +938,7 @@ const ClientActionModal: React.FC<ClientActionModalProps> = ({ client, onClose, 
                           
                           // Show duplicate card for settled client
                           window.dispatchEvent(new CustomEvent('showDuplicateCard', {
-                            detail: { client: client, isAccountClear: true }
+                            detail: { ...client, isAccountClear: true }
                           }));
                         }, 100);
                       } catch (error) {
@@ -960,9 +980,10 @@ const ClientActionModal: React.FC<ClientActionModalProps> = ({ client, onClose, 
                         // Show duplicate card for settled client
                         window.dispatchEvent(new CustomEvent('showDuplicateCard', {
                           detail: { 
-                            client: client, 
+                            ...client,
                             isAccountClear: true,
-                            message: 'Account cleared successfully!'
+                            message: 'Account cleared successfully!',
+                            transactionDescription: 'Account settled and all returnables cleared (chopine/bouteille items)'
                           }
                         }));
                       }, 100);
