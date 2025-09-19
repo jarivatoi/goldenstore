@@ -169,7 +169,8 @@ const ClientSearchModal: React.FC<ClientSearchModalProps> = ({
     // Save current description to history for undo
     setDescriptionHistory(prev => [...prev, description]);
     
-    const newItem = pendingNumber ? `${pendingNumber} ${action} ` : `${action} `;
+    // Automatically insert pending number if it exists
+    const newItem = pendingNumber ? `${pendingNumber} ${action}` : action;
     
     if (description.trim() === '') {
       setDescription(newItem);
