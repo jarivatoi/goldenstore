@@ -419,6 +419,16 @@ const ClientDetailModal: React.FC<ClientDetailModalProps> = ({ client, onClose, 
                               const returnDescription = `Returned: ${quantity} ${itemType}${quantity > 1 ? 's' : ''}`;
                               await addTransaction(client, returnDescription, 0);
                             }
+                            
+                            // Show duplicate card with transaction description to trigger arrows
+                            window.dispatchEvent(new CustomEvent('showDuplicateCard', {
+                              detail: { 
+                                ...client,
+                                isAccountClear: false,
+                                message: 'All returnable items cleared successfully!',
+                                transactionDescription: 'Returned all returnable items (chopine/bouteille items)'
+                              }
+                            }));
                             // Close modal after clearing
                             onClose();
                           } catch (error) {
@@ -651,6 +661,16 @@ const ReturnableItemRow: React.FC<ReturnableItemRowProps> = ({ itemType, quantit
       const uniqueReturnDescription = `${returnDescription} - ${new Date().toLocaleDateString('en-GB')} ${new Date().toLocaleTimeString('en-GB', { hour: '2-digit', minute: '2-digit' })}`;
       await addTransaction(client, uniqueReturnDescription, 0);
       setPendingQuantity(0);
+      
+      // Show duplicate card for successful return processing
+      window.dispatchEvent(new CustomEvent('showDuplicateCard', {
+        detail: { 
+          ...client,
+          isAccountClear: false,
+          message: `${pendingQuantity} ${itemType}${pendingQuantity > 1 ? 's' : ''} returned successfully!`,
+          transactionDescription: `${uniqueReturnDescription} (chopine/bouteille item)`
+        }
+      }));
       
       // Force a re-render of the parent component to update scrolling tabs
       window.dispatchEvent(new CustomEvent('creditDataChanged'));
