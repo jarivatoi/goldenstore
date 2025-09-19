@@ -53,6 +53,17 @@ const ClientActionModal: React.FC<ClientActionModalProps> = ({ client, onClose, 
       setIsProcessing(true);
       await addPartialPayment(client.id, amount);
       
+      // Show duplicate card for successful partial payment
+      window.dispatchEvent(new CustomEvent('showDuplicateCard', {
+        detail: { 
+          ...client,
+          isAccountClear: false,
+          message: `Payment of Rs ${amount.toLocaleString('en-IN', { minimumFractionDigits: 2, maximumFractionDigits: 2 })} recorded successfully!`,
+          transactionAmount: amount,
+          transactionDescription: `Partial payment of Rs ${amount.toLocaleString('en-IN', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`
+        }
+      }));
+      
       // Force timeline reset after payment
       window.dispatchEvent(new CustomEvent('creditDataChanged'));
       
@@ -297,7 +308,7 @@ const ClientActionModal: React.FC<ClientActionModalProps> = ({ client, onClose, 
           ...client,
           isAccountClear: false,
           message: `${itemsBeingReturned} returned successfully!`,
-          transactionDescription: `Returned: ${itemsBeingReturned} (chopine/bouteille items)`
+          transactionDescription: `Returned: ${itemsBeingReturned}`
         }
       }));
       
@@ -328,7 +339,7 @@ const ClientActionModal: React.FC<ClientActionModalProps> = ({ client, onClose, 
           ...client,
           isAccountClear: false,
           message: `${returnQuantity} ${itemType}${returnQuantity > 1 ? 's' : ''} returned successfully!`,
-          transactionDescription: `Returned: ${returnQuantity} ${itemType}${returnQuantity > 1 ? 's' : ''} (chopine/bouteille item)`
+          transactionDescription: `Returned: ${returnQuantity} ${itemType}${returnQuantity > 1 ? 's' : ''}`
         }
       }));
       
@@ -820,7 +831,7 @@ const ClientActionModal: React.FC<ClientActionModalProps> = ({ client, onClose, 
                     ...client,
                     isAccountClear: false,
                     message: 'All returnables settled successfully!',
-                    transactionDescription: 'Returned all returnable items (chopine/bouteille items)'
+                    transactionDescription: 'Returned all returnable items'
                   }
                 }));
               } else if (settleAction.itemType && settleAction.quantity) {
@@ -833,7 +844,7 @@ const ClientActionModal: React.FC<ClientActionModalProps> = ({ client, onClose, 
                     ...client,
                     isAccountClear: false,
                     message: `${settleAction.quantity} ${settleAction.itemType}${(settleAction.quantity || 0) > 1 ? 's' : ''} returned successfully!`,
-                    transactionDescription: `Returned: ${settleAction.quantity} ${settleAction.itemType}${(settleAction.quantity || 0) > 1 ? 's' : ''} (chopine/bouteille item)`
+                    transactionDescription: `Returned: ${settleAction.quantity} ${settleAction.itemType}${(settleAction.quantity || 0) > 1 ? 's' : ''}`
                   }
                 }));
               }
@@ -983,7 +994,7 @@ const ClientActionModal: React.FC<ClientActionModalProps> = ({ client, onClose, 
                             ...client,
                             isAccountClear: true,
                             message: 'Account cleared successfully!',
-                            transactionDescription: 'Account settled and all returnables cleared (chopine/bouteille items)'
+                            transactionDescription: 'Account settled and all returnables cleared'
                           }
                         }));
                       }, 100);
