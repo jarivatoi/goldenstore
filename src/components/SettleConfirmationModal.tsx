@@ -7,6 +7,10 @@ interface SettleConfirmationModalProps {
   title: string;
   message: string;
   itemDetails?: string;
+  clientName?: string;
+  clientId?: string;
+  remainingItems?: string;
+  outstandingDebt?: string;
   onConfirm: () => void;
   onCancel: () => void;
   isProcessing?: boolean;
@@ -24,6 +28,10 @@ const SettleConfirmationModal: React.FC<SettleConfirmationModalProps> = ({
   title,
   message,
   itemDetails,
+  clientName,
+  clientId,
+  remainingItems,
+  outstandingDebt,
   onConfirm,
   onCancel,
   isProcessing = false
@@ -66,6 +74,34 @@ const SettleConfirmationModal: React.FC<SettleConfirmationModalProps> = ({
               )}
             </div>
           </div>
+
+          {/* Client Information */}
+          {(clientName || clientId || remainingItems || outstandingDebt) && (
+            <div className="bg-gray-50 rounded-lg p-3 border border-gray-200 mb-4 select-none">
+              <div className="space-y-1 text-sm select-none">
+                {clientName && (
+                  <p className="select-none">
+                    <span className="font-medium">Client:</span> {clientName}
+                  </p>
+                )}
+                {clientId && (
+                  <p className="select-none">
+                    <span className="font-medium">ID:</span> {clientId}
+                  </p>
+                )}
+                {outstandingDebt && (
+                  <p className="select-none">
+                    <span className="font-medium">Outstanding Debt:</span> Rs {outstandingDebt}
+                  </p>
+                )}
+                {remainingItems && (
+                  <p className="select-none">
+                    <span className="font-medium">Returnable Items:</span> {remainingItems}
+                  </p>
+                )}
+              </div>
+            </div>
+          )}
 
           <div className="bg-yellow-50 border border-yellow-200 rounded-lg p-4 mb-6 select-none">
             <p className="text-sm text-yellow-800 select-none">
