@@ -53,6 +53,29 @@ const ClientActionModal: React.FC<ClientActionModalProps> = ({ client, onClose, 
       setIsProcessing(true);
       await addPartialPayment(client.id, amount);
       
+      // Get returnable items for this client to include in the transaction description
+      const allReturnableItems = getReturnableItems();
+      const availableItems: {[key: string]: {total: number, transactions: Array<{id: string, description: string, amount: number, quantity: number, date: Date}>}} = {};
+      
+      // Filter out items that have already been returned
+      Object.entries(allReturnableItems).forEach(([itemType, data]) => {
+        // Calculate net quantity (original - returned)
+        const returnedQuantity = getReturnedQuantity(itemType);
+        const availableQuantity = Math.max(0, data.total - returnedQuantity);
+        
+        if (availableQuantity > 0) {
+          availableItems[itemType] = {
+            ...data,
+            total: availableQuantity
+          };
+        }
+      });
+      
+      // Format returnable items for display
+      const returnableItemsList = Object.entries(availableItems)
+        .map(([itemType, data]) => `${data.total} ${itemType}${data.total > 1 ? 's' : ''}`)
+        .join(', ');
+      
       // Show duplicate card for successful partial payment
       window.dispatchEvent(new CustomEvent('showDuplicateCard', {
         detail: { 
@@ -60,7 +83,9 @@ const ClientActionModal: React.FC<ClientActionModalProps> = ({ client, onClose, 
           isAccountClear: false,
           message: `Payment of Rs ${amount.toLocaleString('en-IN', { minimumFractionDigits: 2, maximumFractionDigits: 2 })} recorded successfully!`,
           transactionAmount: amount,
-          transactionDescription: `Partial payment of Rs ${amount.toLocaleString('en-IN', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`
+          transactionDescription: returnableItemsList ? 
+            `Returnables: ${returnableItemsList}` : 
+            ''
         }
       }));
       
