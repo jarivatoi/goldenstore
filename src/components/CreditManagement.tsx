@@ -802,7 +802,14 @@ const CreditManagement: React.FC = () => {
       // Show wobble effect for the client that received the transaction
       setRecentTransactionClient(client);
       
-      setDuplicateCard({ ...client, transactionAmount: amount, transactionDescription: description } as DuplicateCard);
+      // Check if the description contains returnable items to ensure arrows are shown
+      const hasReturnables = description.toLowerCase().includes('chopine') || description.toLowerCase().includes('bouteille');
+      
+      setDuplicateCard({ 
+        ...client, 
+        transactionAmount: amount, 
+        transactionDescription: description
+      } as DuplicateCard);
       setTimeout(() => {
         setRecentTransactionClient(null);
       }, 3000); // Increased to 3 seconds for better visibility
@@ -1511,8 +1518,8 @@ const CreditManagement: React.FC = () => {
                       </div>
                     )}
                     
-                    {/* Returnables Section - show if client has returnables */}
-                    {hasReturnables && (
+                    {/* Returnables Section - show if client has returnables or current transaction has returnables */}
+                    {(hasReturnables || transactionHasReturnables) && (
                       <div className="mb-3">
                        {/* Arrow pointing to returnables - show if we have amount OR debt OR just added returnables */}
                        {(hasAmount || hasDebt || transactionHasReturnables) && (
