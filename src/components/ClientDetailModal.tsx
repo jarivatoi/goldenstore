@@ -426,7 +426,7 @@ const ClientDetailModal: React.FC<ClientDetailModalProps> = ({ client, onClose, 
                                 ...client,
                                 isAccountClear: false,
                                 message: 'All returnable items cleared successfully!',
-                                transactionDescription: 'Returned all returnable items (chopine/bouteille items)'
+                                transactionDescription: 'Returned all returnable items'
                               }
                             }));
                             // Close modal after clearing
@@ -668,7 +668,7 @@ const ReturnableItemRow: React.FC<ReturnableItemRowProps> = ({ itemType, quantit
           ...client,
           isAccountClear: false,
           message: `${pendingQuantity} ${itemType}${pendingQuantity > 1 ? 's' : ''} returned successfully!`,
-          transactionDescription: `${uniqueReturnDescription} (chopine/bouteille item)`
+          transactionDescription: `${uniqueReturnDescription}`
         }
       }));
       
