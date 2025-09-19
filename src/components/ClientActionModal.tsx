@@ -916,13 +916,9 @@ const ClientActionModal: React.FC<ClientActionModalProps> = ({ client, onClose, 
                         setTimeout(() => {
                           window.dispatchEvent(new CustomEvent('creditDataChanged'));
                           
-                          // Show duplicate card for settled client with transaction amount
+                          // Show duplicate card for settled client
                           window.dispatchEvent(new CustomEvent('showDuplicateCard', {
-                            detail: { 
-                              client: client, 
-                              isAccountClear: true,
-                              transactionAmount: totalDebt
-                            }
+                            detail: { client: client, isAccountClear: true }
                           }));
                         }, 100);
                       } catch (error) {
@@ -961,12 +957,11 @@ const ClientActionModal: React.FC<ClientActionModalProps> = ({ client, onClose, 
                       setTimeout(() => {
                         window.dispatchEvent(new CustomEvent('creditDataChanged'));
                         
-                        // Show duplicate card for settled client with transaction amount
+                        // Show duplicate card for settled client
                         window.dispatchEvent(new CustomEvent('showDuplicateCard', {
                           detail: { 
                             client: client, 
                             isAccountClear: true,
-                            transactionAmount: totalDebt,
                             message: 'Account cleared successfully!'
                           }
                         }));
