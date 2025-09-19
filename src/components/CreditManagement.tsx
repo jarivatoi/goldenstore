@@ -116,7 +116,7 @@ const CreditManagement: React.FC = () => {
       // Set the duplicate card to show the settled client
       setDuplicateCard({
         ...client,
-        transactionAmount: event.detail.transactionAmount || 0, // Settlement amount
+        transactionAmount: 0, // Settlement amount
         message: message,
         isAccountClear: isAccountClear
       } as DuplicateCard);
@@ -192,16 +192,7 @@ const CreditManagement: React.FC = () => {
     const handleShowDuplicateCard = (event: CustomEvent) => {
       // Handle show duplicate card event
       console.log('Show duplicate card:', event.detail);
-      
-      // If this is a settle account event, ensure transactionAmount is properly set
-      if (event.detail.isAccountClear !== undefined) {
-        setDuplicateCard({
-          ...event.detail,
-          transactionAmount: event.detail.transactionAmount || 0
-        });
-      } else {
-        setDuplicateCard(event.detail);
-      }
+      setDuplicateCard(event.detail);
       
       // Auto-hide after 5 seconds
       setTimeout(() => {
