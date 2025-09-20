@@ -900,7 +900,7 @@ const CreditManagement: React.FC = () => {
   // Database operations
 
   return (
-    <div className="flex flex-col lg:flex-row h-full bg-gray-50 select-none overflow-hidden">
+    <div className="credit-management-container flex flex-col lg:flex-row h-full bg-gray-50 select-none overflow-hidden">
       {/* Main Content Area */}
       <div className="flex flex-col lg:flex-row flex-1 gap-4 lg:gap-6 p-4 lg:p-6 overflow-hidden">
         
@@ -928,7 +928,7 @@ const CreditManagement: React.FC = () => {
           />
 
           {/* Auto-scrolling Client Tabs */}
-          <div className="scrolling-tabs-container">
+          <div className="scrolling-tabs-container w-full">
             <ScrollingTabs
               clients={tabClients}
               linkedClient={linkedClient}
@@ -957,7 +957,7 @@ const CreditManagement: React.FC = () => {
         </div>
 
         {/* Right Side - Calculator Section */}
-        <div className="calculator-container calculator-section w-full lg:w-80 bg-white rounded-lg shadow-lg p-4 lg:p-6 order-1 lg:order-2 flex flex-col">
+        <div className="calculator-container w-full lg:w-80 bg-white rounded-lg shadow-lg p-4 lg:p-6 order-1 lg:order-2 flex flex-col">
           {/* Calculator Header - Clickable */}
           <div className="grid grid-cols-3 items-center gap-2 mb-4">
             <div className="justify-self-start">
