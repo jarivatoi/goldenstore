@@ -383,7 +383,7 @@ const ScrollingTabs: React.FC<ScrollingTabsProps> = ({
 
   return (
     <>
-    <div className="bg-white rounded-lg shadow-sm border border-gray-200 scrolling-tabs-component" style={{ flexShrink: 0 }}>
+    <div className="bg-white rounded-lg shadow-sm border border-gray-200 scrolling-tabs-component w-full" style={{ flexShrink: 0 }}>
       {/* Header */}
       <div className="p-3 border-b border-gray-200">
         <div className="flex items-center justify-between">
@@ -515,6 +515,25 @@ const ScrollingTabs: React.FC<ScrollingTabsProps> = ({
                     returnableItems[key] += 1;
                   }
                 });
+                
+                // Calculate returned quantities
+                const returnedQuantities: {[key: string]: number} = {};
+                clientTransactions
+                  .filter(transaction => transaction.type === 'debt' && transaction.description.toLowerCase().includes('returned'))
+                  .forEach(transaction => {
+                    const description = transaction.description.toLowerCase();
+                    Object.keys(returnableItems).forEach(itemType => {
+                      if (description.includes(itemType.toLowerCase())) {
+                        const match = description.match(/returned:\s*(\d+)\s+/);
+                        if (match) {
+                          if (!returnedQuantities[itemType]) {
+                            returnedQuantities[itemType] = 0;
+                          }
+                          returnedQuantities[itemType] += parseInt(match[1]);
+                        }
+                      }
+                    });
+                  });
                 
                 const truncatedItems: string[] = [];
                 Object.entries(returnableItems).forEach(([itemType, total]) => {
