@@ -928,16 +928,18 @@ const CreditManagement: React.FC = () => {
           />
 
           {/* Auto-scrolling Client Tabs */}
-          <ScrollingTabs
-            clients={tabClients}
-            linkedClient={linkedClient}
-            onQuickAdd={handleQuickAdd}
-            searchQuery="" // Don't pass search query to scrolling tabs
-            clientFilter={clientFilter}
-            getClientTotalDebt={getClientTotalDebt}
-            onResetCalculator={handleResetCalculator}
-            sortOption={sortOption}
-          />
+          <div className="scrolling-tabs-container">
+            <ScrollingTabs
+              clients={tabClients}
+              linkedClient={linkedClient}
+              onQuickAdd={handleQuickAdd}
+              searchQuery="" // Don't pass search query to scrolling tabs
+              clientFilter={clientFilter}
+              getClientTotalDebt={getClientTotalDebt}
+              onResetCalculator={handleResetCalculator}
+              sortOption={sortOption}
+            />
+          </div>
           
           {/* Client Grid */}
           <ClientGrid
@@ -956,7 +958,7 @@ const CreditManagement: React.FC = () => {
         </div>
 
         {/* Right Side - Calculator Section */}
-        <div className="w-full lg:w-80 bg-white rounded-lg shadow-lg p-4 lg:p-6 order-1 lg:order-2 flex flex-col">
+        <div className="calculator-container w-full lg:w-80 bg-white rounded-lg shadow-lg p-4 lg:p-6 order-1 lg:order-2 flex flex-col">
           {/* Calculator Header - Clickable */}
           <div className="grid grid-cols-3 items-center gap-2 mb-4">
             <div className="justify-self-start">
