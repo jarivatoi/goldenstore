@@ -26,6 +26,23 @@ body {
   body {
     font-size: 16px;
   }
+  
+  /* Fix for calculator and scrolling tabs overlap on iPhone portrait */
+  .credit-management-container {
+    display: flex;
+    flex-direction: column;
+    gap: 1rem;
+  }
+  
+  .scrolling-tabs-container {
+    flex-shrink: 0;
+    margin-bottom: 0.5rem;
+  }
+  
+  .calculator-container {
+    flex-shrink: 0;
+    margin-top: 0.5rem;
+  }
 }
 
 /* Mobile Landscape - Natural orientation */
@@ -55,6 +72,23 @@ body {
   .container {
     max-width: 600px;
     margin: 0 auto;
+  }
+  
+  /* Fix for calculator and scrolling tabs overlap on tablet portrait */
+  .credit-management-container {
+    display: flex;
+    flex-direction: column;
+    gap: 1rem;
+  }
+  
+  .scrolling-tabs-container {
+    flex-shrink: 0;
+    margin-bottom: 0.5rem;
+  }
+  
+  .calculator-container {
+    flex-shrink: 0;
+    margin-top: 0.5rem;
   }
 }
 
