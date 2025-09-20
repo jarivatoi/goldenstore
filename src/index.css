@@ -48,8 +48,8 @@ body {
   .calculator-buttons-grid {
     display: grid !important;
     grid-template-columns: repeat(6, 1fr) !important;
-    gap: 0.15rem !important;
-    padding: 0.25rem !important;
+    gap: 0.25rem !important;
+    padding: 0.35rem !important;
     overflow: hidden !important;
     box-sizing: border-box !important;
     width: 100% !important;
@@ -57,9 +57,9 @@ body {
   }
   
   .calculator-button {
-    padding: 0.3rem !important;
-    font-size: 0.65rem !important;
-    min-height: 35px !important;
+    padding: 0.4rem !important;
+    font-size: 0.75rem !important;
+    min-height: 40px !important;
     min-width: 0 !important;
     overflow: hidden !important;
     text-overflow: ellipsis !important;
@@ -68,21 +68,21 @@ body {
   }
   
   .calculator-button-lg {
-    font-size: 0.85rem !important;
+    font-size: 0.95rem !important;
   }
   
   .calculator-button-xl {
-    font-size: 1rem !important;
+    font-size: 1.1rem !important;
   }
   
   .calculator-display {
-    font-size: 1.25rem !important;
-    padding: 0.4rem !important;
-    min-height: 2.25rem !important;
+    font-size: 1.35rem !important;
+    padding: 0.5rem !important;
+    min-height: 2.5rem !important;
   }
   
   .calculator-secondary-display {
-    font-size: 0.7rem !important;
+    font-size: 0.75rem !important;
   }
   
   /* Ensure calculator buttons don't overflow their container */
@@ -97,7 +97,7 @@ body {
   .calculator-button-plus {
     grid-row: span 2 !important;
     height: auto !important;
-    min-height: 70px !important;
+    min-height: 80px !important;
   }
   
   /* Fix for calculator container to prevent overflow */
@@ -106,6 +106,13 @@ body {
     width: 100% !important;
     box-sizing: border-box !important;
     max-width: 100% !important;
+  }
+  
+  /* Adjust the grid to ensure all buttons fit */
+  @supports (display: grid) {
+    .calculator-buttons-grid {
+      grid-template-rows: auto auto auto auto auto auto !important;
+    }
   }
 }
 
@@ -128,18 +135,18 @@ body {
   
   /* Fix for calculator buttons in landscape mode */
   .calculator-buttons-grid {
-    gap: 0.2rem !important;
-    padding: 0.25rem !important;
+    gap: 0.3rem !important;
+    padding: 0.35rem !important;
   }
   
   .calculator-button {
-    padding: 0.25rem !important;
-    font-size: 0.7rem !important;
-    min-height: 32px !important;
+    padding: 0.35rem !important;
+    font-size: 0.8rem !important;
+    min-height: 36px !important;
   }
   
   .calculator-button-plus {
-    min-height: 64px !important;
+    min-height: 72px !important;
   }
 }
 
@@ -173,26 +180,26 @@ body {
   
   /* Adjust calculator buttons for tablet portrait */
   .calculator-buttons-grid {
-    gap: 0.25rem !important;
-    padding: 0.35rem !important;
+    gap: 0.35rem !important;
+    padding: 0.45rem !important;
   }
   
   .calculator-button {
-    padding: 0.35rem !important;
-    font-size: 0.8rem !important;
-    min-height: 40px !important;
+    padding: 0.45rem !important;
+    font-size: 0.9rem !important;
+    min-height: 45px !important;
   }
   
   .calculator-button-lg {
-    font-size: 1rem !important;
-  }
-  
-  .calculator-button-xl {
     font-size: 1.1rem !important;
   }
   
+  .calculator-button-xl {
+    font-size: 1.2rem !important;
+  }
+  
   .calculator-button-plus {
-    min-height: 80px !important;
+    min-height: 90px !important;
   }
 }
 
@@ -217,18 +224,18 @@ body {
   
   /* Adjust calculator buttons for tablet landscape */
   .calculator-buttons-grid {
-    gap: 0.3rem !important;
-    padding: 0.4rem !important;
+    gap: 0.4rem !important;
+    padding: 0.5rem !important;
   }
   
   .calculator-button {
-    padding: 0.4rem !important;
-    font-size: 0.85rem !important;
-    min-height: 42px !important;
+    padding: 0.5rem !important;
+    font-size: 0.95rem !important;
+    min-height: 48px !important;
   }
   
   .calculator-button-plus {
-    min-height: 84px !important;
+    min-height: 96px !important;
   }
 }
 
