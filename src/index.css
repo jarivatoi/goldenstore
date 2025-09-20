@@ -43,6 +43,37 @@ body {
     flex-shrink: 0;
     margin-top: 0.5rem;
   }
+  
+  /* Fix for calculator buttons overflowing on small screens */
+  .calculator-buttons-grid {
+    grid-template-columns: repeat(6, minmax(0, 1fr)) !important;
+    gap: 0.25rem !important;
+    padding: 0.25rem !important;
+  }
+  
+  .calculator-button {
+    padding: 0.5rem !important;
+    font-size: 0.75rem !important;
+    min-height: 40px;
+  }
+  
+  .calculator-button-lg {
+    font-size: 1rem !important;
+  }
+  
+  .calculator-button-xl {
+    font-size: 1.25rem !important;
+  }
+  
+  .calculator-display {
+    font-size: 1.5rem !important;
+    padding: 0.5rem !important;
+    min-height: 2.5rem !important;
+  }
+  
+  .calculator-secondary-display {
+    font-size: 0.75rem !important;
+  }
 }
 
 /* Mobile Landscape - Natural orientation */
@@ -60,6 +91,18 @@ body {
   .py-3 {
     padding-top: 0.5rem;
     padding-bottom: 0.5rem;
+  }
+  
+  /* Fix for calculator buttons in landscape mode */
+  .calculator-buttons-grid {
+    gap: 0.25rem !important;
+    padding: 0.25rem !important;
+  }
+  
+  .calculator-button {
+    padding: 0.25rem !important;
+    font-size: 0.75rem !important;
+    min-height: 35px;
   }
 }
 
