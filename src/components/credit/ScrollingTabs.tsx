@@ -15,12 +15,10 @@ interface ScrollingTabsProps {
   clients: Client[];
   linkedClient: Client | null | undefined;
   onQuickAdd: (client: Client) => void;
-  onClientSelect?: (client: Client) => void;
-  searchQuery: string;
   clientFilter: 'all' | 'returnables' | 'overdue' | 'overlimit';
   getClientTotalDebt: (clientId: string) => number;
-  onResetCalculator?: () => void;
   sortOption: 'name' | 'date' | 'debt';
+  onResetCalculator?: () => void;
   isBigCard?: boolean; // New prop to identify if it's the big card
 }
 
@@ -385,7 +383,7 @@ const ScrollingTabs: React.FC<ScrollingTabsProps> = ({
 
   return (
     <>
-    <div className="bg-white rounded-lg shadow-sm border border-gray-200">
+    <div className="bg-white rounded-lg shadow-sm border border-gray-200 scrolling-tabs-component" style={{ flexShrink: 0 }}>
       {/* Header */}
       <div className="p-3 border-b border-gray-200">
         <div className="flex items-center justify-between">
@@ -517,24 +515,6 @@ const ScrollingTabs: React.FC<ScrollingTabsProps> = ({
                     returnableItems[key] += 1;
                   }
                 });
-                
-                const returnedQuantities: {[key: string]: number} = {};
-                clientTransactions
-                  .filter(transaction => transaction.type === 'debt' && transaction.description.toLowerCase().includes('returned'))
-                  .forEach(transaction => {
-                    const description = transaction.description.toLowerCase();
-                    Object.keys(returnableItems).forEach(itemType => {
-                      if (description.includes(itemType.toLowerCase())) {
-                        const match = description.match(/returned:\s*(\d+)\s+/);
-                        if (match) {
-                          if (!returnedQuantities[itemType]) {
-                            returnedQuantities[itemType] = 0;
-                          }
-                          returnedQuantities[itemType] += parseInt(match[1]);
-                        }
-                      }
-                    });
-                  });
                 
                 const truncatedItems: string[] = [];
                 Object.entries(returnableItems).forEach(([itemType, total]) => {
