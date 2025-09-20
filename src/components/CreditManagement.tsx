@@ -933,7 +933,6 @@ const CreditManagement: React.FC = () => {
               clients={tabClients}
               linkedClient={linkedClient}
               onQuickAdd={handleQuickAdd}
-              searchQuery="" // Don't pass search query to scrolling tabs
               clientFilter={clientFilter}
               getClientTotalDebt={getClientTotalDebt}
               onResetCalculator={handleResetCalculator}
@@ -1005,9 +1004,9 @@ const CreditManagement: React.FC = () => {
 
           {/* Calculator Display */}
           <div className="mb-4">
-            <div className="bg-black rounded-lg p-4 mb-2">
+            <div className="bg-black rounded-lg p-4 mb-2 calculator-display">
               {/* Main Display with inline counter */}
-              <div className="text-2xl sm:text-3xl font-mono text-green-400 min-h-[3rem] flex items-center overflow-hidden bg-black rounded px-3 py-2 relative">
+              <div className="text-2xl sm:text-3xl font-mono text-green-400 min-h-[3rem] flex items-center overflow-hidden bg-black rounded px-3 py-2 relative calculator-display">
                 {/* Memory Indicator - Top Left */}
                 {calculatorMemory !== 0 && (
                   <div className="absolute top-0 left-0 text-xs text-blue-400 font-semibold">
@@ -1032,7 +1031,7 @@ const CreditManagement: React.FC = () => {
               </div>
               
               {/* Secondary Display */}
-              <div className="text-xs text-gray-400 font-mono mt-1 text-center">
+              <div className="text-xs text-gray-400 font-mono mt-1 text-center calculator-secondary-display">
                 {autoReplayActive || (autoReplayDisplay && autoReplayDisplay.startsWith('=')) || autoReplayStepInfo ? (() => {
                   // If we have auto replay step info, use it
                   if (autoReplayStepInfo) {
@@ -1070,7 +1069,7 @@ const CreditManagement: React.FC = () => {
           </div>
 
           {/* Calculator Buttons */}
-          <div className="grid grid-cols-6 gap-1 sm:gap-2 mb-6 p-2 sm:p-4 bg-gray-200 rounded-lg border-2 border-gray-400 shadow-inner">
+          <div className="grid grid-cols-6 gap-1 sm:gap-2 mb-6 p-2 sm:p-4 bg-gray-200 rounded-lg border-2 border-gray-400 shadow-inner calculator-buttons-grid">
             {/* Row 0 - Top row: CHECK←, CHECK→ */}
             <div className="col-span-6 grid grid-cols-2 gap-1 sm:gap-2 mb-1 sm:mb-2">
               {/* Empty space where link button was */}
@@ -1081,37 +1080,37 @@ const CreditManagement: React.FC = () => {
             {/* Row 1: MU, MRC, M-, M+, →, AUTO */}
             <button
               onClick={() => handleCalculatorInput('MU')}
-              className="bg-blue-400 hover:bg-blue-500 text-white p-2 sm:p-3 rounded-lg font-bold text-xs sm:text-sm shadow-md border border-blue-500 flex items-center justify-center"
+              className="bg-blue-400 hover:bg-blue-500 text-white p-2 sm:p-3 rounded-lg font-bold text-xs sm:text-sm shadow-md border border-blue-500 flex items-center justify-center calculator-button"
             >
               MU
             </button>
             <button
               onClick={() => handleCalculatorInput('MRC')}
-              className="bg-blue-400 hover:bg-blue-500 text-white p-2 sm:p-3 rounded-lg font-bold text-xs sm:text-sm shadow-md border border-blue-500 flex items-center justify-center"
+              className="bg-blue-400 hover:bg-blue-500 text-white p-2 sm:p-3 rounded-lg font-bold text-xs sm:text-sm shadow-md border border-blue-500 flex items-center justify-center calculator-button"
             >
               MRC
             </button>
             <button
               onClick={() => handleCalculatorInput('M-')}
-              className="bg-blue-400 hover:bg-blue-500 text-white p-2 sm:p-3 rounded-lg font-bold text-xs sm:text-sm shadow-md border border-blue-500 flex items-center justify-center"
+              className="bg-blue-400 hover:bg-blue-500 text-white p-2 sm:p-3 rounded-lg font-bold text-xs sm:text-sm shadow-md border border-blue-500 flex items-center justify-center calculator-button"
             >
               M-
             </button>
             <button
               onClick={() => handleCalculatorInput('M+')}
-              className="bg-blue-400 hover:bg-blue-500 text-white p-2 sm:p-3 rounded-lg font-bold text-xs sm:text-sm shadow-md border border-blue-500 flex items-center justify-center"
+              className="bg-blue-400 hover:bg-blue-500 text-white p-2 sm:p-3 rounded-lg font-bold text-xs sm:text-sm shadow-md border border-blue-500 flex items-center justify-center calculator-button"
             >
               M+
             </button>
             <button
               onClick={() => handleCalculatorInput('AUTO')}
-              className="bg-gray-400 hover:bg-gray-500 text-white p-2 sm:p-3 rounded-lg font-bold text-xs sm:text-sm shadow-md border border-gray-500 flex items-center justify-center"
+              className="bg-gray-400 hover:bg-gray-500 text-white p-2 sm:p-3 rounded-lg font-bold text-xs sm:text-sm shadow-md border border-gray-500 flex items-center justify-center calculator-button"
             >
               AUTO
             </button>
             <button
               onClick={() => handleCalculatorInput('→')}
-             className="bg-red-500 hover:bg-red-600 text-white p-2 sm:p-3 rounded-lg font-bold text-xs sm:text-sm shadow-md border border-red-600 flex items-center justify-center"
+             className="bg-red-500 hover:bg-red-600 text-white p-2 sm:p-3 rounded-lg font-bold text-xs sm:text-sm shadow-md border border-red-600 flex items-center justify-center calculator-button"
             >
               ⌫
             </button>
@@ -1119,32 +1118,32 @@ const CreditManagement: React.FC = () => {
             {/* Row 2: %, 7, 8, 9, (, ) */}
             <button
               onClick={() => handleCalculatorInput('%')}
-              className="bg-blue-400 hover:bg-blue-500 text-white p-2 sm:p-3 rounded-lg font-bold text-xs sm:text-sm shadow-md border border-blue-500 flex items-center justify-center"
+              className="bg-blue-400 hover:bg-blue-500 text-white p-2 sm:p-3 rounded-lg font-bold text-xs sm:text-sm shadow-md border border-blue-500 flex items-center justify-center calculator-button"
             >
               %
             </button>
             <button
               onClick={() => handleCalculatorInput('7')}
-              className="bg-gray-800 hover:bg-gray-900 text-white p-2 sm:p-3 rounded-lg font-bold text-lg sm:text-xl shadow-md border border-gray-600 flex items-center justify-center"
+              className="bg-gray-800 hover:bg-gray-900 text-white p-2 sm:p-3 rounded-lg font-bold text-lg sm:text-xl shadow-md border border-gray-600 flex items-center justify-center calculator-button calculator-button-lg"
             >
               7
             </button>
             <button
               onClick={() => handleCalculatorInput('8')}
-              className="bg-gray-800 hover:bg-gray-900 text-white p-2 sm:p-3 rounded-lg font-bold text-lg sm:text-xl shadow-md border border-gray-600 flex items-center justify-center"
+              className="bg-gray-800 hover:bg-gray-900 text-white p-2 sm:p-3 rounded-lg font-bold text-lg sm:text-xl shadow-md border border-gray-600 flex items-center justify-center calculator-button calculator-button-lg"
             >
               8
             </button>
             <button
               onClick={() => handleCalculatorInput('9')}
-              className="bg-gray-800 hover:bg-gray-900 text-white p-2 sm:p-3 rounded-lg font-bold text-lg sm:text-xl shadow-md border border-gray-600 flex items-center justify-center"
+              className="bg-gray-800 hover:bg-gray-900 text-white p-2 sm:p-3 rounded-lg font-bold text-lg sm:text-xl shadow-md border border-gray-600 flex items-center justify-center calculator-button calculator-button-lg"
             >
               9
             </button>
             <button
               onClick={() => handleCalculatorInput('CHECK←')}
               disabled={calculationSteps.length === 0}
-              className="bg-purple-400 hover:bg-purple-500 disabled:bg-gray-300 disabled:text-gray-500 text-white p-2 sm:p-3 rounded-lg font-bold text-lg sm:text-xl shadow-md border border-purple-500 flex items-center justify-center check-arrow-button"
+              className="bg-purple-400 hover:bg-purple-500 disabled:bg-gray-300 disabled:text-gray-500 text-white p-2 sm:p-3 rounded-lg font-bold text-lg sm:text-xl shadow-md border border-purple-500 flex items-center justify-center check-arrow-button calculator-button calculator-button-lg"
             >
               <div className="flex items-center">
                 <ArrowLeft size={20} />
@@ -1154,7 +1153,7 @@ const CreditManagement: React.FC = () => {
             <button
               onClick={() => handleCalculatorInput('CHECK→')}
               disabled={calculationSteps.length === 0}
-              className="bg-purple-400 hover:bg-purple-500 disabled:bg-gray-300 disabled:text-gray-500 text-white p-2 sm:p-3 rounded-lg font-bold text-lg sm:text-xl shadow-md border border-purple-500 flex items-center justify-center check-arrow-button"
+              className="bg-purple-400 hover:bg-purple-500 disabled:bg-gray-300 disabled:text-gray-500 text-white p-2 sm:p-3 rounded-lg font-bold text-lg sm:text-xl shadow-md border border-purple-500 flex items-center justify-center check-arrow-button calculator-button calculator-button-lg"
             >
               <div className="flex items-center">
                 <span className="mr-1">CHK</span>
@@ -1165,31 +1164,31 @@ const CreditManagement: React.FC = () => {
             {/* Row 3: √, 4, 5, 6, ×, ÷ */}
             <button
               onClick={() => handleCalculatorInput('√')}
-              className="bg-blue-400 hover:bg-blue-500 text-white p-2 sm:p-3 rounded-lg font-bold text-sm sm:text-lg shadow-md border border-blue-500 flex items-center justify-center"
+              className="bg-blue-400 hover:bg-blue-500 text-white p-2 sm:p-3 rounded-lg font-bold text-sm sm:text-lg shadow-md border border-blue-500 flex items-center justify-center calculator-button calculator-button-lg"
             >
               √
             </button>
             <button
               onClick={() => handleCalculatorInput('4')}
-              className="bg-gray-800 hover:bg-gray-900 text-white p-2 sm:p-3 rounded-lg font-bold text-lg sm:text-xl shadow-md border border-gray-600 flex items-center justify-center"
+              className="bg-gray-800 hover:bg-gray-900 text-white p-2 sm:p-3 rounded-lg font-bold text-lg sm:text-xl shadow-md border border-gray-600 flex items-center justify-center calculator-button calculator-button-lg"
             >
               4
             </button>
             <button
               onClick={() => handleCalculatorInput('5')}
-              className="bg-gray-800 hover:bg-gray-900 text-white p-2 sm:p-3 rounded-lg font-bold text-lg sm:text-xl shadow-md border border-gray-600 flex items-center justify-center"
+              className="bg-gray-800 hover:bg-gray-900 text-white p-2 sm:p-3 rounded-lg font-bold text-lg sm:text-xl shadow-md border border-gray-600 flex items-center justify-center calculator-button calculator-button-lg"
             >
               5
             </button>
             <button
               onClick={() => handleCalculatorInput('6')}
-              className="bg-gray-800 hover:bg-gray-900 text-white p-2 sm:p-3 rounded-lg font-bold text-lg sm:text-xl shadow-md border border-gray-600 flex items-center justify-center"
+              className="bg-gray-800 hover:bg-gray-900 text-white p-2 sm:p-3 rounded-lg font-bold text-lg sm:text-xl shadow-md border border-gray-600 flex items-center justify-center calculator-button calculator-button-lg"
             >
               6
             </button>
             <button
               onClick={() => handleCalculatorInput('*')}
-              className={`p-2 sm:p-3 rounded-lg font-bold text-lg sm:text-xl shadow-md border flex items-center justify-center ${
+              className={`p-2 sm:p-3 rounded-lg font-bold text-lg sm:text-xl shadow-md border flex items-center justify-center calculator-button calculator-button-xl ${
                 lastPressedButton === '*' 
                   ? 'bg-blue-700 text-white border-blue-800' 
                   : 'bg-blue-400 hover:bg-blue-500 text-white border-blue-500'
@@ -1199,7 +1198,7 @@ const CreditManagement: React.FC = () => {
             </button>
             <button
               onClick={() => handleCalculatorInput('÷')}
-              className={`p-2 sm:p-3 rounded-lg font-bold text-lg sm:text-xl shadow-md border flex items-center justify-center ${
+              className={`p-2 sm:p-3 rounded-lg font-bold text-lg sm:text-xl shadow-md border flex items-center justify-center calculator-button calculator-button-xl ${
                 lastPressedButton === '/' 
                   ? 'bg-blue-700 text-white border-blue-800' 
                   : 'bg-blue-400 hover:bg-blue-500 text-white border-blue-500'
@@ -1211,7 +1210,7 @@ const CreditManagement: React.FC = () => {
             {/* Row 4: CE, 1, 2, 3, +, - */}
             <button
               onClick={() => handleCalculatorInput('CE')}
-              className={`p-2 sm:p-3 rounded-lg font-bold text-xs sm:text-sm shadow-md border flex items-center justify-center ${
+              className={`p-2 sm:p-3 rounded-lg font-bold text-xs sm:text-sm shadow-md border flex items-center justify-center calculator-button ${
                 lastPressedButton === 'CE' 
                   ? 'bg-yellow-700 text-white border-yellow-800' 
                   : 'bg-yellow-500 hover:bg-yellow-600 text-white border-yellow-600'
@@ -1221,25 +1220,25 @@ const CreditManagement: React.FC = () => {
             </button>
             <button
               onClick={() => handleCalculatorInput('1')}
-              className="bg-gray-800 hover:bg-gray-900 text-white p-2 sm:p-3 rounded-lg font-bold text-lg sm:text-xl shadow-md border border-gray-600 flex items-center justify-center"
+              className="bg-gray-800 hover:bg-gray-900 text-white p-2 sm:p-3 rounded-lg font-bold text-lg sm:text-xl shadow-md border border-gray-600 flex items-center justify-center calculator-button calculator-button-lg"
             >
               1
             </button>
             <button
               onClick={() => handleCalculatorInput('2')}
-              className="bg-gray-800 hover:bg-gray-900 text-white p-2 sm:p-3 rounded-lg font-bold text-lg sm:text-xl shadow-md border border-gray-600 flex items-center justify-center"
+              className="bg-gray-800 hover:bg-gray-900 text-white p-2 sm:p-3 rounded-lg font-bold text-lg sm:text-xl shadow-md border border-gray-600 flex items-center justify-center calculator-button calculator-button-lg"
             >
               2
             </button>
             <button
               onClick={() => handleCalculatorInput('3')}
-              className="bg-gray-800 hover:bg-gray-900 text-white p-2 sm:p-3 rounded-lg font-bold text-lg sm:text-xl shadow-md border border-gray-600 flex items-center justify-center"
+              className="bg-gray-800 hover:bg-gray-900 text-white p-2 sm:p-3 rounded-lg font-bold text-lg sm:text-xl shadow-md border border-gray-600 flex items-center justify-center calculator-button calculator-button-lg"
             >
               3
             </button>
             <button
               onClick={() => handleCalculatorInput('+')}
-              className={`p-2 sm:p-3 rounded-lg font-bold text-lg sm:text-xl shadow-md border flex items-center justify-center ${
+              className={`p-2 sm:p-3 rounded-lg font-bold text-lg sm:text-xl shadow-md border flex items-center justify-center calculator-button calculator-button-xl ${
                 lastPressedButton === '+' 
                   ? 'bg-blue-700 text-white border-blue-800' 
                   : 'bg-blue-400 hover:bg-blue-500 text-white border-blue-500'
@@ -1250,7 +1249,7 @@ const CreditManagement: React.FC = () => {
             </button>
             <button
               onClick={() => handleCalculatorInput('-')}
-              className={`p-2 sm:p-3 rounded-lg font-bold text-lg sm:text-xl shadow-md border flex items-center justify-center ${
+              className={`p-2 sm:p-3 rounded-lg font-bold text-lg sm:text-xl shadow-md border flex items-center justify-center calculator-button calculator-button-xl ${
                 lastPressedButton === '-' 
                   ? 'bg-blue-700 text-white border-blue-800' 
                   : 'bg-blue-400 hover:bg-blue-500 text-white border-blue-500'
@@ -1262,7 +1261,7 @@ const CreditManagement: React.FC = () => {
             {/* Row 5: AC, 0, 00, •, (+ spans from row 4), = */}
             <button
               onClick={() => handleCalculatorInput('AC')}
-              className={`p-2 sm:p-3 rounded-lg font-bold text-xs sm:text-sm shadow-md border flex items-center justify-center ${
+              className={`p-2 sm:p-3 rounded-lg font-bold text-xs sm:text-sm shadow-md border flex items-center justify-center calculator-button ${
                 lastPressedButton === 'AC' 
                   ? 'bg-red-700 text-white border-red-800' 
                   : 'bg-red-500 hover:bg-red-600 text-white border-red-600'
@@ -1272,25 +1271,25 @@ const CreditManagement: React.FC = () => {
             </button>
             <button
               onClick={() => handleCalculatorInput('0')}
-              className="bg-gray-800 hover:bg-gray-900 text-white p-2 sm:p-3 rounded-lg font-bold text-lg sm:text-xl shadow-md border border-gray-600 flex items-center justify-center"
+              className="bg-gray-800 hover:bg-gray-900 text-white p-2 sm:p-3 rounded-lg font-bold text-lg sm:text-xl shadow-md border border-gray-600 flex items-center justify-center calculator-button calculator-button-lg"
             >
               0
             </button>
             <button
               onClick={() => handleCalculatorInput('00')}
-              className="bg-gray-800 hover:bg-gray-900 text-white p-2 sm:p-3 rounded-lg font-bold text-lg sm:text-xl shadow-md border border-gray-600 flex items-center justify-center"
+              className="bg-gray-800 hover:bg-gray-900 text-white p-2 sm:p-3 rounded-lg font-bold text-lg sm:text-xl shadow-md border border-gray-600 flex items-center justify-center calculator-button calculator-button-lg"
             >
               00
             </button>
             <button
               onClick={() => handleCalculatorInput('.')}
-              className="bg-gray-800 hover:bg-gray-900 text-white p-2 sm:p-3 rounded-lg font-bold text-lg sm:text-xl shadow-md border border-gray-600 flex items-center justify-center"
+              className="bg-gray-800 hover:bg-gray-900 text-white p-2 sm:p-3 rounded-lg font-bold text-lg sm:text-xl shadow-md border border-gray-600 flex items-center justify-center calculator-button calculator-button-lg"
             >
               •
             </button>
             <button
               onClick={() => handleCalculatorInput('=')}
-              className={`p-2 sm:p-3 rounded-lg font-bold text-lg sm:text-xl shadow-md border flex items-center justify-center ${
+              className={`p-2 sm:p-3 rounded-lg font-bold text-lg sm:text-xl shadow-md border flex items-center justify-center calculator-button calculator-button-xl ${
                 lastPressedButton === '=' 
                   ? 'bg-green-700 text-white border-green-800' 
                   : 'bg-green-500 hover:bg-green-600 text-white border-green-600'
