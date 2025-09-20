@@ -44,27 +44,16 @@ body {
     margin-top: 0.5rem;
   }
   
-  /* Fix for calculator buttons overflowing on small screens */
+  /* Calculator button sizing for small screens */
   .calculator-buttons-grid {
-    display: grid !important;
-    grid-template-columns: repeat(6, 1fr) !important;
     gap: 0.25rem !important;
     padding: 0.35rem !important;
-    overflow: hidden !important;
-    box-sizing: border-box !important;
-    width: 100% !important;
-    max-width: 100% !important;
   }
   
   .calculator-button {
     padding: 0.4rem !important;
     font-size: 0.75rem !important;
     min-height: 40px !important;
-    min-width: 0 !important;
-    overflow: hidden !important;
-    text-overflow: ellipsis !important;
-    white-space: nowrap !important;
-    box-sizing: border-box !important;
   }
   
   .calculator-button-lg {
@@ -85,34 +74,9 @@ body {
     font-size: 0.75rem !important;
   }
   
-  /* Ensure calculator buttons don't overflow their container */
-  .calculator-buttons-wrapper {
-    overflow: hidden !important;
-    width: 100% !important;
-    box-sizing: border-box !important;
-    max-width: 100% !important;
-  }
-  
-  /* Specific fix for the plus button that spans two rows */
+  /* Specific adjustments for the plus button */
   .calculator-button-plus {
-    grid-row: span 2 !important;
-    height: auto !important;
     min-height: 80px !important;
-  }
-  
-  /* Fix for calculator container to prevent overflow */
-  .calculator-section {
-    overflow: hidden !important;
-    width: 100% !important;
-    box-sizing: border-box !important;
-    max-width: 100% !important;
-  }
-  
-  /* Adjust the grid to ensure all buttons fit */
-  @supports (display: grid) {
-    .calculator-buttons-grid {
-      grid-template-rows: auto auto auto auto auto auto !important;
-    }
   }
 }
 
@@ -133,7 +97,7 @@ body {
     padding-bottom: 0.5rem;
   }
   
-  /* Fix for calculator buttons in landscape mode */
+  /* Calculator button sizing for landscape mode */
   .calculator-buttons-grid {
     gap: 0.3rem !important;
     padding: 0.35rem !important;
@@ -161,24 +125,7 @@ body {
     margin: 0 auto;
   }
   
-  /* Fix for calculator and scrolling tabs overlap on tablet portrait */
-  .credit-management-container {
-    display: flex;
-    flex-direction: column;
-    gap: 1rem;
-  }
-  
-  .scrolling-tabs-container {
-    flex-shrink: 0;
-    margin-bottom: 0.5rem;
-  }
-  
-  .calculator-container {
-    flex-shrink: 0;
-    margin-top: 0.5rem;
-  }
-  
-  /* Adjust calculator buttons for tablet portrait */
+  /* Calculator button sizing for tablet portrait */
   .calculator-buttons-grid {
     gap: 0.35rem !important;
     padding: 0.45rem !important;
@@ -222,7 +169,7 @@ body {
     gap: 2rem;
   }
   
-  /* Adjust calculator buttons for tablet landscape */
+  /* Calculator button sizing for tablet landscape */
   .calculator-buttons-grid {
     gap: 0.4rem !important;
     padding: 0.5rem !important;
@@ -257,7 +204,7 @@ body {
     gap: 2rem;
   }
   
-  /* Desktop calculator button sizing */
+  /* Calculator button sizing for desktop */
   .calculator-button-plus {
     min-height: 86px !important;
   }
