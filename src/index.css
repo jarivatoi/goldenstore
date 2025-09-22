@@ -57,12 +57,12 @@ body {
   /* Specific fix for iPhone 7 portrait mode */
   @media screen and (max-width: 400px) and (max-height: 700px) and (orientation: portrait) {
     .calculator-container {
-      max-height: 90vh;
+      max-height: 95vh;
     }
     
     .calculator-buttons-grid {
-      max-height: 400px !important;
-      overflow-y: auto !important;
+      max-height: 450px !important;
+      overflow-y: visible !important;
     }
     
     .calculator-display {
@@ -82,12 +82,12 @@ body {
   /* General portrait mode fix */
   @media screen and (max-width: 767px) and (orientation: portrait) {
     .calculator-container {
-      max-height: 90vh;
+      max-height: 100vh;
     }
     
     .calculator-buttons-grid {
-      max-height: 420px !important;
-      overflow-y: auto !important;
+      max-height: 500px !important;
+      overflow-y: visible !important;
     }
     
     /* Logo adjustments for portrait mode */
@@ -102,6 +102,7 @@ body {
   .calculator-buttons-grid {
     gap: 0.25rem !important;
     padding: 0.35rem !important;
+    max-height: 500px;
   }
   
   /* Logo sizing for mobile portrait mode */
@@ -120,6 +121,10 @@ body {
     
     .calculator-container .grid.grid-cols-3.items-center h3 {
       font-size: 0.9rem !important;
+    }
+    
+    .calculator-buttons-grid {
+      max-height: 550px !important;
     }
   }
   
@@ -174,6 +179,7 @@ body {
   .calculator-buttons-grid {
     gap: 0.3rem !important;
     padding: 0.35rem !important;
+    max-height: 350px !important;
   }
   
   .calculator-button {
@@ -184,6 +190,10 @@ body {
   
   .calculator-button-plus {
     min-height: 72px !important;
+  }
+  
+  .calculator-container {
+    max-height: 95vh;
   }
 }
 
