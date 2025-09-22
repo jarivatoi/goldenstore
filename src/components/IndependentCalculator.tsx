@@ -142,7 +142,7 @@ const IndependentCalculator: React.FC = () => {
     : { currentStep: articleCount, totalSteps: articleCount };
 
   return (
-    <div className="w-full bg-white rounded-lg shadow-lg p-4 lg:p-6 flex flex-col">
+    <div className="w-full lg:w-[32rem] calculator-container-landscape bg-white rounded-lg shadow-lg p-4 lg:p-6 flex flex-col">
       {/* Calculator Header */}
       <div className="grid grid-cols-3 items-center gap-2 mb-4">
         <div className="justify-self-start">
@@ -284,7 +284,7 @@ const IndependentCalculator: React.FC = () => {
           )
         </button>
 
-        {/* Row 3: √, 4, 5, 6, ×, +/- */}
+        {/* Row 3: √, 4, 5, 6, ×, ÷ */}
         <button
           onClick={() => handleLocalCalculatorInput('√')}
           className="bg-blue-400 hover:bg-blue-500 text-white p-2 sm:p-3 rounded-lg font-bold text-sm sm:text-lg shadow-md border border-blue-500 flex items-center justify-center"
@@ -320,13 +320,17 @@ const IndependentCalculator: React.FC = () => {
           ×
         </button>
         <button
-          onClick={() => handleLocalCalculatorInput('+/-')}
-          className="bg-blue-400 hover:bg-blue-500 text-white p-2 sm:p-3 rounded-lg font-bold text-sm sm:text-lg shadow-md border border-blue-500 flex items-center justify-center"
+          onClick={() => handleLocalCalculatorInput('÷')}
+          className={`p-2 sm:p-3 rounded-lg font-bold text-lg sm:text-xl shadow-md border flex items-center justify-center ${
+            lastPressedButton === '/' 
+              ? 'bg-blue-700 text-white border-blue-800' 
+              : 'bg-blue-400 hover:bg-blue-500 text-white border-blue-500'
+          }`}
         >
-          +/−
+          ÷
         </button>
 
-        {/* Row 4: CE, 1, 2, 3, -, ÷ */}
+        {/* Row 4: CE, 1, 2, 3, -, +/- */}
         <button
           onClick={() => handleLocalCalculatorInput('CE')}
           className={`p-2 sm:p-3 rounded-lg font-bold text-xs sm:text-sm shadow-md border flex items-center justify-center ${
@@ -366,14 +370,10 @@ const IndependentCalculator: React.FC = () => {
           −
         </button>
         <button
-          onClick={() => handleLocalCalculatorInput('÷')}
-          className={`p-2 sm:p-3 rounded-lg font-bold text-lg sm:text-xl shadow-md border flex items-center justify-center ${
-            lastPressedButton === '/' 
-              ? 'bg-blue-700 text-white border-blue-800' 
-              : 'bg-blue-400 hover:bg-blue-500 text-white border-blue-500'
-          }`}
+          onClick={() => handleLocalCalculatorInput('+/-')}
+          className="bg-blue-400 hover:bg-blue-500 text-white p-2 sm:p-3 rounded-lg font-bold text-sm sm:text-lg shadow-md border border-blue-500 flex items-center justify-center"
         >
-          ÷
+          +/−
         </button>
 
         {/* Row 5: AC, 0, 00, •, +, = */}
