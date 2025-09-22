@@ -41,7 +41,7 @@ export interface KeypadInputResult {
 export class KeypadHandler {
   private static readonly SPECIAL_FUNCTIONS = [
     'ON/C', 'AC', 'C', 'CE', '→', 'MU', 'MRC', 'M-', 'M+', 'GT', 
-    'AUTO', 'CHECK→', 'CHECK←', '%', '√', 'LINK'
+    'AUTO', 'CHECK→', 'CHECK←', '%', '√', 'LINK', '+/-'
   ];
 
   private static readonly OPERATORS = ['+', '-', '*', '/', '×', '÷'];
@@ -1135,6 +1135,15 @@ export class KeypadHandler {
       case 'CE':
         return {
           state: { ...state, display: '0', isNewNumber: true },
+          isActive: true
+        };
+
+      case '+/-':
+        // Change sign of current number
+        const currentNum = this.getCurrentNumber(state.display);
+        const newDisplay = currentNum === 0 ? '0' : (-currentNum).toString();
+        return {
+          state: { ...state, display: newDisplay, isNewNumber: false },
           isActive: true
         };
 
