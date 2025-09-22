@@ -26,136 +26,6 @@ body {
   body {
     font-size: 16px;
   }
-  
-  /* Fix for calculator and scrolling tabs overlap on iPhone portrait */
-  .credit-management-container {
-    display: flex;
-    flex-direction: column;
-    gap: 1rem;
-  }
-  
-  .scrolling-tabs-container {
-    flex-shrink: 0;
-    margin-bottom: 0.5rem;
-  }
-  
-  .calculator-container {
-    flex-shrink: 0;
-    margin-top: 0.5rem;
-    max-height: 80vh;
-    overflow: hidden;
-    display: flex;
-    flex-direction: column;
-  }
-  
-  .calculator-container > div:first-child {
-    flex: 1;
-    overflow-y: auto;
-    max-height: calc(80vh - 60px);
-  }
-  
-  /* Specific fix for iPhone 7 portrait mode */
-  @media screen and (max-width: 400px) and (max-height: 700px) and (orientation: portrait) {
-    .calculator-container {
-      max-height: 95vh;
-    }
-    
-    .calculator-buttons-grid {
-      max-height: 450px !important;
-      overflow-y: visible !important;
-    }
-    
-    .calculator-display {
-      font-size: 1.2rem !important;
-      padding: 0.4rem !important;
-      min-height: 2rem !important;
-    }
-    
-    /* Logo adjustments for small screens */
-    .calculator-container img[alt='Golden Logo'] {
-      width: 60px !important;
-      height: 30px !important;
-      object-fit: contain;
-    }
-  }
-  
-  /* General portrait mode fix */
-  @media screen and (max-width: 767px) and (orientation: portrait) {
-    .calculator-container {
-      max-height: 100vh;
-    }
-    
-    .calculator-buttons-grid {
-      max-height: 500px !important;
-      overflow-y: visible !important;
-    }
-    
-    /* Logo adjustments for portrait mode */
-    .calculator-container img[alt='Golden Logo'] {
-      width: 80px !important;
-      height: 40px !important;
-      object-fit: contain;
-    }
-  }
-  
-  /* Calculator button sizing for small screens */
-  .calculator-buttons-grid {
-    gap: 0.25rem !important;
-    padding: 0.35rem !important;
-    max-height: 500px;
-  }
-  
-  /* Logo sizing for mobile portrait mode */
-  @media screen and (max-width: 767px) and (orientation: portrait) {
-    .calculator-container img[alt='Golden Logo'] {
-      max-width: 120px !important;
-      height: auto !important;
-      width: auto !important;
-    }
-    
-    /* Calculator header adjustments for portrait mode */
-    .calculator-container .grid.grid-cols-3.items-center {
-      gap: 0.5rem !important;
-      margin-bottom: 0.5rem !important;
-    }
-    
-    .calculator-container .grid.grid-cols-3.items-center h3 {
-      font-size: 0.9rem !important;
-    }
-    
-    .calculator-buttons-grid {
-      max-height: 550px !important;
-    }
-  }
-  
-  .calculator-button {
-    padding: 0.4rem !important;
-    font-size: 0.75rem !important;
-    min-height: 40px !important;
-  }
-  
-  .calculator-button-lg {
-    font-size: 0.95rem !important;
-  }
-  
-  .calculator-button-xl {
-    font-size: 1.1rem !important;
-  }
-  
-  .calculator-display {
-    font-size: 1.35rem !important;
-    padding: 0.5rem !important;
-    min-height: 2.5rem !important;
-  }
-  
-  .calculator-secondary-display {
-    font-size: 0.75rem !important;
-  }
-  
-  /* Specific adjustments for the plus button */
-  .calculator-button-plus {
-    min-height: 80px !important;
-  }
 }
 
 /* Mobile Landscape - Natural orientation */
@@ -174,27 +44,6 @@ body {
     padding-top: 0.5rem;
     padding-bottom: 0.5rem;
   }
-  
-  /* Calculator button sizing for landscape mode */
-  .calculator-buttons-grid {
-    gap: 0.3rem !important;
-    padding: 0.35rem !important;
-    max-height: 350px !important;
-  }
-  
-  .calculator-button {
-    padding: 0.35rem !important;
-    font-size: 0.8rem !important;
-    min-height: 36px !important;
-  }
-  
-  .calculator-button-plus {
-    min-height: 72px !important;
-  }
-  
-  .calculator-container {
-    max-height: 95vh;
-  }
 }
 
 /* Tablet Portrait */
@@ -206,30 +55,6 @@ body {
   .container {
     max-width: 600px;
     margin: 0 auto;
-  }
-  
-  /* Calculator button sizing for tablet portrait */
-  .calculator-buttons-grid {
-    gap: 0.35rem !important;
-    padding: 0.45rem !important;
-  }
-  
-  .calculator-button {
-    padding: 0.45rem !important;
-    font-size: 0.9rem !important;
-    min-height: 45px !important;
-  }
-  
-  .calculator-button-lg {
-    font-size: 1.1rem !important;
-  }
-  
-  .calculator-button-xl {
-    font-size: 1.2rem !important;
-  }
-  
-  .calculator-button-plus {
-    min-height: 90px !important;
   }
 }
 
@@ -251,22 +76,6 @@ body {
     grid-template-columns: 1fr 400px;
     gap: 2rem;
   }
-  
-  /* Calculator button sizing for tablet landscape */
-  .calculator-buttons-grid {
-    gap: 0.4rem !important;
-    padding: 0.5rem !important;
-  }
-  
-  .calculator-button {
-    padding: 0.5rem !important;
-    font-size: 0.95rem !important;
-    min-height: 48px !important;
-  }
-  
-  .calculator-button-plus {
-    min-height: 96px !important;
-  }
 }
 
 /* Desktop and Large Tablets */
@@ -285,11 +94,6 @@ body {
     display: grid;
     grid-template-columns: 300px 1fr;
     gap: 2rem;
-  }
-  
-  /* Calculator button sizing for desktop */
-  .calculator-button-plus {
-    min-height: 86px !important;
   }
 }
 
@@ -312,30 +116,6 @@ body {
   to {
     opacity: 1;
   }
-}
-
-/* Ensure calculator operators inherit the text color (green in main display) */
-.calculator-operator {
-  /* color: #3b82f6 !important; */ /* blue-500 - removed to keep operators green */
-  font-weight: 700; /* bold */
-  font-size: 1.5rem !important; /* Increase size to text-2xl */
-  transition: all 0.2s ease-in-out; /* Smooth transition for visual feedback */
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
-  vertical-align: middle;
-}
-
-/* Add hover effect for better visual feedback */
-.calculator-operator:hover {
-  /* color: #2563eb !important; */ /* darker blue - removed to keep operators green */
-  transform: scale(1.1);
-}
-
-/* Add active effect when operator is pressed */
-.calculator-operator:active {
-  /* color: #1d4ed8 !important; */ /* even darker blue - removed to keep operators green */
-  transform: scale(1.2);
 }
 
 .animate-fade-in {
@@ -506,51 +286,6 @@ body {
   animation: bounceHorizontal 1s ease-in-out infinite;
 }
 
-/* Consistent arrow styling */
-.consistent-arrow {
-  font-weight: bold;
-  font-size: 1rem;
-  line-height: 1;
-}
-
-/* Enhanced arrow styling for calculator buttons */
-.calculator-arrow {
-  font-weight: bold;
-  font-size: 1.1rem;
-  line-height: 1;
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
-  min-width: 0; /* Prevent flex issues on mobile */
-  text-align: center;
-}
-
-/* Specific styling for calculator check buttons */
-.check-arrow-button {
-  font-weight: bold;
-  font-size: 1.1rem;
-  line-height: 1;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  text-align: center;
-  white-space: nowrap;
-  /* Improve vertical centering */
-  align-content: center;
-  -webkit-font-smoothing: antialiased;
-  -moz-osx-font-smoothing: grayscale;
-  /* Ensure consistent height */
-  height: 100%;
-  box-sizing: border-box;
-  /* Specific fix for arrow alignment */
-  transform: translateZ(0); /* Force hardware acceleration */
-  backface-visibility: hidden;
-  perspective: 1000px;
-  /* Fix for text arrow alignment */
-  font-feature-settings: "tnum";
-  font-variant-numeric: tabular-nums;
-}
-
 /* Pulsate animation for duplicate card */
 @keyframes pulsate {
   0%, 100% {
@@ -631,20 +366,4 @@ input[type=number]::-webkit-outer-spin-button {
 
 input[type=number] {
   -moz-appearance: textfield;
-}
-
-/* Notification animations */
-@keyframes slideInRight {
-  from {
-    transform: translateX(100%);
-    opacity: 0;
-  }
-  to {
-    transform: translateX(0);
-    opacity: 1;
-  }
-}
-
-.animate-slide-in-right {
-  animation: slideInRight 0.3s ease-out;
 }
