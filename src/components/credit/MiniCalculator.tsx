@@ -140,30 +140,25 @@ const MiniCalculator: React.FC<MiniCalculatorProps> = ({
         setIsNewNumber(true);
       }
     } else if (['+', '-', '*', '/'].includes(input)) {
-      // Handle operator input
-      if (!isNewNumber) {
-        // If we're in the middle of entering a number, we need to calculate first
-        if (lastOperation && lastOperand !== null) {
+      // Handle operator input - prevent multiple operators from chaining calculations
+      // Check if the last character is already an operator
+      const lastChar = calculatorValue.slice(-1);
+      if (['+', '-', '*', '/'].includes(lastChar)) {
+        // Replace the last operator with the new one
+        setCalculatorValue(calculatorValue.slice(0, -1) + input);
+      } else {
+        // Only append operator if we're not starting a new number
+        if (!isNewNumber) {
+          // Store the current number as last operand
           const currentNumber = parseFloat(calculatorValue.split(/[\+\-\*\/]/).pop() || '0');
-          const result = performOperation(lastOperand, currentNumber, lastOperation);
-          setCalculatorValue(result.toString() + input);
-          setLastOperand(result);
-        } else {
-          // First operator - store the current number as last operand
-          const currentNumber = parseFloat(calculatorValue);
           setLastOperand(currentNumber);
           setCalculatorValue(calculatorValue + input);
-        }
-      } else {
-        // If we just finished entering a number, just append the operator
-        // Check if the last character is already an operator
-        const lastChar = calculatorValue.slice(-1);
-        if (['+', '-', '*', '/'].includes(lastChar)) {
-          // Replace the last operator with the new one
-          setCalculatorValue(calculatorValue.slice(0, -1) + input);
+        } else if (lastOperation && lastOperand !== null) {
+          // If we already have a last operation and operand, replace the operator
+          setCalculatorValue(lastOperand.toString() + input);
         } else {
-          // Append the operator to the current value
-          setCalculatorValue(calculatorValue + input);
+          // If we're starting fresh with an operator, just append it to "0"
+          setCalculatorValue('0' + input);
         }
       }
       setLastOperation(input);
@@ -176,8 +171,17 @@ const MiniCalculator: React.FC<MiniCalculatorProps> = ({
           const secondOperand = parseFloat(parts[parts.length - 1]);
           const result = performOperation(lastOperand, secondOperand, lastOperation);
           setCalculatorValue(result.toString());
-          setLastOperation(null);
-          setLastOperand(null);
+          
+          // For continuous equals operations, update lastOperand to the result
+          // This allows 2+==== to keep adding 2
+          setLastOperand(result);
+          
+          setIsNewNumber(true);
+        } else {
+          // If there's no second operand, repeat the last operation with the same operand
+          const result = performOperation(lastOperand, lastOperand, lastOperation);
+          setCalculatorValue(result.toString());
+          setLastOperand(result);
           setIsNewNumber(true);
         }
       }
