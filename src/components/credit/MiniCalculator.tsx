@@ -36,7 +36,7 @@ const MiniCalculator: React.FC<MiniCalculatorProps> = ({
       if (part === '+' || part === '-' || part === '×' || part === '÷' || part === '*' || part === '/') {
         return (
           <span 
-            key={index} 
+            key={index}
             className="calculator-operator"
           >
             {part === '*' ? '×' : part === '/' ? '÷' : part}
@@ -52,6 +52,7 @@ const MiniCalculator: React.FC<MiniCalculatorProps> = ({
   const [memory, setMemory] = useState(0);
   const [lastOperation, setLastOperation] = useState<string | null>(null);
   const [lastOperand, setLastOperand] = useState<number | null>(null);
+  const [originalOperand, setOriginalOperand] = useState<number | null>(null); // Store the original operand for continuous operations
   const [isNewNumber, setIsNewNumber] = useState(true);
   const [label, setLabel] = useState(initialLabel);
   const [isEditingLabel, setIsEditingLabel] = useState(false);
@@ -128,6 +129,7 @@ const MiniCalculator: React.FC<MiniCalculatorProps> = ({
       setMemory(0);
       setLastOperation(null);
       setLastOperand(null);
+      setOriginalOperand(null); // Reset the original operand
       setIsNewNumber(true);
     } else if (input === 'CE') {
       setCalculatorValue('0');
@@ -152,6 +154,7 @@ const MiniCalculator: React.FC<MiniCalculatorProps> = ({
           // Store the current number as last operand
           const currentNumber = parseFloat(calculatorValue.split(/[\+\-\*\/]/).pop() || '0');
           setLastOperand(currentNumber);
+          setOriginalOperand(currentNumber); // Store the original operand for continuous operations
           setCalculatorValue(calculatorValue + input);
         } else if (lastOperation && lastOperand !== null) {
           // If we already have a last operation and operand, replace the operator
@@ -169,19 +172,48 @@ const MiniCalculator: React.FC<MiniCalculatorProps> = ({
         const parts = calculatorValue.split(/[\+\-\*\/]/);
         if (parts.length >= 2) {
           const secondOperand = parseFloat(parts[parts.length - 1]);
-          const result = performOperation(lastOperand, secondOperand, lastOperation);
-          setCalculatorValue(result.toString());
-          
-          // For continuous equals operations, update lastOperand to the result
-          // This allows 2+==== to keep adding 2
-          setLastOperand(result);
-          
-          setIsNewNumber(true);
+          // Check if the second operand is a valid number
+          if (!isNaN(secondOperand)) {
+            const result = performOperation(lastOperand, secondOperand, lastOperation);
+            setCalculatorValue(result.toString());
+            
+            // For continuous equals operations, update lastOperand to the result
+            // This allows 2+==== to keep adding 2, 2x==== to keep multiplying by 2, etc.
+            setLastOperand(result);
+            
+            setIsNewNumber(true);
+          } else {
+            // If there's no valid second operand, repeat the last operation with the original operand
+            // For "2+====", we want to keep adding 2 each time (2, 4, 6, 8, ...)
+            // For "2x====", we want to keep multiplying by 2 each time (2, 4, 8, 16, ...)
+            // Use the original operand for continuous operations
+            if (originalOperand !== null) {
+              const result = performOperation(lastOperand, originalOperand, lastOperation);
+              setCalculatorValue(result.toString());
+              setLastOperand(result);
+            } else {
+              // Fallback to the previous behavior if originalOperand is not set
+              const result = performOperation(lastOperand, lastOperand, lastOperation);
+              setCalculatorValue(result.toString());
+              setLastOperand(result);
+            }
+            setIsNewNumber(true);
+          }
         } else {
-          // If there's no second operand, repeat the last operation with the same operand
-          const result = performOperation(lastOperand, lastOperand, lastOperation);
-          setCalculatorValue(result.toString());
-          setLastOperand(result);
+          // If there's no second operand, repeat the last operation with the original operand
+          // For "2+====", we want to keep adding 2 each time (2, 4, 6, 8, ...)
+          // For "2x====", we want to keep multiplying by 2 each time (2, 4, 8, 16, ...)
+          // Use the original operand for continuous operations
+          if (originalOperand !== null) {
+            const result = performOperation(lastOperand, originalOperand, lastOperation);
+            setCalculatorValue(result.toString());
+            setLastOperand(result);
+          } else {
+            // Fallback to the previous behavior if originalOperand is not set
+            const result = performOperation(lastOperand, lastOperand, lastOperation);
+            setCalculatorValue(result.toString());
+            setLastOperand(result);
+          }
           setIsNewNumber(true);
         }
       }
@@ -298,8 +330,8 @@ const MiniCalculator: React.FC<MiniCalculatorProps> = ({
                   setIsEditingLabel(true);
                 }}
                 className="text-blue-200 hover:text-white transition-colors"
-                style={{ 
-                  touchAction: 'manipulation', 
+                style={{
+                  touchAction: 'manipulation',
                   zIndex: 10001,
                   position: 'relative',
                   pointerEvents: 'auto'
@@ -329,7 +361,7 @@ const MiniCalculator: React.FC<MiniCalculatorProps> = ({
                   e.stopPropagation();
                   e.preventDefault();
                 }}
-                style={{ 
+                style={{
                   touchAction: 'manipulation',
                   zIndex: 10001,
                   position: 'relative',
@@ -356,8 +388,8 @@ const MiniCalculator: React.FC<MiniCalculatorProps> = ({
                   handleSaveLabel();
                 }}
                 className="text-blue-200 hover:text-white transition-colors"
-                style={{ 
-                  touchAction: 'manipulation', 
+                style={{
+                  touchAction: 'manipulation',
                   zIndex: 10001,
                   position: 'relative',
                   pointerEvents: 'auto'
@@ -383,8 +415,8 @@ const MiniCalculator: React.FC<MiniCalculatorProps> = ({
             setIsMinimized(!isMinimized);
           }}
           className="text-blue-200 hover:text-white transition-colors ml-2"
-          style={{ 
-            touchAction: 'manipulation', 
+          style={{
+            touchAction: 'manipulation',
             zIndex: 10001,
             position: 'relative',
             pointerEvents: 'auto'
@@ -409,8 +441,8 @@ const MiniCalculator: React.FC<MiniCalculatorProps> = ({
               onClose();
             }}
             className="text-blue-200 hover:text-white transition-colors ml-2"
-            style={{ 
-              touchAction: 'manipulation', 
+            style={{
+              touchAction: 'manipulation',
               zIndex: 10001,
               position: 'relative',
               pointerEvents: 'auto'
@@ -422,7 +454,7 @@ const MiniCalculator: React.FC<MiniCalculatorProps> = ({
       </div>
 
       {/* Calculator Display */}
-      <div 
+      <div
         className="bg-gray-50 overflow-hidden transition-all duration-300 ease-in-out"
         style={{
           maxHeight: isMinimized ? '0px' : '200px',
@@ -461,7 +493,7 @@ const MiniCalculator: React.FC<MiniCalculatorProps> = ({
       )}
 
       {/* Calculator Buttons */}
-      <div 
+      <div
         className="bg-white overflow-hidden transition-all duration-300 ease-in-out"
         style={{
           maxHeight: isMinimized ? '0px' : '500px',
@@ -483,7 +515,7 @@ const MiniCalculator: React.FC<MiniCalculatorProps> = ({
             }}
             onClick={() => handleCalculatorInput('C')}
             className="bg-red-500 hover:bg-red-600 text-white p-2 rounded text-sm font-semibold"
-            style={{ 
+            style={{
               touchAction: 'manipulation',
               userSelect: 'none',
               WebkitUserSelect: 'none'
@@ -503,7 +535,7 @@ const MiniCalculator: React.FC<MiniCalculatorProps> = ({
             }}
             onClick={() => handleCalculatorInput('CE')}
             className="bg-orange-500 hover:bg-orange-600 text-white p-2 rounded text-sm font-semibold"
-            style={{ 
+            style={{
               touchAction: 'manipulation',
               userSelect: 'none',
               WebkitUserSelect: 'none'
@@ -523,7 +555,7 @@ const MiniCalculator: React.FC<MiniCalculatorProps> = ({
             }}
             onClick={() => handleCalculatorInput('⌫')}
             className="bg-gray-500 hover:bg-gray-600 text-white p-2 rounded text-sm font-semibold"
-            style={{ 
+            style={{
               touchAction: 'manipulation',
               userSelect: 'none',
               WebkitUserSelect: 'none'
@@ -543,7 +575,7 @@ const MiniCalculator: React.FC<MiniCalculatorProps> = ({
             }}
             onClick={() => handleCalculatorInput('/')}
             className="bg-blue-500 hover:bg-blue-600 text-white p-2 rounded text-sm font-semibold"
-            style={{ 
+            style={{
               touchAction: 'manipulation',
               userSelect: 'none',
               WebkitUserSelect: 'none'
@@ -565,7 +597,7 @@ const MiniCalculator: React.FC<MiniCalculatorProps> = ({
             }}
             onClick={() => handleCalculatorInput('7')}
             className="bg-gray-200 hover:bg-gray-300 text-gray-800 p-2 rounded text-sm font-semibold"
-            style={{ 
+            style={{
               touchAction: 'manipulation',
               userSelect: 'none',
               WebkitUserSelect: 'none'
@@ -585,7 +617,7 @@ const MiniCalculator: React.FC<MiniCalculatorProps> = ({
             }}
             onClick={() => handleCalculatorInput('8')}
             className="bg-gray-200 hover:bg-gray-300 text-gray-800 p-2 rounded text-sm font-semibold"
-            style={{ 
+            style={{
               touchAction: 'manipulation',
               userSelect: 'none',
               WebkitUserSelect: 'none'
@@ -605,7 +637,7 @@ const MiniCalculator: React.FC<MiniCalculatorProps> = ({
             }}
             onClick={() => handleCalculatorInput('9')}
             className="bg-gray-200 hover:bg-gray-300 text-gray-800 p-2 rounded text-sm font-semibold"
-            style={{ 
+            style={{
               touchAction: 'manipulation',
               userSelect: 'none',
               WebkitUserSelect: 'none'
@@ -625,7 +657,7 @@ const MiniCalculator: React.FC<MiniCalculatorProps> = ({
             }}
             onClick={() => handleCalculatorInput('*')}
             className="bg-blue-500 hover:bg-blue-600 text-white p-2 rounded text-sm font-semibold"
-            style={{ 
+            style={{
               touchAction: 'manipulation',
               userSelect: 'none',
               WebkitUserSelect: 'none'
@@ -647,7 +679,7 @@ const MiniCalculator: React.FC<MiniCalculatorProps> = ({
             }}
             onClick={() => handleCalculatorInput('4')}
             className="bg-gray-200 hover:bg-gray-300 text-gray-800 p-2 rounded text-sm font-semibold"
-            style={{ 
+            style={{
               touchAction: 'manipulation',
               userSelect: 'none',
               WebkitUserSelect: 'none'
@@ -667,7 +699,7 @@ const MiniCalculator: React.FC<MiniCalculatorProps> = ({
             }}
             onClick={() => handleCalculatorInput('5')}
             className="bg-gray-200 hover:bg-gray-300 text-gray-800 p-2 rounded text-sm font-semibold"
-            style={{ 
+            style={{
               touchAction: 'manipulation',
               userSelect: 'none',
               WebkitUserSelect: 'none'
@@ -687,7 +719,7 @@ const MiniCalculator: React.FC<MiniCalculatorProps> = ({
             }}
             onClick={() => handleCalculatorInput('6')}
             className="bg-gray-200 hover:bg-gray-300 text-gray-800 p-2 rounded text-sm font-semibold"
-            style={{ 
+            style={{
               touchAction: 'manipulation',
               userSelect: 'none',
               WebkitUserSelect: 'none'
@@ -707,7 +739,7 @@ const MiniCalculator: React.FC<MiniCalculatorProps> = ({
             }}
             onClick={() => handleCalculatorInput('-')}
             className="bg-blue-500 hover:bg-blue-600 text-white p-2 rounded text-sm font-semibold"
-            style={{ 
+            style={{
               touchAction: 'manipulation',
               userSelect: 'none',
               WebkitUserSelect: 'none'
@@ -729,7 +761,7 @@ const MiniCalculator: React.FC<MiniCalculatorProps> = ({
             }}
             onClick={() => handleCalculatorInput('1')}
             className="bg-gray-200 hover:bg-gray-300 text-gray-800 p-2 rounded text-sm font-semibold"
-            style={{ 
+            style={{
               touchAction: 'manipulation',
               userSelect: 'none',
               WebkitUserSelect: 'none'
@@ -749,7 +781,7 @@ const MiniCalculator: React.FC<MiniCalculatorProps> = ({
             }}
             onClick={() => handleCalculatorInput('2')}
             className="bg-gray-200 hover:bg-gray-300 text-gray-800 p-2 rounded text-sm font-semibold"
-            style={{ 
+            style={{
               touchAction: 'manipulation',
               userSelect: 'none',
               WebkitUserSelect: 'none'
@@ -769,7 +801,7 @@ const MiniCalculator: React.FC<MiniCalculatorProps> = ({
             }}
             onClick={() => handleCalculatorInput('3')}
             className="bg-gray-200 hover:bg-gray-300 text-gray-800 p-2 rounded text-sm font-semibold"
-            style={{ 
+            style={{
               touchAction: 'manipulation',
               userSelect: 'none',
               WebkitUserSelect: 'none'
@@ -789,7 +821,7 @@ const MiniCalculator: React.FC<MiniCalculatorProps> = ({
             }}
             onClick={() => handleCalculatorInput('+')}
             className="bg-blue-500 hover:bg-blue-600 text-white p-2 rounded text-sm font-semibold"
-            style={{ 
+            style={{
               touchAction: 'manipulation',
               userSelect: 'none',
               WebkitUserSelect: 'none'
@@ -811,7 +843,7 @@ const MiniCalculator: React.FC<MiniCalculatorProps> = ({
             }}
             onClick={() => handleCalculatorInput('0')}
             className="bg-gray-200 hover:bg-gray-300 text-gray-800 p-2 rounded text-sm font-semibold col-span-2"
-            style={{ 
+            style={{
               touchAction: 'manipulation',
               userSelect: 'none',
               WebkitUserSelect: 'none'
@@ -831,7 +863,7 @@ const MiniCalculator: React.FC<MiniCalculatorProps> = ({
             }}
             onClick={() => handleCalculatorInput('.')}
             className="bg-gray-200 hover:bg-gray-300 text-gray-800 p-2 rounded text-sm font-semibold"
-            style={{ 
+            style={{
               touchAction: 'manipulation',
               userSelect: 'none',
               WebkitUserSelect: 'none'
@@ -851,7 +883,7 @@ const MiniCalculator: React.FC<MiniCalculatorProps> = ({
             }}
             onClick={() => handleCalculatorInput('=')}
             className="bg-green-500 hover:bg-green-600 text-white p-2 rounded text-sm font-semibold"
-            style={{ 
+            style={{
               touchAction: 'manipulation',
               userSelect: 'none',
               WebkitUserSelect: 'none'
@@ -873,7 +905,7 @@ const MiniCalculator: React.FC<MiniCalculatorProps> = ({
             }}
             onClick={() => handleCalculatorInput('M+')}
             className="bg-purple-500 hover:bg-purple-600 text-white p-2 rounded text-xs font-semibold"
-            style={{ 
+            style={{
               touchAction: 'manipulation',
               userSelect: 'none',
               WebkitUserSelect: 'none'
@@ -893,7 +925,7 @@ const MiniCalculator: React.FC<MiniCalculatorProps> = ({
             }}
             onClick={() => handleCalculatorInput('MR')}
             className="bg-purple-500 hover:bg-purple-600 text-white p-2 rounded text-xs font-semibold"
-            style={{ 
+            style={{
               touchAction: 'manipulation',
               userSelect: 'none',
               WebkitUserSelect: 'none'
@@ -913,7 +945,7 @@ const MiniCalculator: React.FC<MiniCalculatorProps> = ({
             }}
             onClick={() => handleCalculatorInput('MC')}
             className="bg-purple-500 hover:bg-purple-600 text-white p-2 rounded text-xs font-semibold"
-            style={{ 
+            style={{
               touchAction: 'manipulation',
               userSelect: 'none',
               WebkitUserSelect: 'none'
@@ -942,7 +974,7 @@ const MiniCalculator: React.FC<MiniCalculatorProps> = ({
               }
             }}
             className="bg-green-500 hover:bg-green-600 disabled:bg-gray-300 disabled:cursor-not-allowed text-white p-2 rounded text-xs font-semibold"
-            style={{ 
+            style={{
               touchAction: 'manipulation',
               userSelect: 'none',
               WebkitUserSelect: 'none'
