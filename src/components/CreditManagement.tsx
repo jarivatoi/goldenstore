@@ -1146,8 +1146,8 @@ const CreditManagement: React.FC = () => {
               className="bg-purple-400 hover:bg-purple-500 disabled:bg-gray-300 disabled:text-gray-500 text-white p-2 sm:p-3 rounded-lg font-bold text-lg sm:text-xl shadow-md border border-purple-500 flex items-center justify-center check-arrow-button calculator-button calculator-button-lg"
             >
               <div className="flex items-center">
-                <ArrowLeft size={20} />
-                <span className="ml-1">CHK</span>
+                <ArrowLeft size={16} />
+                <span className="ml-1 text-sm">CHK</span>
               </div>
             </button>
             <button
@@ -1156,8 +1156,8 @@ const CreditManagement: React.FC = () => {
               className="bg-purple-400 hover:bg-purple-500 disabled:bg-gray-300 disabled:text-gray-500 text-white p-2 sm:p-3 rounded-lg font-bold text-lg sm:text-xl shadow-md border border-purple-500 flex items-center justify-center check-arrow-button calculator-button calculator-button-lg"
             >
               <div className="flex items-center">
-                <span className="mr-1">CHK</span>
-                <ArrowRight size={20} />
+                <span className="mr-1 text-sm">CHK</span>
+                <ArrowRight size={16} />
               </div>
             </button>
 
