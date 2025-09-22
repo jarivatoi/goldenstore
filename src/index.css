@@ -118,6 +118,8 @@ body {
   }
 }
 
+
+
 .animate-fade-in {
   animation: fadeIn .2s ease-out forwards;
 }
@@ -286,6 +288,8 @@ body {
   animation: bounceHorizontal 1s ease-in-out infinite;
 }
 
+
+
 /* Pulsate animation for duplicate card */
 @keyframes pulsate {
   0%, 100% {
@@ -366,4 +370,20 @@ input[type=number]::-webkit-outer-spin-button {
 
 input[type=number] {
   -moz-appearance: textfield;
+}
+
+/* Notification animations */
+@keyframes slideInRight {
+  from {
+    transform: translateX(100%);
+    opacity: 0;
+  }
+  to {
+    transform: translateX(0);
+    opacity: 1;
+  }
+}
+
+.animate-slide-in-right {
+  animation: slideInRight 0.3s ease-out;
 }
