@@ -282,6 +282,23 @@ const processSimpleCalculation = (
       };
     }
     
+    // Check if we're switching between + and - operators
+    // If so, don't perform any calculation, just update the operator
+    if ((newLastOperation === '+' || newLastOperation === '-') && newIsNewNumber) {
+      // Switching between + and - operators - just update the operator
+      newLastOperation = input;
+      newIsNewNumber = true;
+      return {
+        value: newValue,
+        calculationSteps: newCalculationSteps,
+        lastOperation: newLastOperation,
+        isNewNumber: newIsNewNumber,
+        articleCount: newArticleCount,
+        grandTotal: newGrandTotal,
+        transactionHistory: newTransactionHistory
+      };
+    }
+    
     // Special case: If minus is pressed when starting fresh or just after operator,
     // treat it as sign change instead of subtraction
     if (input === '-' && (currentValue === '0' || newIsNewNumber) && 
@@ -546,6 +563,29 @@ const processCompoundCalculation = (
     // If so, don't perform any calculation, just update the operator
     if (newLastOperation === input && newIsNewNumber) {
       // Repeated operator press - just update the operator
+      newLastOperation = input;
+      return {
+        value: newValue,
+        calculationSteps: newCalculationSteps,
+        lastOperation: newLastOperation,
+        isNewNumber: newIsNewNumber,
+        articleCount: newArticleCount,
+        grandTotal: newGrandTotal,
+        transactionHistory: newTransactionHistory,
+        lastOperand: newLastOperand,
+        result
+      };
+    }
+    
+    // Check if we're switching between operators of the same precedence
+    // If so, don't perform any calculation, just update the operator
+    const isCurrentAddSub = (input === '+' || input === '-');
+    const isLastAddSub = (newLastOperation === '+' || newLastOperation === '-');
+    const isCurrentMultDiv = (input === '*' || input === '/' || input === '×' || input === '÷');
+    const isLastMultDiv = (newLastOperation === '*' || newLastOperation === '/' || newLastOperation === '×' || newLastOperation === '÷');
+    
+    if (((isCurrentAddSub && isLastAddSub) || (isCurrentMultDiv && isLastMultDiv)) && newIsNewNumber) {
+      // Switching between operators of the same precedence - just update the operator
       newLastOperation = input;
       return {
         value: newValue,
@@ -1386,6 +1426,31 @@ export const processCalculatorInput = (
     if ((input === '+' || input === '-' || input === '*' || input === '/' || input === '×' || input === '÷') && 
         newLastOperation === input && newIsNewNumber) {
       // Repeated operator press - just update the operator
+      newLastOperation = input;
+      return {
+        value: newValue,
+        memory: newMemory,
+        grandTotal: newGrandTotal,
+        lastOperation: newLastOperation,
+        lastOperand: newLastOperand,
+        isNewNumber: newIsNewNumber,
+        isActive,
+        transactionHistory: newTransactionHistory,
+        calculationSteps: newCalculationSteps,
+        autoReplayActive,
+        articleCount: newArticleCount
+      };
+    }
+    
+    // Check if we're switching between operators of the same precedence
+    // If so, don't perform any calculation, just update the operator
+    const isCurrentAddSub = (input === '+' || input === '-');
+    const isLastAddSub = (newLastOperation === '+' || newLastOperation === '-');
+    const isCurrentMultDiv = (input === '*' || input === '/' || input === '×' || input === '÷');
+    const isLastMultDiv = (newLastOperation === '*' || newLastOperation === '/' || newLastOperation === '×' || newLastOperation === '÷');
+    
+    if ((isCurrentAddSub && isLastAddSub || isCurrentMultDiv && isLastMultDiv) && newIsNewNumber) {
+      // Switching between operators of the same precedence - just update the operator
       newLastOperation = input;
       return {
         value: newValue,
