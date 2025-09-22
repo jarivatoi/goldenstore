@@ -496,12 +496,12 @@ const MiniCalculator: React.FC<MiniCalculatorProps> = ({
       <div
         className="bg-white overflow-hidden transition-all duration-300 ease-in-out"
         style={{
-          maxHeight: isMinimized ? '0px' : '500px',
+          maxHeight: isMinimized ? '0px' : '600px',
           padding: isMinimized ? '0 12px' : '12px',
           opacity: isMinimized ? 0 : 1
         }}
       >
-        <div className="grid grid-cols-4 gap-1 mb-3" style={{ maxHeight: '300px', overflowY: 'auto' }}>
+        <div className="grid grid-cols-4 gap-1 mb-3" style={{ maxHeight: '400px', overflowY: 'auto' }}>
           {/* Row 1 */}
           <button
             onTouchStart={(e) => {
