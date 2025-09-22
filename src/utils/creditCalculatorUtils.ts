@@ -518,7 +518,7 @@ const processCompoundCalculation = (
         newValue = currentValue + '.';
       }
     }
-  } else if (input === '*' || input === '/' || input === '+' || input === '-') {
+  } else if (input === '+' || input === '-' || input === '*' || input === '/' || input === '×' || input === '÷') {
     // Handle operators - properly handle order of operations with step creation
     console.log('🔧 Operator input:', input, 'Current steps:', newCalculationSteps.length);
     
@@ -559,6 +559,24 @@ const processCompoundCalculation = (
       // For addition/subtraction, check if we need to complete a compound operation first
       console.log('🧮 Addition/Subtraction operator after mult/div. Last operation:', newLastOperation);
       console.log('🧮 Current operand stack:', { newLastOperand, currentNum });
+      
+      // Check if we're pressing the same operator repeatedly
+      // If so, don't perform any calculation, just update the operator
+      if (newLastOperation === input && newIsNewNumber) {
+        // Repeated operator press - just update the operator
+        newLastOperation = input;
+        return {
+          value: newValue,
+          calculationSteps: newCalculationSteps,
+          lastOperation: newLastOperation,
+          isNewNumber: newIsNewNumber,
+          articleCount: newArticleCount,
+          grandTotal: newGrandTotal,
+          transactionHistory: newTransactionHistory,
+          lastOperand: newLastOperand,
+          result
+        };
+      }
       
       if (newLastOperation === '*' || newLastOperation === '/') {
         // We have a pending multiplication/division - create compound step
@@ -678,7 +696,10 @@ const processCompoundCalculation = (
         newValue = parseFloat(result.toFixed(10)).toString();
       }
       
-      newLastOperation = null;
+      // For continuous equals operations, update lastOperand to the result
+      // This allows 2+==== to keep adding 2
+      newLastOperand = result;
+      newLastOperation = newLastOperation; // Keep the last operation for continuous equals
       newIsNewNumber = true;
       
       // Add to grand total and transaction history
