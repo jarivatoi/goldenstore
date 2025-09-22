@@ -266,6 +266,22 @@ const processSimpleCalculation = (
     // Handle + and - operators
     console.log('📊 Operator pressed - preserving articleCount:', newArticleCount);
     
+    // Check if we're pressing the same operator repeatedly
+    // If so, don't perform any calculation, just update the operator
+    if (newLastOperation === input && newIsNewNumber) {
+      // Repeated operator press - just update the operator
+      newLastOperation = input;
+      return {
+        value: newValue,
+        calculationSteps: newCalculationSteps,
+        lastOperation: newLastOperation,
+        isNewNumber: newIsNewNumber,
+        articleCount: newArticleCount,
+        grandTotal: newGrandTotal,
+        transactionHistory: newTransactionHistory
+      };
+    }
+    
     // Special case: If minus is pressed when starting fresh or just after operator,
     // treat it as sign change instead of subtraction
     if (input === '-' && (currentValue === '0' || newIsNewNumber) && 
@@ -335,7 +351,11 @@ const processSimpleCalculation = (
       result = evaluateExpression(expression);
       
       newValue = result.toString();
-      newLastOperation = null;
+      // For continuous equals operations (like 2+==== or 2x====), we need to preserve the last operation
+      // and update the last operand to the result so that subsequent equals presses continue the operation
+      const shouldPreserveOperation = newLastOperation === '+' || newLastOperation === '-' || 
+                                   newLastOperation === '*' || newLastOperation === '/';
+      newLastOperation = shouldPreserveOperation ? newLastOperation : null;
       newIsNewNumber = true;
       newArticleCount = newCalculationSteps.length; // Keep same article count, don't increment
       
@@ -522,6 +542,24 @@ const processCompoundCalculation = (
     // Handle operators - properly handle order of operations with step creation
     console.log('🔧 Operator input:', input, 'Current steps:', newCalculationSteps.length);
     
+    // Check if we're pressing the same operator repeatedly
+    // If so, don't perform any calculation, just update the operator
+    if (newLastOperation === input && newIsNewNumber) {
+      // Repeated operator press - just update the operator
+      newLastOperation = input;
+      return {
+        value: newValue,
+        calculationSteps: newCalculationSteps,
+        lastOperation: newLastOperation,
+        isNewNumber: newIsNewNumber,
+        articleCount: newArticleCount,
+        grandTotal: newGrandTotal,
+        transactionHistory: newTransactionHistory,
+        lastOperand: newLastOperand,
+        result
+      };
+    }
+    
     const currentNum = getCurrentNumber();
     
     // Create steps for compound operations following PEMDAS rules
@@ -559,24 +597,6 @@ const processCompoundCalculation = (
       // For addition/subtraction, check if we need to complete a compound operation first
       console.log('🧮 Addition/Subtraction operator after mult/div. Last operation:', newLastOperation);
       console.log('🧮 Current operand stack:', { newLastOperand, currentNum });
-      
-      // Check if we're pressing the same operator repeatedly
-      // If so, don't perform any calculation, just update the operator
-      if (newLastOperation === input && newIsNewNumber) {
-        // Repeated operator press - just update the operator
-        newLastOperation = input;
-        return {
-          value: newValue,
-          calculationSteps: newCalculationSteps,
-          lastOperation: newLastOperation,
-          isNewNumber: newIsNewNumber,
-          articleCount: newArticleCount,
-          grandTotal: newGrandTotal,
-          transactionHistory: newTransactionHistory,
-          lastOperand: newLastOperand,
-          result
-        };
-      }
       
       if (newLastOperation === '*' || newLastOperation === '/') {
         // We have a pending multiplication/division - create compound step
@@ -1346,6 +1366,27 @@ export const processCalculatorInput = (
         isComplete: false // Keep as incomplete to allow continuation
       }];
       
+      return {
+        value: newValue,
+        memory: newMemory,
+        grandTotal: newGrandTotal,
+        lastOperation: newLastOperation,
+        lastOperand: newLastOperand,
+        isNewNumber: newIsNewNumber,
+        isActive,
+        transactionHistory: newTransactionHistory,
+        calculationSteps: newCalculationSteps,
+        autoReplayActive,
+        articleCount: newArticleCount
+      };
+    }
+    
+    // Check if we're pressing the same operator repeatedly
+    // If so, don't perform any calculation, just update the operator
+    if ((input === '+' || input === '-' || input === '*' || input === '/' || input === '×' || input === '÷') && 
+        newLastOperation === input && newIsNewNumber) {
+      // Repeated operator press - just update the operator
+      newLastOperation = input;
       return {
         value: newValue,
         memory: newMemory,
