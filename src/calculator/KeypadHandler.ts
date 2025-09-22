@@ -481,6 +481,24 @@ export class KeypadHandler {
         };
       }
       
+      // Check if we're switching between + and - operators
+      // If so, don't perform any calculation, just update the operator
+      if ((state.lastOperation === '+' || state.lastOperation === '-') && 
+          (normalizedOperator === '+' || normalizedOperator === '-') && 
+          state.isNewNumber) {
+        // Switching between + and - operators - just update the operator
+        console.log('🎬 Switching between + and - operators, updating operator only');
+        return {
+          ...state,
+          lastOperation: normalizedOperator,
+          isNewNumber: true,
+          isError: false,
+          calculationSteps: newCalculationSteps,
+          nextOperatorContext: state.nextOperatorContext || normalizedOperator,
+          articleCount: newArticleCount
+        };
+      }
+      
       // Check if we have a pending addition/subtraction operation that needs to be completed
       if (state.lastOperation && (state.lastOperation === '+' || state.lastOperation === '-')) {
         // Check if we have any calculation steps yet - if not, we're just changing operators
