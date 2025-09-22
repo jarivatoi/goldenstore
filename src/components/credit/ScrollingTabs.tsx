@@ -44,6 +44,24 @@ const ScrollingTabs: React.FC<ScrollingTabsProps> = ({
   const [forceUpdate, setForceUpdate] = React.useState(0);
   const [recentlyUpdatedClient, setRecentlyUpdatedClient] = React.useState<string | null>(null);
   
+  const sortedClients = React.useMemo(() => {
+    const clientsToSort = [...clients];
+    
+    switch (sortOption) {
+      case 'name':
+        return clientsToSort.sort((a, b) => a.name.localeCompare(b.name));
+      
+      case 'date':
+        return clientsToSort.sort((a, b) => b.lastTransactionAt.getTime() - a.lastTransactionAt.getTime());
+      
+      case 'debt':
+        return clientsToSort.sort((a, b) => getClientTotalDebt(b.id) - getClientTotalDebt(a.id));
+      
+      default:
+        return clientsToSort;
+    }
+  }, [clients, sortOption, getClientTotalDebt]); // Depend on clients array, sort option, and getClientTotalDebt function
+
   // Listen for credit data changes to force re-render
   React.useEffect(() => {
     const handleCreditDataChanged = (event: CustomEvent) => {
@@ -85,7 +103,7 @@ const ScrollingTabs: React.FC<ScrollingTabsProps> = ({
       
       // Restart timeline after a short delay to ensure DOM updates
       setTimeout(() => {
-        if (clients.length > 0) {
+        if (sortedClients.length > 0) {
           setupContinuousScroll();
         }
       }, 100);
@@ -98,29 +116,11 @@ const ScrollingTabs: React.FC<ScrollingTabsProps> = ({
     return () => {
       window.removeEventListener('creditDataChanged', handleCreditDataChanged as EventListener);
     };
-  }, [clients.length]);
+  }, [sortedClients]); // Depend on sortedClients instead of clients.length
 
   // Get transactions directly from context to ensure fresh data
   const { getClientTransactions: getTransactions } = useCredit();
   
-  const sortedClients = React.useMemo(() => {
-    const clientsToSort = [...clients];
-    
-    switch (sortOption) {
-      case 'name':
-        return clientsToSort.sort((a, b) => a.name.localeCompare(b.name));
-      
-      case 'date':
-        return clientsToSort.sort((a, b) => b.lastTransactionAt.getTime() - a.lastTransactionAt.getTime());
-      
-      case 'debt':
-        return clientsToSort.sort((a, b) => getClientTotalDebt(b.id) - getClientTotalDebt(a.id));
-      
-      default:
-        return clientsToSort;
-    }
-  }, [clients.length, sortOption]); // Only depend on client count and sort option
-
   // Helper function to check if client has overdue returnables (3+ weeks old)
   const hasOverdueReturnables = (client: Client): boolean => {
     const clientTransactions = getTransactions(client.id);
@@ -220,7 +220,7 @@ const ScrollingTabs: React.FC<ScrollingTabsProps> = ({
           pausedPositionRef.current = null;
         });
     }
-  }, [sortedClients.length]); // Remove function dependencies to prevent recreation
+  }, [sortedClients]); // Update dependency to sortedClients instead of sortedClients.length
 
   const setupContinuousScroll = useCallback(() => {
     const content = contentRef.current;
@@ -303,7 +303,7 @@ const ScrollingTabs: React.FC<ScrollingTabsProps> = ({
         }
       });
     });
-  }, []); // Remove all dependencies to prevent recreation
+  }, [sortedClients]); // Update dependency to sortedClients
 
   // Setup animation when clients change
   useEffect(() => {
@@ -320,7 +320,7 @@ const ScrollingTabs: React.FC<ScrollingTabsProps> = ({
         setupContinuousScroll();
       }, 50);
     }
-  }, [clients.length]); // Only react to actual client count changes
+  }, [sortedClients]); // Depend on sortedClients instead of clients.length
 
   // Additional effect to handle filter changes that might not change length
   useEffect(() => {
