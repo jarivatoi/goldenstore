@@ -957,7 +957,7 @@ const CreditManagement: React.FC = () => {
         </div>
 
         {/* Right Side - Calculator Section */}
-        <div className="calculator-container w-full lg:w-80 bg-white rounded-lg shadow-lg p-4 lg:p-6 order-1 lg:order-2 flex flex-col h-full">
+        <div className="calculator-container w-full lg:w-[32rem] calculator-container-landscape bg-white rounded-lg shadow-lg p-4 lg:p-6 order-1 lg:order-2 flex flex-col h-full">
           {/* Calculator Header - Clickable */}
           <div className="grid grid-cols-3 items-center gap-2 mb-4">
             <div className="justify-self-start">
