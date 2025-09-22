@@ -320,6 +320,22 @@ export class KeypadHandler {
     if (normalizedOperator === '*' || normalizedOperator === '/' || normalizedOperator === '%') {
       console.log('🎬 Handling compound operation:', { normalizedOperator, currentNumber, lastOperand: state.lastOperand });
       
+      // Check if we're pressing the same operator repeatedly
+      // If so, don't perform any calculation, just update the operator
+      if (state.lastOperation === normalizedOperator && state.isNewNumber) {
+        // Repeated operator press - just update the operator
+        console.log('🎬 Repeated operator detected, updating operator only');
+        return {
+          ...state,
+          lastOperation: normalizedOperator,
+          lastOperand: currentNumber,
+          isNewNumber: true,
+          isError: false,
+          calculationSteps: newCalculationSteps,
+          articleCount: newArticleCount
+        };
+      }
+      
       // Special handling for when we have a percentage and then press multiplication
       // For example: 10% × 100 should calculate 10% of 100
       if (state.lastOperation === '%' && state.lastOperand !== null) {
@@ -448,6 +464,22 @@ export class KeypadHandler {
     // Handle addition/subtraction
     if (normalizedOperator === '+' || normalizedOperator === '-') {
       console.log('🎬 Handling addition/subtraction:', { normalizedOperator, currentNumber });
+      
+      // Check if we're pressing the same operator repeatedly
+      // If so, don't perform any calculation, just update the operator
+      if (state.lastOperation === normalizedOperator && state.isNewNumber) {
+        // Repeated operator press - just update the operator
+        console.log('🎬 Repeated operator detected, updating operator only');
+        return {
+          ...state,
+          lastOperation: normalizedOperator,
+          isNewNumber: true,
+          isError: false,
+          calculationSteps: newCalculationSteps,
+          nextOperatorContext: state.nextOperatorContext || normalizedOperator,
+          articleCount: newArticleCount
+        };
+      }
       
       // Check if we have a pending addition/subtraction operation that needs to be completed
       if (state.lastOperation && (state.lastOperation === '+' || state.lastOperation === '-')) {
@@ -964,46 +996,100 @@ export class KeypadHandler {
       // Set article count to match number of steps
       newArticleCount = newCalculationSteps.length;
     }
-    
+
     // Calculate final result
     // For compound calculations, if we have a single compound step, use its result directly
     // Otherwise, evaluate all steps (for mixed operations like 10+5×3)
     let finalResult: number;
-    
+
     // Check if we have a sequence that starts with a number followed by operations
     const hasInitialNumber = newCalculationSteps.length > 0 && 
       newCalculationSteps[0].operationType === 'number';
-    
-    if (hasInitialNumber && newCalculationSteps.length > 1) {
-      // Mixed operations like "10+5×3" - evaluate all steps
-      finalResult = this.evaluateAllSteps(newCalculationSteps);
-    } else if (newCalculationSteps.length === 1 && 
-        newCalculationSteps[0].operationType === 'operation' && 
-        newCalculationSteps[0].displayValue.includes('(') && 
-        newCalculationSteps[0].displayValue.includes('=')) {
-      // Direct single compound operation like "(2×3)=6"
-      finalResult = newCalculationSteps[0].result;
-    } else if (newCalculationSteps.length > 1) {
-      // Other mixed operations - evaluate all steps
-      finalResult = this.evaluateAllSteps(newCalculationSteps);
-    } else if (newCalculationSteps.length === 1) {
-      // Single step - use its result
-      finalResult = newCalculationSteps[0].result;
+
+    // For continuous equals operations, we need special handling
+    const isContinuousOperation = state.lastOperation && state.isNewNumber;
+
+    if (isContinuousOperation && hasInitialNumber) {
+      // This is a continuous operation, extract the original operand from the first step
+      const originalOperand = newCalculationSteps[0].result;
+      
+      // For continuous operations, we want to add the original operand to the current result
+      switch (state.lastOperation) {
+        case '+':
+          finalResult = currentNumber + originalOperand;
+          break;
+        case '-':
+          finalResult = currentNumber - originalOperand;
+          break;
+        case '*':
+        case '×':
+          finalResult = currentNumber * originalOperand;
+          break;
+        case '/':
+        case '÷':
+          finalResult = originalOperand !== 0 ? currentNumber / originalOperand : 0;
+          break;
+        default:
+          // Fallback to normal evaluation
+          if (hasInitialNumber && newCalculationSteps.length > 1) {
+            // Mixed operations like "10+5×3" - evaluate all steps
+            finalResult = this.evaluateAllSteps(newCalculationSteps);
+          } else if (newCalculationSteps.length === 1 && 
+              newCalculationSteps[0].operationType === 'operation' && 
+              newCalculationSteps[0].displayValue.includes('(') && 
+              newCalculationSteps[0].displayValue.includes('=')) {
+            // Direct single compound operation like "(2×3)=6"
+            finalResult = newCalculationSteps[0].result;
+          } else if (newCalculationSteps.length > 1) {
+            // Other mixed operations - evaluate all steps
+            finalResult = this.evaluateAllSteps(newCalculationSteps);
+          } else if (newCalculationSteps.length === 1) {
+            // Single step - use its result
+            finalResult = newCalculationSteps[0].result;
+          } else {
+            // Fallback - use current number
+            finalResult = currentNumber;
+          }
+      }
     } else {
-      // Fallback - use current number
-      finalResult = currentNumber;
+      // Normal operation evaluation
+      if (hasInitialNumber && newCalculationSteps.length > 1) {
+        // Mixed operations like "10+5×3" - evaluate all steps
+        finalResult = this.evaluateAllSteps(newCalculationSteps);
+      } else if (newCalculationSteps.length === 1 && 
+          newCalculationSteps[0].operationType === 'operation' && 
+          newCalculationSteps[0].displayValue.includes('(') && 
+          newCalculationSteps[0].displayValue.includes('=')) {
+        // Direct single compound operation like "(2×3)=6"
+        finalResult = newCalculationSteps[0].result;
+      } else if (newCalculationSteps.length > 1) {
+        // Other mixed operations - evaluate all steps
+        finalResult = this.evaluateAllSteps(newCalculationSteps);
+      } else if (newCalculationSteps.length === 1) {
+        // Single step - use its result
+        finalResult = newCalculationSteps[0].result;
+      } else {
+        // Fallback - use current number
+        finalResult = currentNumber;
+      }
     }
-    
+
     console.log('🎬 Final result:', { finalResult, steps: newCalculationSteps });
-    
+
+    // For continuous equals operations (like 2+==== or 2x====), we need to preserve the last operation
+    // and properly handle the operands for subsequent operations
+    const shouldPreserveOperation = state.lastOperation === '+' || state.lastOperation === '-' || 
+                       state.lastOperation === '*' || state.lastOperation === '/' ||
+                       state.lastOperation === '×' || state.lastOperation === '÷';
+
     return {
       ...state,
       display: finalResult.toString(),
       grandTotal: state.grandTotal + finalResult,
       transactionHistory: [...state.transactionHistory, finalResult],
       calculationSteps: newCalculationSteps,
-      lastOperation: null,
-      lastOperand: null,
+      lastOperation: shouldPreserveOperation ? state.lastOperation : null,
+      lastOperand: shouldPreserveOperation ? finalResult : null,
       isNewNumber: true,
       isError: false,
       articleCount: newCalculationSteps.length // Set final article count to total steps
