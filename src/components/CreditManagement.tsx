@@ -957,7 +957,7 @@ const CreditManagement: React.FC = () => {
         </div>
 
         {/* Right Side - Calculator Section */}
-        <div className="calculator-container w-full lg:w-80 bg-white rounded-lg shadow-lg p-4 lg:p-6 order-1 lg:order-2 flex flex-col h-full" style={{ maxHeight: '95vh' }}>
+        <div className="calculator-container w-full lg:w-80 bg-white rounded-lg shadow-lg p-4 lg:p-6 order-1 lg:order-2 flex flex-col h-full">
           {/* Calculator Header - Clickable */}
           <div className="grid grid-cols-3 items-center gap-2 mb-4">
             <div className="justify-self-start">
@@ -1069,7 +1069,7 @@ const CreditManagement: React.FC = () => {
           </div>
 
           {/* Calculator Buttons */}
-          <div className="grid grid-cols-6 gap-1 sm:gap-2 mb-6 p-2 sm:p-4 bg-gray-200 rounded-lg border-2 border-gray-400 shadow-inner calculator-buttons-grid flex-grow" style={{ maxHeight: '600px' }}>
+          <div className="grid grid-cols-6 gap-1 sm:gap-2 mb-6 p-2 sm:p-4 bg-gray-200 rounded-lg border-2 border-gray-400 shadow-inner calculator-buttons-grid flex-grow">
             {/* Row 0 - Top row: CHECK←, CHECK→ */}
             <div className="col-span-6 grid grid-cols-2 gap-1 sm:gap-2 mb-1 sm:mb-2">
               {/* Empty space where link button was */}
