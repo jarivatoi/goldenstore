@@ -1207,7 +1207,7 @@ const CreditManagement: React.FC = () => {
               ÷
             </button>
 
-            {/* Row 4: CE, 1, 2, 3, +, - */}
+            {/* Row 4: CE, 1, 2, 3, -, +/- */}
             <button
               onClick={() => handleCalculatorInput('CE')}
               className={`p-2 sm:p-3 rounded-lg font-bold text-xs sm:text-sm shadow-md border flex items-center justify-center calculator-button ${
@@ -1237,17 +1237,6 @@ const CreditManagement: React.FC = () => {
               3
             </button>
             <button
-              onClick={() => handleCalculatorInput('+')}
-              className={`p-2 sm:p-3 rounded-lg font-bold text-lg sm:text-xl shadow-md border flex items-center justify-center calculator-button calculator-button-xl ${
-                lastPressedButton === '+' 
-                  ? 'bg-blue-700 text-white border-blue-800' 
-                  : 'bg-blue-400 hover:bg-blue-500 text-white border-blue-500'
-              }`}
-              style={{ gridRow: 'span 2' }}
-            >
-              +
-            </button>
-            <button
               onClick={() => handleCalculatorInput('-')}
               className={`p-2 sm:p-3 rounded-lg font-bold text-lg sm:text-xl shadow-md border flex items-center justify-center calculator-button calculator-button-xl ${
                 lastPressedButton === '-' 
@@ -1257,8 +1246,14 @@ const CreditManagement: React.FC = () => {
             >
               −
             </button>
+            <button
+              onClick={() => handleCalculatorInput('+/-')}
+              className="bg-blue-400 hover:bg-blue-500 text-white p-2 sm:p-3 rounded-lg font-bold text-sm sm:text-lg shadow-md border border-blue-500 flex items-center justify-center calculator-button calculator-button-lg"
+            >
+              +/−
+            </button>
 
-            {/* Row 5: AC, 0, 00, •, (+ spans from row 4), = */}
+            {/* Row 5: AC, 0, 00, •, +, = */}
             <button
               onClick={() => handleCalculatorInput('AC')}
               className={`p-2 sm:p-3 rounded-lg font-bold text-xs sm:text-sm shadow-md border flex items-center justify-center calculator-button ${
@@ -1286,6 +1281,17 @@ const CreditManagement: React.FC = () => {
               className="bg-gray-800 hover:bg-gray-900 text-white p-2 sm:p-3 rounded-lg font-bold text-lg sm:text-xl shadow-md border border-gray-600 flex items-center justify-center calculator-button calculator-button-lg"
             >
               •
+            </button>
+            <button
+              onClick={() => handleCalculatorInput('+')}
+              className={`p-2 sm:p-3 rounded-lg font-bold text-lg sm:text-xl shadow-md border flex items-center justify-center calculator-button calculator-button-xl ${
+                lastPressedButton === '+' 
+                  ? 'bg-blue-700 text-white border-blue-800' 
+                  : 'bg-blue-400 hover:bg-blue-500 text-white border-blue-500'
+              }`}
+              style={{ gridRow: 'span 1' }}
+            >
+              +
             </button>
             <button
               onClick={() => handleCalculatorInput('=')}
