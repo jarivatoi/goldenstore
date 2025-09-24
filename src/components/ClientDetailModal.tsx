@@ -104,6 +104,8 @@ const ClientDetailModal: React.FC<ClientDetailModalProps> = ({ client, onClose, 
       if (description.includes('bouteille') && !bouteillePattern.test(description)) {
         const sizeMatch = description.match(/(\d+(?:\.\d+)?[Ll])/i);
         const brandMatch = description.match(/bouteilles?\s+([^,]*)/i);
+        // If no brand match found, check for simple "bouteille" or "bouteilles"
+        const simpleMatch = description.match(/\b(bouteilles?)\b/i);
         const brand = brandMatch?.[1]?.trim() || '';
         
         // Properly capitalize brand name
@@ -118,7 +120,11 @@ const ClientDetailModal: React.FC<ClientDetailModalProps> = ({ client, onClose, 
           key = `Bouteille ${capitalizedBrand}`;
         } else if (sizeMatch) {
           key = `${sizeMatch[1].replace(/l$/i, 'L')} Bouteille`;
+        } else if (simpleMatch) {
+          // Handle simple "bouteille" or "bouteilles" without brand or size
+          key = 'Bouteille';
         } else {
+          // Fallback to simple "bouteille"
           key = 'Bouteille';
         }
         
@@ -130,8 +136,27 @@ const ClientDetailModal: React.FC<ClientDetailModalProps> = ({ client, onClose, 
       
       if (description.includes('chopine') && !chopinePattern.test(description)) {
         const brandMatch = description.match(/chopines?\s+([^,]*)/i);
+        // If no brand match found, check for simple "chopine" or "chopines"
+        const simpleMatch = description.match(/\b(chopines?)\b/i);
         const brand = brandMatch?.[1]?.trim() || '';
-        const key = brand ? `Chopine ${brand}` : 'Chopine';
+        let key;
+        if (brand) {
+          // For branded items, create a specific key
+          key = `Chopine ${brand}`;
+          
+          // Also add a generic "Chopine" entry for the same transaction
+          const genericKey = 'Chopine';
+          if (!returnableItems[genericKey]) {
+            returnableItems[genericKey] = 0;
+          }
+          returnableItems[genericKey] += 1;
+        } else if (simpleMatch) {
+          // Handle simple "chopine" or "chopines" without brand
+          key = 'Chopine';
+        } else {
+          // Fallback to simple "chopine"
+          key = 'Chopine';
+        }
         
         if (!returnableItems[key]) {
           returnableItems[key] = 0;
