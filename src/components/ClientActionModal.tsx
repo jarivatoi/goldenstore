@@ -290,16 +290,9 @@ const ClientActionModal: React.FC<ClientActionModalProps> = ({ client, onClose, 
           // For branded items, create a specific key
           key = `Chopine ${brand}`;
           
-          // Also add a generic "Chopine" entry for the same transaction
-          const genericKey = 'Chopine';
-          if (!returnableItems[genericKey]) {
-            returnableItems[genericKey] = { total: 0, transactions: [] };
-          }
-          returnableItems[genericKey].total += 1;
-          returnableItems[genericKey].transactions.push({
-            ...transaction,
-            quantity: 1
-          });
+          // REMOVE the generic "Chopine" entry for branded items
+          // This was causing the issue where branded items were also counted as generic items
+          // The generic entry is NOT needed when we have a branded item
         } else if (simpleMatch) {
           // Handle simple "chopine" or "chopines" without brand
           key = 'Chopine';
