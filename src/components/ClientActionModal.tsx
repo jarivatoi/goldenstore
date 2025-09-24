@@ -419,7 +419,10 @@ const ClientActionModal: React.FC<ClientActionModalProps> = ({ client, onClose, 
           // e.g., "Chopine" should not match "Chopine Vin"
           // Create a pattern that matches the item type followed by end of string, space, or comma
           const escapedItemType = normalizedItemType.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
-          const pattern = new RegExp(`returned:\\s*(\\d+)\\s+${escapedItemType}s?(?=\\s|$|,|\\.)`, 'i');
+          // For generic items, we need a more restrictive pattern that doesn't match branded items
+          // The pattern should match "chopine" or "chopines" but not "chopine vin"
+          // This pattern ensures that "chopine" only matches when it's not part of a larger phrase
+          const pattern = new RegExp(`returned:\\s*(\\d+)\\s+${escapedItemType}(?=s?(?=\\s|$|,|\\.))`, 'i');
           const match = description.match(pattern);
           if (match) {
             return total + parseInt(match[1]);
