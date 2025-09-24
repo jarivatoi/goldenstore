@@ -482,38 +482,61 @@ const ScrollingTabs: React.FC<ScrollingTabsProps> = ({
                     returnableItems[key] += quantity;
                   }
                   
+                  // Handle items without explicit numbers
                   if (description.includes('bouteille') && !bouteillePattern.test(description)) {
-                    const sizeMatch = description.match(/(\d+(?:\.\d+)?L)/i);
-                    const brandMatch = description.match(/bouteilles?\s+([^,]*)/i);
-                    const brand = brandMatch?.[1]?.trim() || '';
-                    
-                    let key;
-                    if (sizeMatch && sizeMatch[1] && brand) {
-                      key = `${sizeMatch[1].toUpperCase()} Bouteille ${brand}`;
-                    } else if (brand) {
-                      key = `Bouteille ${brand}`;
-                    } else if (sizeMatch && sizeMatch[1]) {
-                      key = `${sizeMatch[1].toUpperCase()} Bouteille`;
-                    } else {
-                      key = 'Bouteille';
-                    }
-                    
-                    if (!returnableItems[key]) {
-                      returnableItems[key] = 0;
-                    }
-                    returnableItems[key] += 1;
-                  }
+                                const sizeMatch = description.match(/(\d+(?:\.\d+)?L)/i);
+                                const brandMatch = description.match(/bouteilles?\s+([^,]*)/i);
+                                // If no brand match found, check for simple "bouteille" or "bouteilles"
+                                const simpleMatch = description.match(/\b(bouteilles?)\b/i);
+                                const brand = brandMatch?.[1]?.trim() || '';
+                                
+                                // Capitalize brand name properly
+                                const capitalizedBrand = brand ? brand.split(' ').map((word: string) => 
+                                  word.charAt(0).toUpperCase() + word.slice(1).toLowerCase()
+                                ).join(' ') : '';
+                                
+                                let key;
+                                if (sizeMatch && brand) {
+                                  key = `${sizeMatch[1].replace(/l$/i, 'L')} ${capitalizedBrand}`;
+                                } else if (brand) {
+                                  key = `Bouteille ${capitalizedBrand}`;
+                                } else if (sizeMatch) {
+                                  key = `${sizeMatch[1].replace(/l$/i, 'L')} Bouteille`;
+                                } else if (simpleMatch) {
+                                  // Handle simple "bouteille" or "bouteilles" without brand or size
+                                  key = 'Bouteille';
+                                } else {
+                                  // Fallback to simple "bouteille"
+                                  key = 'Bouteille';
+                                }
+                                
+                                if (!returnableItems[key]) {
+                                  returnableItems[key] = 0;
+                                }
+                                returnableItems[key] += 1;
+                              }
                   
                   if (description.includes('chopine') && !chopinePattern.test(description)) {
-                    const brandMatch = description.match(/chopines?\s+([^,]*)/i);
-                    const brand = brandMatch?.[1]?.trim() || '';
-                    const key = brand ? `Chopine ${brand}` : 'Chopine';
-                    
-                    if (!returnableItems[key]) {
-                      returnableItems[key] = 0;
-                    }
-                    returnableItems[key] += 1;
-                  }
+                                const brandMatch = description.match(/chopines?\s+([^,]*)/i);
+                                // If no brand match found, check for simple "chopine" or "chopines"
+                                const simpleMatch = description.match(/\b(chopines?)\b/i);
+                                const brand = brandMatch?.[1]?.trim() || '';
+                                let key;
+                                if (brand) {
+                                  key = `Chopine ${brand}`;
+                                } else if (simpleMatch) {
+                                  // Handle simple "chopine" or "chopines" without brand
+                                  key = 'Chopine';
+                                } else {
+                                  // Fallback to simple "chopine"
+                                  key = 'Chopine';
+                                }
+                                
+                                if (!returnableItems[key]) {
+                                  returnableItems[key] = 0;
+                                }
+                                returnableItems[key] += 1;
+                              }
                 });
                 
                 // Calculate returned quantities
@@ -660,6 +683,8 @@ const ScrollingTabs: React.FC<ScrollingTabsProps> = ({
                               if (description.includes('bouteille') && !bouteillePattern.test(description)) {
                                 const sizeMatch = description.match(/(\d+(?:\.\d+)?L)/i);
                                 const brandMatch = description.match(/bouteilles?\s+([^,]*)/i);
+                                // If no brand match found, check for simple "bouteille" or "bouteilles"
+                                const simpleMatch = description.match(/\b(bouteilles?)\b/i);
                                 const brand = brandMatch?.[1]?.trim() || '';
                                 
                                 // Capitalize brand name properly
@@ -674,7 +699,11 @@ const ScrollingTabs: React.FC<ScrollingTabsProps> = ({
                                   key = `Bouteille ${capitalizedBrand}`;
                                 } else if (sizeMatch) {
                                   key = `${sizeMatch[1].replace(/l$/i, 'L')} Bouteille`;
+                                } else if (simpleMatch) {
+                                  // Handle simple "bouteille" or "bouteilles" without brand or size
+                                  key = 'Bouteille';
                                 } else {
+                                  // Fallback to simple "bouteille"
                                   key = 'Bouteille';
                                 }
                                 
@@ -686,14 +715,19 @@ const ScrollingTabs: React.FC<ScrollingTabsProps> = ({
                               
                               if (description.includes('chopine') && !chopinePattern.test(description)) {
                                 const brandMatch = description.match(/chopines?\s+([^,]*)/i);
+                                // If no brand match found, check for simple "chopine" or "chopines"
+                                const simpleMatch = description.match(/\b(chopines?)\b/i);
                                 const brand = brandMatch?.[1]?.trim() || '';
-                                
-                                // Capitalize brand name properly
-                                const capitalizedBrand = brand ? brand.split(' ').map((word: string) => 
-                                  word.charAt(0).toUpperCase() + word.slice(1).toLowerCase()
-                                ).join(' ') : '';
-                                
-                                const key = capitalizedBrand ? `Chopine ${capitalizedBrand}` : 'Chopine';
+                                let key;
+                                if (brand) {
+                                  key = `Chopine ${brand}`;
+                                } else if (simpleMatch) {
+                                  // Handle simple "chopine" or "chopines" without brand
+                                  key = 'Chopine';
+                                } else {
+                                  // Fallback to simple "chopine"
+                                  key = 'Chopine';
+                                }
                                 
                                 if (!returnableItems[key]) {
                                   returnableItems[key] = 0;
