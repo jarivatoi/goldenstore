@@ -108,6 +108,12 @@ const CreditManagement: React.FC = () => {
     };
 
     const handleShowDuplicateCard = (event: CustomEvent) => {
+      // Add safety checks for event.detail and event.detail.client
+      if (!event.detail || !event.detail.client) {
+        console.warn('Invalid duplicate card event data:', event.detail);
+        return;
+      }
+      
       const client = event.detail.client;
       const isAccountClear = event.detail.isAccountClear;
       const message = event.detail.message || 'Transaction added successfully!';
@@ -175,23 +181,30 @@ const CreditManagement: React.FC = () => {
   // Handle auto replay events
   useEffect(() => {
     const handleCreditDataChanged = (event: CustomEvent) => {
-      // Handle credit data changes
+      // Handle credit data changes with safety checks
       console.log('Credit data changed:', event.detail);
       
-      // Update recent transaction client if provided
-      if (event.detail.clientId) {
+      // Update recent transaction client if provided and valid
+      if (event.detail && event.detail.clientId) {
         setRecentTransactionClient(event.detail.clientId);
         
         // Clear the recent transaction client after 5 seconds
         setTimeout(() => {
           setRecentTransactionClient(null);
         }, 5000);
-      };
+      }
     };
     
     const handleShowDuplicateCard = (event: CustomEvent) => {
-      // Handle show duplicate card event
+      // Handle show duplicate card event with safety checks
       console.log('Show duplicate card:', event.detail);
+      
+      // Add safety checks for event.detail
+      if (!event.detail) {
+        console.warn('Invalid duplicate card event data');
+        return;
+      }
+      
       setDuplicateCard(event.detail);
       
       // Auto-hide after 5 seconds
