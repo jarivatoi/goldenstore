@@ -886,28 +886,27 @@ const CreditManagement: React.FC = () => {
     }
   };
 
+  // Helper function to properly capitalize transaction descriptions
+  const capitalizeTransactionDescription = (text: string): string => {
+    if (!text) return '';
+    // Capitalize first letter of each word
+    let capitalized = text.replace(/\b\w/g, (char) => char.toUpperCase());
+    // Ensure specific terms are properly capitalized
+    capitalized = capitalized.replace(/\bchopine\b/gi, 'Chopine');
+    capitalized = capitalized.replace(/\bbouteille\b/gi, 'Bouteille');
+    capitalized = capitalized.replace(/\bchopines\b/gi, 'Chopines');
+    capitalized = capitalized.replace(/\bbouteilles\b/gi, 'Bouteilles');
+    return capitalized;
+  };
+
   // Helper function to safely evaluate calculator value
   const formatCalculatorValue = (value: string) => {
-    // Split the value into numbers and operators
-    // Handle both display symbols (×, ÷) and input symbols (*, /)
-    const parts = value.split(/([+\-×÷*/])/);
+    if (!value) return '';
     
-    return parts.map((part, index) => {
-      // Check if the part is an operator (handle both display and input symbols)
-      if (part === '+' || part === '-' || part === '×' || part === '÷' || part === '*' || part === '/') {
-        return (
-          <span 
-            key={index} 
-            className="calculator-operator"
-          >
-            {/* Display the proper symbol regardless of what was input */}
-            {part === '*' ? '×' : part === '/' ? '÷' : part}
-          </span>
-        );
-      }
-      // Return regular text for numbers and other characters
-      return part;
-    });
+    // For display purposes, replace operators with proper symbols
+    return value
+      .replace(/\*/g, '×')
+      .replace(/\//g, '÷');
   };
 
   // Database operations
@@ -1391,18 +1390,7 @@ const CreditManagement: React.FC = () => {
               {duplicateCard.transactionDescription && (
                 <div className="mb-3 text-center select-none">
                   <p className="text-lg font-semibold text-gray-800 leading-relaxed select-none">
-                    {(() => {
-                      // Properly capitalize common terms
-                      let text = duplicateCard.transactionDescription;
-                      // Capitalize first letter of each word
-                      text = text.replace(/\b\w/g, (char) => char.toUpperCase());
-                      // Ensure specific terms are properly capitalized
-                      text = text.replace(/\bchopine\b/gi, 'Chopine');
-                      text = text.replace(/\bbouteille\b/gi, 'Bouteille');
-                      text = text.replace(/\bchopines\b/gi, 'Chopines');
-                      text = text.replace(/\bbouteilles\b/gi, 'Bouteilles');
-                      return text;
-                    })()}
+                    {capitalizeTransactionDescription(duplicateCard.transactionDescription)}
                   </p>
                 </div>
               )}
@@ -1556,17 +1544,7 @@ const CreditManagement: React.FC = () => {
                        {(hasAmount || hasDebt || transactionHasReturnables) && (
                           <div className="flex items-center justify-center gap-2 mb-2">
                             <div className="bg-orange-500 text-white px-3 py-1 rounded-lg text-sm font-medium max-w-xs">
-                              {duplicateCard.message?.toLowerCase().includes('returned') ? 'Still to return:' : 'Returnables:'} {(() => {
-                                let text = returnableItems.join(', ');
-                                // Capitalize first letter of each word
-                                text = text.replace(/\b\w/g, (char) => char.toUpperCase());
-                                // Ensure specific terms are properly capitalized
-                                text = text.replace(/\bchopine\b/gi, 'Chopine');
-                                text = text.replace(/\bbouteille\b/gi, 'Bouteille');
-                                text = text.replace(/\bchopines\b/gi, 'Chopines');
-                                text = text.replace(/\bbouteilles\b/gi, 'Bouteilles');
-                                return text;
-                              })()}
+                              {duplicateCard.message?.toLowerCase().includes('returned') ? 'Still to return:' : 'Returnables:'} {capitalizeTransactionDescription(returnableItems.join(', '))}
                             </div>
                             <div className="animate-bounce-horizontal text-orange-600">
                               <ArrowLeft size={24} />
@@ -1578,17 +1556,7 @@ const CreditManagement: React.FC = () => {
                        {!hasAmount && !hasDebt && !transactionHasReturnables && (
                           <div className="bg-orange-100 border border-orange-300 rounded-lg p-3 mb-2">
                             <p className="text-orange-800 font-medium text-sm mb-1">Total Returnables:</p>
-                            <p className="text-orange-700 text-sm">{(() => {
-                              let text = returnableItems.join(', ');
-                              // Capitalize first letter of each word
-                              text = text.replace(/\b\w/g, (char) => char.toUpperCase());
-                              // Ensure specific terms are properly capitalized
-                              text = text.replace(/\bchopine\b/gi, 'Chopine');
-                              text = text.replace(/\bbouteille\b/gi, 'Bouteille');
-                              text = text.replace(/\bchopines\b/gi, 'Chopines');
-                              text = text.replace(/\bbouteilles\b/gi, 'Bouteilles');
-                              return text;
-                            })()}</p>
+                            <p className="text-orange-700 text-sm">{capitalizeTransactionDescription(returnableItems.join(', '))}</p>
                           </div>
                         )}
                       </div>
