@@ -413,7 +413,7 @@ export class KeypadHandler {
           return {
             ...state,
             lastOperation: normalizedOperator,
-            lastOperand: currentNumber, // Store the current number as operand for next operation
+            lastOperand: state.lastOperand !== null ? state.lastOperand : this.getCurrentNumber(state.display), // Store the first operand for compound operations
             isNewNumber: true,
             isError: false,
             calculationSteps: newCalculationSteps,
@@ -433,7 +433,7 @@ export class KeypadHandler {
           return {
             ...state,
             lastOperation: normalizedOperator,
-            lastOperand: currentNumber,
+            lastOperand: state.lastOperand !== null ? state.lastOperand : this.getCurrentNumber(state.display), // Store the first operand for compound operations
             isNewNumber: true,
             isError: false,
             calculationSteps: newCalculationSteps,
@@ -451,10 +451,15 @@ export class KeypadHandler {
         // Keep the article count from the previous state to maintain visibility during compound operations
         newArticleCount = state.articleCount; // Preserve article count instead of setting to 0
       }
+      
+      // For compound operations, we want to preserve the first operand as lastOperand
+      // For "1×3", when we press ×, lastOperand should be 1, not 3
+      const operandForCompoundOps = state.lastOperand !== null ? state.lastOperand : this.getCurrentNumber(state.display);
+      
       return {
         ...state,
         lastOperation: normalizedOperator,
-        lastOperand: currentNumber,
+        lastOperand: operandForCompoundOps,
         isNewNumber: true,
         isError: false,
         calculationSteps: newCalculationSteps,
@@ -1031,7 +1036,10 @@ export class KeypadHandler {
       newCalculationSteps[0].operationType === 'number';
 
     // For continuous equals operations, we need special handling
-    const isContinuousOperation = state.lastOperation && state.isNewNumber;
+    // A continuous operation occurs when we have a lastOperation and either:
+    // 1. isNewNumber is true (for subsequent continuous operations)
+    // 2. We have a valid lastOperand and currentNumber (for the first continuous operation)
+    const isContinuousOperation = state.lastOperation && (state.isNewNumber || (state.lastOperand !== null && currentNumber !== null));
     
     console.log('🎬 Continuous operation check:', {
       lastOperation: state.lastOperation,
@@ -1081,6 +1089,41 @@ export class KeypadHandler {
       }
       
       console.log('🎬 Continuous operation result:', finalResult);
+    } else if (isContinuousOperation && state.lastOperand !== null && newCalculationSteps.length < 2) {
+      // Handle the case where we have a continuous operation but don't have enough steps yet
+      // This happens for the first continuous operation like "1+3=" where we want to preserve 3
+      const continuousOperand = currentNumber;
+      const currentDisplayValue = this.getCurrentNumber(state.display);
+      
+      console.log('🎬 First continuous operation detected:', {
+        continuousOperand,
+        currentDisplayValue,
+        lastOperation: state.lastOperation
+      });
+      
+      // For continuous operations, we want to apply the last operation repeatedly
+      // For 1+3====: 1+3=4, then 4+3=7, then 7+3=10, etc.
+      switch (state.lastOperation) {
+        case '+':
+          finalResult = currentDisplayValue + continuousOperand;
+          break;
+        case '-':
+          finalResult = currentDisplayValue - continuousOperand;
+          break;
+        case '*':
+        case '×':
+          finalResult = currentDisplayValue * continuousOperand;
+          break;
+        case '/':
+        case '÷':
+          finalResult = continuousOperand !== 0 ? currentDisplayValue / continuousOperand : 0;
+          break;
+        default:
+          // Fallback to normal evaluation
+          finalResult = this.evaluateAllSteps(newCalculationSteps);
+      }
+      
+      console.log('🎬 First continuous operation result:', finalResult);
     } else {
       // Normal operation evaluation
       if (hasInitialNumber && newCalculationSteps.length > 1) {
@@ -1115,12 +1158,25 @@ export class KeypadHandler {
     // For continuous operations, we need to preserve the correct operand
     // For "1+3=", we want to preserve 3 for subsequent operations, not the result 4
     let newLastOperand = state.lastOperand;
-    if (shouldPreserveOperation && newCalculationSteps.length >= 2) {
+    if (shouldPreserveOperation) {
       // For continuous operations like "1+3====", we need to preserve the second operand (3)
-      // The second operand is the result of the last step
-      const lastStep = newCalculationSteps[newCalculationSteps.length - 1];
-      if (lastStep.operationType === 'number') {
-        newLastOperand = lastStep.result;
+      // The second operand is the one that was entered after the operator
+      if (newCalculationSteps.length >= 2) {
+        // For "1+3====", after pressing =, we want to preserve 3 (the second operand)
+        // The second operand is stored in the last step's result when operationType is 'number'
+        const lastStep = newCalculationSteps[newCalculationSteps.length - 1];
+        if (lastStep.operationType === 'number' && lastStep.result !== undefined) {
+          newLastOperand = lastStep.result;
+        }
+      } else if (state.lastOperand !== null && !state.isNewNumber) {
+        // For the first equals operation, use the current number as the operand for continuous operations
+        newLastOperand = currentNumber;
+      } else if (state.lastOperand !== null && state.isNewNumber) {
+        // For the first continuous operation, we want to preserve the second operand
+        // For "1+3=", we want to preserve 3, not 1
+        // When we press +, lastOperand is set to 1, and when we press 3, currentNumber is 3
+        // For the first = operation, we want to use 3 as the operand for future operations
+        newLastOperand = currentNumber;
       }
     }
 
