@@ -262,7 +262,14 @@ const ClientCard: React.FC<ClientCardProps> = ({ client, onLongPress, onQuickAdd
           .filter(transaction => 
             transaction.type === 'debt' && 
             !transaction.description.toLowerCase().includes('returned') &&
-            transaction.description.toLowerCase().includes(itemType.toLowerCase().split(' ')[0])
+            (() => {
+              // Create precise pattern for matching
+              const normalizedItemType = itemType.toLowerCase().split(' ')[0];
+              const escapedItemType = normalizedItemType.replace(/[.*+?^${}|[\]\\]/g, '\\$&');
+              const pattern = new RegExp(`returned:\\s*(\\d+)\\s+${escapedItemType}s?(?=\\s|$|,|\.)`, 'i');
+              const match = transaction.description.toLowerCase().match(pattern);
+              return match;
+            })()
           )
           .sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime())[0];
         
