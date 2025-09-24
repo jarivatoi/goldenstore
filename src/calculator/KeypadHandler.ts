@@ -1116,7 +1116,7 @@ export class KeypadHandler {
       transactionHistory: [...state.transactionHistory, finalResult],
       calculationSteps: newCalculationSteps,
       lastOperation: shouldPreserveOperation ? state.lastOperation : null,
-      lastOperand: shouldPreserveOperation ? finalResult : null,
+      lastOperand: shouldPreserveOperation ? state.lastOperand : null, // Preserve the original operand for continuous operations
       isNewNumber: true,
       isError: false,
       articleCount: newCalculationSteps.length // Set final article count to total steps
