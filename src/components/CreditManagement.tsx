@@ -458,13 +458,6 @@ const CreditManagement: React.FC = () => {
         if (brand) {
           // For branded items, create a specific key
           key = `Chopine ${brand}`;
-          
-          // Also add a generic "Chopine" entry for the same transaction
-          const genericKey = 'Chopine';
-          if (!returnableItems[genericKey]) {
-            returnableItems[genericKey] = 0;
-          }
-          returnableItems[genericKey] += 1;
         } else {
           // If no brand match found, check for simple "chopine" or "chopines"
           const simpleMatch = description.match(/\b(chopines?)\b/i);
