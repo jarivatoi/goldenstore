@@ -1496,7 +1496,28 @@ const CreditManagement: React.FC = () => {
                     const returned = returnedQuantities[itemType] || 0;
                     const remaining = Math.max(0, total - returned);
                     if (remaining > 0) {
-                      netReturnableItems.push(`${remaining} ${itemType}${remaining > 1 ? 's' : ''}`);
+                      // Handle proper pluralization with capitalization
+                      let displayItemType = itemType;
+                      if (remaining > 1) {
+                        // Handle special cases for proper pluralization
+                        if (itemType === 'Chopine') {
+                          displayItemType = 'Chopines';
+                        } else if (itemType === 'Bouteille') {
+                          displayItemType = 'Bouteilles';
+                        } else if (itemType.includes('Chopine') && !itemType.includes('Chopines')) {
+                          // For branded chopines, replace Chopine with Chopines
+                          displayItemType = itemType.replace(/\bChopine\b/g, 'Chopines');
+                        } else if (itemType.includes('Bouteille') && !itemType.includes('Bouteilles')) {
+                          // For branded bouteilles, replace Bouteille with Bouteilles
+                          displayItemType = itemType.replace(/\bBouteille\b/g, 'Bouteilles');
+                        } else {
+                          // For other items, just add 's' if not already plural
+                          if (!itemType.endsWith('s')) {
+                            displayItemType = itemType + 's';
+                          }
+                        }
+                      }
+                      netReturnableItems.push(`${remaining} ${displayItemType}`);
                     }
                   });
                   
@@ -1597,4 +1618,4 @@ const CreditManagement: React.FC = () => {
   );
 };
 
-export default CreditManagement; 
+export default CreditManagement;
