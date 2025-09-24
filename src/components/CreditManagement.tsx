@@ -396,7 +396,7 @@ const CreditManagement: React.FC = () => {
       }
       
       // Look for Bouteille items
-      const bouteillePattern = /(\d+)\s+(?:(\d+(?:\.\d+)?[Ll])\s+)?bouteilles?(?:\s+([^,\(\)]*))?/gi;
+      const bouteillePattern = /(\d+)\s+(?:(\d+(?:\.\d+)?L)\s+)?bouteilles?(?:\s+([^,]*))?/gi;
       let bouteilleMatch;
       
       while ((bouteilleMatch = bouteillePattern.exec(description)) !== null) {
@@ -492,27 +492,35 @@ const CreditManagement: React.FC = () => {
           const normalizedItemType = itemType.toLowerCase();
           
           if (normalizedItemType === 'chopine' || normalizedItemType === 'bouteille') {
-            // For generic items, we need to make sure we're not matching branded versions
-            // e.g., "Chopine" should not match "Chopine Vin"
-            // Create a pattern that matches the item type followed by end of string, space, or comma
-            const escapedItemType = normalizedItemType.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
-            const pattern = new RegExp(`returned:\\s*(\\d+)\\s+${escapedItemType}s?(?=\\s|$|,|\\.)`, 'i');
-            const match = description.match(pattern);
-            if (match) {
-              returnedQuantities[itemType] = (returnedQuantities[itemType] || 0) + parseInt(match[1]);
-            }
-          } else {
-            // For branded items, we can use a more specific match
-            // e.g., "Chopine Vin" should match "Chopine Vin" but not "Chopine"
-            // Create a more precise pattern that matches the exact item type
-            const escapedItemType = itemType.toLowerCase().replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
-            // Match the item type followed by end of string, space, comma, or period
-            const pattern = new RegExp(`returned:\\s*(\\d+)\\s+${escapedItemType}s?(?=\\s|$|,|\\.)`, 'i');
-            const match = description.match(pattern);
-            if (match) {
-              returnedQuantities[itemType] = (returnedQuantities[itemType] || 0) + parseInt(match[1]);
-            }
-          }
+                // For generic items, we need to make sure we're not matching branded versions
+                // e.g., "Chopine" should not match "Chopine Vin"
+                // Create a pattern that matches the item type followed by end of string, space, or comma
+                const escapedItemType = normalizedItemType.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+                // For generic items, we need a more restrictive pattern that doesn't match branded items
+                // The pattern should match "chopine" or "chopines" but not "chopine vin"
+                const pattern = new RegExp(`returned:\\s*(\\d+)\\s+${escapedItemType}(?=s(?=\\s|$|,|\.)|(\\s|$|,|\\.))`, 'i');
+                const match = description.match(pattern);
+                if (match) {
+                  if (!returnedQuantities[itemType]) {
+                    returnedQuantities[itemType] = 0;
+                  }
+                  returnedQuantities[itemType] += parseInt(match[1]);
+                }
+              } else {
+                // For branded items, we can use a more specific match
+                // e.g., "Chopine Vin" should match "Chopine Vin" but not "Chopine"
+                // Create a more precise pattern that matches the exact item type
+                const escapedItemType = itemType.toLowerCase().replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+                // Match the item type followed by end of string, space, comma, or period
+                const pattern = new RegExp(`returned:\\s*(\\d+)\\s+${escapedItemType}s?(?=\\s|$|,|\\.)`, 'i');
+                const match = description.match(pattern);
+                if (match) {
+                  if (!returnedQuantities[itemType]) {
+                    returnedQuantities[itemType] = 0;
+                  }
+                  returnedQuantities[itemType] += parseInt(match[1]);
+                }
+              }
         });
       });
     
@@ -667,7 +675,10 @@ const CreditManagement: React.FC = () => {
                 // e.g., "Chopine" should not match "Chopine Vin"
                 // Create a pattern that matches the item type followed by end of string, space, or comma
                 const escapedItemType = normalizedItemType.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
-                const pattern = new RegExp(`returned:\\s*(\\d+)\\s+${escapedItemType}s?(?=\\s|$|,|\\.)`, 'i');
+                // For generic items, we need a more restrictive pattern that doesn't match branded items
+                // The pattern should match "chopine" or "chopines" but not "chopine vin"
+                // This pattern ensures that "chopine" only matches when it's not part of a larger phrase
+                const pattern = new RegExp(`returned:\\s*(\\d+)\\s+${escapedItemType}(?=s?(?=\\s|$|,|\\.))`, 'i');
                 const match = description.match(pattern);
                 if (match) {
                   if (!returnedQuantities[itemType]) {
