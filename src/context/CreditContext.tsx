@@ -1,11 +1,11 @@
 import React, { createContext, useContext, useState, useEffect, ReactNode } from 'react';
 import { supabase } from '../lib/supabase';
-import { Client, Transaction, Payment } from '../types';
+import { Client, CreditTransaction, PaymentRecord } from '../types';
 
 interface CreditContextType {
   clients: Client[];
-  transactions: Transaction[];
-  payments: Payment[];
+  transactions: CreditTransaction[];
+  payments: PaymentRecord[];
   loading: boolean;
   error: string | null;
   
@@ -15,8 +15,8 @@ interface CreditContextType {
   searchClients: (query: string) => Client[];
   getClientTotalDebt: (clientId: string) => number;
   getClientBottlesOwed: (clientId: string) => { beer: number; guinness: number; malta: number; coca: number; chopines: number };
-  getClientTransactions: (clientId: string) => Transaction[];
-  getClientPayments: (clientId: string) => Payment[];
+  getClientTransactions: (clientId: string) => CreditTransaction[];
+  getClientPayments: (clientId: string) => PaymentRecord[];
   
   // Client update operations
   updateClient: (client: Client) => Promise<void>;
@@ -53,8 +53,8 @@ interface CreditProviderProps {
 
 export const CreditProvider: React.FC<CreditProviderProps> = ({ children }) => {
   const [clients, setClients] = useState<Client[]>([]);
-  const [transactions, setTransactions] = useState<Transaction[]>([]);
-  const [payments, setPayments] = useState<Payment[]>([]);
+  const [transactions, setTransactions] = useState<CreditTransaction[]>([]);
+  const [payments, setPayments] = useState<PaymentRecord[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
 
@@ -76,12 +76,12 @@ export const CreditProvider: React.FC<CreditProviderProps> = ({ children }) => {
         lastTransactionAt: new Date(client.lastTransactionAt)
       })) : [];
       
-      const transformedTransactions: Transaction[] = storedTransactions ? JSON.parse(storedTransactions).map((transaction: any) => ({
+      const transformedTransactions: CreditTransaction[] = storedTransactions ? JSON.parse(storedTransactions).map((transaction: any) => ({
         ...transaction,
         date: new Date(transaction.date)
       })) : [];
       
-      const transformedPayments: Payment[] = storedPayments ? JSON.parse(storedPayments).map((payment: any) => ({
+      const transformedPayments: PaymentRecord[] = storedPayments ? JSON.parse(storedPayments).map((payment: any) => ({
         ...payment,
         date: new Date(payment.date)
       })) : [];
@@ -295,12 +295,12 @@ export const CreditProvider: React.FC<CreditProviderProps> = ({ children }) => {
   };
 
   // Get client transactions
-  const getClientTransactions = (clientId: string): Transaction[] => {
+  const getClientTransactions = (clientId: string): CreditTransaction[] => {
     return transactions.filter(transaction => transaction.clientId === clientId);
   };
 
   // Get client payments
-  const getClientPayments = (clientId: string): Payment[] => {
+  const getClientPayments = (clientId: string): PaymentRecord[] => {
     return payments.filter(payment => payment.clientId === clientId);
   };
 
@@ -309,7 +309,7 @@ export const CreditProvider: React.FC<CreditProviderProps> = ({ children }) => {
     try {
       
       // Add transaction to database
-      const newTransaction: Transaction = {
+      const newTransaction: CreditTransaction = {
         id: crypto.randomUUID(),
         clientId: client.id,
         description,
@@ -375,7 +375,7 @@ export const CreditProvider: React.FC<CreditProviderProps> = ({ children }) => {
   // Add partial payment
   const addPartialPayment = async (clientId: string, amount: number) => {
     try {
-      const newPayment: Payment = {
+      const newPayment: PaymentRecord = {
         id: crypto.randomUUID(),
         clientId,
         amount,
@@ -434,7 +434,7 @@ export const CreditProvider: React.FC<CreditProviderProps> = ({ children }) => {
       );
       
       // Add new settlement record (even if debt is 0)
-      const newPayment: Payment = {
+      const newPayment: PaymentRecord = {
         id: crypto.randomUUID(),
         clientId,
         amount: currentDebt,
@@ -487,7 +487,12 @@ export const CreditProvider: React.FC<CreditProviderProps> = ({ children }) => {
       }))));
       
       // Force update of duplicate card and other UI components
-      window.dispatchEvent(new CustomEvent('creditDataChanged'));
+      window.dispatchEvent(new CustomEvent('creditDataChanged', {
+        detail: {
+          clientId: clientId,
+          source: 'settle'
+        }
+      }));
       
     } catch (err) {
       throw err;
@@ -505,7 +510,7 @@ export const CreditProvider: React.FC<CreditProviderProps> = ({ children }) => {
       );
       
       // Add new settlement record (even if debt is 0)
-      const newPayment: Payment = {
+      const newPayment: PaymentRecord = {
         id: crypto.randomUUID(),
         clientId,
         amount: currentDebt,
@@ -552,7 +557,12 @@ export const CreditProvider: React.FC<CreditProviderProps> = ({ children }) => {
       }))));
       
       // Force update of duplicate card and other UI components
-      window.dispatchEvent(new CustomEvent('creditDataChanged'));
+      window.dispatchEvent(new CustomEvent('creditDataChanged', {
+        detail: {
+          clientId: clientId,
+          source: 'settleFullClear'
+        }
+      }));
       
     } catch (err) {
       throw err;
