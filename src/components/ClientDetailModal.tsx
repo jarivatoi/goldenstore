@@ -104,8 +104,6 @@ const ClientDetailModal: React.FC<ClientDetailModalProps> = ({ client, onClose, 
       if (description.includes('bouteille') && !bouteillePattern.test(description)) {
         const sizeMatch = description.match(/(\d+(?:\.\d+)?[Ll])/i);
         const brandMatch = description.match(/bouteilles?\s+([^,]*)/i);
-        // If no brand match found, check for simple "bouteille" or "bouteilles"
-        const simpleMatch = description.match(/\b(bouteilles?)\b/i);
         const brand = brandMatch?.[1]?.trim() || '';
         
         // Properly capitalize brand name
@@ -120,11 +118,7 @@ const ClientDetailModal: React.FC<ClientDetailModalProps> = ({ client, onClose, 
           key = `Bouteille ${capitalizedBrand}`;
         } else if (sizeMatch) {
           key = `${sizeMatch[1].replace(/l$/i, 'L')} Bouteille`;
-        } else if (simpleMatch) {
-          // Handle simple "bouteille" or "bouteilles" without brand or size
-          key = 'Bouteille';
         } else {
-          // Fallback to simple "bouteille"
           key = 'Bouteille';
         }
         
@@ -136,24 +130,8 @@ const ClientDetailModal: React.FC<ClientDetailModalProps> = ({ client, onClose, 
       
       if (description.includes('chopine') && !chopinePattern.test(description)) {
         const brandMatch = description.match(/chopines?\s+([^,]*)/i);
-        // If no brand match found, check for simple "chopine" or "chopines"
-        const simpleMatch = description.match(/\b(chopines?)\b/i);
         const brand = brandMatch?.[1]?.trim() || '';
-        let key;
-        if (brand) {
-          // For branded items, create a specific key
-          key = `Chopine ${brand}`;
-          
-          // REMOVE the generic "Chopine" entry for branded items
-          // This was causing the issue where branded items were also counted as generic items
-          // The generic entry is NOT needed when we have a branded item
-        } else if (simpleMatch) {
-          // Handle simple "chopine" or "chopines" without brand
-          key = 'Chopine';
-        } else {
-          // Fallback to simple "chopine"
-          key = 'Chopine';
-        }
+        const key = brand ? `Chopine ${brand}` : 'Chopine';
         
         if (!returnableItems[key]) {
           returnableItems[key] = 0;
@@ -169,34 +147,8 @@ const ClientDetailModal: React.FC<ClientDetailModalProps> = ({ client, onClose, 
       .forEach(transaction => {
         const description = transaction.description.toLowerCase();
         Object.keys(returnableItems).forEach(itemType => {
-          // Create a more precise matching approach
-          // For exact matches (e.g., "Chopine" should not match "Chopine Vin")
-          const normalizedItemType = itemType.toLowerCase();
-          
-          if (normalizedItemType === 'chopine' || normalizedItemType === 'bouteille') {
-            // For generic items, we need to make sure we're not matching branded versions
-            // e.g., "Chopine" should not match "Chopine Vin"
-            // Create a pattern that matches the item type followed by end of string, space, or comma
-            const escapedItemType = normalizedItemType.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
-            // For generic items, we need a more restrictive pattern that doesn't match branded items
-            // The pattern should match "chopine" or "chopines" but not "chopine vin"
-            // This pattern ensures that "chopine" only matches when it's not part of a larger phrase
-            const pattern = new RegExp(`returned:\\s*(\\d+)\\s+${escapedItemType}(?=s?(?=\\s|$|,|\\.))`, 'i');
-            const match = description.match(pattern);
-            if (match) {
-              if (!returnedQuantities[itemType]) {
-                returnedQuantities[itemType] = 0;
-              }
-              returnedQuantities[itemType] += parseInt(match[1]);
-            }
-          } else {
-            // For branded items, we can use a more specific match
-            // e.g., "Chopine Vin" should match "Chopine Vin" but not "Chopine"
-            // Create a more precise pattern that matches the exact item type
-            const escapedItemType = itemType.toLowerCase().replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
-            // Match the item type followed by end of string, space, comma, or period
-            const pattern = new RegExp(`returned:\\s*(\\d+)\\s+${escapedItemType}s?(?=\\s|$|,|\\.)`, 'i');
-            const match = description.match(pattern);
+          if (description.includes(itemType.toLowerCase())) {
+            const match = description.match(/returned:\s*(\d+)\s+/);
             if (match) {
               if (!returnedQuantities[itemType]) {
                 returnedQuantities[itemType] = 0;
