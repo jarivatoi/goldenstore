@@ -554,8 +554,31 @@ const ScrollingTabs: React.FC<ScrollingTabsProps> = ({
                   .forEach(transaction => {
                     const description = transaction.description.toLowerCase();
                     Object.keys(returnableItems).forEach(itemType => {
-                      if (description.includes(itemType.toLowerCase())) {
-                        const match = description.match(/returned:\s*(\d+)\s+/);
+                      // Create a more precise matching approach
+                      // For exact matches (e.g., "Chopine" should not match "Chopine Vin")
+                      const normalizedItemType = itemType.toLowerCase();
+                      
+                      if (normalizedItemType === 'chopine' || normalizedItemType === 'bouteille') {
+                        // For generic items, we need to make sure we're not matching branded versions
+                        // e.g., "Chopine" should not match "Chopine Vin"
+                        // Create a pattern that matches the item type followed by end of string, space, or comma
+                        const escapedItemType = normalizedItemType.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+                        const pattern = new RegExp(`returned:\\s*(\\d+)\\s+${escapedItemType}s?(?=\\s|$|,|\\.)`, 'i');
+                        const match = description.match(pattern);
+                        if (match) {
+                          if (!returnedQuantities[itemType]) {
+                            returnedQuantities[itemType] = 0;
+                          }
+                          returnedQuantities[itemType] += parseInt(match[1]);
+                        }
+                      } else {
+                        // For branded items, we can use a more specific match
+                        // e.g., "Chopine Vin" should match "Chopine Vin" but not "Chopine"
+                        // Create a more precise pattern that matches the exact item type
+                        const escapedItemType = itemType.toLowerCase().replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+                        // Match the item type followed by end of string, space, comma, or period
+                        const pattern = new RegExp(`returned:\\s*(\\d+)\\s+${escapedItemType}s?(?=\\s|$|,|\\.)`, 'i');
+                        const match = description.match(pattern);
                         if (match) {
                           if (!returnedQuantities[itemType]) {
                             returnedQuantities[itemType] = 0;
@@ -759,8 +782,31 @@ const ScrollingTabs: React.FC<ScrollingTabsProps> = ({
                               .forEach(transaction => {
                                 const description = transaction.description.toLowerCase();
                                 Object.keys(returnableItems).forEach(itemType => {
-                                  if (description.includes(itemType.toLowerCase())) {
-                                    const match = description.match(/returned:\s*(\d+)\s+/);
+                                  // Create a more precise matching approach
+                                  // For exact matches (e.g., "Chopine" should not match "Chopine Vin")
+                                  const normalizedItemType = itemType.toLowerCase();
+                                  
+                                  if (normalizedItemType === 'chopine' || normalizedItemType === 'bouteille') {
+                                    // For generic items, we need to make sure we're not matching branded versions
+                                    // e.g., "Chopine" should not match "Chopine Vin"
+                                    // Create a pattern that matches the item type followed by end of string, space, or comma
+                                    const escapedItemType = normalizedItemType.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+                                    const pattern = new RegExp(`returned:\\s*(\\d+)\\s+${escapedItemType}s?(?=\\s|$|,|\\.)`, 'i');
+                                    const match = description.match(pattern);
+                                    if (match) {
+                                      if (!returnedQuantities[itemType]) {
+                                        returnedQuantities[itemType] = 0;
+                                      }
+                                      returnedQuantities[itemType] += parseInt(match[1]);
+                                    }
+                                  } else {
+                                    // For branded items, we can use a more specific match
+                                    // e.g., "Chopine Vin" should match "Chopine Vin" but not "Chopine"
+                                    // Create a more precise pattern that matches the exact item type
+                                    const escapedItemType = itemType.toLowerCase().replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+                                    // Match the item type followed by end of string, space, comma, or period
+                                    const pattern = new RegExp(`returned:\\s*(\\d+)\\s+${escapedItemType}s?(?=\\s|$|,|\\.)`, 'i');
+                                    const match = description.match(pattern);
                                     if (match) {
                                       if (!returnedQuantities[itemType]) {
                                         returnedQuantities[itemType] = 0;
