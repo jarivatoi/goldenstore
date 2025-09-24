@@ -426,13 +426,14 @@ const ClientActionModal: React.FC<ClientActionModalProps> = ({ client, onClose, 
           }
         } else {
           // For branded items, we can use a more specific match
-          // e.g., "Chopine Vin" should match "Chopine Vin"
-          if (description.includes(itemType.toLowerCase())) {
-            // Extract quantity from return transaction
-            const match = description.match(/returned:\s*(\d+)\s+/);
-            if (match) {
-              return total + parseInt(match[1]);
-            }
+          // e.g., "Chopine Vin" should match "Chopine Vin" but not "Chopine"
+          // Create a more precise pattern that matches the exact item type
+          const escapedItemType = itemType.toLowerCase().replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+          // Match the item type followed by end of string, space, comma, or period
+          const pattern = new RegExp(`returned:\\s*(\\d+)\\s+${escapedItemType}s?(?=\\s|$|,|\\.)`, 'i');
+          const match = description.match(pattern);
+          if (match) {
+            return total + parseInt(match[1]);
           }
         }
         return total;
