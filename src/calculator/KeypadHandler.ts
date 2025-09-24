@@ -193,23 +193,41 @@ export class KeypadHandler {
         }
     }
     
+    // If we have a pending operation and we're entering a new number, 
+    // this is the second operand, so update lastOperand
+    let newLastOperand = state.lastOperand;
+    if (state.lastOperation && state.isNewNumber) {
+      // This is the first digit of the second operand, update lastOperand for continuous operations
+      newLastOperand = this.getCurrentNumber(input);
+    }
+    
     return {
       ...state,
       display: input,
       isNewNumber: false,
       isError: false,
       articleCount: newArticleCount,
-      calculationSteps: newCalculationSteps
+      calculationSteps: newCalculationSteps,
+      lastOperand: newLastOperand
     };
   }
 
   // Building multi-digit number - just append to display, don't create steps
   const newDisplay = state.display + input;
   
+  // If we have a pending operation and we're building a multi-digit second operand,
+  // update lastOperand
+  let newLastOperand = state.lastOperand;
+  if (state.lastOperation && !state.isNewNumber) {
+    // We're building a multi-digit second operand, update lastOperand for continuous operations
+    newLastOperand = this.getCurrentNumber(newDisplay);
+  }
+  
   return {
     ...state,
     display: newDisplay,
-    isError: false
+    isError: false,
+    lastOperand: newLastOperand
   };
   }
 
@@ -320,6 +338,11 @@ export class KeypadHandler {
     if (normalizedOperator === '*' || normalizedOperator === '/' || normalizedOperator === '%') {
       console.log('🎬 Handling compound operation:', { normalizedOperator, currentNumber, lastOperand: state.lastOperand });
       
+      // For compound operations, we don't set lastOperand here because we need to wait for the second operand
+      
+      // Set lastOperand to the current number (first operand) for continuous operations
+      const firstOperand = currentNumber;
+      
       // Check if we're pressing the same operator repeatedly
       // If so, don't perform any calculation, just update the operator
       if (state.lastOperation === normalizedOperator && state.isNewNumber) {
@@ -328,7 +351,7 @@ export class KeypadHandler {
         return {
           ...state,
           lastOperation: normalizedOperator,
-          lastOperand: currentNumber,
+          lastOperand: firstOperand, // Store the first operand for continuous operations
           isNewNumber: true,
           isError: false,
           calculationSteps: newCalculationSteps,
@@ -364,7 +387,7 @@ export class KeypadHandler {
           ...state,
           display: result.toString(),
           lastOperation: normalizedOperator,
-          lastOperand: result,
+          lastOperand: currentNumber, // For percentage operations, use the current number as the operand for continuous operations
           isNewNumber: true,
           isError: false,
           calculationSteps: newCalculationSteps,
@@ -383,7 +406,7 @@ export class KeypadHandler {
           return {
             ...state,
             lastOperation: normalizedOperator,
-            lastOperand: currentNumber, // Store the current number as operand for next operation
+            lastOperand: firstOperand, // Store the first operand for continuous operations
             isNewNumber: true,
             isError: false,
             calculationSteps: newCalculationSteps,
@@ -413,7 +436,7 @@ export class KeypadHandler {
           return {
             ...state,
             lastOperation: normalizedOperator,
-            lastOperand: currentNumber, // Store the current number as operand for next operation
+            lastOperand: firstOperand, // Store the first operand for continuous operations
             isNewNumber: true,
             isError: false,
             calculationSteps: newCalculationSteps,
@@ -433,7 +456,7 @@ export class KeypadHandler {
           return {
             ...state,
             lastOperation: normalizedOperator,
-            lastOperand: currentNumber,
+            lastOperand: firstOperand, // Store the first operand for continuous operations
             isNewNumber: true,
             isError: false,
             calculationSteps: newCalculationSteps,
@@ -448,12 +471,13 @@ export class KeypadHandler {
       if (newCalculationSteps.length === 0) {
         // Don't create a step for the first number in standalone compound operations
         // We'll create both steps together in handleEqualsInput
-        newArticleCount = 0; // No steps created yet
+        // Keep the article count from the previous state to maintain visibility during compound operations
+        newArticleCount = state.articleCount; // Preserve article count instead of setting to 0
       }
       return {
         ...state,
         lastOperation: normalizedOperator,
-        lastOperand: currentNumber,
+        lastOperand: firstOperand, // Store the first operand for continuous operations
         isNewNumber: true,
         isError: false,
         calculationSteps: newCalculationSteps,
@@ -465,6 +489,12 @@ export class KeypadHandler {
     if (normalizedOperator === '+' || normalizedOperator === '-') {
       console.log('🎬 Handling addition/subtraction:', { normalizedOperator, currentNumber });
       
+      // For addition/subtraction operations, we need to preserve the correct operand for continuous operations
+      // We set lastOperand to the current number (first operand) and will update it when we get the second operand
+      
+      // Set lastOperand to the current number (first operand) for continuous operations
+      const firstOperand = currentNumber;
+      
       // Check if we're pressing the same operator repeatedly
       // If so, don't perform any calculation, just update the operator
       if (state.lastOperation === normalizedOperator && state.isNewNumber) {
@@ -473,6 +503,7 @@ export class KeypadHandler {
         return {
           ...state,
           lastOperation: normalizedOperator,
+          lastOperand: firstOperand, // Store the first operand for continuous operations
           isNewNumber: true,
           isError: false,
           calculationSteps: newCalculationSteps,
@@ -491,6 +522,7 @@ export class KeypadHandler {
         return {
           ...state,
           lastOperation: normalizedOperator,
+          lastOperand: firstOperand, // Store the first operand for continuous operations
           isNewNumber: true,
           isError: false,
           calculationSteps: newCalculationSteps,
@@ -508,6 +540,7 @@ export class KeypadHandler {
           return {
             ...state,
             lastOperation: normalizedOperator,
+            lastOperand: firstOperand, // Store the first operand for continuous operations
             isNewNumber: true,
             isError: false,
             calculationSteps: newCalculationSteps,
@@ -541,7 +574,7 @@ export class KeypadHandler {
             ...state,
             display: prevResult.toString(), // Show the result of the previous operation
             lastOperation: normalizedOperator,
-            lastOperand: prevResult, // Store the result as the operand for the next operation
+            lastOperand: currentNumber, // Store the second operand for continuous operations
             isNewNumber: true,
             isError: false,
             calculationSteps: newCalculationSteps,
@@ -560,6 +593,7 @@ export class KeypadHandler {
           return {
             ...state,
             lastOperation: normalizedOperator,
+            lastOperand: firstOperand, // Store the first operand for continuous operations
             isNewNumber: true,
             isError: false,
             calculationSteps: newCalculationSteps,
@@ -615,7 +649,7 @@ export class KeypadHandler {
             ...state,
             display: displayValue, // Show the result of the full expression evaluation
             lastOperation: state.nextOperatorContext || normalizedOperator, // Set to the operator that completed the compound operation
-            lastOperand: this.evaluateAllSteps([...state.calculationSteps, compoundStep]), // Store the full evaluated result
+            lastOperand: currentNumber, // Store the second operand for continuous operations
             isNewNumber: true,
             isError: false,
             calculationSteps: newCalculationSteps,
@@ -651,7 +685,7 @@ export class KeypadHandler {
             ...state,
             display: displayValue, // Show the result of the full expression evaluation
             lastOperation: normalizedOperator,
-            lastOperand: currentNumber, // Store the current number as operand for next operation
+            lastOperand: currentNumber, // Store the second operand for continuous operations
             isNewNumber: true,
             isError: false,
             calculationSteps: newCalculationSteps,
@@ -711,7 +745,7 @@ export class KeypadHandler {
           ...state,
           display: displayValue, // Show the result of the operation
           lastOperation: normalizedOperator,
-          lastOperand: currentNumber, // Store the current number as operand for next operation
+          lastOperand: currentNumber, // Store the second operand for continuous operations
           isNewNumber: true,
           isError: false,
           calculationSteps: newCalculationSteps,
@@ -725,7 +759,7 @@ export class KeypadHandler {
     return {
       ...state,
       lastOperation: normalizedOperator,
-      lastOperand: currentNumber,
+      lastOperand: state.lastOperand, // Preserve lastOperand for continuous operations
       isNewNumber: true,
       isError: false,
       calculationSteps: newCalculationSteps,
@@ -1025,27 +1059,60 @@ export class KeypadHandler {
       newCalculationSteps[0].operationType === 'number';
 
     // For continuous equals operations, we need special handling
+    // A continuous operation is when we press equals after already having performed an operation
+    // and we're in a new number state (meaning we just pressed equals)
     const isContinuousOperation = state.lastOperation && state.isNewNumber;
 
+    // For continuous operations like "1+3====", we want:
+    // First = : 1+3=4
+    // Second = : 4+3=7
+    // Third = : 7+3=10
+    // etc.
+    
+    // Track the correct operand for continuous operations
+    let operandForContinuousOperation = state.lastOperand;
+    
     if (isContinuousOperation && hasInitialNumber) {
-      // This is a continuous operation, extract the original operand from the first step
-      const originalOperand = newCalculationSteps[0].result;
+      // This is a continuous operation, we need to apply the correct operand to the current result
       
-      // For continuous operations, we want to add the original operand to the current result
+      // Find the operand that was entered after the operator
+      // For "1+3=", we want to use 3 for all subsequent operations
+      let operandToUse = state.lastOperand !== null ? state.lastOperand : currentNumber; // Default to lastOperand if available
+      
+      // For continuous operations, we want to use the operand that was entered after the operator
+      // Search backwards through steps to find the last number step with matching operator
+      if (newCalculationSteps.length > 0) {
+        for (let i = newCalculationSteps.length - 1; i >= 0; i--) {
+          const step = newCalculationSteps[i];
+          // Look for a number step that has an operator (this is the operand entered after the operator)
+          if (step.operationType === 'number' && step.operator === state.lastOperation) {
+            operandToUse = step.result;
+            operandForContinuousOperation = step.result; // Store this for next continuous operation
+            break;
+          }
+        }
+      }
+      
       switch (state.lastOperation) {
         case '+':
-          finalResult = currentNumber + originalOperand;
+          // For continuous addition, we want to add the original operand
+          // For "1+3=", currentNumber is 4 (result), operandToUse should be 3
+          finalResult = currentNumber + operandToUse;
           break;
         case '-':
-          finalResult = currentNumber - originalOperand;
+          // For continuous subtraction, we want to subtract the original operand
+          // For "100-3=", currentNumber is 97 (result), operandToUse should be 3
+          finalResult = currentNumber - operandToUse;
           break;
         case '*':
         case '×':
-          finalResult = currentNumber * originalOperand;
+          // For continuous multiplication
+          finalResult = currentNumber * operandToUse;
           break;
         case '/':
         case '÷':
-          finalResult = originalOperand !== 0 ? currentNumber / originalOperand : 0;
+          // For continuous division
+          finalResult = operandToUse !== 0 ? currentNumber / operandToUse : 0;
           break;
         default:
           // Fallback to normal evaluation
@@ -1100,6 +1167,37 @@ export class KeypadHandler {
                        state.lastOperation === '*' || state.lastOperation === '/' ||
                        state.lastOperation === '×' || state.lastOperation === '÷';
 
+    // For continuous operations, preserve the operand that should be used for subsequent operations
+    // For "1+3=", we want to use 3 for subsequent operations, not 1
+    let newLastOperand = shouldPreserveOperation ? state.lastOperand : null;
+    
+    // For continuous operations, we need to preserve the correct operand
+    // For "1+3=", we want to preserve 3 for all subsequent operations
+    if (shouldPreserveOperation && newCalculationSteps.length > 0) {
+      // For continuous operations, find the operand that was entered after the operator
+      // Search backwards through steps to find the last number step with matching operator
+      for (let i = newCalculationSteps.length - 1; i >= 0; i--) {
+        const step = newCalculationSteps[i];
+        // Look for a number step that has an operator (this is the operand entered after the operator)
+        if (step.operationType === 'number' && step.operator === state.lastOperation) {
+          // This is the operand that was entered after the operator
+          // For "1+3=", this would be 3
+          newLastOperand = step.result;
+          operandForContinuousOperation = step.result; // Store this for next continuous operation
+          break;
+        }
+      }
+      
+      // If we couldn't find it in the steps, preserve the existing lastOperand
+      if (newLastOperand === null && state.lastOperand !== null) {
+        newLastOperand = state.lastOperand;
+      }
+    } else if (shouldPreserveOperation && state.lastOperand !== null) {
+      // If we don't have calculation steps yet but we have a lastOperand,
+      // use that for continuous operations (this handles the case where we just pressed an operator)
+      newLastOperand = state.lastOperand;
+    }
+
     return {
       ...state,
       display: finalResult.toString(),
@@ -1107,7 +1205,7 @@ export class KeypadHandler {
       transactionHistory: [...state.transactionHistory, finalResult],
       calculationSteps: newCalculationSteps,
       lastOperation: shouldPreserveOperation ? state.lastOperation : null,
-      lastOperand: shouldPreserveOperation ? finalResult : null,
+      lastOperand: newLastOperand, // Use the corrected last operand
       isNewNumber: true,
       isError: false,
       articleCount: newCalculationSteps.length // Set final article count to total steps
