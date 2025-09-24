@@ -115,6 +115,8 @@ const ClientCard: React.FC<ClientCardProps> = ({ client, onLongPress, onQuickAdd
       if (description.includes('bouteille') && !bouteillePattern.test(description)) {
         const sizeMatch = description.match(/(\d+(?:\.\d+)?[Ll])/i);
         const brandMatch = description.match(/bouteilles?\s+([^,]*)/i);
+        // If no brand match found, check for simple "bouteille" or "bouteilles"
+        const simpleMatch = description.match(/\b(bouteilles?)\b/i);
         const brand = brandMatch?.[1]?.trim() || '';
         
         // Capitalize brand name properly
@@ -129,7 +131,11 @@ const ClientCard: React.FC<ClientCardProps> = ({ client, onLongPress, onQuickAdd
           key = `Bouteille ${capitalizedBrand}`;
         } else if (sizeMatch) {
           key = `${sizeMatch[1].replace(/l$/i, 'L')} Bouteille`;
+        } else if (simpleMatch) {
+          // Handle simple "bouteille" or "bouteilles" without brand or size
+          key = 'Bouteille';
         } else {
+          // Fallback to simple "bouteille"
           key = 'Bouteille';
         }
         
@@ -141,6 +147,8 @@ const ClientCard: React.FC<ClientCardProps> = ({ client, onLongPress, onQuickAdd
       
       if (description.includes('chopine') && !chopinePattern.test(description)) {
         const brandMatch = description.match(/chopines?\s+([^,]*)/i);
+        // If no brand match found, check for simple "chopine" or "chopines"
+        const simpleMatch = description.match(/\b(chopines?)\b/i);
         const brand = brandMatch?.[1]?.trim() || '';
         
         // Capitalize brand name properly
@@ -148,7 +156,16 @@ const ClientCard: React.FC<ClientCardProps> = ({ client, onLongPress, onQuickAdd
           word.charAt(0).toUpperCase() + word.slice(1).toLowerCase()
         ).join(' ') : '';
         
-        const key = capitalizedBrand ? `Chopine ${capitalizedBrand}` : 'Chopine';
+        let key;
+        if (capitalizedBrand) {
+          key = `Chopine ${capitalizedBrand}`;
+        } else if (simpleMatch) {
+          // Handle simple "chopine" or "chopines" without brand
+          key = 'Chopine';
+        } else {
+          // Fallback to simple "chopine"
+          key = 'Chopine';
+        }
         
         if (!returnableItems[key]) {
           returnableItems[key] = 0;
