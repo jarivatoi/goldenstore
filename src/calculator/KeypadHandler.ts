@@ -1031,39 +1031,19 @@ export class KeypadHandler {
 
     if (isContinuousOperation && hasInitialNumber) {
       // This is a continuous operation, we need to use the correct operand
-      // For operations like "2+3=" or "2×3=", we want to use 3 (the second operand) for subsequent operations
+      // For operations like "2+3=", we want to use 3 (the second operand) for subsequent operations
       
+      // Try to extract the second operand from the calculation steps
       let operandToUse = state.lastOperand !== null ? state.lastOperand : currentNumber;
       
-      // For simple operations like "2+3=" or "2×3=", we need to extract the second operand correctly
-      // For addition/subtraction, the second operand is in the second step
-      // For multiplication/division, the second operand is embedded in the expression of an operation step
-      if (newCalculationSteps.length >= 1) {
-        const lastStep = newCalculationSteps[newCalculationSteps.length - 1];
-        
-        if (lastStep.operationType === 'number' && lastStep.operator) {
-          // This is an addition/subtraction step, the result contains the second operand
-          operandToUse = lastStep.result;
-        } else if (lastStep.operationType === 'operation' && lastStep.expression) {
-          // This is a multiplication/division step, extract the second operand from the expression
-          // Expression format: "(2×3)=6" or "+(2×3)=6"
-          const expression = lastStep.expression;
-          const operatorMatch = expression.match(/[×÷*/]/);
-          
-          if (operatorMatch && operatorMatch.index !== undefined) {
-            const operatorIndex = operatorMatch.index;
-            const closingParenIndex = expression.indexOf(')', operatorIndex);
-            
-            if (operatorIndex !== -1 && closingParenIndex !== -1) {
-              // Extract the part between the operator and the closing parenthesis
-              const operandStr = expression.substring(operatorIndex + 1, closingParenIndex);
-              const operand = parseFloat(operandStr);
-              
-              if (!isNaN(operand)) {
-                operandToUse = operand;
-              }
-            }
-          }
+      // For simple operations like "2+3=", we should have two steps:
+      // Step 1: the first number (2)
+      // Step 2: the operation with the second number (+3)
+      if (newCalculationSteps.length >= 2) {
+        const secondStep = newCalculationSteps[1];
+        if (secondStep.operationType === 'number' && secondStep.operator) {
+          // The result field in the second step contains the second operand
+          operandToUse = secondStep.result;
         }
       }
       
