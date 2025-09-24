@@ -1030,14 +1030,21 @@ export class KeypadHandler {
     const isContinuousOperation = state.lastOperation && state.isNewNumber;
 
     if (isContinuousOperation && hasInitialNumber) {
-      // This is a continuous operation, extract the original operand from the first step
-      // For addition/subtraction, we want to add/subtract the SECOND operand (not the first)
-      // For multiplication/division, we want to multiply/divide by the SECOND operand
-      let operandToUse = newCalculationSteps[0].result;
+      // This is a continuous operation, we need to use the correct operand
+      // For operations like "2+3=", we want to use 3 (the second operand) for subsequent operations
       
-      // For operations like "2+3=", we want to use 3 (the last operand) for subsequent operations
-      if (state.lastOperand !== null) {
-        operandToUse = state.lastOperand;
+      // Try to extract the second operand from the calculation steps
+      let operandToUse = state.lastOperand !== null ? state.lastOperand : currentNumber;
+      
+      // For simple operations like "2+3=", we should have two steps:
+      // Step 1: the first number (2)
+      // Step 2: the operation with the second number (+3)
+      if (newCalculationSteps.length >= 2) {
+        const secondStep = newCalculationSteps[1];
+        if (secondStep.operationType === 'number' && secondStep.operator) {
+          // The result field in the second step contains the second operand
+          operandToUse = secondStep.result;
+        }
       }
       
       // For continuous operations, we want to apply the operation with the correct operand
