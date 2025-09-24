@@ -173,9 +173,9 @@ const ClientSearchModal: React.FC<ClientSearchModalProps> = ({
     const newItem = pendingNumber ? `${pendingNumber} ${action}` : action;
     
     if (description.trim() === '') {
-      setDescription(newItem);
+      setDescription(newItem + ' '); // Add space at the end
     } else {
-      setDescription(prev => prev + ', ' + newItem);
+      setDescription(prev => prev + ', ' + newItem + ' '); // Add space at the end
     }
     
     // Clear pending number after use
@@ -299,12 +299,10 @@ const ClientSearchModal: React.FC<ClientSearchModalProps> = ({
               type="text"
               value={description}
               onChange={(e) => {
-                // Auto-capitalize as user types while preserving spacing
+                // Auto-capitalize as user types with proper word capitalization
                 const value = e.target.value;
-                // Auto-capitalize first letter of each word and add space after comma
-                // Also capitalize after "/" for items like "Petit/Gros"
-                let formatted = value.replace(/(^|\s|\/)\w/g, (char) => char.toUpperCase());
-                // Add space after comma if not already present
+                // Capitalize first letter of each word and after commas and slashes
+                let formatted = value.replace(/(^|[\s,\/])\w/g, (match) => match.toUpperCase());
                 setDescription(formatted);
               }}
               placeholder="Enter item or service description..."
