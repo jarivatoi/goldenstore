@@ -448,7 +448,8 @@ export class KeypadHandler {
       if (newCalculationSteps.length === 0) {
         // Don't create a step for the first number in standalone compound operations
         // We'll create both steps together in handleEqualsInput
-        newArticleCount = 0; // No steps created yet
+        // Keep the article count from the previous state to maintain visibility during compound operations
+        newArticleCount = state.articleCount; // Preserve article count instead of setting to 0
       }
       return {
         ...state,
@@ -764,7 +765,8 @@ export class KeypadHandler {
         newArticleCount = 1;
       } else {
         newCalculationSteps = [];
-        newArticleCount = 0;
+        // Preserve article count to maintain visibility during percentage operations
+        newArticleCount = state.articleCount; // Preserve article count instead of setting to 0
       }
       
       return {
