@@ -176,6 +176,7 @@ export interface OrderItemTemplate {
   name: string; // Product name (e.g., "Matinee", "Palmal")
   unitPrice: number; // Default unit price
   isVatNil: boolean; // Whether item is VAT exempt
+  isVatIncluded: boolean; // Whether VAT is included in the price
   vatPercentage: number; // VAT percentage (default 15)
   createdAt: Date; // When template was created
 }
@@ -211,4 +212,39 @@ export interface Order {
   totalCost: number; // Sum of all item total prices
   createdAt: Date; // When order was created
   lastEditedAt?: Date; // When order was last modified
+}
+
+/**
+ * CALCULATOR TYPES
+ * ===============
+ */
+
+/**
+ * CALCULATION STEP INTERFACE
+ * ==========================
+ * 
+ * Represents a single step in calculator calculations
+ */
+export interface CalculationStep {
+  expression: string;
+  result: number;
+  timestamp: number;
+  stepNumber: number;
+  operationType: 'number' | 'operation' | 'result';
+  displayValue: string;
+  isComplete: boolean;
+  operator?: string;
+}
+
+/**
+ * DUPLICATE CARD INTERFACE
+ * ========================
+ * 
+ * Extended client interface for showing transaction success messages
+ */
+export interface DuplicateCard extends Client {
+  transactionAmount?: number;
+  transactionDescription?: string;
+  message?: string;
+  isAccountClear?: boolean;
 }

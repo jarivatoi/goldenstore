@@ -19,25 +19,21 @@ class UpdateManager {
   private async init() {
     if ('serviceWorker' in navigator) {
       try {
-        const registration = await navigator.serviceWorker.register('/goldenpricelist/sw.js', {
-          scope: '/goldenpricelist/'
+        const registration = await navigator.serviceWorker.register('./sw.js', {
+          scope: './'
         });
         
         this.serviceWorker = registration;
         this.isRegistered = true;
-        console.log('✅ Service Worker registered successfully');
         
         // Handle updates
         registration.addEventListener('updatefound', () => {
-          console.log('🔄 Service Worker update found');
         });
         
       } catch (error) {
         const errorMessage = error instanceof Error ? error.message : String(error);
         if (errorMessage.includes('Service Workers are not yet supported on StackBlitz')) {
-          console.warn('⚠️ Service Workers not supported in this environment (StackBlitz)');
         } else {
-          console.error('❌ Service Worker registration failed:', error);
         }
       }
     }
@@ -48,15 +44,12 @@ class UpdateManager {
    */
   async registerBackgroundSync(tag: string): Promise<void> {
     if (!this.serviceWorker || !('sync' in window.ServiceWorkerRegistration.prototype)) {
-      console.warn('⚠️ Background sync not supported');
       return;
     }
 
     try {
       await this.serviceWorker.sync.register(tag);
-      console.log(`📋 Background sync registered: ${tag}`);
     } catch (error) {
-      console.error(`❌ Background sync registration failed for ${tag}:`, error);
     }
   }
 

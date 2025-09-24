@@ -17,9 +17,9 @@ const TabNavigation: React.FC<TabNavigationProps> = ({ activeTab, onTabChange })
   ];
 
   return (
-    <div className="sticky top-0 bg-white border-b border-gray-200 shadow-sm z-20 w-full">
-      <div className="w-full">
-        <div className="flex overflow-x-auto">
+    <div className="sticky top-0 bg-white border-b border-gray-200 shadow-sm z-20 w-full select-none">
+      <div className="w-full select-none">
+        <div className="flex overflow-x-auto select-none">
           {tabs.map((tab) => {
             const Icon = tab.icon;
             const isActive = activeTab === tab.id;
@@ -28,14 +28,14 @@ const TabNavigation: React.FC<TabNavigationProps> = ({ activeTab, onTabChange })
               <button
                 key={tab.id}
                 onClick={() => onTabChange(tab.id)}
-                className={`flex-1 min-w-0 flex items-center justify-center py-3 px-4 text-sm sm:text-base font-medium transition-colors duration-200 whitespace-nowrap ${
+                className={`flex-1 min-w-0 flex items-center justify-center py-3 px-4 text-sm sm:text-base font-medium transition-colors duration-200 whitespace-nowrap select-none ${
                   isActive
                     ? 'text-blue-600 border-b-2 border-blue-600 bg-blue-50 transform scale-105'
                     : 'text-gray-600 hover:text-gray-800 hover:bg-gray-50'
                 }`}
               >
                 <Icon size={isActive ? 20 : 18} className="mr-1 sm:mr-2 flex-shrink-0" />
-                <span className="truncate">{tab.label}</span>
+                <span className="truncate select-none">{tab.label}</span>
               </button>
             );
           })}
