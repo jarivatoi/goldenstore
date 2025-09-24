@@ -181,12 +181,6 @@ const ClientCard: React.FC<ClientCardProps> = ({ client, onLongPress, onQuickAdd
             // For branded items, create a specific key
             key = `Chopine ${capitalizedBrand}`;
             
-            // Also add a generic "Chopine" entry for the same transaction
-            const genericKey = 'Chopine';
-            if (!returnableItems[genericKey]) {
-              returnableItems[genericKey] = 0;
-            }
-            returnableItems[genericKey] += 1;
           } else if (simpleMatch) {
             // Handle simple "chopine" or "chopines" without brand
             key = 'Chopine';
