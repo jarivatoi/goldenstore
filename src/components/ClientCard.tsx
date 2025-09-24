@@ -31,27 +31,20 @@ const ClientCard: React.FC<ClientCardProps> = ({ client, onLongPress, onQuickAdd
   
   // Listen for credit data changes to force re-render
   React.useEffect(() => {
-    const handleCreditDataChanged = (event: CustomEvent) => {
-      // Check if this event is for this specific client
-      const detail = event.detail as { clientId?: string; source?: string } | undefined;
-      if (!detail || !detail.clientId || detail.clientId === client.id) {
-        setForceUpdate(prev => prev + 1);
-      }
+    const handleCreditDataChanged = () => {
+      setForceUpdate(prev => prev + 1);
     };
 
-    window.addEventListener('creditDataChanged', handleCreditDataChanged as EventListener);
+    window.addEventListener('creditDataChanged', handleCreditDataChanged);
     
     return () => {
-      window.removeEventListener('creditDataChanged', handleCreditDataChanged as EventListener);
+      window.removeEventListener('creditDataChanged', handleCreditDataChanged);
     };
-  }, [client.id]);
+  }, []);
   
   // Get returnable items for scrolling display
-  const getReturnableItemsText = React.useMemo((): Array<{text: string, date: string, time: string}> => {
+  const getReturnableItemsText = React.useMemo((): string => {
     const clientTransactions = getClientTransactions(client.id);
-    
-    // Debug: Log transactions to see what we're working with
-    console.log('Client transactions for', client.name, clientTransactions);
     
     const returnableItems: {[key: string]: number} = {};
     
@@ -67,9 +60,6 @@ const ClientCard: React.FC<ClientCardProps> = ({ client, onLongPress, onQuickAdd
       if (!description.includes('chopine') && !description.includes('bouteille')) {
         return;
       }
-      
-      // Debug: Log which transactions are being processed
-      console.log('Processing transaction:', transaction.description);
       
       // Look for Chopine items
       const chopinePattern = /(\d+)\s+chopines?(?:\s+([^,]*))?/gi;
@@ -122,83 +112,50 @@ const ClientCard: React.FC<ClientCardProps> = ({ client, onLongPress, onQuickAdd
       }
       
       // Handle items without explicit numbers (assume quantity 1)
-      // For bouteille items
-      if (description.includes('bouteille')) {
-        const bouteilleTestPattern = /(\d+)\s+(?:(\d+(?:\.\d+)?[Ll])\s+)?bouteilles?(?:\s+([^,\(\)]*))?/gi;
-        const hasBouteilleWithNumber = bouteilleTestPattern.test(description);
-        if (!hasBouteilleWithNumber) {
-          const sizeMatch = description.match(/(\d+(?:\.\d+)?[Ll])/i);
-          const brandMatch = description.match(/bouteilles?\s+([^,]*)/i);
-          // If no brand match found, check for simple "bouteille" or "bouteilles"
-          const simpleMatch = description.match(/\b(bouteilles?)\b/i);
-          const brand = brandMatch?.[1]?.trim() || '';
-          
-          // Capitalize brand name properly
-          const capitalizedBrand = brand ? brand.split(' ').map(word => 
-            word.charAt(0).toUpperCase() + word.slice(1).toLowerCase()
-          ).join(' ') : '';
-          
-          let key;
-          if (sizeMatch && capitalizedBrand) {
-            key = `${sizeMatch[1].replace(/l$/i, 'L')} ${capitalizedBrand}`;
-          } else if (capitalizedBrand) {
-            key = `Bouteille ${capitalizedBrand}`;
-          } else if (sizeMatch) {
-            key = `${sizeMatch[1].replace(/l$/i, 'L')} Bouteille`;
-          } else if (simpleMatch) {
-            // Handle simple "bouteille" or "bouteilles" without brand or size
-            key = 'Bouteille';
-          } else {
-            // Fallback to simple "bouteille"
-            key = 'Bouteille';
-          }
-          
-          if (!returnableItems[key]) {
-            returnableItems[key] = 0;
-          }
-          returnableItems[key] += 1;
+      if (description.includes('bouteille') && !bouteillePattern.test(description)) {
+        const sizeMatch = description.match(/(\d+(?:\.\d+)?[Ll])/i);
+        const brandMatch = description.match(/bouteilles?\s+([^,]*)/i);
+        const brand = brandMatch?.[1]?.trim() || '';
+        
+        // Capitalize brand name properly
+        const capitalizedBrand = brand ? brand.split(' ').map(word => 
+          word.charAt(0).toUpperCase() + word.slice(1).toLowerCase()
+        ).join(' ') : '';
+        
+        let key;
+        if (sizeMatch && capitalizedBrand) {
+          key = `${sizeMatch[1].replace(/l$/i, 'L')} ${capitalizedBrand}`;
+        } else if (capitalizedBrand) {
+          key = `Bouteille ${capitalizedBrand}`;
+        } else if (sizeMatch) {
+          key = `${sizeMatch[1].replace(/l$/i, 'L')} Bouteille`;
+        } else {
+          key = 'Bouteille';
         }
+        
+        if (!returnableItems[key]) {
+          returnableItems[key] = 0;
+        }
+        returnableItems[key] += 1;
       }
       
-      // For chopine items
-      if (description.includes('chopine')) {
-        const chopineTestPattern = /(\d+)\s+chopines?(?:\s+([^,]*))?/gi;
-        // Store the result of test() in a variable to avoid issues with regex lastIndex
-        const hasChopineWithNumberResult = chopineTestPattern.test(description);
-        if (!hasChopineWithNumberResult) {
-          const brandMatch = description.match(/chopines?\s+([^,]*)/i);
-          // If no brand match found, check for simple "chopine" or "chopines"
-          const simpleMatch = description.match(/\b(chopines?)\b/i);
-          const brand = brandMatch?.[1]?.trim() || '';
-          
-          // Capitalize brand name properly
-          const capitalizedBrand = brand ? brand.split(' ').map(word => 
-            word.charAt(0).toUpperCase() + word.slice(1).toLowerCase()
-          ).join(' ') : '';
-          
-          let key;
-          if (capitalizedBrand) {
-            // For branded items, create a specific key
-            key = `Chopine ${capitalizedBrand}`;
-            
-          } else if (simpleMatch) {
-            // Handle simple "chopine" or "chopines" without brand
-            key = 'Chopine';
-          } else {
-            // Fallback to simple "chopine"
-            key = 'Chopine';
-          }
-          
-          if (!returnableItems[key]) {
-            returnableItems[key] = 0;
-          }
-          returnableItems[key] += 1;
+      if (description.includes('chopine') && !chopinePattern.test(description)) {
+        const brandMatch = description.match(/chopines?\s+([^,]*)/i);
+        const brand = brandMatch?.[1]?.trim() || '';
+        
+        // Capitalize brand name properly
+        const capitalizedBrand = brand ? brand.split(' ').map(word => 
+          word.charAt(0).toUpperCase() + word.slice(1).toLowerCase()
+        ).join(' ') : '';
+        
+        const key = capitalizedBrand ? `Chopine ${capitalizedBrand}` : 'Chopine';
+        
+        if (!returnableItems[key]) {
+          returnableItems[key] = 0;
         }
+        returnableItems[key] += 1;
       }
     });
-    
-    // Debug: Log detected returnable items
-    console.log('Detected returnable items:', returnableItems);
     
     // Calculate returned quantities
     const returnedQuantities: {[key: string]: number} = {};
@@ -207,34 +164,8 @@ const ClientCard: React.FC<ClientCardProps> = ({ client, onLongPress, onQuickAdd
       .forEach(transaction => {
         const description = transaction.description.toLowerCase();
         Object.keys(returnableItems).forEach(itemType => {
-          // Create a more precise matching approach
-          // For exact matches (e.g., "Chopine" should not match "Chopine Vin")
-          const normalizedItemType = itemType.toLowerCase();
-          
-          if (normalizedItemType === 'chopine' || normalizedItemType === 'bouteille') {
-            // For generic items, we need to make sure we're not matching branded versions
-            // e.g., "Chopine" should not match "Chopine Vin"
-            // Create a pattern that matches the item type followed by end of string, space, or comma
-            const escapedItemType = normalizedItemType.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
-            // For generic items, we need a more restrictive pattern that doesn't match branded items
-            // The pattern should match "chopine" or "chopines" but not "chopine vin"
-            // This pattern ensures that "chopine" only matches when it's not part of a larger phrase
-            const pattern = new RegExp(`returned:\\s*(\\d+)\\s+${escapedItemType}(?=s?(?=\\s|$|,|\\.))`, 'i');
-            const match = description.match(pattern);
-            if (match) {
-              if (!returnedQuantities[itemType]) {
-                returnedQuantities[itemType] = 0;
-              }
-              returnedQuantities[itemType] += parseInt(match[1]);
-            }
-          } else {
-            // For branded items, we can use a more specific match
-            // e.g., "Chopine Vin" should match "Chopine Vin" but not "Chopine"
-            // Create a more precise pattern that matches the exact item type
-            const escapedItemType = itemType.toLowerCase().replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
-            // Match the item type followed by end of string, space, comma, or period
-            const pattern = new RegExp(`returned:\\s*(\\d+)\\s+${escapedItemType}s?(?=\\s|$|,|\\.)`, 'i');
-            const match = description.match(pattern);
+          if (description.includes(itemType.toLowerCase())) {
+            const match = description.match(/returned:\s*(\d+)\s+/);
             if (match) {
               if (!returnedQuantities[itemType]) {
                 returnedQuantities[itemType] = 0;
@@ -245,11 +176,8 @@ const ClientCard: React.FC<ClientCardProps> = ({ client, onLongPress, onQuickAdd
         });
       });
     
-    // Debug: Log returned quantities
-    console.log('Returned quantities:', returnedQuantities);
-    
     // Calculate net returnable quantities
-    const netReturnableItems: Array<{text: string, date: string, time: string}> = [];
+    const netReturnableItems: string[] = [];
     Object.entries(returnableItems).forEach(([itemType, total]) => {
       const returned = returnedQuantities[itemType] || 0;
       const remaining = Math.max(0, total - returned);
@@ -259,14 +187,7 @@ const ClientCard: React.FC<ClientCardProps> = ({ client, onLongPress, onQuickAdd
           .filter(transaction => 
             transaction.type === 'debt' && 
             !transaction.description.toLowerCase().includes('returned') &&
-            (() => {
-              // Create precise pattern for matching
-              const normalizedItemType = itemType.toLowerCase().split(' ')[0];
-              const escapedItemType = normalizedItemType.replace(/[.*+?^${}|[\]\\]/g, '\\$&');
-              const pattern = new RegExp(`returned:\\s*(\\d+)\\s+${escapedItemType}s?(?=\\s|$|,|\.)`, 'i');
-              const match = transaction.description.toLowerCase().match(pattern);
-              return match;
-            })()
+            transaction.description.toLowerCase().includes(itemType.toLowerCase().split(' ')[0])
           )
           .sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime())[0];
         
@@ -330,9 +251,6 @@ const ClientCard: React.FC<ClientCardProps> = ({ client, onLongPress, onQuickAdd
         });
       }
     });
-    
-    // Debug: Log final returnable items to display
-    console.log('Net returnable items to display:', netReturnableItems);
     
     return netReturnableItems;
   }, [client.id, getClientTransactions, forceUpdate]);
