@@ -426,49 +426,49 @@ const CreditManagement: React.FC = () => {
         returnableItems[key] += quantity;
       }
       
-      // Handle items without explicit numbers (assume quantity 1)
+      // Handle items without explicit numbers
       if (description.includes('bouteille') && !bouteillePattern.test(description)) {
-        const sizeMatch = description.match(/(\d+(?:\.\d+)?[Ll])/i);
+        const sizeMatch = description.match(/(\d+(?:\.\d+)?L)/i);
         const brandMatch = description.match(/bouteilles?\s+([^,]*)/i);
+        // If no brand match found, check for simple "bouteille" or "bouteilles"
+        const simpleMatch = description.match(/\b(bouteilles?)\b/i);
         const brand = brandMatch?.[1]?.trim() || '';
-        
-        // Capitalize brand name properly
-        const capitalizedBrand = brand ? brand.split(' ').map((word: string) => 
-          word.charAt(0).toUpperCase() + word.slice(1).toLowerCase()
-        ).join(' ') : '';
         
         let key;
         if (sizeMatch && brand) {
-          key = `${sizeMatch[1].replace(/l$/i, 'L')} ${capitalizedBrand}`;
+          key = `${sizeMatch[1]} ${brand}`;
         } else if (brand) {
-          key = `Bouteille ${capitalizedBrand}`;
+          key = `Bouteille ${brand}`;
         } else if (sizeMatch) {
-          key = `${sizeMatch[1].replace(/l$/i, 'L')} Bouteille`;
+          key = `${sizeMatch[1]} Bouteille`;
+        } else if (simpleMatch) {
+          // Handle simple "bouteille" or "bouteilles" without brand or size
+          key = 'Bouteille';
         } else {
+          // Fallback to simple "bouteille"
           key = 'Bouteille';
         }
-        
-        if (!returnableItems[key]) {
-          returnableItems[key] = 0;
-        }
-        returnableItems[key] += 1;
+        returnableItems[key] = (returnableItems[key] || 0) + 1;
       }
       
       if (description.includes('chopine') && !chopinePattern.test(description)) {
         const brandMatch = description.match(/chopines?\s+([^,]*)/i);
         const brand = brandMatch?.[1]?.trim() || '';
-        
-        // Capitalize brand name properly
-        const capitalizedBrand = brand ? brand.split(' ').map((word: string) => 
-          word.charAt(0).toUpperCase() + word.slice(1).toLowerCase()
-        ).join(' ') : '';
-        
-        const key = capitalizedBrand ? `Chopine ${capitalizedBrand}` : 'Chopine';
-        
-        if (!returnableItems[key]) {
-          returnableItems[key] = 0;
+        let key;
+        if (brand) {
+          key = `Chopine ${brand}`;
+        } else {
+          // If no brand match found, check for simple "chopine" or "chopines"
+          const simpleMatch = description.match(/\b(chopines?)\b/i);
+          if (simpleMatch) {
+            // Handle simple "chopine" or "chopines" without brand
+            key = 'Chopine';
+          } else {
+            // Fallback to simple "chopine"
+            key = 'Chopine';
+          }
         }
-        returnableItems[key] += 1;
+        returnableItems[key] = (returnableItems[key] || 0) + 1;
       }
     });
     
@@ -572,43 +572,49 @@ const CreditManagement: React.FC = () => {
             returnableItems[key] += quantity;
           }
           
-          // Handle items without explicit numbers (assume quantity 1)
+          // Handle items without explicit numbers
           if (description.includes('bouteille') && !bouteillePattern.test(description)) {
             const sizeMatch = description.match(/(\d+(?:\.\d+)?L)/i);
             const brandMatch = description.match(/bouteilles?\s+([^,]*)/i);
+            // If no brand match found, check for simple "bouteille" or "bouteilles"
+            const simpleMatch = description.match(/\b(bouteilles?)\b/i);
             const brand = brandMatch?.[1]?.trim() || '';
-            
-            // Capitalize brand name properly
-            const capitalizedBrand = brand ? brand.split(' ').map((word: string) => 
-              word.charAt(0).toUpperCase() + word.slice(1).toLowerCase()
-            ).join(' ') : '';
             
             let key;
             if (sizeMatch && brand) {
-              key = `${sizeMatch[1].replace(/l$/i, 'L')} ${capitalizedBrand}`;
+              key = `${sizeMatch[1]} ${brand}`;
             } else if (brand) {
-              key = `Bouteille ${capitalizedBrand}`;
+              key = `Bouteille ${brand}`;
             } else if (sizeMatch) {
-              key = `${sizeMatch[1].replace(/l$/i, 'L')} Bouteille`;
+              key = `${sizeMatch[1]} Bouteille`;
+            } else if (simpleMatch) {
+              // Handle simple "bouteille" or "bouteilles" without brand or size
+              key = 'Bouteille';
             } else {
+              // Fallback to simple "bouteille"
               key = 'Bouteille';
             }
-            
-            if (!returnableItems[key]) {
-              returnableItems[key] = 0;
-            }
-            returnableItems[key] += 1;
+            returnableItems[key] = (returnableItems[key] || 0) + 1;
           }
           
           if (description.includes('chopine') && !chopinePattern.test(description)) {
             const brandMatch = description.match(/chopines?\s+([^,]*)/i);
             const brand = brandMatch?.[1]?.trim() || '';
-            const key = brand ? `Chopine ${brand}` : 'Chopine';
-            
-            if (!returnableItems[key]) {
-              returnableItems[key] = 0;
+            let key;
+            if (brand) {
+              key = `Chopine ${brand}`;
+            } else {
+              // If no brand match found, check for simple "chopine" or "chopines"
+              const simpleMatch = description.match(/\b(chopines?)\b/i);
+              if (simpleMatch) {
+                // Handle simple "chopine" or "chopines" without brand
+                key = 'Chopine';
+              } else {
+                // Fallback to simple "chopine"
+                key = 'Chopine';
+              }
             }
-            returnableItems[key] += 1;
+            returnableItems[key] = (returnableItems[key] || 0) + 1;
           }
         });
         
@@ -1451,6 +1457,8 @@ const CreditManagement: React.FC = () => {
                     if (description.includes('bouteille') && !bouteillePattern.test(description)) {
                       const sizeMatch = description.match(/(\d+(?:\.\d+)?L)/i);
                       const brandMatch = description.match(/bouteilles?\s+([^,]*)/i);
+                      // If no brand match found, check for simple "bouteille" or "bouteilles"
+                      const simpleMatch = description.match(/\b(bouteilles?)\b/i);
                       const brand = brandMatch?.[1]?.trim() || '';
                       
                       let key;
@@ -1460,7 +1468,11 @@ const CreditManagement: React.FC = () => {
                         key = `Bouteille ${brand}`;
                       } else if (sizeMatch) {
                         key = `${sizeMatch[1]} Bouteille`;
+                      } else if (simpleMatch) {
+                        // Handle simple "bouteille" or "bouteilles" without brand or size
+                        key = 'Bouteille';
                       } else {
+                        // Fallback to simple "bouteille"
                         key = 'Bouteille';
                       }
                       returnableItems[key] = (returnableItems[key] || 0) + 1;
@@ -1469,7 +1481,20 @@ const CreditManagement: React.FC = () => {
                     if (description.includes('chopine') && !chopinePattern.test(description)) {
                       const brandMatch = description.match(/chopines?\s+([^,]*)/i);
                       const brand = brandMatch?.[1]?.trim() || '';
-                      const key = brand ? `Chopine ${brand}` : 'Chopine';
+                      let key;
+                      if (brand) {
+                        key = `Chopine ${brand}`;
+                      } else {
+                        // If no brand match found, check for simple "chopine" or "chopines"
+                        const simpleMatch = description.match(/\b(chopines?)\b/i);
+                        if (simpleMatch) {
+                          // Handle simple "chopine" or "chopines" without brand
+                          key = 'Chopine';
+                        } else {
+                          // Fallback to simple "chopine"
+                          key = 'Chopine';
+                        }
+                      }
                       returnableItems[key] = (returnableItems[key] || 0) + 1;
                     }
                   });
