@@ -244,6 +244,8 @@ const ClientActionModal: React.FC<ClientActionModalProps> = ({ client, onClose, 
       if (!hasMatched && description.includes('bouteille')) {
         const sizeMatch = description.match(/(\d+(?:\.\d+)?[Ll])/i);
         const brandMatch = description.match(/bouteilles?\s+([^,]*)/i);
+        // If no brand match found, check for simple "bouteille" or "bouteilles"
+        const simpleMatch = description.match(/\b(bouteilles?)\b/i);
         const brand = brandMatch?.[1]?.trim() || '';
         
         let key;
@@ -253,7 +255,11 @@ const ClientActionModal: React.FC<ClientActionModalProps> = ({ client, onClose, 
           key = `Bouteille ${brand}`;
         } else if (sizeMatch) {
           key = `${sizeMatch[1].replace(/l$/i, 'L')} Bouteille`;
+        } else if (simpleMatch) {
+          // Handle simple "bouteille" or "bouteilles" without brand or size
+          key = 'Bouteille';
         } else {
+          // Fallback to simple "bouteille"
           key = 'Bouteille';
         }
         
@@ -276,8 +282,31 @@ const ClientActionModal: React.FC<ClientActionModalProps> = ({ client, onClose, 
       
       if (!hasMatched && description.includes('chopine')) {
         const brandMatch = description.match(/chopines?\s+([^,]*)/i);
+        // If no brand match found, check for simple "chopine" or "chopines"
+        const simpleMatch = description.match(/\b(chopines?)\b/i);
         const brand = brandMatch?.[1]?.trim() || '';
-        const key = brand ? `Chopine ${brand}` : 'Chopine';
+        let key;
+        if (brand) {
+          // For branded items, create a specific key
+          key = `Chopine ${brand}`;
+          
+          // Also add a generic "Chopine" entry for the same transaction
+          const genericKey = 'Chopine';
+          if (!returnableItems[genericKey]) {
+            returnableItems[genericKey] = { total: 0, transactions: [] };
+          }
+          returnableItems[genericKey].total += 1;
+          returnableItems[genericKey].transactions.push({
+            ...transaction,
+            quantity: 1
+          });
+        } else if (simpleMatch) {
+          // Handle simple "chopine" or "chopines" without brand
+          key = 'Chopine';
+        } else {
+          // Fallback to simple "chopine"
+          key = 'Chopine';
+        }
         
        // Skip if we've already processed this item type for this transaction
        if (transactionItemTypes.has(key)) {
@@ -379,11 +408,31 @@ const ClientActionModal: React.FC<ClientActionModalProps> = ({ client, onClose, 
       .filter(transaction => transaction.type === 'debt' && transaction.description.toLowerCase().includes('returned'))
       .reduce((total, transaction) => {
         const description = transaction.description.toLowerCase();
-        if (description.includes(itemType.toLowerCase())) {
-          // Extract quantity from return transaction
-          const match = description.match(/returned:\s*(\d+)\s+/);
+        // Create a more precise matching approach
+        // For exact matches (e.g., "Chopine" should not match "Chopine Vin")
+        const normalizedItemType = itemType.toLowerCase();
+        
+        // Check if this is a return for the specific item type
+        // We need to be more precise about matching to avoid generic items matching branded ones
+        if (normalizedItemType === 'chopine' || normalizedItemType === 'bouteille') {
+          // For generic items, we need to make sure we're not matching branded versions
+          // e.g., "Chopine" should not match "Chopine Vin"
+          // Create a pattern that matches the item type followed by end of string, space, or comma
+          const escapedItemType = normalizedItemType.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+          const pattern = new RegExp(`returned:\\s*(\\d+)\\s+${escapedItemType}s?(?=\\s|$|,|\\.)`, 'i');
+          const match = description.match(pattern);
           if (match) {
             return total + parseInt(match[1]);
+          }
+        } else {
+          // For branded items, we can use a more specific match
+          // e.g., "Chopine Vin" should match "Chopine Vin"
+          if (description.includes(itemType.toLowerCase())) {
+            // Extract quantity from return transaction
+            const match = description.match(/returned:\s*(\d+)\s+/);
+            if (match) {
+              return total + parseInt(match[1]);
+            }
           }
         }
         return total;
