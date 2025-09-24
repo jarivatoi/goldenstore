@@ -1032,32 +1032,30 @@ export class KeypadHandler {
 
     // For continuous equals operations, we need special handling
     const isContinuousOperation = state.lastOperation && state.isNewNumber;
+    
+    console.log('🎬 Continuous operation check:', {
+      lastOperation: state.lastOperation,
+      isNewNumber: state.isNewNumber,
+      isContinuousOperation,
+      hasInitialNumber,
+      stepsLength: newCalculationSteps.length
+    });
 
     // FIXED: Proper continuous operation handling for 1+3====
     if (isContinuousOperation && hasInitialNumber && newCalculationSteps.length >= 2) {
-      // This is a continuous operation, extract the operand that was entered after the operator
-      // For "1+3=", we want to use 3 for subsequent operations, not 1
-      let continuousOperand = currentNumber; // Default to current number
+      // For continuous operations like "1+3====", we want to add 3 each time
+      // The operand for continuous operations should be the second operand entered (3 in "1+3")
       
-      // Look for the operand that was entered after the operator
-      // Search backwards through steps to find the last number step with matching operator
-      for (let i = newCalculationSteps.length - 1; i >= 0; i--) {
-        const step = newCalculationSteps[i];
-        // Look for a number step that has an operator (this is the operand entered after the operator)
-        if (step.operationType === 'number' && step.operator === state.lastOperation) {
-          // This is the operand that was entered after the operator
-          // For "1+3=", this would be 3
-          continuousOperand = step.result;
-          break;
-        }
-      }
-      
+      // Find the second operand - it's the result of the last step
+      const lastStep = newCalculationSteps[newCalculationSteps.length - 1];
+      const continuousOperand = lastStep.operationType === 'number' ? lastStep.result : currentNumber;
       const currentDisplayValue = this.getCurrentNumber(state.display);
       
       console.log('🎬 Continuous operation detected:', {
         continuousOperand,
         currentDisplayValue,
-        lastOperation: state.lastOperation
+        lastOperation: state.lastOperation,
+        steps: newCalculationSteps
       });
       
       // For continuous operations, we want to apply the last operation repeatedly
@@ -1106,7 +1104,7 @@ export class KeypadHandler {
       }
     }
 
-    console.log('🎬 Final result:', { finalResult, steps: newCalculationSteps });
+    console.log('🎬 Final result:', { finalResult, steps: newCalculationSteps, lastOperand: state.lastOperand, currentNumber });
 
     // For continuous equals operations (like 2+==== or 2x====), we need to preserve the last operation
     // and properly handle the operands for subsequent operations
@@ -1117,15 +1115,12 @@ export class KeypadHandler {
     // For continuous operations, we need to preserve the correct operand
     // For "1+3=", we want to preserve 3 for subsequent operations, not the result 4
     let newLastOperand = state.lastOperand;
-    if (shouldPreserveOperation) {
+    if (shouldPreserveOperation && newCalculationSteps.length >= 2) {
       // For continuous operations like "1+3====", we need to preserve the second operand (3)
-      // Look through calculation steps to find the operand entered after the operator
-      if (newCalculationSteps.length >= 2) {
-        const lastStep = newCalculationSteps[newCalculationSteps.length - 1];
-        // If the last step is a number operation with an operator, use its result as the operand
-        if (lastStep.operationType === 'number' && lastStep.operator === state.lastOperation) {
-          newLastOperand = lastStep.result;
-        }
+      // The second operand is the result of the last step
+      const lastStep = newCalculationSteps[newCalculationSteps.length - 1];
+      if (lastStep.operationType === 'number') {
+        newLastOperand = lastStep.result;
       }
     }
 
