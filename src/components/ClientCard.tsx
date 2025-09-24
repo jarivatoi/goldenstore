@@ -163,8 +163,9 @@ const ClientCard: React.FC<ClientCardProps> = ({ client, onLongPress, onQuickAdd
       // For chopine items
       if (description.includes('chopine')) {
         const chopineTestPattern = /(\d+)\s+chopines?(?:\s+([^,]*))?/gi;
-        const hasChopineWithNumber = chopineTestPattern.test(description);
-        if (!hasChopineWithNumber) {
+        // Store the result of test() in a variable to avoid issues with regex lastIndex
+        const hasChopineWithNumberResult = chopineTestPattern.test(description);
+        if (!hasChopineWithNumberResult) {
           const brandMatch = description.match(/chopines?\s+([^,]*)/i);
           // If no brand match found, check for simple "chopine" or "chopines"
           const simpleMatch = description.match(/\b(chopines?)\b/i);
