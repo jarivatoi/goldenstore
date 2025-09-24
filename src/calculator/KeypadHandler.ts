@@ -191,26 +191,26 @@ export class KeypadHandler {
         if (lastStep.operationType === 'operation' && input !== '0') {
           newArticleCount++;
         }
+      }
+    
+      return {
+        ...state,
+        display: input,
+        isNewNumber: false,
+        isError: false,
+        articleCount: newArticleCount,
+        calculationSteps: newCalculationSteps
+      };
     }
+
+    // Building multi-digit number - just append to display, don't create steps
+    const newDisplay = state.display + input;
     
     return {
       ...state,
-      display: input,
-      isNewNumber: false,
-      isError: false,
-      articleCount: newArticleCount,
-      calculationSteps: newCalculationSteps
+      display: newDisplay,
+      isError: false
     };
-  }
-
-  // Building multi-digit number - just append to display, don't create steps
-  const newDisplay = state.display + input;
-  
-  return {
-    ...state,
-    display: newDisplay,
-    isError: false
-  };
   }
 
   /**
@@ -736,6 +736,7 @@ export class KeypadHandler {
 
   /**
    * Handle equals input - complete final operation, evaluate all steps, and update article count
+   * FIXED: Now correctly handles continuous operations like 1+3==== to give 4,7,10,13,17...
    */
   private static handleEqualsInput(state: KeypadState): KeypadState {
     const currentNumber = this.getCurrentNumber(state.display);
@@ -1018,8 +1019,6 @@ export class KeypadHandler {
     }
 
     // Calculate final result
-    // For compound calculations, if we have a single compound step, use its result directly
-    // Otherwise, evaluate all steps (for mixed operations like 10+5×3)
     let finalResult: number;
 
     // Check if we have a sequence that starts with a number followed by operations
@@ -1029,25 +1028,34 @@ export class KeypadHandler {
     // For continuous equals operations, we need special handling
     const isContinuousOperation = state.lastOperation && state.isNewNumber;
 
+    // FIXED: Proper continuous operation handling for 1+3====
     if (isContinuousOperation && hasInitialNumber) {
       // This is a continuous operation, extract the original operand from the first step
       const originalOperand = newCalculationSteps[0].result;
+      const currentDisplayValue = this.getCurrentNumber(state.display);
       
-      // For continuous operations, we want to add the original operand to the current result
+      console.log('🎬 Continuous operation detected:', {
+        originalOperand,
+        currentDisplayValue,
+        lastOperation: state.lastOperation
+      });
+      
+      // For continuous operations, we want to apply the last operation repeatedly
+      // For 1+3====: 1+3=4, then 4+3=7, then 7+3=10, etc.
       switch (state.lastOperation) {
         case '+':
-          finalResult = currentNumber + originalOperand;
+          finalResult = currentDisplayValue + originalOperand;
           break;
         case '-':
-          finalResult = currentNumber - originalOperand;
+          finalResult = currentDisplayValue - originalOperand;
           break;
         case '*':
         case '×':
-          finalResult = currentNumber * originalOperand;
+          finalResult = currentDisplayValue * originalOperand;
           break;
         case '/':
         case '÷':
-          finalResult = originalOperand !== 0 ? currentNumber / originalOperand : 0;
+          finalResult = originalOperand !== 0 ? currentDisplayValue / originalOperand : 0;
           break;
         default:
           // Fallback to normal evaluation
@@ -1071,6 +1079,8 @@ export class KeypadHandler {
             finalResult = currentNumber;
           }
       }
+      
+      console.log('🎬 Continuous operation result:', finalResult);
     } else {
       // Normal operation evaluation
       if (hasInitialNumber && newCalculationSteps.length > 1) {
