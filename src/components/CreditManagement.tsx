@@ -396,7 +396,7 @@ const CreditManagement: React.FC = () => {
       }
       
       // Look for Bouteille items
-      const bouteillePattern = /(\d+)\s+(?:(\d+(?:\.\d+)?L)\s+)?bouteilles?(?:\s+([^,]*))?/gi;
+      const bouteillePattern = /(\d+)\s+(?:(\d+(?:\.\d+)?[Ll])\s+)?bouteilles?(?:\s+([^,\(\)]*))?/gi;
       let bouteilleMatch;
       
       while ((bouteilleMatch = bouteillePattern.exec(description)) !== null) {
@@ -426,50 +426,49 @@ const CreditManagement: React.FC = () => {
         returnableItems[key] += quantity;
       }
       
-      // Handle items without explicit numbers
+      // Handle items without explicit numbers (assume quantity 1)
       if (description.includes('bouteille') && !bouteillePattern.test(description)) {
-        const sizeMatch = description.match(/(\d+(?:\.\d+)?L)/i);
+        const sizeMatch = description.match(/(\d+(?:\.\d+)?[Ll])/i);
         const brandMatch = description.match(/bouteilles?\s+([^,]*)/i);
-        // If no brand match found, check for simple "bouteille" or "bouteilles"
-        const simpleMatch = description.match(/\b(bouteilles?)\b/i);
         const brand = brandMatch?.[1]?.trim() || '';
+        
+        // Capitalize brand name properly
+        const capitalizedBrand = brand ? brand.split(' ').map((word: string) => 
+          word.charAt(0).toUpperCase() + word.slice(1).toLowerCase()
+        ).join(' ') : '';
         
         let key;
         if (sizeMatch && brand) {
-          key = `${sizeMatch[1]} ${brand}`;
+          key = `${sizeMatch[1].replace(/l$/i, 'L')} ${capitalizedBrand}`;
         } else if (brand) {
-          key = `Bouteille ${brand}`;
+          key = `Bouteille ${capitalizedBrand}`;
         } else if (sizeMatch) {
-          key = `${sizeMatch[1]} Bouteille`;
-        } else if (simpleMatch) {
-          // Handle simple "bouteille" or "bouteilles" without brand or size
-          key = 'Bouteille';
+          key = `${sizeMatch[1].replace(/l$/i, 'L')} Bouteille`;
         } else {
-          // Fallback to simple "bouteille"
           key = 'Bouteille';
         }
-        returnableItems[key] = (returnableItems[key] || 0) + 1;
+        
+        if (!returnableItems[key]) {
+          returnableItems[key] = 0;
+        }
+        returnableItems[key] += 1;
       }
       
       if (description.includes('chopine') && !chopinePattern.test(description)) {
         const brandMatch = description.match(/chopines?\s+([^,]*)/i);
         const brand = brandMatch?.[1]?.trim() || '';
-        let key;
-        if (brand) {
-          // For branded items, create a specific key
-          key = `Chopine ${brand}`;
-        } else {
-          // If no brand match found, check for simple "chopine" or "chopines"
-          const simpleMatch = description.match(/\b(chopines?)\b/i);
-          if (simpleMatch) {
-            // Handle simple "chopine" or "chopines" without brand
-            key = 'Chopine';
-          } else {
-            // Fallback to simple "chopine"
-            key = 'Chopine';
-          }
+        
+        // Capitalize brand name properly
+        const capitalizedBrand = brand ? brand.split(' ').map((word: string) => 
+          word.charAt(0).toUpperCase() + word.slice(1).toLowerCase()
+        ).join(' ') : '';
+        
+        const key = capitalizedBrand ? `Chopine ${capitalizedBrand}` : 'Chopine';
+        
+        if (!returnableItems[key]) {
+          returnableItems[key] = 0;
         }
-        returnableItems[key] = (returnableItems[key] || 0) + 1;
+        returnableItems[key] += 1;
       }
     });
     
@@ -480,40 +479,15 @@ const CreditManagement: React.FC = () => {
       .forEach(transaction => {
         const description = transaction.description.toLowerCase();
         Object.keys(returnableItems).forEach(itemType => {
-          // Create a more precise matching approach
-          // For exact matches (e.g., "Chopine" should not match "Chopine Vin")
-          const normalizedItemType = itemType.toLowerCase();
-          
-          if (normalizedItemType === 'chopine' || normalizedItemType === 'bouteille') {
-                // For generic items, we need to make sure we're not matching branded versions
-                // e.g., "Chopine" should not match "Chopine Vin"
-                // Create a pattern that matches the item type followed by end of string, space, or comma
-                const escapedItemType = normalizedItemType.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
-                // For generic items, we need a more restrictive pattern that doesn't match branded items
-                // The pattern should match "chopine" or "chopines" but not "chopine vin"
-                const pattern = new RegExp(`returned:\\s*(\\d+)\\s+${escapedItemType}(?=s(?=\\s|$|,|\.)|(\\s|$|,|\\.))`, 'i');
-                const match = description.match(pattern);
-                if (match) {
-                  if (!returnedQuantities[itemType]) {
-                    returnedQuantities[itemType] = 0;
-                  }
-                  returnedQuantities[itemType] += parseInt(match[1]);
-                }
-              } else {
-                // For branded items, we can use a more specific match
-                // e.g., "Chopine Vin" should match "Chopine Vin" but not "Chopine"
-                // Create a more precise pattern that matches the exact item type
-                const escapedItemType = itemType.toLowerCase().replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
-                // Match the item type followed by end of string, space, comma, or period
-                const pattern = new RegExp(`returned:\\s*(\\d+)\\s+${escapedItemType}s?(?=\\s|$|,|\\.)`, 'i');
-                const match = description.match(pattern);
-                if (match) {
-                  if (!returnedQuantities[itemType]) {
-                    returnedQuantities[itemType] = 0;
-                  }
-                  returnedQuantities[itemType] += parseInt(match[1]);
-                }
+          if (description.includes(itemType.toLowerCase())) {
+            const match = description.match(/returned:\s*(\d+)\s+/);
+            if (match) {
+              if (!returnedQuantities[itemType]) {
+                returnedQuantities[itemType] = 0;
               }
+              returnedQuantities[itemType] += parseInt(match[1]);
+            }
+          }
         });
       });
     
@@ -598,57 +572,43 @@ const CreditManagement: React.FC = () => {
             returnableItems[key] += quantity;
           }
           
-          // Handle items without explicit numbers
+          // Handle items without explicit numbers (assume quantity 1)
           if (description.includes('bouteille') && !bouteillePattern.test(description)) {
             const sizeMatch = description.match(/(\d+(?:\.\d+)?L)/i);
             const brandMatch = description.match(/bouteilles?\s+([^,]*)/i);
-            // If no brand match found, check for simple "bouteille" or "bouteilles"
-            const simpleMatch = description.match(/\b(bouteilles?)\b/i);
             const brand = brandMatch?.[1]?.trim() || '';
+            
+            // Capitalize brand name properly
+            const capitalizedBrand = brand ? brand.split(' ').map((word: string) => 
+              word.charAt(0).toUpperCase() + word.slice(1).toLowerCase()
+            ).join(' ') : '';
             
             let key;
             if (sizeMatch && brand) {
-              key = `${sizeMatch[1]} ${brand}`;
+              key = `${sizeMatch[1].replace(/l$/i, 'L')} ${capitalizedBrand}`;
             } else if (brand) {
-              key = `Bouteille ${brand}`;
+              key = `Bouteille ${capitalizedBrand}`;
             } else if (sizeMatch) {
-              key = `${sizeMatch[1]} Bouteille`;
-            } else if (simpleMatch) {
-              // Handle simple "bouteille" or "bouteilles" without brand or size
-              key = 'Bouteille';
+              key = `${sizeMatch[1].replace(/l$/i, 'L')} Bouteille`;
             } else {
-              // Fallback to simple "bouteille"
               key = 'Bouteille';
             }
-            returnableItems[key] = (returnableItems[key] || 0) + 1;
+            
+            if (!returnableItems[key]) {
+              returnableItems[key] = 0;
+            }
+            returnableItems[key] += 1;
           }
           
           if (description.includes('chopine') && !chopinePattern.test(description)) {
             const brandMatch = description.match(/chopines?\s+([^,]*)/i);
             const brand = brandMatch?.[1]?.trim() || '';
-            let key;
-            if (brand) {
-              // For branded items, create a specific key
-              key = `Chopine ${brand}`;
-              
-              // Also add a generic "Chopine" entry for the same transaction
-              const genericKey = 'Chopine';
-              if (!returnableItems[genericKey]) {
-                returnableItems[genericKey] = 0;
-              }
-              returnableItems[genericKey] += 1;
-            } else {
-              // If no brand match found, check for simple "chopine" or "chopines"
-              const simpleMatch = description.match(/\b(chopines?)\b/i);
-              if (simpleMatch) {
-                // Handle simple "chopine" or "chopines" without brand
-                key = 'Chopine';
-              } else {
-                // Fallback to simple "chopine"
-                key = 'Chopine';
-              }
+            const key = brand ? `Chopine ${brand}` : 'Chopine';
+            
+            if (!returnableItems[key]) {
+              returnableItems[key] = 0;
             }
-            returnableItems[key] = (returnableItems[key] || 0) + 1;
+            returnableItems[key] += 1;
           }
         });
         
@@ -659,34 +619,8 @@ const CreditManagement: React.FC = () => {
           .forEach(transaction => {
             const description = transaction.description.toLowerCase();
             Object.keys(returnableItems).forEach(itemType => {
-              // Create a more precise matching approach
-              // For exact matches (e.g., "Chopine" should not match "Chopine Vin")
-              const normalizedItemType = itemType.toLowerCase();
-              
-              if (normalizedItemType === 'chopine' || normalizedItemType === 'bouteille') {
-                // For generic items, we need to make sure we're not matching branded versions
-                // e.g., "Chopine" should not match "Chopine Vin"
-                // Create a pattern that matches the item type followed by end of string, space, or comma
-                const escapedItemType = normalizedItemType.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
-                // For generic items, we need a more restrictive pattern that doesn't match branded items
-                // The pattern should match "chopine" or "chopines" but not "chopine vin"
-                // This pattern ensures that "chopine" only matches when it's not part of a larger phrase
-                const pattern = new RegExp(`returned:\\s*(\\d+)\\s+${escapedItemType}(?=s?(?=\\s|$|,|\\.))`, 'i');
-                const match = description.match(pattern);
-                if (match) {
-                  if (!returnedQuantities[itemType]) {
-                    returnedQuantities[itemType] = 0;
-                  }
-                  returnedQuantities[itemType] += parseInt(match[1]);
-                }
-              } else {
-                // For branded items, we can use a more specific match
-                // e.g., "Chopine Vin" should match "Chopine Vin" but not "Chopine"
-                // Create a more precise pattern that matches the exact item type
-                const escapedItemType = itemType.toLowerCase().replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
-                // Match the item type followed by end of string, space, comma, or period
-                const pattern = new RegExp(`returned:\\s*(\\d+)\\s+${escapedItemType}s?(?=\\s|$|,|\\.)`, 'i');
-                const match = description.match(pattern);
+              if (description.includes(itemType.toLowerCase())) {
+                const match = description.match(/returned:\s*(\d+)\s+/);
                 if (match) {
                   if (!returnedQuantities[itemType]) {
                     returnedQuantities[itemType] = 0;
@@ -952,27 +886,28 @@ const CreditManagement: React.FC = () => {
     }
   };
 
-  // Helper function to properly capitalize transaction descriptions
-  const capitalizeTransactionDescription = (text: string): string => {
-    if (!text) return '';
-    // Capitalize first letter of each word
-    let capitalized = text.replace(/\b\w/g, (char) => char.toUpperCase());
-    // Ensure specific terms are properly capitalized
-    capitalized = capitalized.replace(/\bchopine\b/gi, 'Chopine');
-    capitalized = capitalized.replace(/\bbouteille\b/gi, 'Bouteille');
-    capitalized = capitalized.replace(/\bchopines\b/gi, 'Chopines');
-    capitalized = capitalized.replace(/\bbouteilles\b/gi, 'Bouteilles');
-    return capitalized;
-  };
-
   // Helper function to safely evaluate calculator value
   const formatCalculatorValue = (value: string) => {
-    if (!value) return '';
+    // Split the value into numbers and operators
+    // Handle both display symbols (×, ÷) and input symbols (*, /)
+    const parts = value.split(/([+\-×÷*/])/);
     
-    // For display purposes, replace operators with proper symbols
-    return value
-      .replace(/\*/g, '×')
-      .replace(/\//g, '÷');
+    return parts.map((part, index) => {
+      // Check if the part is an operator (handle both display and input symbols)
+      if (part === '+' || part === '-' || part === '×' || part === '÷' || part === '*' || part === '/') {
+        return (
+          <span 
+            key={index} 
+            className="calculator-operator"
+          >
+            {/* Display the proper symbol regardless of what was input */}
+            {part === '*' ? '×' : part === '/' ? '÷' : part}
+          </span>
+        );
+      }
+      // Return regular text for numbers and other characters
+      return part;
+    });
   };
 
   // Database operations
@@ -1456,7 +1391,7 @@ const CreditManagement: React.FC = () => {
               {duplicateCard.transactionDescription && (
                 <div className="mb-3 text-center select-none">
                   <p className="text-lg font-semibold text-gray-800 leading-relaxed select-none">
-                    {capitalizeTransactionDescription(duplicateCard.transactionDescription)}
+                    {duplicateCard.transactionDescription}
                   </p>
                 </div>
               )}
@@ -1517,8 +1452,6 @@ const CreditManagement: React.FC = () => {
                     if (description.includes('bouteille') && !bouteillePattern.test(description)) {
                       const sizeMatch = description.match(/(\d+(?:\.\d+)?L)/i);
                       const brandMatch = description.match(/bouteilles?\s+([^,]*)/i);
-                      // If no brand match found, check for simple "bouteille" or "bouteilles"
-                      const simpleMatch = description.match(/\b(bouteilles?)\b/i);
                       const brand = brandMatch?.[1]?.trim() || '';
                       
                       let key;
@@ -1528,11 +1461,7 @@ const CreditManagement: React.FC = () => {
                         key = `Bouteille ${brand}`;
                       } else if (sizeMatch) {
                         key = `${sizeMatch[1]} Bouteille`;
-                      } else if (simpleMatch) {
-                        // Handle simple "bouteille" or "bouteilles" without brand or size
-                        key = 'Bouteille';
                       } else {
-                        // Fallback to simple "bouteille"
                         key = 'Bouteille';
                       }
                       returnableItems[key] = (returnableItems[key] || 0) + 1;
@@ -1541,28 +1470,7 @@ const CreditManagement: React.FC = () => {
                     if (description.includes('chopine') && !chopinePattern.test(description)) {
                       const brandMatch = description.match(/chopines?\s+([^,]*)/i);
                       const brand = brandMatch?.[1]?.trim() || '';
-                      let key;
-                      if (brand) {
-                        // For branded items, create a specific key
-                        key = `Chopine ${brand}`;
-                        
-                        // Also add a generic "Chopine" entry for the same transaction
-                        const genericKey = 'Chopine';
-                        if (!returnableItems[genericKey]) {
-                          returnableItems[genericKey] = 0;
-                        }
-                        returnableItems[genericKey] += 1;
-                      } else {
-                        // If no brand match found, check for simple "chopine" or "chopines"
-                        const simpleMatch = description.match(/\b(chopines?)\b/i);
-                        if (simpleMatch) {
-                          // Handle simple "chopine" or "chopines" without brand
-                          key = 'Chopine';
-                        } else {
-                          // Fallback to simple "chopine"
-                          key = 'Chopine';
-                        }
-                      }
+                      const key = brand ? `Chopine ${brand}` : 'Chopine';
                       returnableItems[key] = (returnableItems[key] || 0) + 1;
                     }
                   });
@@ -1574,36 +1482,10 @@ const CreditManagement: React.FC = () => {
                     .forEach(transaction => {
                       const description = transaction.description.toLowerCase();
                       Object.keys(returnableItems).forEach(itemType => {
-                        // Create a more precise matching approach
-                        // For exact matches (e.g., "Chopine" should not match "Chopine Vin")
-                        const normalizedItemType = itemType.toLowerCase();
-                        
-                        if (normalizedItemType === 'chopine' || normalizedItemType === 'bouteille') {
-                          // For generic items, we need to make sure we're not matching branded versions
-                          // e.g., "Chopine" should not match "Chopine Vin"
-                          // Create a pattern that matches the item type followed by end of string, space, or comma
-                          const escapedItemType = normalizedItemType.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
-                          const pattern = new RegExp(`returned:\\s*(\\d+)\\s+${escapedItemType}s?(?=\\s|$|,|\\.)`, 'i');
-                          const match = description.match(pattern);
+                        if (description.includes(itemType.toLowerCase())) {
+                          const match = description.match(/returned:\s*(\d+)\s+/);
                           if (match) {
-                            if (!returnedQuantities[itemType]) {
-                              returnedQuantities[itemType] = 0;
-                            }
-                            returnedQuantities[itemType] += parseInt(match[1]);
-                          }
-                        } else {
-                          // For branded items, we can use a more specific match
-                          // e.g., "Chopine Vin" should match "Chopine Vin" but not "Chopine"
-                          // Create a more precise pattern that matches the exact item type
-                          const escapedItemType = itemType.toLowerCase().replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
-                          // Match the item type followed by end of string, space, comma, or period
-                          const pattern = new RegExp(`returned:\\s*(\\d+)\\s+${escapedItemType}s?(?=\\s|$|,|\\.)`, 'i');
-                          const match = description.match(pattern);
-                          if (match) {
-                            if (!returnedQuantities[itemType]) {
-                              returnedQuantities[itemType] = 0;
-                            }
-                            returnedQuantities[itemType] += parseInt(match[1]);
+                            returnedQuantities[itemType] = (returnedQuantities[itemType] || 0) + parseInt(match[1]);
                           }
                         }
                       });
@@ -1615,28 +1497,7 @@ const CreditManagement: React.FC = () => {
                     const returned = returnedQuantities[itemType] || 0;
                     const remaining = Math.max(0, total - returned);
                     if (remaining > 0) {
-                      // Handle proper pluralization with capitalization
-                      let displayItemType = itemType;
-                      if (remaining > 1) {
-                        // Handle special cases for proper pluralization
-                        if (itemType === 'Chopine') {
-                          displayItemType = 'Chopines';
-                        } else if (itemType === 'Bouteille') {
-                          displayItemType = 'Bouteilles';
-                        } else if (itemType.includes('Chopine') && !itemType.includes('Chopines')) {
-                          // For branded chopines, replace Chopine with Chopines
-                          displayItemType = itemType.replace(/\bChopine\b/g, 'Chopines');
-                        } else if (itemType.includes('Bouteille') && !itemType.includes('Bouteilles')) {
-                          // For branded bouteilles, replace Bouteille with Bouteilles
-                          displayItemType = itemType.replace(/\bBouteille\b/g, 'Bouteilles');
-                        } else {
-                          // For other items, just add 's' if not already plural
-                          if (!itemType.endsWith('s')) {
-                            displayItemType = itemType + 's';
-                          }
-                        }
-                      }
-                      netReturnableItems.push(`${remaining} ${displayItemType}`);
+                      netReturnableItems.push(`${remaining} ${itemType}${remaining > 1 ? 's' : ''}`);
                     }
                   });
                   
@@ -1651,9 +1512,6 @@ const CreditManagement: React.FC = () => {
                  duplicateCard.transactionDescription.toLowerCase().includes('chopine') ||
                  duplicateCard.transactionDescription.toLowerCase().includes('bouteille')
                );
-               
-               // Check if this is a return transaction
-               const isReturnTransaction = duplicateCard.transactionDescription?.toLowerCase().includes('returned');
                
                 return (
                   <div className="relative mb-3">
@@ -1681,13 +1539,13 @@ const CreditManagement: React.FC = () => {
                     )}
                     
                     {/* Returnables Section - show if client has returnables or current transaction has returnables */}
-                    {(hasReturnables || transactionHasReturnables) && !isReturnTransaction && (
+                    {(hasReturnables || transactionHasReturnables) && (
                       <div className="mb-3">
                        {/* Arrow pointing to returnables - show if we have amount OR debt OR just added returnables */}
                        {(hasAmount || hasDebt || transactionHasReturnables) && (
                           <div className="flex items-center justify-center gap-2 mb-2">
                             <div className="bg-orange-500 text-white px-3 py-1 rounded-lg text-sm font-medium max-w-xs">
-                              Returnables: {capitalizeTransactionDescription(returnableItems.join(', '))}
+                              {duplicateCard.message?.toLowerCase().includes('returned') ? 'Still to return:' : 'Returnables:'} {returnableItems.join(', ')}
                             </div>
                             <div className="animate-bounce-horizontal text-orange-600">
                               <ArrowLeft size={24} />
@@ -1699,37 +1557,9 @@ const CreditManagement: React.FC = () => {
                        {!hasAmount && !hasDebt && !transactionHasReturnables && (
                           <div className="bg-orange-100 border border-orange-300 rounded-lg p-3 mb-2">
                             <p className="text-orange-800 font-medium text-sm mb-1">Total Returnables:</p>
-                            <p className="text-orange-700 text-sm">{capitalizeTransactionDescription(returnableItems.join(', '))}</p>
+                            <p className="text-orange-700 text-sm">{returnableItems.join(', ')}</p>
                           </div>
                         )}
-                      </div>
-                    )}
-                    
-                    {/* Special handling for return transactions - show "Still to return" when items have been returned but there are still items to return */}
-                    {isReturnTransaction && returnableItems.length > 0 && (
-                      <div className="mb-3">
-                        <div className="flex items-center justify-center gap-2 mb-2">
-                          <div className="bg-orange-500 text-white px-3 py-1 rounded-lg text-sm font-medium max-w-xs">
-                            Still to return: {capitalizeTransactionDescription(returnableItems.join(', '))}
-                          </div>
-                          <div className="animate-bounce-horizontal text-orange-600">
-                            <ArrowLeft size={24} />
-                          </div>
-                        </div>
-                      </div>
-                    )}
-                    
-                    {/* Special handling for return transactions - show confirmation when all items have been returned */}
-                    {isReturnTransaction && returnableItems.length === 0 && (
-                      <div className="mb-3">
-                        <div className="flex items-center justify-center gap-2 mb-2">
-                          <div className="bg-green-500 text-white px-3 py-1 rounded-lg text-sm font-medium max-w-xs">
-                            All items returned successfully!
-                          </div>
-                          <div className="animate-bounce-horizontal text-green-600">
-                            <CheckCircle size={24} />
-                          </div>
-                        </div>
                       </div>
                     )}
                   </div>
