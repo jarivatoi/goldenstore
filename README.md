@@ -1,1 +1,1 @@
-goldenstore
+goldenpricelist

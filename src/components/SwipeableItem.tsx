@@ -524,7 +524,7 @@ const SwipeableItem: React.FC<SwipeableItemProps> = ({ item, onEdit, onDelete })
             cursor: revealWidth > 0 ? 'pointer' : 'grab',
             backgroundColor: '#fef3c7', // Pale golden color (yellow-100)
             // Touch action for swipe support
-            touchAction: 'manipulation', // Better iPhone touch handling
+            touchAction: 'pan-y', // Allow vertical scrolling, prevent horizontal
           }}
         >
           {formattedPrice}
@@ -538,7 +538,7 @@ const SwipeableItem: React.FC<SwipeableItemProps> = ({ item, onEdit, onDelete })
             // Prevent text selection during swipe
             userSelect: 'none',
             WebkitUserSelect: 'none',
-            touchAction: 'manipulation', // Better iPhone touch handling
+            touchAction: 'pan-y', // Allow vertical scrolling, prevent horizontal
             backgroundColor: '#fef3c7', // Pale golden color (yellow-100)
             zIndex: 10, // Lower than price but higher than background
           }}
@@ -575,9 +575,7 @@ const SwipeableItem: React.FC<SwipeableItemProps> = ({ item, onEdit, onDelete })
                   maxWidth: '100%'
                 }}
               >
-                {!isNaN(item.grossPrice) && item.grossPrice > 0 && (
-                  <>Gross Price: Rs {item.grossPrice.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</>
-                )}
+                Gross Price: Rs {item.grossPrice.toFixed(2)}
               </div>
               {/* Last edited date display */}
               {item.lastEditedAt && (
@@ -591,9 +589,9 @@ const SwipeableItem: React.FC<SwipeableItemProps> = ({ item, onEdit, onDelete })
                 >
                   Last edited on {item.lastEditedAt.toLocaleDateString('en-GB', {
                     day: '2-digit',
-                    month: 'short',
+                    month: '2-digit',
                     year: 'numeric'
-                  }).replace(/\s/g, '-')} {item.lastEditedAt.toLocaleTimeString('en-GB', {
+                  })} {item.lastEditedAt.toLocaleTimeString('en-GB', {
                     hour: '2-digit',
                     minute: '2-digit',
                     hour12: false
