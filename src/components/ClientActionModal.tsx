@@ -806,7 +806,14 @@ const ClientActionModal: React.FC<ClientActionModalProps> = ({ client, onClose, 
                             .filter(transaction => 
                               transaction.type === 'debt' && 
                               transaction.description.toLowerCase().includes('returned') &&
-                              transaction.description.toLowerCase().includes(itemType.toLowerCase())
+                              (() => {
+                                // Create precise pattern for matching
+                                const normalizedItemType = itemType.toLowerCase();
+                                const escapedItemType = normalizedItemType.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+                                const pattern = new RegExp(`returned:\\s*(\\d+)\\s+${escapedItemType}s?(?=\\s|$|,|\.)`, 'i');
+                                const match = transaction.description.toLowerCase().match(pattern);
+                                return match;
+                              })()
                             )
                             .filter(transaction => {
                               // Only show returned transactions that are newer than the most recent non-return transaction for this item type
@@ -814,7 +821,14 @@ const ClientActionModal: React.FC<ClientActionModalProps> = ({ client, onClose, 
                                 .filter(t => 
                                   t.type === 'debt' && 
                                   !t.description.toLowerCase().includes('returned') &&
-                                  t.description.toLowerCase().includes(itemType.toLowerCase().split(' ')[0])
+                                  (() => {
+                                    // Create precise pattern for matching
+                                    const normalizedItemType = itemType.toLowerCase().split(' ')[0];
+                                    const escapedItemType = normalizedItemType.replace(/[.*+?^${}|[\]\\]/g, '\\$&');
+                                    const pattern = new RegExp(`returned:\\s*(\\d+)\\s+${escapedItemType}s?(?=\\s|$|,|\.)`, 'i');
+                                    const match = t.description.toLowerCase().match(pattern);
+                                    return match;
+                                  })()
                                 )
                                 .sort((a, b) => b.date.getTime() - a.date.getTime())[0];
                               
@@ -822,7 +836,12 @@ const ClientActionModal: React.FC<ClientActionModalProps> = ({ client, onClose, 
                               if (!mostRecentTakeTransaction) return false;
                               
                               // Only show returns that happened after the most recent take
-                              return transaction.date.getTime() > mostRecentTakeTransaction.date.getTime();
+                              // Create precise pattern for matching
+                              const normalizedItemType = itemType.toLowerCase();
+                              const escapedItemType = normalizedItemType.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+                              const pattern = new RegExp(`returned:\\s*(\\d+)\\s+${escapedItemType}s?(?=\\s|$|,|\\.)`, 'i');
+                              const match = transaction.description.toLowerCase().match(pattern);
+                              return transaction.date.getTime() > mostRecentTakeTransaction.date.getTime() && match;
                             })
                             .slice(-2); // Show last 2 relevant returned transactions
                           
@@ -1125,6 +1144,14 @@ const ClientActionModal: React.FC<ClientActionModalProps> = ({ client, onClose, 
   );
 
   return createPortal(modalContent, document.body);
+};
+
+// Helper function to create precise regex pattern for item matching
+const createItemMatchingPattern = (itemType: string): RegExp => {
+  const normalizedItemType = itemType.toLowerCase();
+  const escapedItemType = normalizedItemType.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+  // Match the item type followed by end of string, space, comma, or period
+  return new RegExp(`returned:\\s*(\\d+)\\s+${escapedItemType}s?(?=\\s|$|,|\\.)`, 'i');
 };
 
 export default ClientActionModal;
