@@ -1391,7 +1391,18 @@ const CreditManagement: React.FC = () => {
               {duplicateCard.transactionDescription && (
                 <div className="mb-3 text-center select-none">
                   <p className="text-lg font-semibold text-gray-800 leading-relaxed select-none">
-                    {duplicateCard.transactionDescription}
+                    {(() => {
+                      // Properly capitalize common terms
+                      let text = duplicateCard.transactionDescription;
+                      // Capitalize first letter of each word
+                      text = text.replace(/\b\w/g, (char) => char.toUpperCase());
+                      // Ensure specific terms are properly capitalized
+                      text = text.replace(/\bchopine\b/gi, 'Chopine');
+                      text = text.replace(/\bbouteille\b/gi, 'Bouteille');
+                      text = text.replace(/\bchopines\b/gi, 'Chopines');
+                      text = text.replace(/\bbouteilles\b/gi, 'Bouteilles');
+                      return text;
+                    })()}
                   </p>
                 </div>
               )}
@@ -1545,7 +1556,17 @@ const CreditManagement: React.FC = () => {
                        {(hasAmount || hasDebt || transactionHasReturnables) && (
                           <div className="flex items-center justify-center gap-2 mb-2">
                             <div className="bg-orange-500 text-white px-3 py-1 rounded-lg text-sm font-medium max-w-xs">
-                              {duplicateCard.message?.toLowerCase().includes('returned') ? 'Still to return:' : 'Returnables:'} {returnableItems.join(', ')}
+                              {duplicateCard.message?.toLowerCase().includes('returned') ? 'Still to return:' : 'Returnables:'} {(() => {
+                                let text = returnableItems.join(', ');
+                                // Capitalize first letter of each word
+                                text = text.replace(/\b\w/g, (char) => char.toUpperCase());
+                                // Ensure specific terms are properly capitalized
+                                text = text.replace(/\bchopine\b/gi, 'Chopine');
+                                text = text.replace(/\bbouteille\b/gi, 'Bouteille');
+                                text = text.replace(/\bchopines\b/gi, 'Chopines');
+                                text = text.replace(/\bbouteilles\b/gi, 'Bouteilles');
+                                return text;
+                              })()}
                             </div>
                             <div className="animate-bounce-horizontal text-orange-600">
                               <ArrowLeft size={24} />
@@ -1557,7 +1578,17 @@ const CreditManagement: React.FC = () => {
                        {!hasAmount && !hasDebt && !transactionHasReturnables && (
                           <div className="bg-orange-100 border border-orange-300 rounded-lg p-3 mb-2">
                             <p className="text-orange-800 font-medium text-sm mb-1">Total Returnables:</p>
-                            <p className="text-orange-700 text-sm">{returnableItems.join(', ')}</p>
+                            <p className="text-orange-700 text-sm">{(() => {
+                              let text = returnableItems.join(', ');
+                              // Capitalize first letter of each word
+                              text = text.replace(/\b\w/g, (char) => char.toUpperCase());
+                              // Ensure specific terms are properly capitalized
+                              text = text.replace(/\bchopine\b/gi, 'Chopine');
+                              text = text.replace(/\bbouteille\b/gi, 'Bouteille');
+                              text = text.replace(/\bchopines\b/gi, 'Chopines');
+                              text = text.replace(/\bbouteilles\b/gi, 'Bouteilles');
+                              return text;
+                            })()}</p>
                           </div>
                         )}
                       </div>
