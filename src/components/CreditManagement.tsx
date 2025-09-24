@@ -1558,6 +1558,9 @@ const CreditManagement: React.FC = () => {
                  duplicateCard.transactionDescription.toLowerCase().includes('bouteille')
                );
                
+               // Check if this is a return transaction
+               const isReturnTransaction = duplicateCard.transactionDescription?.toLowerCase().includes('returned');
+               
                 return (
                   <div className="relative mb-3">
                     {/* Amount Section - show if amount > 0 OR if client has debt */}
@@ -1584,13 +1587,13 @@ const CreditManagement: React.FC = () => {
                     )}
                     
                     {/* Returnables Section - show if client has returnables or current transaction has returnables */}
-                    {(hasReturnables || transactionHasReturnables) && (
+                    {(hasReturnables || transactionHasReturnables) && !isReturnTransaction && (
                       <div className="mb-3">
                        {/* Arrow pointing to returnables - show if we have amount OR debt OR just added returnables */}
                        {(hasAmount || hasDebt || transactionHasReturnables) && (
                           <div className="flex items-center justify-center gap-2 mb-2">
                             <div className="bg-orange-500 text-white px-3 py-1 rounded-lg text-sm font-medium max-w-xs">
-                              {duplicateCard.message?.toLowerCase().includes('returned') ? 'Still to return:' : 'Returnables:'} {capitalizeTransactionDescription(returnableItems.join(', '))}
+                              Returnables: {capitalizeTransactionDescription(returnableItems.join(', '))}
                             </div>
                             <div className="animate-bounce-horizontal text-orange-600">
                               <ArrowLeft size={24} />
@@ -1605,6 +1608,34 @@ const CreditManagement: React.FC = () => {
                             <p className="text-orange-700 text-sm">{capitalizeTransactionDescription(returnableItems.join(', '))}</p>
                           </div>
                         )}
+                      </div>
+                    )}
+                    
+                    {/* Special handling for return transactions - show "Still to return" when items have been returned but there are still items to return */}
+                    {isReturnTransaction && returnableItems.length > 0 && (
+                      <div className="mb-3">
+                        <div className="flex items-center justify-center gap-2 mb-2">
+                          <div className="bg-orange-500 text-white px-3 py-1 rounded-lg text-sm font-medium max-w-xs">
+                            Still to return: {capitalizeTransactionDescription(returnableItems.join(', '))}
+                          </div>
+                          <div className="animate-bounce-horizontal text-orange-600">
+                            <ArrowLeft size={24} />
+                          </div>
+                        </div>
+                      </div>
+                    )}
+                    
+                    {/* Special handling for return transactions - show confirmation when all items have been returned */}
+                    {isReturnTransaction && returnableItems.length === 0 && (
+                      <div className="mb-3">
+                        <div className="flex items-center justify-center gap-2 mb-2">
+                          <div className="bg-green-500 text-white px-3 py-1 rounded-lg text-sm font-medium max-w-xs">
+                            All items returned successfully!
+                          </div>
+                          <div className="animate-bounce-horizontal text-green-600">
+                            <CheckCircle size={24} />
+                          </div>
+                        </div>
                       </div>
                     )}
                   </div>
