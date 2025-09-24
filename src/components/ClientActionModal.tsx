@@ -244,8 +244,6 @@ const ClientActionModal: React.FC<ClientActionModalProps> = ({ client, onClose, 
       if (!hasMatched && description.includes('bouteille')) {
         const sizeMatch = description.match(/(\d+(?:\.\d+)?[Ll])/i);
         const brandMatch = description.match(/bouteilles?\s+([^,]*)/i);
-        // If no brand match found, check for simple "bouteille" or "bouteilles"
-        const simpleMatch = description.match(/\b(bouteilles?)\b/i);
         const brand = brandMatch?.[1]?.trim() || '';
         
         let key;
@@ -255,11 +253,7 @@ const ClientActionModal: React.FC<ClientActionModalProps> = ({ client, onClose, 
           key = `Bouteille ${brand}`;
         } else if (sizeMatch) {
           key = `${sizeMatch[1].replace(/l$/i, 'L')} Bouteille`;
-        } else if (simpleMatch) {
-          // Handle simple "bouteille" or "bouteilles" without brand or size
-          key = 'Bouteille';
         } else {
-          // Fallback to simple "bouteille"
           key = 'Bouteille';
         }
         
@@ -282,24 +276,8 @@ const ClientActionModal: React.FC<ClientActionModalProps> = ({ client, onClose, 
       
       if (!hasMatched && description.includes('chopine')) {
         const brandMatch = description.match(/chopines?\s+([^,]*)/i);
-        // If no brand match found, check for simple "chopine" or "chopines"
-        const simpleMatch = description.match(/\b(chopines?)\b/i);
         const brand = brandMatch?.[1]?.trim() || '';
-        let key;
-        if (brand) {
-          // For branded items, create a specific key
-          key = `Chopine ${brand}`;
-          
-          // REMOVE the generic "Chopine" entry for branded items
-          // This was causing the issue where branded items were also counted as generic items
-          // The generic entry is NOT needed when we have a branded item
-        } else if (simpleMatch) {
-          // Handle simple "chopine" or "chopines" without brand
-          key = 'Chopine';
-        } else {
-          // Fallback to simple "chopine"
-          key = 'Chopine';
-        }
+        const key = brand ? `Chopine ${brand}` : 'Chopine';
         
        // Skip if we've already processed this item type for this transaction
        if (transactionItemTypes.has(key)) {
@@ -401,33 +379,9 @@ const ClientActionModal: React.FC<ClientActionModalProps> = ({ client, onClose, 
       .filter(transaction => transaction.type === 'debt' && transaction.description.toLowerCase().includes('returned'))
       .reduce((total, transaction) => {
         const description = transaction.description.toLowerCase();
-        // Create a more precise matching approach
-        // For exact matches (e.g., "Chopine" should not match "Chopine Vin")
-        const normalizedItemType = itemType.toLowerCase();
-        
-        // Check if this is a return for the specific item type
-        // We need to be more precise about matching to avoid generic items matching branded ones
-        if (normalizedItemType === 'chopine' || normalizedItemType === 'bouteille') {
-          // For generic items, we need to make sure we're not matching branded versions
-          // e.g., "Chopine" should not match "Chopine Vin"
-          // Create a pattern that matches the item type followed by end of string, space, or comma
-          const escapedItemType = normalizedItemType.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
-          // For generic items, we need a more restrictive pattern that doesn't match branded items
-          // The pattern should match "chopine" or "chopines" but not "chopine vin"
-          // This pattern ensures that "chopine" only matches when it's not part of a larger phrase
-          const pattern = new RegExp(`returned:\\s*(\\d+)\\s+${escapedItemType}(?=s?(?=\\s|$|,|\\.))`, 'i');
-          const match = description.match(pattern);
-          if (match) {
-            return total + parseInt(match[1]);
-          }
-        } else {
-          // For branded items, we can use a more specific match
-          // e.g., "Chopine Vin" should match "Chopine Vin" but not "Chopine"
-          // Create a more precise pattern that matches the exact item type
-          const escapedItemType = itemType.toLowerCase().replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
-          // Match the item type followed by end of string, space, comma, or period
-          const pattern = new RegExp(`returned:\\s*(\\d+)\\s+${escapedItemType}s?(?=\\s|$|,|\\.)`, 'i');
-          const match = description.match(pattern);
+        if (description.includes(itemType.toLowerCase())) {
+          // Extract quantity from return transaction
+          const match = description.match(/returned:\s*(\d+)\s+/);
           if (match) {
             return total + parseInt(match[1]);
           }
@@ -802,14 +756,7 @@ const ClientActionModal: React.FC<ClientActionModalProps> = ({ client, onClose, 
                             .filter(transaction => 
                               transaction.type === 'debt' && 
                               transaction.description.toLowerCase().includes('returned') &&
-                              (() => {
-                                // Create precise pattern for matching
-                                const normalizedItemType = itemType.toLowerCase();
-                                const escapedItemType = normalizedItemType.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
-                                const pattern = new RegExp(`returned:\\s*(\\d+)\\s+${escapedItemType}s?(?=\\s|$|,|\.)`, 'i');
-                                const match = transaction.description.toLowerCase().match(pattern);
-                                return match;
-                              })()
+                              transaction.description.toLowerCase().includes(itemType.toLowerCase())
                             )
                             .filter(transaction => {
                               // Only show returned transactions that are newer than the most recent non-return transaction for this item type
@@ -817,14 +764,7 @@ const ClientActionModal: React.FC<ClientActionModalProps> = ({ client, onClose, 
                                 .filter(t => 
                                   t.type === 'debt' && 
                                   !t.description.toLowerCase().includes('returned') &&
-                                  (() => {
-                                    // Create precise pattern for matching
-                                    const normalizedItemType = itemType.toLowerCase().split(' ')[0];
-                                    const escapedItemType = normalizedItemType.replace(/[.*+?^${}|[\]\\]/g, '\\$&');
-                                    const pattern = new RegExp(`returned:\\s*(\\d+)\\s+${escapedItemType}s?(?=\\s|$|,|\.)`, 'i');
-                                    const match = t.description.toLowerCase().match(pattern);
-                                    return match;
-                                  })()
+                                  t.description.toLowerCase().includes(itemType.toLowerCase().split(' ')[0])
                                 )
                                 .sort((a, b) => b.date.getTime() - a.date.getTime())[0];
                               
@@ -832,12 +772,7 @@ const ClientActionModal: React.FC<ClientActionModalProps> = ({ client, onClose, 
                               if (!mostRecentTakeTransaction) return false;
                               
                               // Only show returns that happened after the most recent take
-                              // Create precise pattern for matching
-                              const normalizedItemType = itemType.toLowerCase();
-                              const escapedItemType = normalizedItemType.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
-                              const pattern = new RegExp(`returned:\\s*(\\d+)\\s+${escapedItemType}s?(?=\\s|$|,|\\.)`, 'i');
-                              const match = transaction.description.toLowerCase().match(pattern);
-                              return transaction.date.getTime() > mostRecentTakeTransaction.date.getTime() && match;
+                              return transaction.date.getTime() > mostRecentTakeTransaction.date.getTime();
                             })
                             .slice(-2); // Show last 2 relevant returned transactions
                           
@@ -1140,14 +1075,6 @@ const ClientActionModal: React.FC<ClientActionModalProps> = ({ client, onClose, 
   );
 
   return createPortal(modalContent, document.body);
-};
-
-// Helper function to create precise regex pattern for item matching
-const createItemMatchingPattern = (itemType: string): RegExp => {
-  const normalizedItemType = itemType.toLowerCase();
-  const escapedItemType = normalizedItemType.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
-  // Match the item type followed by end of string, space, comma, or period
-  return new RegExp(`returned:\\s*(\\d+)\\s+${escapedItemType}s?(?=\\s|$|,|\\.)`, 'i');
 };
 
 export default ClientActionModal;
