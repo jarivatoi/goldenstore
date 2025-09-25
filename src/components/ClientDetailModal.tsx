@@ -36,6 +36,23 @@ const ClientDetailModal: React.FC<ClientDetailModalProps> = ({ client, onClose, 
   const payments = getClientPayments(client.id);
   const totalDebt = getClientTotalDebt(client.id);
 
+  // Reset transaction filter when credit data changes (e.g., after settlement)
+  React.useEffect(() => {
+    const handleCreditDataChanged = (event: CustomEvent) => {
+      // Reset filter to 'all' when account is settled
+      if (event.detail && event.detail.source && 
+          (event.detail.source === 'settle' || event.detail.source === 'settleFullClear')) {
+        setTransactionFilter('all');
+      }
+    };
+
+    window.addEventListener('creditDataChanged', handleCreditDataChanged as EventListener);
+    
+    return () => {
+      window.removeEventListener('creditDataChanged', handleCreditDataChanged as EventListener);
+    };
+  }, []);
+
   // Get returnable items for this client
   const getReturnableItems = () => {
     const returnableItems: {[key: string]: number} = {};
