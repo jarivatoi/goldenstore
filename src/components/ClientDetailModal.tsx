@@ -663,11 +663,22 @@ const ReturnableItemRow: React.FC<ReturnableItemRowProps> = ({ itemType, quantit
       setPendingQuantity(0);
       
       // Show duplicate card for successful return processing
+      let displayItemType = itemType;
+      if (itemType.includes('Chopine')) {
+        const brand = itemType.replace('Chopine', '').trim();
+        displayItemType = `Chopine${pendingQuantity > 1 ? 's' : ''}${brand ? ` ${brand}` : ''}`;
+      } else if (itemType.includes('Bouteille')) {
+        const brand = itemType.replace('Bouteille', '').trim();
+        displayItemType = `Bouteille${pendingQuantity > 1 ? 's' : ''}${brand ? ` ${brand}` : ''}`;
+      } else if (pendingQuantity > 1) {
+        displayItemType = `${itemType}s`;
+      }
+      
       window.dispatchEvent(new CustomEvent('showDuplicateCard', {
         detail: { 
           ...client,
           isAccountClear: false,
-          message: `${pendingQuantity} ${itemType}${pendingQuantity > 1 ? 's' : ''} returned successfully!`,
+          message: `${pendingQuantity} ${displayItemType} returned successfully!`,
           transactionDescription: `${uniqueReturnDescription}`
         }
       }));
@@ -721,7 +732,7 @@ const ReturnableItemRow: React.FC<ReturnableItemRowProps> = ({ itemType, quantit
           disabled={isProcessing}
           className="w-full px-3 py-2 bg-orange-500 hover:bg-orange-600 text-white rounded-md transition-colors disabled:opacity-50 text-sm"
         >
-          {isProcessing ? 'Processing...' : `Return ${pendingQuantity} ${itemType}${pendingQuantity > 1 ? 's' : ''}`}
+          {isProcessing ? 'Processing...' : `Return ${pendingQuantity} ${displayItemType}`}
         </button>
       )}
     </div>
