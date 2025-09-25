@@ -1497,7 +1497,25 @@ const CreditManagement: React.FC = () => {
                     const returned = returnedQuantities[itemType] || 0;
                     const remaining = Math.max(0, total - returned);
                     if (remaining > 0) {
-                      netReturnableItems.push(`${remaining} ${itemType}${remaining > 1 ? 's' : ''}`);
+                      let displayText = '';
+                      if (itemType.includes('Chopine')) {
+                        const brand = itemType.replace('Chopine', '').trim();
+                        if (brand) {
+                          displayText = `${remaining} Chopine${remaining > 1 ? 's' : ''} ${brand}`;
+                        } else {
+                          displayText = `${remaining} Chopine${remaining > 1 ? 's' : ''}`;
+                        }
+                      } else if (itemType.includes('Bouteille')) {
+                        const brand = itemType.replace('Bouteille', '').trim();
+                        if (brand) {
+                          displayText = `${remaining} Bouteille${remaining > 1 ? 's' : ''} ${brand}`;
+                        } else {
+                          displayText = `${remaining} Bouteille${remaining > 1 ? 's' : ''}`;
+                        }
+                      } else {
+                        displayText = `${remaining} ${itemType}${remaining > 1 ? 's' : ''}`;
+                      }
+                      netReturnableItems.push(displayText);
                     }
                   });
                   
@@ -1507,10 +1525,11 @@ const CreditManagement: React.FC = () => {
                 const returnableItems = getReturnableItems();
                 const hasReturnables = returnableItems.length > 0;
                 
-               // Check if the transaction description contains returnable items
+               // Check if the transaction description contains returnable items AND there are still items to return
                const transactionHasReturnables = duplicateCard.transactionDescription && (
-                 duplicateCard.transactionDescription.toLowerCase().includes('chopine') ||
-                 duplicateCard.transactionDescription.toLowerCase().includes('bouteille')
+                 (duplicateCard.transactionDescription.toLowerCase().includes('chopine') ||
+                 duplicateCard.transactionDescription.toLowerCase().includes('bouteille')) && 
+                 hasReturnables
                );
                
                 return (
