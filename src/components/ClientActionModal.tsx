@@ -105,10 +105,25 @@ const ClientActionModal: React.FC<ClientActionModalProps> = ({ client, onClose, 
     }
   };
 
-  const handleSettle = async () => {
+  const handleSettle = async (clearAllTransactions: boolean = false) => {
     try {
       setIsProcessing(true);
-      await settleClient(client.id);
+      
+      if (clearAllTransactions) {
+        // Clear all transactions including returnables
+        await settleClientWithFullClear(client.id);
+      } else {
+        // Check if client has returnables
+        const hasReturnables = Object.keys(availableItems).length > 0;
+        
+        if (hasReturnables) {
+          // If client has returnables, use settleClient (preserves returnables in history)
+          await settleClient(client.id);
+        } else {
+          // If client has no returnables, use settleClientWithFullClear (clears all transactions)
+          await settleClientWithFullClear(client.id);
+        }
+      }
       
       // Force timeline reset after settling
       window.dispatchEvent(new CustomEvent('creditDataChanged'));
@@ -548,14 +563,14 @@ const ClientActionModal: React.FC<ClientActionModalProps> = ({ client, onClose, 
                     onClose();
                     // Show duplicate card animation after modal closes
                     setTimeout(() => {
-                      // Use handleSettle to clear debt only (no returnables to worry about)
-                      handleSettle().then(() => {
+                      // Use settleClientWithFullClear to clear all transactions when there are no returnables
+                      handleSettleWithFullClear().then(() => {
                         window.dispatchEvent(new CustomEvent('showDuplicateCard', {
                           detail: { 
-                            client: client, 
+                            ...client, 
                             isAccountClear: true,
                             message: 'Account settled successfully!',
-                            transactionDescription: 'Account settled (no returnables)'
+                            transactionDescription: 'Account settled and all transactions cleared'
                           }
                         }));
                       });
@@ -569,7 +584,7 @@ const ClientActionModal: React.FC<ClientActionModalProps> = ({ client, onClose, 
                   </div>
                   <div className="text-left">
                     <h4 className="font-medium text-gray-800">Settle Account</h4>
-                    <p className="text-sm text-gray-600">Mark debt as fully paid</p>
+                    <p className="text-sm text-gray-600">Mark debt as fully paid and clear all transactions</p>
                   </div>
                 </button>
               ) : null /* Hide settle option if no debt and no returnables */}
@@ -974,7 +989,12 @@ const ClientActionModal: React.FC<ClientActionModalProps> = ({ client, onClose, 
                           
                           // Show duplicate card for settled client
                           window.dispatchEvent(new CustomEvent('showDuplicateCard', {
-                            detail: { ...client, isAccountClear: true }
+                            detail: { 
+                              ...client, 
+                              isAccountClear: true,
+                              message: 'Account cleared successfully!',
+                              transactionDescription: 'Account settled and all transactions cleared'
+                            }
                           }));
                         }, 100);
                       } catch (error) {
@@ -988,9 +1008,9 @@ const ClientActionModal: React.FC<ClientActionModalProps> = ({ client, onClose, 
                       <DollarSign size={20} className="text-white" />
                     </div>
                     <div className="text-left flex-1 select-none">
-                      <h4 className="font-medium text-gray-800 select-none">Settle Amount Only</h4>
+                      <h4 className="font-medium text-gray-800 select-none">Settle Account</h4>
                       <p className="text-sm text-gray-600 select-none">
-                        Mark account as fully paid (keeps returnables)
+                        Mark account as fully paid and clear all transactions
                       </p>
                       <p className="text-xs text-green-600 select-none">
                         Debt: Rs {totalDebt.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
