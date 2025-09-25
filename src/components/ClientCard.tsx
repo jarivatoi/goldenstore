@@ -216,7 +216,7 @@ const ClientCard: React.FC<ClientCardProps> = ({ client, onLongPress, onQuickAdd
         });
         
         if (itemType.includes('Chopine')) {
-          // For Chopine items: "8 Chopines beer" (with pluralization for display)
+          // For Chopine items: "8 Chopines beer" (with proper pluralization and capitalization)
           const brand = itemType.replace('Chopine', '').trim();
           if (brand) {
             displayText = `${remaining} Chopine${remaining > 1 ? 's' : ''} ${brand}`;
@@ -230,12 +230,12 @@ const ClientCard: React.FC<ClientCardProps> = ({ client, onLongPress, onQuickAdd
             // For sized bottles like "1.5L Green" -> "3 (1.5L Green)"
             displayText = `${remaining} (${itemType})`;
           } else {
-            // For regular bottles like "Bouteille Green" -> "3 Bouteille Green"
+            // For regular bottles: "3 Bouteilles Green" (with proper pluralization)
             const brand = itemType.replace('Bouteille', '').trim();
             if (brand) {
-              displayText = `${remaining} Bouteille ${brand}`;
+              displayText = `${remaining} Bouteille${remaining > 1 ? 's' : ''} ${brand}`;
             } else {
-              displayText = `${remaining} Bouteille`;
+              displayText = `${remaining} Bouteille${remaining > 1 ? 's' : ''}`;
             }
           }
         } else {
