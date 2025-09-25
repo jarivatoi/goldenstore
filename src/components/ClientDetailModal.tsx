@@ -36,9 +36,6 @@ const ClientDetailModal: React.FC<ClientDetailModalProps> = ({ client, onClose, 
   const payments = getClientPayments(client.id);
   const totalDebt = getClientTotalDebt(client.id);
 
-  // Check if account has been fully settled
-  const isAccountSettled = payments.some(payment => payment.type === 'full');
-
   // Reset transaction filter when credit data changes (e.g., after settlement)
   React.useEffect(() => {
     const handleCreditDataChanged = (event: CustomEvent) => {
@@ -226,18 +223,7 @@ const ClientDetailModal: React.FC<ClientDetailModalProps> = ({ client, onClose, 
 
   // Filter transactions based on selected filter
   const getFilteredTransactions = () => {
-    // If account is settled, filter out debt transactions (amount > 0) except for returnables
-    const filteredTransactions = isAccountSettled 
-      ? transactions.filter(transaction => 
-          transaction.amount === 0 || 
-          transaction.description.toLowerCase().includes('returned') ||
-          transaction.description.toLowerCase().includes('chopine') ||
-          transaction.description.toLowerCase().includes('bouteille') ||
-          transaction.type === 'payment'
-        )
-      : transactions;
-
-    const allTransactions = filteredTransactions
+    const allTransactions = transactions
       .sort((a, b) => b.date.getTime() - a.date.getTime())
       .filter(transaction => {
         // For returnable filter, allow zero amount transactions if they have returnable items
@@ -536,17 +522,9 @@ const ClientDetailModal: React.FC<ClientDetailModalProps> = ({ client, onClose, 
               </div>
             </div>
             
-            {isAccountSettled && transactionFilter === 'taken' ? (
-              <div className="text-center py-4 bg-green-50 rounded-lg">
-                <CheckCircle size={24} className="text-green-600 mx-auto mb-2" />
-                <p className="text-green-800 font-medium">Account fully settled</p>
-                <p className="text-green-600 text-sm">All outstanding debt has been cleared</p>
-              </div>
-            ) : filteredTransactions.length === 0 ? (
+            {filteredTransactions.length === 0 ? (
               <div className="text-center py-4">
-                <p className="text-gray-500">
-                  {isAccountSettled ? 'No additional transactions found' : 'No transactions found'}
-                </p>
+                <p className="text-gray-500">No transactions found</p>
               </div>
             ) : (
               <div className="space-y-3">
