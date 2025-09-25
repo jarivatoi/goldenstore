@@ -43,7 +43,7 @@ const ClientCard: React.FC<ClientCardProps> = ({ client, onLongPress, onQuickAdd
   }, []);
   
   // Get returnable items for scrolling display
-  const getReturnableItemsText = React.useMemo((): string => {
+  const getReturnableItemsText = React.useMemo((): {text: string, date: string, time: string}[] => {
     const clientTransactions = getClientTransactions(client.id);
     
     const returnableItems: {[key: string]: number} = {};
@@ -177,7 +177,7 @@ const ClientCard: React.FC<ClientCardProps> = ({ client, onLongPress, onQuickAdd
       });
     
     // Calculate net returnable quantities
-    const netReturnableItems: string[] = [];
+    const netReturnableItems: {text: string, date: string, time: string}[] = [];
     Object.entries(returnableItems).forEach(([itemType, total]) => {
       const returned = returnedQuantities[itemType] || 0;
       const remaining = Math.max(0, total - returned);
