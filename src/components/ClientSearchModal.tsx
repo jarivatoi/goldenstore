@@ -173,9 +173,9 @@ const ClientSearchModal: React.FC<ClientSearchModalProps> = ({
     const newItem = pendingNumber ? `${pendingNumber} ${action}` : action;
     
     if (description.trim() === '') {
-      setDescription(newItem);
+      setDescription(newItem + ' ');
     } else {
-      setDescription(prev => prev + ', ' + newItem);
+      setDescription(prev => prev + ', ' + newItem + ' ');
     }
     
     // Clear pending number after use
