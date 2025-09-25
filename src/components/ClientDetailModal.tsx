@@ -628,6 +628,9 @@ const ReturnableItemRow: React.FC<ReturnableItemRowProps> = ({ itemType, quantit
   const { addTransaction } = useCredit();
   const [isProcessing, setIsProcessing] = React.useState(false);
   const [pendingQuantity, setPendingQuantity] = React.useState(0);
+  
+  // Declare displayItemType here so it's accessible throughout the component
+  const [displayItemType, setDisplayItemType] = React.useState(itemType);
 
   const handleQuantityChange = (change: number) => {
     setPendingQuantity(prev => Math.max(0, Math.min(quantity, prev + change)));
@@ -662,23 +665,25 @@ const ReturnableItemRow: React.FC<ReturnableItemRowProps> = ({ itemType, quantit
       await addTransaction(client, uniqueReturnDescription, 0);
       setPendingQuantity(0);
       
-      // Show duplicate card for successful return processing
-      let displayItemType = itemType;
+      // Update displayItemType for the button text
+      let newDisplayItemType = itemType;
       if (itemType.includes('Chopine')) {
         const brand = itemType.replace('Chopine', '').trim();
-        displayItemType = `Chopine${pendingQuantity > 1 ? 's' : ''}${brand ? ` ${brand}` : ''}`;
+        newDisplayItemType = `Chopine${pendingQuantity > 1 ? 's' : ''}${brand ? ` ${brand}` : ''}`;
       } else if (itemType.includes('Bouteille')) {
         const brand = itemType.replace('Bouteille', '').trim();
-        displayItemType = `Bouteille${pendingQuantity > 1 ? 's' : ''}${brand ? ` ${brand}` : ''}`;
+        newDisplayItemType = `Bouteille${pendingQuantity > 1 ? 's' : ''}${brand ? ` ${brand}` : ''}`;
       } else if (pendingQuantity > 1) {
-        displayItemType = `${itemType}s`;
+        newDisplayItemType = `${itemType}s`;
       }
+      
+      setDisplayItemType(newDisplayItemType);
       
       window.dispatchEvent(new CustomEvent('showDuplicateCard', {
         detail: { 
           ...client,
           isAccountClear: false,
-          message: `${pendingQuantity} ${displayItemType} returned successfully!`,
+          message: `${pendingQuantity} ${newDisplayItemType} returned successfully!`,
           transactionDescription: `${uniqueReturnDescription}`
         }
       }));
