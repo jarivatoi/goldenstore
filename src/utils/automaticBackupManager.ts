@@ -139,8 +139,11 @@ export class AutomaticBackupManager {
       // Create backup name with timestamp
       const backupName = `Auto Backup ${new Date().toLocaleDateString('en-GB')} ${new Date().toLocaleTimeString('en-GB', { hour: '2-digit', minute: '2-digit' })}`;
       
-      // Perform backup
+      // Perform backup to Supabase
       await SupabaseBackupManager.saveToSupabase(exportData, backupName);
+      
+      // Create local backup with fixed filename that gets overwritten daily
+      this.createLocalBackup(exportData);
       
       // Update last backup timestamp
       this.setLastBackupDate(new Date());
@@ -165,6 +168,35 @@ export class AutomaticBackupManager {
       this.setLastError(error instanceof Error ? error.message : 'Unknown error');
     } finally {
       this.isRunning = false;
+    }
+  }
+
+  /**
+   * Create local backup file with fixed filename
+   */
+  private createLocalBackup(databaseJson: any): void {
+    try {
+      const jsonString = JSON.stringify(databaseJson, null, 2);
+      const dataBlob = new Blob([jsonString], { type: 'application/json' });
+      
+      // Create download link
+      const url = URL.createObjectURL(dataBlob);
+      const link = document.createElement('a');
+      link.href = url;
+      link.download = 'GoldenStore_Latest.json';
+      
+      // Temporarily add to DOM, click, and remove
+      document.body.appendChild(link);
+      link.click();
+      document.body.removeChild(link);
+      
+      // Clean up blob URL to prevent memory leaks
+      URL.revokeObjectURL(url);
+      
+      console.log('✅ Local backup created successfully: GoldenStore_Latest.json');
+    } catch (error) {
+      console.error('❌ Local backup creation failed:', error);
+      // Don't throw error as this is supplementary to the main backup
     }
   }
 
@@ -308,8 +340,11 @@ export class AutomaticBackupManager {
       // Create backup name indicating it was delayed
       const backupName = `Delayed Backup ${new Date().toLocaleDateString('en-GB')} ${new Date().toLocaleTimeString('en-GB', { hour: '2-digit', minute: '2-digit' })}`;
       
-      // Perform backup
+      // Perform backup to Supabase
       await SupabaseBackupManager.saveToSupabase(exportData, backupName);
+      
+      // Create local backup with fixed filename
+      this.createLocalBackup(exportData);
       
       // Update last backup timestamp
       this.setLastBackupDate(new Date());
