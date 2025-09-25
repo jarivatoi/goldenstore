@@ -81,7 +81,7 @@ const ClientActionModal: React.FC<ClientActionModalProps> = ({ client, onClose, 
         detail: { 
           ...client,
           isAccountClear: false,
-          message: `Payment of Rs ${amount.toLocaleString('en-IN', { minimumFractionDigits: 2, maximumFractionDigits: 2 })} recorded successfully!`,
+          message: `Payment of Rs ${amount.toLocaleString('en-IN', { minimumFractionDigits: 2, maximumFractionDigits: 2 })} Recorded Successfully!`,
           transactionAmount: amount,
           transactionDescription: returnableItemsList ? 
             `Returnables: ${returnableItemsList}` : 
@@ -99,7 +99,7 @@ const ClientActionModal: React.FC<ClientActionModalProps> = ({ client, onClose, 
       onClose();
     } catch (error) {
       console.error('Error processing partial payment:', error);
-      showAlert({ type: 'error', message: 'Failed to process payment' });
+      showAlert({ type: 'error', message: 'Failed to Process Payment' });
     } finally {
       setIsProcessing(false);
     }
@@ -347,7 +347,7 @@ const ClientActionModal: React.FC<ClientActionModalProps> = ({ client, onClose, 
         detail: { 
           ...client,
           isAccountClear: false,
-          message: `${itemsBeingReturned} returned successfully!`,
+          message: `${itemsBeingReturned} Returned Successfully!`,
           transactionDescription: `Returned: ${itemsBeingReturned}`
         }
       }));
@@ -358,7 +358,7 @@ const ClientActionModal: React.FC<ClientActionModalProps> = ({ client, onClose, 
       onClose();
     } catch (error) {
       console.error('Error processing returns:', error);
-      showAlert({ type: 'error', message: 'Failed to process returns' });
+      showAlert({ type: 'error', message: 'Failed to Process Returns' });
     } finally {
       setIsProcessing(false);
     }
@@ -378,7 +378,7 @@ const ClientActionModal: React.FC<ClientActionModalProps> = ({ client, onClose, 
         detail: { 
           ...client,
           isAccountClear: false,
-          message: `${returnQuantity} ${itemType}${returnQuantity > 1 ? 's' : ''} returned successfully!`,
+          message: `${returnQuantity} ${itemType}${returnQuantity > 1 ? 's' : ''} Returned Successfully!`,
           transactionDescription: `Returned: ${returnQuantity} ${itemType}${returnQuantity > 1 ? 's' : ''}`
         }
       }));
@@ -480,7 +480,7 @@ const ClientActionModal: React.FC<ClientActionModalProps> = ({ client, onClose, 
                 </div>
                 <div className="text-left select-none">
                   <h4 className="font-medium text-gray-800 select-none">View Details</h4>
-                  <p className="text-sm text-gray-600 select-none">See transaction history and client info</p>
+                  <p className="text-sm text-gray-600 select-none">See Transaction History and Client Info</p>
                 </div>
               </button>
               
@@ -502,7 +502,7 @@ const ClientActionModal: React.FC<ClientActionModalProps> = ({ client, onClose, 
                 </div>
                 <div className="text-left select-none">
                   <h4 className="font-medium text-gray-800 select-none">Link to Calculator</h4>
-                  <p className="text-sm text-gray-600 select-none">Connect client to calculator for quick transactions</p>
+                  <p className="text-sm text-gray-600 select-none">Connect Client to Calculator for Quick Transactions</p>
                 </div>
               </button>
               
@@ -518,7 +518,7 @@ const ClientActionModal: React.FC<ClientActionModalProps> = ({ client, onClose, 
                   </div>
                   <div className="text-left select-none">
                     <h4 className="font-medium text-gray-800 select-none">Return</h4>
-                    <p className="text-sm text-gray-600 select-none">Return items or make adjustments</p>
+                    <p className="text-sm text-gray-600 select-none">Return Items or Make Adjustments</p>
                   </div>
                 </button>
               )}
@@ -535,7 +535,7 @@ const ClientActionModal: React.FC<ClientActionModalProps> = ({ client, onClose, 
                 </div>
                 <div className="text-left select-none">
                   <h4 className="font-medium text-gray-800 select-none">Partial Payment</h4>
-                  <p className="text-sm text-gray-600 select-none">Record a partial payment amount</p>
+                  <p className="text-sm text-gray-600 select-none">Record a Partial Payment Amount</p>
                 </div>
               </button>
              )}
@@ -553,7 +553,7 @@ const ClientActionModal: React.FC<ClientActionModalProps> = ({ client, onClose, 
                   </div>
                   <div className="text-left">
                     <h4 className="font-medium text-gray-800">Settle Account</h4>
-                    <p className="text-sm text-gray-600">Mark as fully paid and remove</p>
+                    <p className="text-sm text-gray-600">Mark as Fully Paid and Remove</p>
                   </div>
                 </button>
               ) : totalDebt > 0 && Object.keys(availableItems).length === 0 ? (
@@ -569,8 +569,8 @@ const ClientActionModal: React.FC<ClientActionModalProps> = ({ client, onClose, 
                           detail: { 
                             ...client, 
                             isAccountClear: true,
-                            message: 'Account settled successfully!',
-                            transactionDescription: 'Account settled and all transactions cleared'
+                            message: 'Account Settled Successfully!',
+                            transactionDescription: 'Account Settled And All Transactions Cleared'
                           }
                         }));
                       });
@@ -584,7 +584,7 @@ const ClientActionModal: React.FC<ClientActionModalProps> = ({ client, onClose, 
                   </div>
                   <div className="text-left">
                     <h4 className="font-medium text-gray-800">Settle Account</h4>
-                    <p className="text-sm text-gray-600">Mark debt as fully paid and clear all transactions</p>
+                    <p className="text-sm text-gray-600">Mark Debt as Fully Paid and Clear All Transactions</p>
                   </div>
                 </button>
               ) : null /* Hide settle option if no debt and no returnables */}
@@ -836,13 +836,13 @@ const ClientActionModal: React.FC<ClientActionModalProps> = ({ client, onClose, 
           title={settleAction.type === 'all' ? 'Settle All Returns' : 'Settle Item Returns'}
           message={
             settleAction.type === 'all'
-              ? `Return ALL available Chopine & Bouteille items for ${client.name}?`
-              : `Return all ${settleAction.quantity} ${settleAction.itemType}${(settleAction.quantity || 0) > 1 ? 's' : ''} for ${client.name}?`
+              ? `Return All Available Chopine & Bouteille Items for ${client.name}?`
+              : `Return All ${settleAction.quantity} ${settleAction.itemType}${(settleAction.quantity || 0) > 1 ? 's' : ''} for ${client.name}?`
           }
           itemDetails={
             settleAction.type === 'all'
-              ? `This will mark all returnable containers as returned.`
-              : `This will mark ${settleAction.quantity} ${settleAction.itemType}${(settleAction.quantity || 0) > 1 ? 's' : ''} as returned.`
+              ? `This Will Mark All Returnable Containers as Returned.`
+              : `This Will Mark ${settleAction.quantity} ${settleAction.itemType}${(settleAction.quantity || 0) > 1 ? 's' : ''} as returned.`
           }
           clientName={client.name}
           clientId={client.id}
@@ -870,8 +870,8 @@ const ClientActionModal: React.FC<ClientActionModalProps> = ({ client, onClose, 
                   detail: { 
                     ...client,
                     isAccountClear: false,
-                    message: 'All returnables settled successfully!',
-                    transactionDescription: 'Returned all returnable items'
+                    message: 'All Returnables Settled Successfully!',
+                    transactionDescription: 'Returned All Returnable Items'
                   }
                 }));
               } else if (settleAction.itemType && settleAction.quantity) {
@@ -903,7 +903,7 @@ const ClientActionModal: React.FC<ClientActionModalProps> = ({ client, onClose, 
               onClose();
             } catch (error) {
               console.error('Error settling items:', error);
-              showAlert({ type: 'error', message: `Failed to settle ${settleAction.type === 'all' ? 'all items' : settleAction.itemType}` });
+              showAlert({ type: 'error', message: `Failed to Settle ${settleAction.type === 'all' ? 'All Items' : settleAction.itemType}` });
             } finally {
               setIsProcessing(false);
             }
@@ -992,8 +992,8 @@ const ClientActionModal: React.FC<ClientActionModalProps> = ({ client, onClose, 
                             detail: { 
                               ...client, 
                               isAccountClear: true,
-                              message: 'Account cleared successfully!',
-                              transactionDescription: 'Account settled and all transactions cleared'
+                              message: 'Account Cleared Successfully!',
+                              transactionDescription: 'Account Settled (Returnables Preserved)'
                             }
                           }));
                         }, 100);
@@ -1008,9 +1008,9 @@ const ClientActionModal: React.FC<ClientActionModalProps> = ({ client, onClose, 
                       <DollarSign size={20} className="text-white" />
                     </div>
                     <div className="text-left flex-1 select-none">
-                      <h4 className="font-medium text-gray-800 select-none">Settle Account</h4>
+                      <h4 className="font-medium text-gray-800 select-none">Settle Account Only</h4>
                       <p className="text-sm text-gray-600 select-none">
-                        Mark account as fully paid and clear all transactions
+                        Mark Account as Fully Paid but Keep Returnables
                       </p>
                       <p className="text-xs text-green-600 select-none">
                         Debt: Rs {totalDebt.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
@@ -1038,14 +1038,14 @@ const ClientActionModal: React.FC<ClientActionModalProps> = ({ client, onClose, 
                           detail: { 
                             ...client,
                             isAccountClear: true,
-                            message: 'Account cleared successfully!',
-                            transactionDescription: 'Account settled and all returnables cleared'
+                            message: 'Account Cleared Successfully!',
+                            transactionDescription: 'Account Settled And All Returnables Cleared'
                           }
                         }));
                       }, 100);
                     } catch (error) {
                       console.error('Error settling account with returns:', error);
-                      showAlert({ type: 'error', message: 'Failed to settle account' });
+                      showAlert({ type: 'error', message: 'Failed to Settle Account' });
                     } finally {
                       setIsProcessing(false);
                     }
@@ -1059,7 +1059,7 @@ const ClientActionModal: React.FC<ClientActionModalProps> = ({ client, onClose, 
                   <div className="text-left flex-1 select-none">
                     <h4 className="font-medium text-gray-800 select-none">Settle Account + Clear Returnables</h4>
                     <p className="text-sm text-gray-600 select-none">
-                      {totalDebt > 0 ? 'Mark account as fully paid and clear all returnables' : 'Clear all data for this client'}
+                      {totalDebt > 0 ? 'Mark Account as Fully Paid and Clear All Returnables' : 'Clear all data for this client'}
                     </p>
                     {totalDebt > 0 && (
                       <p className="text-xs text-green-600 select-none">
