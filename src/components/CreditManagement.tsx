@@ -808,6 +808,7 @@ const CreditManagement: React.FC = () => {
     setDeleteAllPasscode('');
   };
 
+  
   const confirmDeleteAllClients = async () => {
     if (deleteAllPasscode !== 'DELETE') {
       return;
@@ -1463,20 +1464,32 @@ const CreditManagement: React.FC = () => {
                       let displayText = '';
                       if (itemType.includes('Chopine')) {
                         const brand = itemType.replace('Chopine', '').trim();
-                        if (brand) {
-                          displayText = `${remaining} Chopine${remaining > 1 ? 's' : ''} ${brand}`;
+                        // Ensure brand is title case
+                        const titleCaseBrand = brand ? brand.split(' ').map(word => 
+                          word.charAt(0).toUpperCase() + word.slice(1).toLowerCase()
+                        ).join(' ') : '';
+                        if (titleCaseBrand) {
+                          displayText = `${remaining} Chopine${remaining > 1 ? 's' : ''} ${titleCaseBrand}`;
                         } else {
                           displayText = `${remaining} Chopine${remaining > 1 ? 's' : ''}`;
                         }
                       } else if (itemType.includes('Bouteille')) {
                         const brand = itemType.replace('Bouteille', '').trim();
-                        if (brand) {
-                          displayText = `${remaining} Bouteille${remaining > 1 ? 's' : ''} ${brand}`;
+                        // Ensure brand is title case
+                        const titleCaseBrand = brand ? brand.split(' ').map(word => 
+                          word.charAt(0).toUpperCase() + word.slice(1).toLowerCase()
+                        ).join(' ') : '';
+                        if (titleCaseBrand) {
+                          displayText = `${remaining} Bouteille${remaining > 1 ? 's' : ''} ${titleCaseBrand}`;
                         } else {
                           displayText = `${remaining} Bouteille${remaining > 1 ? 's' : ''}`;
                         }
                       } else {
-                        displayText = `${remaining} ${itemType}${remaining > 1 ? 's' : ''}`;
+                        // Ensure item type is title case
+                        const titleCaseItemType = itemType.split(' ').map(word => 
+                          word.charAt(0).toUpperCase() + word.slice(1).toLowerCase()
+                        ).join(' ');
+                        displayText = `${remaining} ${titleCaseItemType}${remaining > 1 ? 's' : ''}`;
                       }
                       netReturnableItems.push(displayText);
                     }
@@ -1520,28 +1533,14 @@ const CreditManagement: React.FC = () => {
                       </div>
                     )}
                     
-                    {/* Returnables Section - show if client has returnables or current transaction has returnables */}
+                    {/* Simplified Returnables Section - show if client has returnables or current transaction has returnables */}
                     {(hasReturnables || transactionHasReturnables) && (
                       <div className="mb-3">
-                       {/* Arrow pointing to returnables - show if we have amount OR debt OR just added returnables */}
-                       {(hasAmount || hasDebt || transactionHasReturnables) && (
-                          <div className="flex items-center justify-center gap-2 mb-2">
-                            <div className="bg-orange-500 text-white px-3 py-1 rounded-lg text-sm font-medium max-w-xs">
-                              {duplicateCard.message?.toLowerCase().includes('returned') ? 'Still to return:' : 'Returnables:'} {returnableItems.join(', ')}
-                            </div>
-                            <div className="animate-bounce-horizontal text-orange-600">
-                              <ArrowLeft size={24} />
-                            </div>
-                          </div>
-                        )}
-                        
-                       {/* Show returnables without arrow if no amount AND no debt AND not adding returnables */}
-                       {!hasAmount && !hasDebt && !transactionHasReturnables && (
-                          <div className="bg-orange-100 border border-orange-300 rounded-lg p-3 mb-2">
-                            <p className="text-orange-800 font-medium text-sm mb-1">Total Returnables:</p>
-                            <p className="text-orange-700 text-sm">{returnableItems.join(', ')}</p>
-                          </div>
-                        )}
+                        {/* Show returnables without calculation or arrows */}
+                        <div className="bg-orange-100 border border-orange-300 rounded-lg p-3 mb-2">
+                          <p className="text-orange-800 font-medium text-sm mb-1">Total Returnables:</p>
+                          <p className="text-orange-700 text-sm">{returnableItems.join(', ')}</p>
+                        </div>
                       </div>
                     )}
                   </div>
