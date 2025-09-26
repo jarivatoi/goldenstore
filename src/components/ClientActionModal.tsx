@@ -224,7 +224,7 @@ const ClientActionModal: React.FC<ClientActionModalProps> = ({ client, onClose, 
       // Pattern: number + space + optional size + bouteille + optional brand
       const bouteillePattern = /(\d+)\s+(?:(\d+(?:\.\d+)?[Ll])\s+)?bouteilles?(?:\s+([^,\(\)]*))?/gi;
       let bouteilleMatch;
-      
+
       while ((bouteilleMatch = bouteillePattern.exec(description)) !== null) {
         const quantity = parseInt(bouteilleMatch[1]);
         const size = bouteilleMatch[2]?.trim().toUpperCase() || '';
@@ -267,11 +267,11 @@ const ClientActionModal: React.FC<ClientActionModalProps> = ({ client, onClose, 
         
         let key;
         if (sizeMatch && brand) {
-          key = `${sizeMatch[1].replace(/l$/i, 'L')} ${brand}`;
+          key = `${sizeMatch[1].replace(/l$/i, 'L').toUpperCase()} ${brand}`;
         } else if (brand) {
           key = `Bouteille ${brand}`;
         } else if (sizeMatch) {
-          key = `${sizeMatch[1].replace(/l$/i, 'L')} Bouteille`;
+          key = `${sizeMatch[1].replace(/l$/i, 'L').toUpperCase()} Bouteille`;
         } else {
           key = 'Bouteille';
         }
