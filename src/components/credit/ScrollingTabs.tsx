@@ -31,6 +31,7 @@ const ScrollingTabs: React.FC<ScrollingTabsProps> = ({
   sortOption,
   isBigCard = false // Default to false for backward compatibility
 }) => {
+  const scrollingTabsRef = useRef<HTMLDivElement>(null);
   const contentRef = useRef<HTMLDivElement>(null);
   const containerRef = useRef<HTMLDivElement>(null);
   const timelineRef = useRef<gsap.core.Timeline | null>(null);
@@ -44,6 +45,25 @@ const ScrollingTabs: React.FC<ScrollingTabsProps> = ({
   const [forceUpdate, setForceUpdate] = React.useState(0);
   const [recentlyUpdatedClient, setRecentlyUpdatedClient] = React.useState<string | null>(null);
   
+  // Add a custom hook to compare array contents
+  const useArrayComparison = (array: any[]) => {
+    const ref = useRef(array);
+    
+    if (array.length !== ref.current.length) {
+      ref.current = array;
+      return array;
+    }
+    
+    for (let i = 0; i < array.length; i++) {
+      if (array[i] !== ref.current[i]) {
+        ref.current = array;
+        return array;
+      }
+    }
+    
+    return ref.current;
+  };
+  
   const sortedClients = React.useMemo(() => {
     const clientsToSort = [...clients];
     
@@ -52,48 +72,113 @@ const ScrollingTabs: React.FC<ScrollingTabsProps> = ({
         return clientsToSort.sort((a, b) => a.name.localeCompare(b.name));
       
       case 'date':
-        return clientsToSort.sort((a, b) => b.lastTransactionAt.getTime() - a.lastTransactionAt.getTime());
+        // Sort by lastTransactionAt descending, but prioritize recently updated client
+        return clientsToSort.sort((a, b) => {
+          // If one of them is the recently updated client, prioritize it
+          if (recentlyUpdatedClient) {
+            if (a.id === recentlyUpdatedClient) {
+              return -1; // a comes first
+            }
+            if (b.id === recentlyUpdatedClient) {
+              return 1; // b comes first
+            }
+          }
+          
+          // Otherwise sort by lastTransactionAt descending
+          return b.lastTransactionAt.getTime() - a.lastTransactionAt.getTime();
+        });
       
       case 'debt':
         return clientsToSort.sort((a, b) => getClientTotalDebt(b.id) - getClientTotalDebt(a.id));
       
       default:
+        // For default case, preserve the order from the context (which handles moveClientToFront)
         return clientsToSort;
     }
-  }, [clients, sortOption, getClientTotalDebt]); // Depend on clients array, sort option, and getClientTotalDebt function
-
+  }, [clients, sortOption, getClientTotalDebt, recentlyUpdatedClient]); // Depend on clients array, sort option, getClientTotalDebt function, and recentlyUpdatedClient
+  
+  // Use the custom hook to prevent unnecessary re-renders
+  const stableSortedClients = useArrayComparison(sortedClients);
+  
+  // Expose timelineRef to parent component
+  useEffect(() => {
+    if (scrollingTabsRef.current) {
+      (scrollingTabsRef.current as any).__timelineRef = timelineRef;
+    }
+    return () => {
+      if (scrollingTabsRef.current) {
+        delete (scrollingTabsRef.current as any).__timelineRef;
+      }
+    };
+  }, []);
+  
   // Listen for credit data changes to force re-render
   React.useEffect(() => {
     const handleCreditDataChanged = (event: CustomEvent) => {
-      console.log('🔄 Credit data changed, restarting timeline...');
+      console.log('🔍 ScrollingTabs: Received creditDataChanged event:', event.detail);
       
       // Check if this is a calculator interaction - if so, ignore it
       const isCalculatorInteraction = event && event.detail && event.detail.source === 'calculator';
       if (isCalculatorInteraction) {
-        console.log('⏭️ Ignoring calculator interaction');
+        console.log('🔍 ScrollingTabs: Ignoring calculator interaction');
         return;
+      }
+      
+      // Check if this is a duplicate card interaction - if so, ignore it to prevent timeline restart
+      const isDuplicateCardInteraction = event && event.detail && event.detail.source === 'duplicateCard';
+      if (isDuplicateCardInteraction) {
+        console.log('🔍 ScrollingTabs: Ignoring duplicate card interaction');
+        return;
+      }
+      
+      // Check if this is a client action interaction for adding transactions - if so, ignore it to prevent timeline restart
+      const isClientActionAddInteraction = event && event.detail && event.detail.source === 'clientActionAdd';
+      if (isClientActionAddInteraction) {
+        console.log('🔍 ScrollingTabs: Ignoring client action add interaction');
+        return;
+      }
+      
+      // Check if this is a transaction interaction (from handleAddToClient) - if so, ignore it to prevent timeline restart
+      const isTransactionInteraction = event && event.detail && event.detail.source === 'transaction';
+      if (isTransactionInteraction) {
+        console.log('🔍 ScrollingTabs: Ignoring transaction interaction');
+        return;
+      }
+      
+      // Check if this is a client action interaction for settling - allow timeline restart for settling
+      const isClientActionSettleInteraction = event && event.detail && event.detail.source === 'clientActionSettle';
+      if (isClientActionSettleInteraction) {
+        console.log('🔍 ScrollingTabs: Processing client action settle interaction');
+      }
+      
+      // Check if this is a client action interaction for returns - allow UI update but prevent timeline restart
+      const isClientActionReturnInteraction = event && event.detail && event.detail.source === 'clientActionReturn';
+      if (isClientActionReturnInteraction) {
+        console.log('🔍 ScrollingTabs: Processing client action return interaction');
       }
       
       // Check if this is a specific client update
       const updatedClientId = event && event.detail && event.detail.clientId;
       if (updatedClientId) {
-        console.log('🎯 Client updated:', updatedClientId);
+        console.log('🔍 ScrollingTabs: Setting recently updated client:', updatedClientId);
         setRecentlyUpdatedClient(updatedClientId);
-        // Clear the recently updated flag after 3 seconds
+        // Clear the recently updated flag after 5 seconds
         setTimeout(() => {
-          console.log('🕒 Clearing recently updated client:', updatedClientId);
+          console.log('🔍 ScrollingTabs: Clearing recently updated client');
           setRecentlyUpdatedClient(null);
-        }, 3000);
+        }, 5000);
       }
       
       // Kill existing timeline
       if (timelineRef.current) {
+        console.log('🔍 ScrollingTabs: Killing existing timeline due to creditDataChanged');
         timelineRef.current.kill();
         timelineRef.current = null;
       }
       
       // Kill existing draggable
       if (draggableRef.current) {
+        console.log('🔍 ScrollingTabs: Killing existing draggable due to creditDataChanged');
         draggableRef.current.forEach(d => d.kill());
         draggableRef.current = null;
       }
@@ -101,22 +186,37 @@ const ScrollingTabs: React.FC<ScrollingTabsProps> = ({
       // Clear any stored position
       pausedPositionRef.current = null;
       
+      // For return actions, we want to update UI but not restart timeline
+      if (isClientActionReturnInteraction) {
+        console.log('🔍 ScrollingTabs: Forcing update without timeline restart for return action');
+        // Force a re-render without restarting timeline
+        setForceUpdate(prev => prev + 1);
+        return;
+      }
+      
       // Restart timeline after a short delay to ensure DOM updates
+      console.log('🔍 ScrollingTabs: Scheduling timeline restart');
       setTimeout(() => {
-        if (sortedClients.length > 0) {
+        if (stableSortedClients.length > 0) {
+          console.log('🔍 ScrollingTabs: Restarting timeline with', stableSortedClients.length, 'clients');
           setupContinuousScroll();
+        } else {
+          console.log('🔍 ScrollingTabs: No clients to restart timeline with');
         }
       }, 100);
     };
 
+    console.log('🔍 ScrollingTabs: Adding creditDataChanged event listener');
+    
     // Handle long press to show client details
     
     window.addEventListener('creditDataChanged', handleCreditDataChanged as EventListener);
     
     return () => {
+      console.log('🔍 ScrollingTabs: Removing creditDataChanged event listener');
       window.removeEventListener('creditDataChanged', handleCreditDataChanged as EventListener);
     };
-  }, [sortedClients]); // Depend on sortedClients instead of clients.length
+  }, [clients, recentlyUpdatedClient, stableSortedClients]); // Depend on all relevant variables
 
   // Get transactions directly from context to ensure fresh data
   const { getClientTransactions: getTransactions } = useCredit();
@@ -220,26 +320,31 @@ const ScrollingTabs: React.FC<ScrollingTabsProps> = ({
           pausedPositionRef.current = null;
         });
     }
-  }, [sortedClients]); // Update dependency to sortedClients instead of sortedClients.length
+  }, [stableSortedClients]); // Update dependency to stableSortedClients
 
   const setupContinuousScroll = useCallback(() => {
     const content = contentRef.current;
     const container = containerRef.current;
     
     if (!container || !content) {
+      console.log('🔍 ScrollingTabs: Cannot setup scroll - missing container or content');
       return;
     }
     
     // Prevent multiple timeline creation
     if (timelineRef.current && timelineRef.current.isActive()) {
+      console.log('🔍 ScrollingTabs: Timeline already active, skipping creation');
       return;
     }
     
     // Kill any existing timeline before creating new one
     if (timelineRef.current) {
+      console.log('🔍 ScrollingTabs: Killing existing timeline');
       timelineRef.current.kill();
       timelineRef.current = null;
     }
+    
+    console.log('🔍 ScrollingTabs: Setting up continuous scroll for', stableSortedClients.length, 'clients');
     
     requestAnimationFrame(() => {
       const containerWidth = container.offsetWidth;
@@ -249,6 +354,7 @@ const ScrollingTabs: React.FC<ScrollingTabsProps> = ({
       const totalDistance = contentWidth + containerWidth;
       const duration = totalDistance / 60; // 60px per second for faster speed
       
+      console.log('🔍 ScrollingTabs: Animation parameters - containerWidth:', containerWidth, 'contentWidth:', contentWidth, 'duration:', duration);
       
       // Create seamless infinite timeline with protection against external interference
       timelineRef.current = gsap.timeline({ 
@@ -259,6 +365,8 @@ const ScrollingTabs: React.FC<ScrollingTabsProps> = ({
         overwrite: false // Don't let other animations overwrite this
       });
       
+      console.log('🔍 ScrollingTabs: Created new timeline instance');
+      
       timelineRef.current
         .fromTo(content, 
           { x: containerWidth }, // Enter from right
@@ -267,7 +375,9 @@ const ScrollingTabs: React.FC<ScrollingTabsProps> = ({
             duration: duration,
             ease: "none",
             overwrite: false // Prevent external interference
-          });
+        });
+      
+      console.log('🔍 ScrollingTabs: Timeline animation configured');
       
       // Create draggable instance with updated bounds
       draggableRef.current = Draggable.create(content, {
@@ -289,6 +399,7 @@ const ScrollingTabs: React.FC<ScrollingTabsProps> = ({
         lockAxis: true, // Lock to horizontal axis only
         minimumMovement: 3, // Require minimum movement to start drag
         onDragStart: function() {
+          console.log('🔍 ScrollingTabs: Drag started, killing timeline');
           // Kill the timeline on drag start but don't store position yet
           if (timelineRef.current) {
             timelineRef.current.kill();
@@ -296,43 +407,56 @@ const ScrollingTabs: React.FC<ScrollingTabsProps> = ({
           }
         },
         onThrowComplete: function() {
+          console.log('🔍 ScrollingTabs: Throw completed, restarting timeline');
           // Always resume timeline after throw completes
           const currentX = gsap.getProperty(contentRef.current, "x") as number;
           restartTimelineFromPosition(currentX);
           pausedPositionRef.current = null; // Clear any stored position
         }
       });
+      
+      console.log('🔍 ScrollingTabs: Draggable instance created');
     });
-  }, [sortedClients]); // Update dependency to sortedClients
+  }, [stableSortedClients]); // Update dependency to stableSortedClients
 
   // Setup animation when clients change
   useEffect(() => {
+    console.log('🔍 ScrollingTabs: Clients changed, current count:', stableSortedClients.length);
+    
     // Kill existing timeline and recreate immediately when client list changes
     if (timelineRef.current) {
+      console.log('🔍 ScrollingTabs: Killing timeline due to client list change');
       timelineRef.current.kill();
       timelineRef.current = null;
     }
     
     // Only setup if we have clients
-    if (sortedClients.length > 0) {
+    if (stableSortedClients.length > 0) {
+      console.log('🔍 ScrollingTabs: Setting up scroll after client list change');
       // Small delay to ensure DOM has updated with new client list
       setTimeout(() => {
         setupContinuousScroll();
       }, 50);
+    } else {
+      console.log('🔍 ScrollingTabs: No clients to setup scroll with');
     }
-  }, [sortedClients]); // Depend on sortedClients instead of clients.length
+  }, [stableSortedClients]); // Depend on stableSortedClients instead of sortedClients
 
   // Additional effect to handle filter changes that might not change length
   useEffect(() => {
+    console.log('🔍 ScrollingTabs: Filter or sort changed, forcing timeline restart');
+    
     // Force timeline restart when clients array reference changes (filter changes)
-    if (timelineRef.current && sortedClients.length > 0) {
+    if (timelineRef.current && stableSortedClients.length > 0) {
+      console.log('🔍 ScrollingTabs: Killing timeline due to filter/sort change');
       timelineRef.current.kill();
       timelineRef.current = null;
       
       // Immediate restart for filter changes
+      console.log('🔍 ScrollingTabs: Restarting timeline due to filter/sort change');
       setupContinuousScroll();
     }
-  }, [sortedClients]);
+  }, [stableSortedClients]);
 
   // Cleanup on unmount
   useEffect(() => {
@@ -383,7 +507,7 @@ const ScrollingTabs: React.FC<ScrollingTabsProps> = ({
 
   return (
     <>
-    <div className="bg-white rounded-lg shadow-sm border border-gray-200 scrolling-tabs-component w-full" style={{ flexShrink: 0 }}>
+    <div ref={scrollingTabsRef} className="bg-white rounded-lg shadow-sm border border-gray-200 scrolling-tabs-component w-full" style={{ flexShrink: 0 }}>
       {/* Header */}
       <div className="p-3 border-b border-gray-200">
         <div className="flex items-center justify-between">
@@ -391,7 +515,7 @@ const ScrollingTabs: React.FC<ScrollingTabsProps> = ({
             {getFilterLabel()}
           </h3>
           <span className="text-xs text-gray-500 bg-gray-100 px-2 py-1 rounded-full">
-            {sortedClients.length} client{sortedClients.length !== 1 ? 's' : ''}
+            {stableSortedClients.length} client{stableSortedClients.length !== 1 ? 's' : ''}
           </span>
         </div>
       </div>
@@ -422,7 +546,7 @@ const ScrollingTabs: React.FC<ScrollingTabsProps> = ({
               })
             }}
           >
-            {sortedClients.map((client) => {
+            {stableSortedClients.map((client) => {
               const totalDebt = getClientTotalDebt(client.id);
               const isLinked = linkedClient?.id === client.id;
               const hasOverdueItems = hasOverdueReturnables(client);
@@ -516,15 +640,41 @@ const ScrollingTabs: React.FC<ScrollingTabsProps> = ({
                   }
                 });
                 
-                // Calculate returned quantities
+                // Calculate returned quantities with improved matching
                 const returnedQuantities: {[key: string]: number} = {};
                 clientTransactions
                   .filter(transaction => transaction.type === 'debt' && transaction.description.toLowerCase().includes('returned'))
                   .forEach(transaction => {
                     const description = transaction.description.toLowerCase();
                     Object.keys(returnableItems).forEach(itemType => {
-                      if (description.includes(itemType.toLowerCase())) {
-                        const match = description.match(/returned:\s*(\d+)\s+/);
+                      // Use more precise matching to avoid substring conflicts
+                      if (itemType.includes('Chopine')) {
+                        if (itemType === 'Chopine') {
+                          // For generic Chopine, match "Returned: X Chopine" but not "Chopine Brand"
+                          const genericChopinePattern = /returned:\s*(\d+)\s+chopines?(?!\s+\w)/i;
+                          const match = description.match(genericChopinePattern);
+                          if (match) {
+                            if (!returnedQuantities[itemType]) {
+                              returnedQuantities[itemType] = 0;
+                            }
+                            returnedQuantities[itemType] += parseInt(match[1]);
+                          }
+                        } else {
+                          // For branded Chopine like "Chopine Vin", match the exact brand
+                          const brandedChopinePattern = new RegExp(`returned:\\s*(\\d+)\\s+${itemType.replace('Chopine', 'Chopines?')}`, 'i');
+                          const match = description.match(brandedChopinePattern);
+                          if (match) {
+                            if (!returnedQuantities[itemType]) {
+                              returnedQuantities[itemType] = 0;
+                            }
+                            returnedQuantities[itemType] += parseInt(match[1]);
+                          }
+                        }
+                      } else {
+                        // For other items, use word boundary matching
+                        const escapedItemType = itemType.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+                        const pattern = new RegExp(`returned:\\s*(\\d+)\\s+${escapedItemType}`, 'i');
+                        const match = description.match(pattern);
                         if (match) {
                           if (!returnedQuantities[itemType]) {
                             returnedQuantities[itemType] = 0;
@@ -533,7 +683,7 @@ const ScrollingTabs: React.FC<ScrollingTabsProps> = ({
                         }
                       }
                     });
-                  });
+                });
                 
                 const truncatedItems: string[] = [];
                 Object.entries(returnableItems).forEach(([itemType, total]) => {
