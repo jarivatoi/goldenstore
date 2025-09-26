@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import { Calculator, Plus, CheckCircle, ArrowLeft, ArrowRight } from 'lucide-react';
 import { useCredit } from '../context/CreditContext';
 import ClientDetailModal from './ClientDetailModal';
@@ -44,6 +44,9 @@ const CreditManagement: React.FC = () => {
   const [showFilterDropdown, setShowFilterDropdown] = useState(false);
   const [sortOption, setSortOption] = useState<'name' | 'date' | 'debt'>('date');
   const [showSortDropdown, setShowSortDropdown] = useState(false);
+
+  // Ref for tracking scrolling tabs timeline state
+  const scrollingTabsTimelineRef = useRef<any>(null);
 
   // Separate search query for main grid (bottom search bar)
   const [mainGridSearchQuery, setMainGridSearchQuery] = useState('');
@@ -94,13 +97,31 @@ const CreditManagement: React.FC = () => {
   // Create calculator engine instance
   const [calculatorEngine] = useState(() => new CalculatorEngine());
 
-  // Listen for credit data changes to force re-render
+  // Listen for credit data changes and duplicate card events
   useEffect(() => {
     const handleCreditDataChanged = (event: CustomEvent) => {
+      console.log('💳 CreditManagement: Received creditDataChanged event:', event.detail);
+      
       // Check if this is a calculator interaction - if so, ignore it
       const isCalculatorInteraction = event && event.detail && event.detail.source === 'calculator';
       if (isCalculatorInteraction) {
+        console.log('💳 CreditManagement: Ignoring calculator interaction');
         return;
+      }
+      
+      // Handle credit data changes with safety checks
+      console.log('💳 CreditManagement: Processing credit data change:', event.detail);
+      
+      // Update recent transaction client if provided and valid
+      if (event.detail && event.detail.clientId) {
+        console.log('💳 CreditManagement: Setting recent transaction client:', event.detail.clientId);
+        setRecentTransactionClient(event.detail.clientId);
+        
+        // Clear the recent transaction client after 5 seconds
+        setTimeout(() => {
+          console.log('💳 CreditManagement: Clearing recent transaction client');
+          setRecentTransactionClient(null);
+        }, 5000);
       }
       
       // Only handle real data changes, not calculator interactions
@@ -108,108 +129,74 @@ const CreditManagement: React.FC = () => {
     };
 
     const handleShowDuplicateCard = (event: CustomEvent) => {
-      // Add safety checks for event.detail and event.detail.client
-      if (!event.detail || !event.detail.client) {
-        console.warn('Invalid duplicate card event data:', event.detail);
-        return;
-      }
+      console.log('💳 CreditManagement: Received showDuplicateCard event:', event.detail);
       
-      const client = event.detail.client;
-      const isAccountClear = event.detail.isAccountClear;
-      const message = event.detail.message || 'Transaction added successfully!';
-      console.log('🎯 Showing duplicate card for settled client:', client.name);
-      
-      // Set the duplicate card to show the settled client
-      setDuplicateCard({
-        ...client,
-        transactionAmount: 0, // Settlement amount
-        message: message,
-        isAccountClear: isAccountClear
-      } as DuplicateCard);
-      
-      // Also set recent transaction client for wobble effect
-      setRecentTransactionClient(client);
-      
-      // Auto-hide after 5 seconds
-      setTimeout(() => {
-        setDuplicateCard(null);
-        setRecentTransactionClient(null);
-      }, 5000);
-    };
-    
-    const handleAutoReplayStep = (event: CustomEvent) => {
-      // Handle auto replay step updates
-      // The event.detail contains displayValue, articleCount, etc.
-      const { displayValue, articleCount } = event.detail;
-      // For now, we'll just log the values to see if the events are working
-      console.log('Auto replay step:', displayValue, articleCount);
-      
-      // Update auto replay display
-      setAutoReplayDisplay(event.detail.displayValue);
-      
-      // Update step info for display during auto replay
-      if (event.detail.currentStep !== undefined && event.detail.totalSteps !== undefined) {
-        setAutoReplayStepInfo({
-          currentStep: event.detail.currentStep,
-          totalSteps: event.detail.totalSteps
-        });
-      }
-    };
-
-    const handleAutoReplayComplete = () => {
-      // Handle auto replay completion
-      // Instead of resetting, keep the last display value and set a flag to indicate completion
-      console.log('Auto replay complete');
-      
-      // Set a flag to indicate that auto replay has completed
-      setAutoReplayCompleted(true);
-    };
-
-    window.addEventListener('creditDataChanged', handleCreditDataChanged as EventListener);
-    window.addEventListener('showDuplicateCard', handleShowDuplicateCard as EventListener);
-    window.addEventListener('autoReplayStep', handleAutoReplayStep as EventListener);
-    window.addEventListener('autoReplayComplete', handleAutoReplayComplete as EventListener);
-    
-    return () => {
-      window.removeEventListener('creditDataChanged', handleCreditDataChanged as EventListener);
-      window.removeEventListener('showDuplicateCard', handleShowDuplicateCard as EventListener);
-      window.removeEventListener('autoReplayStep', handleAutoReplayStep as EventListener);
-      window.removeEventListener('autoReplayComplete', handleAutoReplayComplete as EventListener);
-    };
-  }, [linkedClient]);
-
-  // Handle auto replay events
-  useEffect(() => {
-    const handleCreditDataChanged = (event: CustomEvent) => {
-      // Handle credit data changes with safety checks
-      console.log('Credit data changed:', event.detail);
-      
-      // Update recent transaction client if provided and valid
-      if (event.detail && event.detail.clientId) {
-        setRecentTransactionClient(event.detail.clientId);
-        
-        // Clear the recent transaction client after 5 seconds
-        setTimeout(() => {
-          setRecentTransactionClient(null);
-        }, 5000);
-      }
-    };
-    
-    const handleShowDuplicateCard = (event: CustomEvent) => {
       // Handle show duplicate card event with safety checks
-      console.log('Show duplicate card:', event.detail);
+      console.log('💳 CreditManagement: Showing duplicate card:', event.detail);
       
       // Add safety checks for event.detail
       if (!event.detail) {
-        console.warn('Invalid duplicate card event data');
+        console.warn('💳 CreditManagement: Invalid duplicate card event data');
         return;
       }
       
-      setDuplicateCard(event.detail);
+      // Pause scrolling tabs timeline when showing duplicate card
+      const scrollingTabsElement = document.querySelector('.scrolling-tabs-component');
+      if (scrollingTabsElement) {
+        const timeline = (scrollingTabsElement as any).__timelineRef;
+        if (timeline && timeline.current && timeline.current.pause) {
+          // Only pause if not already paused
+          if (!scrollingTabsTimelineRef.current) {
+            console.log('💳 CreditManagement: Pausing scrolling tabs timeline');
+            timeline.current.pause();
+            scrollingTabsTimelineRef.current = timeline.current;
+          }
+        }
+      }
       
-      // Auto-hide after 5 seconds
+      // Set the duplicate card to show the settled client if it has client data
+      if (event.detail.client) {
+        const client = event.detail.client;
+        const isAccountClear = event.detail.isAccountClear;
+        const message = event.detail.message || 'Transaction added successfully!';
+        console.log('💳 CreditManagement: Showing duplicate card for settled client:', client.name);
+        
+        // Set the duplicate card to show the settled client
+        setDuplicateCard({
+          ...client,
+          transactionAmount: 0, // Settlement amount
+          message: message,
+          isAccountClear: isAccountClear
+        } as DuplicateCard);
+        
+        // Also set recent transaction client for wobble effect
+        setRecentTransactionClient(client);
+      } else {
+        setDuplicateCard(event.detail);
+      }
+      
+      // Auto-hide after 5 seconds and resume scrolling tabs timeline
       setTimeout(() => {
+        console.log('💳 CreditManagement: Hiding duplicate card and resuming timeline');
         setDuplicateCard(null);
+        setRecentTransactionClient(null);
+        
+        // Resume scrolling tabs timeline when hiding duplicate card
+        if (scrollingTabsTimelineRef.current && scrollingTabsTimelineRef.current.resume) {
+          try {
+            console.log('💳 CreditManagement: Resuming scrolling tabs timeline');
+            scrollingTabsTimelineRef.current.resume();
+          } catch (e) {
+            console.warn('💳 CreditManagement: Failed to resume timeline:', e);
+          }
+          scrollingTabsTimelineRef.current = null;
+        }
+        
+        // Dispatch creditDataChanged event with duplicateCard source to prevent timeline restart
+        console.log('💳 CreditManagement: Dispatching creditDataChanged event with duplicateCard source');
+        window.dispatchEvent(new CustomEvent('creditDataChanged', {
+          detail: { source: 'duplicateCard' }
+        }));
       }, 5000);
     };
     
@@ -218,26 +205,12 @@ const CreditManagement: React.FC = () => {
       // The event.detail contains displayValue, articleCount, etc.
       const { displayValue, articleCount } = event.detail;
       // For now, we'll just log the values to see if the events are working
-      console.log('Auto replay step:', displayValue, articleCount);
+      console.log('💳 CreditManagement: Auto replay step:', displayValue, articleCount);
       
       // Update auto replay display
       setAutoReplayDisplay(event.detail.displayValue);
       
-      // Update step info for display during auto replay
-      if (event.detail.currentStep !== undefined && event.detail.totalSteps !== undefined) {
-        setAutoReplayStepInfo({
-          currentStep: event.detail.currentStep,
-          totalSteps: event.detail.totalSteps
-        });
-      }
-    };
-
-    const handleCheckNavigation = (event: CustomEvent) => {
-      // Handle check navigation updates
-      // The event.detail contains displayValue, articleCount, currentStep, totalSteps, etc.
-      console.log('Check navigation step:', event.detail);
-      
-      // Update step info for display during check navigation
+      // Update step info if provided
       if (event.detail.currentStep !== undefined && event.detail.totalSteps !== undefined) {
         setAutoReplayStepInfo({
           currentStep: event.detail.currentStep,
@@ -245,35 +218,25 @@ const CreditManagement: React.FC = () => {
         });
       }
       
-      // Update calculator display with the navigation step value
-      if (event.detail.displayValue) {
-        setAutoReplayDisplay(event.detail.displayValue);
+      // Update completed status if provided
+      if (event.detail.completed !== undefined) {
+        setAutoReplayCompleted(event.detail.completed);
       }
     };
-
-    const handleAutoReplayComplete = () => {
-      // Handle auto replay completion
-      // Instead of resetting, keep the last display value and set a flag to indicate completion
-      console.log('Auto replay complete');
-      
-      // Set a flag to indicate that auto replay has completed
-      setAutoReplayCompleted(true);
-    };
-
+    
+    console.log('💳 CreditManagement: Adding event listeners');
+    
     window.addEventListener('creditDataChanged', handleCreditDataChanged as EventListener);
     window.addEventListener('showDuplicateCard', handleShowDuplicateCard as EventListener);
     window.addEventListener('autoReplayStep', handleAutoReplayStep as EventListener);
-    window.addEventListener('checkNavigation', handleCheckNavigation as EventListener);
-    window.addEventListener('autoReplayComplete', handleAutoReplayComplete as EventListener);
     
     return () => {
+      console.log('💳 CreditManagement: Removing event listeners');
       window.removeEventListener('creditDataChanged', handleCreditDataChanged as EventListener);
       window.removeEventListener('showDuplicateCard', handleShowDuplicateCard as EventListener);
       window.removeEventListener('autoReplayStep', handleAutoReplayStep as EventListener);
-      window.removeEventListener('checkNavigation', handleCheckNavigation as EventListener);
-      window.removeEventListener('autoReplayComplete', handleAutoReplayComplete as EventListener);
     };
-  }, [linkedClient]);
+  }, []);
 
   // Get filtered clients for tabs based on selected filter
   const getFilteredClientsForTabs = React.useCallback(() => {
