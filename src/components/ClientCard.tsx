@@ -242,10 +242,14 @@ const ClientCard: React.FC<ClientCardProps> = ({ client, onLongPress, onQuickAdd
         });
         
         if (itemType.includes('Chopine')) {
-          // For Chopine items: "8 Chopines beer" (with proper pluralization and capitalization)
+          // For Chopine items: "8 Chopines Beer" (with proper pluralization and capitalization)
           const brand = itemType.replace('Chopine', '').trim();
-          if (brand) {
-            displayText = `${remaining} Chopine${remaining > 1 ? 's' : ''} ${brand}`;
+          // Ensure brand is title case
+          const titleCaseBrand = brand ? brand.split(' ').map(word => 
+            word.charAt(0).toUpperCase() + word.slice(1).toLowerCase()
+          ).join(' ') : '';
+          if (titleCaseBrand) {
+            displayText = `${remaining} Chopine${remaining > 1 ? 's' : ''} ${titleCaseBrand}`;
           } else {
             displayText = `${remaining} Chopine${remaining > 1 ? 's' : ''}`;
           }
@@ -258,15 +262,22 @@ const ClientCard: React.FC<ClientCardProps> = ({ client, onLongPress, onQuickAdd
           } else {
             // For regular bottles: "3 Bouteilles Green" (with proper pluralization)
             const brand = itemType.replace('Bouteille', '').trim();
-            if (brand) {
-              displayText = `${remaining} Bouteille${remaining > 1 ? 's' : ''} ${brand}`;
+            // Ensure brand is title case
+            const titleCaseBrand = brand ? brand.split(' ').map(word => 
+              word.charAt(0).toUpperCase() + word.slice(1).toLowerCase()
+            ).join(' ') : '';
+            if (titleCaseBrand) {
+              displayText = `${remaining} Bouteille${remaining > 1 ? 's' : ''} ${titleCaseBrand}`;
             } else {
               displayText = `${remaining} Bouteille${remaining > 1 ? 's' : ''}`;
             }
           }
         } else {
-          // For other items: use parentheses format
-          displayText = `${remaining} (${itemType})`;
+          // For other items: use parentheses format with title case
+          const titleCaseItemType = itemType.split(' ').map(word => 
+            word.charAt(0).toUpperCase() + word.slice(1).toLowerCase()
+          ).join(' ');
+          displayText = `${remaining} (${titleCaseItemType})`;
         }
         
         // Create the returnable item with flip card for date
