@@ -77,6 +77,7 @@ const ClientActionModal: React.FC<ClientActionModalProps> = ({ client, onClose, 
         .join(', ');
       
       // Show duplicate card for successful partial payment
+      console.log('📱 ClientActionModal: Dispatching showDuplicateCard event for partial payment');
       window.dispatchEvent(new CustomEvent('showDuplicateCard', {
         detail: { 
           ...client,
@@ -90,7 +91,8 @@ const ClientActionModal: React.FC<ClientActionModalProps> = ({ client, onClose, 
       }));
       
       // Force timeline reset after payment
-      window.dispatchEvent(new CustomEvent('creditDataChanged'));
+      console.log('📱 ClientActionModal: Dispatching creditDataChanged event with clientActionAdd source');
+      window.dispatchEvent(new CustomEvent('creditDataChanged', { detail: { source: 'clientActionAdd' } }));
       
       // Reset calculator after successful payment
       if (onResetCalculator) {
@@ -98,7 +100,7 @@ const ClientActionModal: React.FC<ClientActionModalProps> = ({ client, onClose, 
       }
       onClose();
     } catch (error) {
-      console.error('Error processing partial payment:', error);
+      console.error('📱 ClientActionModal: Error processing partial payment:', error);
       showAlert({ type: 'error', message: 'Failed to Process Payment' });
     } finally {
       setIsProcessing(false);
@@ -126,14 +128,15 @@ const ClientActionModal: React.FC<ClientActionModalProps> = ({ client, onClose, 
       }
       
       // Force timeline reset after settling
-      window.dispatchEvent(new CustomEvent('creditDataChanged'));
+      console.log('📱 ClientActionModal: Dispatching creditDataChanged event with clientActionSettle source');
+      window.dispatchEvent(new CustomEvent('creditDataChanged', { detail: { source: 'clientActionSettle' } }));
       
       onClose();
       if (onResetCalculator) {
         onResetCalculator();
       }
     } catch (error) {
-      console.error('Error settling client:', error);
+      console.error('📱 ClientActionModal: Error settling client:', error);
       // Error handling without alert - could add error state here
     } finally {
       setIsProcessing(false);
@@ -146,14 +149,15 @@ const ClientActionModal: React.FC<ClientActionModalProps> = ({ client, onClose, 
       await settleClientWithFullClear(client.id);
       
       // Force timeline reset after settling
-      window.dispatchEvent(new CustomEvent('creditDataChanged'));
+      console.log('📱 ClientActionModal: Dispatching creditDataChanged event with clientActionSettle source (full clear)');
+      window.dispatchEvent(new CustomEvent('creditDataChanged', { detail: { source: 'clientActionSettle' } }));
       
       onClose();
       if (onResetCalculator) {
         onResetCalculator();
       }
     } catch (error) {
-      console.error('Error settling client with full clear:', error);
+      console.error('📱 ClientActionModal: Error settling client with full clear:', error);
       // Error handling without alert - could add error state here
     } finally {
       setIsProcessing(false);
@@ -335,58 +339,55 @@ const ClientActionModal: React.FC<ClientActionModalProps> = ({ client, onClose, 
         .filter(([_, quantity]) => quantity > 0)
         .map(([itemType, quantity]) => `${quantity} ${itemType}${quantity > 1 ? 's' : ''}`)
         .join(', ');
-      
-      for (const [itemType, quantity] of Object.entries(returnItems)) {
-        if (quantity > 0) {
-          await processItemReturn(itemType, quantity);
-        }
+    
+    for (const [itemType, quantity] of Object.entries(returnItems)) {
+      if (quantity > 0) {
+        await processItemReturn(itemType, quantity);
       }
-      
-      // Show duplicate card for successful return processing
-      window.dispatchEvent(new CustomEvent('showDuplicateCard', {
-        detail: { 
-          ...client,
-          isAccountClear: false,
-          message: `${itemsBeingReturned} Returned Successfully!`,
-          transactionDescription: `Returned: ${itemsBeingReturned}`
-        }
-      }));
-      
-      // Force a re-render of the parent component to update scrolling tabs
-      window.dispatchEvent(new CustomEvent('creditDataChanged'));
-      
-      onClose();
-    } catch (error) {
-      console.error('Error processing returns:', error);
-      showAlert({ type: 'error', message: 'Failed to Process Returns' });
-    } finally {
-      setIsProcessing(false);
     }
-  };
+    
+    // Show duplicate card for successful return processing
+    console.log('📱 ClientActionModal: Dispatching showDuplicateCard event for returns');
+    window.dispatchEvent(new CustomEvent('showDuplicateCard', {
+      detail: { 
+        ...client,
+        isAccountClear: false,
+        message: `${itemsBeingReturned} Returned Successfully!`,
+        transactionDescription: `Returned: ${itemsBeingReturned}`
+      }
+    }));
+    
+    // Force update of duplicate card and other UI components
+    console.log('📱 ClientActionModal: Dispatching creditDataChanged event with clientActionReturn source');
+    window.dispatchEvent(new CustomEvent('creditDataChanged', { detail: { source: 'clientActionReturn' } }));
+    
+    setShowSettleConfirm(false);
+    setSettleAction(null);
+    onClose();
+  } catch (error) {
+    console.error('📱 ClientActionModal: Error processing returns:', error);
+    showAlert({ type: 'error', message: 'Failed to Process Returns' });
+  } finally {
+    setIsProcessing(false);
+  }
+};
 
-  const processItemReturn = async (itemType: string, returnQuantity: number) => {
+const processItemReturn = async (itemType: string, returnQuantity: number) => {
+  
+  // Create a return transaction (negative transaction)
+  const returnDescription = `Returned: ${returnQuantity} ${itemType}${returnQuantity > 1 ? 's' : ''} - ${new Date().toLocaleDateString('en-GB')}`;
+  
+  try {
+    // Add a return transaction with zero amount and unique description
+    await addTransaction(client, returnDescription, 0);
     
-    // Create a return transaction (negative transaction)
-    const returnDescription = `Returned: ${returnQuantity} ${itemType}${returnQuantity > 1 ? 's' : ''} - ${new Date().toLocaleDateString('en-GB')}`;
+    // NOTE: We don't dispatch showDuplicateCard here because it's handled at a higher level
+    // This prevents duplicate animations when processing multiple items
     
-    try {
-      // Add a return transaction with zero amount and unique description
-      await addTransaction(client, returnDescription, 0);
-      
-      // Show duplicate card with transaction description to trigger arrows
-      window.dispatchEvent(new CustomEvent('showDuplicateCard', {
-        detail: { 
-          ...client,
-          isAccountClear: false,
-          message: `${returnQuantity} ${itemType}${returnQuantity > 1 ? 's' : ''} Returned Successfully!`,
-          transactionDescription: `Returned: ${returnQuantity} ${itemType}${returnQuantity > 1 ? 's' : ''}`
-        }
-      }));
-      
-    } catch (error) {
-      throw error;
-    }
-  };
+  } catch (error) {
+    throw error;
+  }
+};
 
   // Helper function to calculate how much has already been returned
   const getReturnedQuantity = (itemType: string): number => {
@@ -394,9 +395,30 @@ const ClientActionModal: React.FC<ClientActionModalProps> = ({ client, onClose, 
       .filter(transaction => transaction.type === 'debt' && transaction.description.toLowerCase().includes('returned'))
       .reduce((total, transaction) => {
         const description = transaction.description.toLowerCase();
-        if (description.includes(itemType.toLowerCase())) {
-          // Extract quantity from return transaction
-          const match = description.match(/returned:\s*(\d+)\s+/);
+        // Use more precise matching to avoid substring conflicts
+        // For branded items like "Chopine Vin", match the exact pattern
+        if (itemType.includes('Chopine')) {
+          // For Chopine items, be more specific about matching
+          if (itemType === 'Chopine') {
+            // For generic Chopine, match "Returned: X Chopine" but not "Chopine Brand"
+            const genericChopinePattern = /returned:\s*(\d+)\s+chopines?(?!\s+\w)/i;
+            const match = description.match(genericChopinePattern);
+            if (match) {
+              return total + parseInt(match[1]);
+            }
+          } else {
+            // For branded Chopine like "Chopine Vin", match the exact brand
+            const brandedChopinePattern = new RegExp(`returned:\\s*(\\d+)\\s+${itemType.replace('Chopine', 'Chopines?')}`, 'i');
+            const match = description.match(brandedChopinePattern);
+            if (match) {
+              return total + parseInt(match[1]);
+            }
+          }
+        } else {
+          // For other items, use the original logic but with word boundaries
+          const escapedItemType = itemType.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+          const pattern = new RegExp(`returned:\\s*(\\d+)\\s+${escapedItemType}`, 'i');
+          const match = description.match(pattern);
           if (match) {
             return total + parseInt(match[1]);
           }
@@ -890,13 +912,7 @@ const ClientActionModal: React.FC<ClientActionModalProps> = ({ client, onClose, 
               }
               
               // Force update of duplicate card and other UI components
-              window.dispatchEvent(new CustomEvent('creditDataChanged'));
-              
-              // Force update of duplicate card and other UI components
-              window.dispatchEvent(new CustomEvent('creditDataChanged'));
-              
-              // Force a re-render of the parent component to update scrolling tabs
-              window.dispatchEvent(new CustomEvent('creditDataChanged'));
+              window.dispatchEvent(new CustomEvent('creditDataChanged', { detail: { source: 'clientActionReturn' } }));
               
               setShowSettleConfirm(false);
               setSettleAction(null);
@@ -985,7 +1001,7 @@ const ClientActionModal: React.FC<ClientActionModalProps> = ({ client, onClose, 
                         
                         // Force update of duplicate card and other UI components with delay
                         setTimeout(() => {
-                          window.dispatchEvent(new CustomEvent('creditDataChanged'));
+                          window.dispatchEvent(new CustomEvent('creditDataChanged', { detail: { source: 'clientActionSettle' } }));
                           
                           // Show duplicate card for settled client
                           window.dispatchEvent(new CustomEvent('showDuplicateCard', {
@@ -1031,7 +1047,7 @@ const ClientActionModal: React.FC<ClientActionModalProps> = ({ client, onClose, 
                       
                       // Force update of duplicate card and other UI components with delay
                       setTimeout(() => {
-                        window.dispatchEvent(new CustomEvent('creditDataChanged'));
+                        window.dispatchEvent(new CustomEvent('creditDataChanged', { detail: { source: 'clientActionSettle' } }));
                         
                         // Show duplicate card for settled client
                         window.dispatchEvent(new CustomEvent('showDuplicateCard', {
