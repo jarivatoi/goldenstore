@@ -157,15 +157,41 @@ const ClientCard: React.FC<ClientCardProps> = ({ client, onLongPress, onQuickAdd
       }
     });
     
-    // Calculate returned quantities
+    // Calculate returned quantities with improved matching
     const returnedQuantities: {[key: string]: number} = {};
     clientTransactions
       .filter(transaction => transaction.type === 'debt' && transaction.description.toLowerCase().includes('returned'))
       .forEach(transaction => {
         const description = transaction.description.toLowerCase();
         Object.keys(returnableItems).forEach(itemType => {
-          if (description.includes(itemType.toLowerCase())) {
-            const match = description.match(/returned:\s*(\d+)\s+/);
+          // Use more precise matching to avoid substring conflicts
+          if (itemType.includes('Chopine')) {
+            if (itemType === 'Chopine') {
+              // For generic Chopine, match "Returned: X Chopine" but not "Chopine Brand"
+              const genericChopinePattern = /returned:\s*(\d+)\s+chopines?(?!\s+\w)/i;
+              const match = description.match(genericChopinePattern);
+              if (match) {
+                if (!returnedQuantities[itemType]) {
+                  returnedQuantities[itemType] = 0;
+                }
+                returnedQuantities[itemType] += parseInt(match[1]);
+              }
+            } else {
+              // For branded Chopine like "Chopine Vin", match the exact brand
+              const brandedChopinePattern = new RegExp(`returned:\\s*(\\d+)\\s+${itemType.replace('Chopine', 'Chopines?')}`, 'i');
+              const match = description.match(brandedChopinePattern);
+              if (match) {
+                if (!returnedQuantities[itemType]) {
+                  returnedQuantities[itemType] = 0;
+                }
+                returnedQuantities[itemType] += parseInt(match[1]);
+              }
+            }
+          } else {
+            // For other items, use word boundary matching
+            const escapedItemType = itemType.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+            const pattern = new RegExp(`returned:\\s*(\\d+)\\s+${escapedItemType}`, 'i');
+            const match = description.match(pattern);
             if (match) {
               if (!returnedQuantities[itemType]) {
                 returnedQuantities[itemType] = 0;
