@@ -46,6 +46,25 @@ const MiniCalculator: React.FC<MiniCalculatorProps> = ({
       // If we found an operator, only show what comes after it (the current number being entered)
       if (lastOpIndex !== -1) {
         const currentNumber = value.substring(lastOpIndex + 1);
+        // If there's no number after the operator, show the previous number
+        if (currentNumber === '') {
+          // Extract the number before the operator
+          const previousNumber = value.substring(0, lastOpIndex);
+          // Handle cases where previousNumber might still contain operators (e.g., "2+3+")
+          const lastPrevOpIndex = Math.max(
+            previousNumber.lastIndexOf('+'),
+            previousNumber.lastIndexOf('-'),
+            previousNumber.lastIndexOf('*'),
+            previousNumber.lastIndexOf('/'),
+            previousNumber.lastIndexOf('×'),
+            previousNumber.lastIndexOf('÷')
+          );
+          
+          if (lastPrevOpIndex !== -1) {
+            return previousNumber.substring(lastPrevOpIndex + 1);
+          }
+          return previousNumber;
+        }
         return currentNumber;
       }
     }
@@ -288,7 +307,7 @@ const MiniCalculator: React.FC<MiniCalculatorProps> = ({
       ref={calculatorRef}
       className="fixed bg-white rounded-lg shadow-2xl border border-gray-300 select-none"
       style={{
-        width: isMinimized ? '200px' : '280px',
+        width: isMinimized && !isEditingLabel ? '200px' : '280px',
         zIndex: 9999,
         maxHeight: isMinimized ? 'auto' : '90vh',
         overflow: 'hidden',
@@ -398,32 +417,36 @@ const MiniCalculator: React.FC<MiniCalculatorProps> = ({
             </div>
           )}
         </div>
-        <button
-          onTouchStart={(e) => {
-            e.preventDefault();
-          }}
-          onTouchEnd={(e) => {
-            e.stopPropagation();
-            e.preventDefault();
-            setIsMinimized(!isMinimized);
-          }}
-          onClick={(e) => {
-            e.stopPropagation();
-            e.preventDefault();
-            setIsMinimized(!isMinimized);
-          }}
-          className="text-blue-200 hover:text-white transition-colors ml-2"
-          style={{
-            touchAction: 'manipulation',
-            zIndex: 10001,
-            position: 'relative',
-            pointerEvents: 'auto'
-          }}
-          title={isMinimized ? 'Maximize calculator' : 'Minimize calculator'}
-        >
-          {isMinimized ? <Maximize2 size={16} /> : <Minus size={16} />}
-        </button>
-        {!isMinimized && (
+        {/* Only show the minimize/maximize and close buttons when not editing in minimized mode */}
+        {!(isMinimized && isEditingLabel) && (
+          <button
+            onTouchStart={(e) => {
+              e.preventDefault();
+            }}
+            onTouchEnd={(e) => {
+              e.stopPropagation();
+              e.preventDefault();
+              setIsMinimized(!isMinimized);
+            }}
+            onClick={(e) => {
+              e.stopPropagation();
+              e.preventDefault();
+              setIsMinimized(!isMinimized);
+            }}
+            className="text-blue-200 hover:text-white transition-colors ml-2"
+            style={{
+              touchAction: 'manipulation',
+              zIndex: 10001,
+              position: 'relative',
+              pointerEvents: 'auto'
+            }}
+            title={isMinimized ? 'Maximize calculator' : 'Minimize calculator'}
+          >
+            {isMinimized ? <Maximize2 size={16} /> : <Minus size={16} />}
+          </button>
+        )}
+        {/* Only show the close button when not minimized or when editing in minimized mode */}
+        {(!isMinimized || isEditingLabel) && (
           <button
             onTouchStart={(e) => {
               e.preventDefault();
