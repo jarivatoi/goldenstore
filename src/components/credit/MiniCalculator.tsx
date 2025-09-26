@@ -2,6 +2,7 @@ import React, { useState, useRef, useEffect } from 'react';
 import { createPortal } from 'react-dom';
 import { X, Edit2, Check, Calculator, Plus, Minus, Maximize2 } from 'lucide-react';
 import { gsap } from 'gsap';
+// @ts-ignore
 import { DraggableCalculator } from '../../lib/draggableCalculator.js';
 import ClientSearchModal from '../ClientSearchModal';
 
@@ -28,24 +29,29 @@ const MiniCalculator: React.FC<MiniCalculatorProps> = ({
 }) => {
   // Helper function to format calculator value with styled operators
   const formatCalculatorValue = (value: string) => {
-    // Split the value into numbers and operators
-    const parts = value.split(/([+\-×÷*/])/);
+    // Check if we're in a calculation state (contains operators)
+    const hasOperator = /[+\-×÷*/]/.test(value);
     
-    return parts.map((part, index) => {
-      // Check if the part is an operator
-      if (part === '+' || part === '-' || part === '×' || part === '÷' || part === '*' || part === '/') {
-        return (
-          <span 
-            key={index}
-            className="calculator-operator"
-          >
-            {part === '*' ? '×' : part === '/' ? '÷' : part}
-          </span>
-        );
+    // If we're in a calculation state, only show the final result (last number after last operator)
+    if (hasOperator) {
+      // Find the position of the last operator
+      let lastOpIndex = -1;
+      for (let i = value.length - 1; i >= 0; i--) {
+        if (['+', '-', '×', '÷', '*', '/'].includes(value[i])) {
+          lastOpIndex = i;
+          break;
+        }
       }
-      // Return regular text for numbers and other characters
-      return part;
-    });
+      
+      // If we found an operator, only show what comes after it (the current number being entered)
+      if (lastOpIndex !== -1) {
+        const currentNumber = value.substring(lastOpIndex + 1);
+        return currentNumber;
+      }
+    }
+    
+    // For all other cases (no operators or error states), show the full value
+    return value;
   };
 
   const [calculatorValue, setCalculatorValue] = useState('0');
@@ -108,7 +114,7 @@ const MiniCalculator: React.FC<MiniCalculatorProps> = ({
     };
   }, [initialPosition, id, isVisible]);
 
-  // Simple calculator logic for mini calculator
+  // Simple calculator logic for mini calculator - standard calculator behavior
   const handleCalculatorInput = (input: string) => {
     if (input >= '0' && input <= '9') {
       if (isNewNumber || calculatorValue === '0') {
@@ -129,7 +135,7 @@ const MiniCalculator: React.FC<MiniCalculatorProps> = ({
       setMemory(0);
       setLastOperation(null);
       setLastOperand(null);
-      setOriginalOperand(null); // Reset the original operand
+      setOriginalOperand(null);
       setIsNewNumber(true);
     } else if (input === 'CE') {
       setCalculatorValue('0');
@@ -142,86 +148,78 @@ const MiniCalculator: React.FC<MiniCalculatorProps> = ({
         setIsNewNumber(true);
       }
     } else if (['+', '-', '*', '/'].includes(input)) {
-      // Handle operator input - prevent multiple operators from chaining calculations
-      // Check if the last character is already an operator
-      const lastChar = calculatorValue.slice(-1);
-      if (['+', '-', '*', '/'].includes(lastChar)) {
-        // Replace the last operator with the new one
+      // Handle operator input with standard calculator logic
+      if (lastOperation && lastOperand !== null && !isNewNumber) {
+        // Complete the previous operation first
+        const currentNumber = parseFloat(calculatorValue);
+        if (!isNaN(currentNumber)) {
+          const result = performOperation(lastOperand, currentNumber, lastOperation);
+          setCalculatorValue(result.toString());
+          setLastOperand(result);
+        }
+      } else if (lastOperation && lastOperand !== null && isNewNumber) {
+        // User pressed operator after operator, just change the operation
+        // Keep the last operand, just update the operation
+        // Remove the last character (previous operator) and add the new one
         setCalculatorValue(calculatorValue.slice(0, -1) + input);
       } else {
-        // Only append operator if we're not starting a new number
-        if (!isNewNumber) {
-          // Store the current number as last operand
-          const currentNumber = parseFloat(calculatorValue.split(/[\+\-\*\/]/).pop() || '0');
+        // First operation, store the current number
+        const currentNumber = parseFloat(calculatorValue);
+        if (!isNaN(currentNumber)) {
           setLastOperand(currentNumber);
-          setOriginalOperand(currentNumber); // Store the original operand for continuous operations
-          setCalculatorValue(calculatorValue + input);
-        } else if (lastOperation && lastOperand !== null) {
-          // If we already have a last operation and operand, replace the operator
-          setCalculatorValue(lastOperand.toString() + input);
-        } else {
-          // If we're starting fresh with an operator, just append it to "0"
-          setCalculatorValue('0' + input);
+          setOriginalOperand(currentNumber);
         }
+      }
+      
+      // If we haven't already updated the display, do it now
+      if (!(lastOperation && lastOperand !== null && isNewNumber)) {
+        setCalculatorValue(calculatorValue + input);
       }
       setLastOperation(input);
       setIsNewNumber(true);
     } else if (input === '=') {
       if (lastOperation && lastOperand !== null) {
-        // Extract the second operand from the display
-        const parts = calculatorValue.split(/[\+\-\*\/]/);
-        if (parts.length >= 2) {
-          const secondOperand = parseFloat(parts[parts.length - 1]);
-          // Check if the second operand is a valid number
+        // Extract the second operand correctly
+        // Find the position of the last operator
+        let lastOpIndex = -1;
+        for (let i = calculatorValue.length - 1; i >= 0; i--) {
+          if (['+', '-', '*', '/'].includes(calculatorValue[i])) {
+            lastOpIndex = i;
+            break;
+          }
+        }
+        
+        if (lastOpIndex !== -1) {
+          // Normal case: we have an operator in the expression
+          const secondOperandStr = calculatorValue.substring(lastOpIndex + 1);
+          const secondOperand = parseFloat(secondOperandStr);
+          
           if (!isNaN(secondOperand)) {
             const result = performOperation(lastOperand, secondOperand, lastOperation);
             setCalculatorValue(result.toString());
-            
-            // For continuous equals operations, update lastOperand to the result
-            // This allows 2+==== to keep adding 2, 2x==== to keep multiplying by 2, etc.
             setLastOperand(result);
-            
-            setIsNewNumber(true);
-          } else {
-            // If there's no valid second operand, repeat the last operation with the original operand
-            // For "2+====", we want to keep adding 2 each time (2, 4, 6, 8, ...)
-            // For "2x====", we want to keep multiplying by 2 each time (2, 4, 8, 16, ...)
-            // Use the original operand for continuous operations
-            if (originalOperand !== null) {
-              const result = performOperation(lastOperand, originalOperand, lastOperation);
-              setCalculatorValue(result.toString());
-              setLastOperand(result);
-            } else {
-              // Fallback to the previous behavior if originalOperand is not set
-              const result = performOperation(lastOperand, lastOperand, lastOperation);
-              setCalculatorValue(result.toString());
-              setLastOperand(result);
-            }
             setIsNewNumber(true);
           }
         } else {
-          // If there's no second operand, repeat the last operation with the original operand
-          // For "2+====", we want to keep adding 2 each time (2, 4, 6, 8, ...)
-          // For "2x====", we want to keep multiplying by 2 each time (2, 4, 8, 16, ...)
-          // Use the original operand for continuous operations
-          if (originalOperand !== null) {
-            const result = performOperation(lastOperand, originalOperand, lastOperation);
+          // Special case: no operator found, which means we're completing a previous operation
+          // This happens when calculatorValue is just a number like "2" after pressing "="
+          // We need to repeat the last operation with the last operand and current number
+          const currentNumber = parseFloat(calculatorValue);
+          if (!isNaN(currentNumber)) {
+            const result = performOperation(lastOperand, currentNumber, lastOperation);
             setCalculatorValue(result.toString());
             setLastOperand(result);
-          } else {
-            // Fallback to the previous behavior if originalOperand is not set
-            const result = performOperation(lastOperand, lastOperand, lastOperation);
-            setCalculatorValue(result.toString());
-            setLastOperand(result);
+            setIsNewNumber(true);
           }
-          setIsNewNumber(true);
         }
       }
     } else if (input === 'M+') {
-      const currentValue = parseFloat(calculatorValue.split(/[\+\-\*\/]/).pop() || '0');
-      setMemory(memory + currentValue);
+      const currentValue = parseFloat(calculatorValue);
+      if (!isNaN(currentValue)) {
+        setMemory(memory + currentValue);
+      }
     } else if (input === 'MR') {
-      setCalculatorValue(calculatorValue === '0' ? memory.toString() : calculatorValue + memory.toString());
+      setCalculatorValue(memory.toString());
       setIsNewNumber(true);
     } else if (input === 'MC') {
       setMemory(0);
