@@ -1392,11 +1392,11 @@ const CreditManagement: React.FC = () => {
                     }
                     
                     // Parse bouteilles
-                    const bouteillePattern = /(\d+)\s+(?:(\d+(?:\.\d+)?L)\s+)?bouteilles?(?:\s+([^,]*))?/gi;
+                    const bouteillePattern = /(\d+)\s+(?:(\d+(?:\.\d+)?[Ll])\s+)?bouteilles?(?:\s+([^,]*))?/gi;
                     let bouteilleMatch;
                     while ((bouteilleMatch = bouteillePattern.exec(description)) !== null) {
                       const quantity = parseInt(bouteilleMatch[1]);
-                      const size = bouteilleMatch[2]?.trim() || '';
+                      const size = bouteilleMatch[2]?.trim().replace(/l$/gi, 'L') || '';
                       const brand = bouteilleMatch[3]?.trim() || '';
                       
                       let key;
@@ -1414,17 +1414,17 @@ const CreditManagement: React.FC = () => {
                     
                     // Handle items without explicit numbers
                     if (description.includes('bouteille') && !bouteillePattern.test(description)) {
-                      const sizeMatch = description.match(/(\d+(?:\.\d+)?L)/i);
+                      const sizeMatch = description.match(/(\d+(?:\.\d+)?[Ll])/i);
                       const brandMatch = description.match(/bouteilles?\s+([^,]*)/i);
                       const brand = brandMatch?.[1]?.trim() || '';
                       
                       let key;
                       if (sizeMatch && brand) {
-                        key = `${sizeMatch[1]} ${brand}`;
+                        key = `${sizeMatch[1].replace(/l$/gi, 'L')} ${brand}`;
                       } else if (brand) {
                         key = `Bouteille ${brand}`;
                       } else if (sizeMatch) {
-                        key = `${sizeMatch[1]} Bouteille`;
+                        key = `${sizeMatch[1].replace(/l$/gi, 'L')} Bouteille`;
                       } else {
                         key = 'Bouteille';
                       }
@@ -1479,7 +1479,18 @@ const CreditManagement: React.FC = () => {
                         const titleCaseBrand = brand ? brand.split(' ').map(word => 
                           word.charAt(0).toUpperCase() + word.slice(1).toLowerCase()
                         ).join(' ') : '';
-                        if (titleCaseBrand) {
+                        // Check if this is a sized bottle (like "1.5L Green")
+                        const sizeMatch = itemType.match(/(\d+(?:\.\d+)?[Ll])/i);
+                        if (sizeMatch) {
+                          // For sized bottles, ensure size is properly formatted with uppercase L
+                          const formattedSize = sizeMatch[1].replace(/l$/gi, 'L');
+                          const itemTypeWithoutSize = itemType.replace(sizeMatch[1], '').replace('Bouteille', '').trim();
+                          if (itemTypeWithoutSize) {
+                            displayText = `${remaining} ${formattedSize} Bouteille${remaining > 1 ? 's' : ''} ${titleCaseBrand || itemTypeWithoutSize}`;
+                          } else {
+                            displayText = `${remaining} ${formattedSize} Bouteille${remaining > 1 ? 's' : ''}`;
+                          }
+                        } else if (titleCaseBrand) {
                           displayText = `${remaining} Bouteille${remaining > 1 ? 's' : ''} ${titleCaseBrand}`;
                         } else {
                           displayText = `${remaining} Bouteille${remaining > 1 ? 's' : ''}`;
@@ -1533,14 +1544,28 @@ const CreditManagement: React.FC = () => {
                       </div>
                     )}
                     
-                    {/* Simplified Returnables Section - show if client has returnables or current transaction has returnables */}
+                    {/* Returnables Section - show if client has returnables or current transaction has returnables */}
                     {(hasReturnables || transactionHasReturnables) && (
                       <div className="mb-3">
-                        {/* Show returnables without calculation or arrows */}
-                        <div className="bg-orange-100 border border-orange-300 rounded-lg p-3 mb-2">
-                          <p className="text-orange-800 font-medium text-sm mb-1">Total Returnables:</p>
-                          <p className="text-orange-700 text-sm">{returnableItems.join(', ')}</p>
-                        </div>
+                       {/* Arrow pointing to returnables - show if we have amount OR debt OR just added returnables */}
+                       {(hasAmount || hasDebt || transactionHasReturnables) && (
+                          <div className="flex items-center justify-center gap-2 mb-2">
+                            <div className="bg-orange-500 text-white px-3 py-1 rounded-lg text-sm font-medium max-w-xs">
+                              {duplicateCard.message?.toLowerCase().includes('returned') ? 'Still to return:' : 'Returnables:'} {returnableItems.join(', ')}
+                            </div>
+                            <div className="animate-bounce-horizontal text-orange-600">
+                              <ArrowLeft size={24} />
+                            </div>
+                          </div>
+                        )}
+                        
+                       {/* Show returnables without arrow if no amount AND no debt AND not adding returnables */}
+                       {!hasAmount && !hasDebt && !transactionHasReturnables && (
+                          <div className="bg-orange-100 border border-orange-300 rounded-lg p-3 mb-2">
+                            <p className="text-orange-800 font-medium text-sm mb-1">Total Returnables:</p>
+                            <p className="text-orange-700 text-sm">{returnableItems.join(', ')}</p>
+                          </div>
+                        )}
                       </div>
                     )}
                   </div>
