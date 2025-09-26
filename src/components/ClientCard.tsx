@@ -86,7 +86,7 @@ const ClientCard: React.FC<ClientCardProps> = ({ client, onLongPress, onQuickAdd
       
       while ((bouteilleMatch = bouteillePattern.exec(description)) !== null) {
         const quantity = parseInt(bouteilleMatch[1]);
-        const size = bouteilleMatch[2]?.trim().replace(/l$/i, 'L') || '';
+        const size = bouteilleMatch[2]?.trim().replace(/l$/gi, 'L') || '';
         const brand = bouteilleMatch[3]?.trim() || '';
         
         // Capitalize brand name properly
@@ -124,11 +124,11 @@ const ClientCard: React.FC<ClientCardProps> = ({ client, onLongPress, onQuickAdd
         
         let key;
         if (sizeMatch && capitalizedBrand) {
-          key = `${sizeMatch[1].replace(/l$/i, 'L')} ${capitalizedBrand}`;
+          key = `${sizeMatch[1].replace(/l$/gi, 'L')} ${capitalizedBrand}`;
         } else if (capitalizedBrand) {
           key = `Bouteille ${capitalizedBrand}`;
         } else if (sizeMatch) {
-          key = `${sizeMatch[1].replace(/l$/i, 'L')} Bouteille`;
+          key = `${sizeMatch[1].replace(/l$/gi, 'L')} Bouteille`;
         } else {
           key = 'Bouteille';
         }
@@ -255,10 +255,18 @@ const ClientCard: React.FC<ClientCardProps> = ({ client, onLongPress, onQuickAdd
           }
         } else if (itemType.includes('Bouteille')) {
           // For Bouteille items: check if it has a size (like "1.5L Green")
-          const sizeMatch = itemType.match(/(\d+(?:\.\d+)?L)/i);
+          const sizeMatch = itemType.match(/(\d+(?:\.\d+)?[Ll])/i);
           if (sizeMatch) {
-            // For sized bottles like "1.5L Green" -> "3 (1.5L Green)"
-            displayText = `${remaining} (${itemType})`;
+            // For sized bottles, ensure size is properly formatted with uppercase L
+            const formattedSize = sizeMatch[1].replace(/l$/gi, 'L');
+            const itemTypeWithoutSize = itemType.replace(sizeMatch[1], '').replace('Bouteille', '').trim();
+            if (itemTypeWithoutSize) {
+              // Format as "3 1.5L Bouteilles Green"
+              displayText = `${remaining} ${formattedSize} Bouteille${remaining > 1 ? 's' : ''} ${itemTypeWithoutSize}`;
+            } else {
+              // Format as "3 1.5L Bouteilles"
+              displayText = `${remaining} ${formattedSize} Bouteille${remaining > 1 ? 's' : ''}`;
+            }
           } else {
             // For regular bottles: "3 Bouteilles Green" (with proper pluralization)
             const brand = itemType.replace('Bouteille', '').trim();
