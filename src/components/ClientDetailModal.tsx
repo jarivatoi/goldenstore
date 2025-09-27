@@ -77,8 +77,12 @@ const ClientDetailModal: React.FC<ClientDetailModalProps> = ({ client, onClose, 
       while ((chopineMatch = chopinePattern.exec(description)) !== null) {
         const quantity = parseInt(chopineMatch[1]);
         const brand = chopineMatch[2]?.trim() || '';
+        // Capitalize brand name properly
+        const capitalizedBrand = brand ? brand.split(' ').map(word => 
+          word.charAt(0).toUpperCase() + word.slice(1).toLowerCase()
+        ).join(' ') : '';
         // Create more precise key for generic vs branded chopines
-        const key = brand ? `Chopine ${brand}` : 'Chopine';
+        const key = capitalizedBrand ? `Chopine ${capitalizedBrand}` : 'Chopine';
         
         if (!returnableItems[key]) {
           returnableItems[key] = 0;
@@ -93,15 +97,20 @@ const ClientDetailModal: React.FC<ClientDetailModalProps> = ({ client, onClose, 
       
       while ((bouteilleMatch = bouteillePattern.exec(description)) !== null) {
         const quantity = parseInt(bouteilleMatch[1]);
-        const size = bouteilleMatch[2]?.trim().toUpperCase() || '';
+        const size = bouteilleMatch[2]?.trim().replace(/l$/gi, 'L') || '';
         const brand = bouteilleMatch[3]?.trim() || '';
+        
+        // Capitalize brand name properly
+        const capitalizedBrand = brand ? brand.split(' ').map(word => 
+          word.charAt(0).toUpperCase() + word.slice(1).toLowerCase()
+        ).join(' ') : '';
         
         // Format the key based on what we found
         let key;
-        if (size && brand) {
-          key = `${size} ${brand}`;
-        } else if (brand) {
-          key = `Bouteille ${brand}`;
+        if (size && capitalizedBrand) {
+          key = `${size} ${capitalizedBrand}`;
+        } else if (capitalizedBrand) {
+          key = `Bouteille ${capitalizedBrand}`;
         } else if (size) {
           key = `${size} Bouteille`;
         } else {
