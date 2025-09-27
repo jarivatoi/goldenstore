@@ -451,7 +451,16 @@ const ClientCard: React.FC<ClientCardProps> = ({ client, onLongPress, onQuickAdd
             <User size={18} className="text-blue-600 sm:w-5 sm:h-5" />
           </div>
           <div className="flex-1 text-center min-w-0">
-            <h3 className="font-semibold text-gray-800 text-sm sm:text-base">{client.name}</h3>
+            <h3 className="font-semibold text-gray-800 text-sm sm:text-base">
+              <ScrollingText 
+                className="font-semibold text-gray-800 text-sm sm:text-base"
+                pauseDuration={1}
+                scrollDuration={3}
+                easing="power1.inOut"
+              >
+                {client.name}
+              </ScrollingText>
+            </h3>
             <p className="text-xs sm:text-sm text-gray-500">ID: {client.id}</p>
           </div>
           <div className="w-10 flex-shrink-0"></div>
