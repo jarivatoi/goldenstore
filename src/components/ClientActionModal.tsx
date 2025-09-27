@@ -201,13 +201,18 @@ const ClientActionModal: React.FC<ClientActionModalProps> = ({ client, onClose, 
       while ((chopineMatch = chopinePattern.exec(description)) !== null) {
         const quantity = parseInt(chopineMatch[1]);
         const brand = chopineMatch[2]?.trim() || '';
-        const key = brand ? `Chopine ${brand}` : 'Chopine';
+        // Capitalize brand name properly
+        const capitalizedBrand = brand ? brand.split(' ').map(word => 
+          word.charAt(0).toUpperCase() + word.slice(1).toLowerCase()
+        ).join(' ') : '';
+        const key = capitalizedBrand ? `Chopine ${capitalizedBrand}` : 'Chopine';
         
-       // Skip if we've already processed this item type for this transaction
-       if (transactionItemTypes.has(key)) {
-         continue;
-       }
-       transactionItemTypes.add(key);
+        // Remove the duplicate item type check to allow multiple occurrences
+        // of the same item type within a single transaction description
+        // if (transactionItemTypes.has(key)) {
+        //   continue;
+        // }
+        // transactionItemTypes.add(key);
         
         if (!returnableItems[key]) {
           returnableItems[key] = { total: 0, transactions: [] };
@@ -227,26 +232,32 @@ const ClientActionModal: React.FC<ClientActionModalProps> = ({ client, onClose, 
 
       while ((bouteilleMatch = bouteillePattern.exec(description)) !== null) {
         const quantity = parseInt(bouteilleMatch[1]);
-        const size = bouteilleMatch[2]?.trim().toUpperCase() || '';
+        const size = bouteilleMatch[2]?.trim().replace(/l$/gi, 'L') || '';
         const brand = bouteilleMatch[3]?.trim() || '';
+        
+        // Capitalize brand name properly
+        const capitalizedBrand = brand ? brand.split(' ').map(word => 
+          word.charAt(0).toUpperCase() + word.slice(1).toLowerCase()
+        ).join(' ') : '';
         
         // Format the key based on what we found
         let key;
-        if (size && brand) {
-          key = `${size} ${brand}`;
-        } else if (brand) {
-          key = `Bouteille ${brand}`;
+        if (size && capitalizedBrand) {
+          key = `${size} ${capitalizedBrand}`;
+        } else if (capitalizedBrand) {
+          key = `Bouteille ${capitalizedBrand}`;
         } else if (size) {
           key = `${size} Bouteille`;
         } else {
           key = 'Bouteille';
         }
         
-       // Skip if we've already processed this item type for this transaction
-       if (transactionItemTypes.has(key)) {
-         continue;
-       }
-       transactionItemTypes.add(key);
+        // Remove the duplicate item type check to allow multiple occurrences
+        // of the same item type within a single transaction description
+        // if (transactionItemTypes.has(key)) {
+        //   continue;
+        // }
+        // transactionItemTypes.add(key);
         
         if (!returnableItems[key]) {
           returnableItems[key] = { total: 0, transactions: [] };
@@ -259,59 +270,106 @@ const ClientActionModal: React.FC<ClientActionModalProps> = ({ client, onClose, 
         hasMatched = true;
       }
       
-      // Handle items without explicit numbers (assume quantity 1) - only if no pattern matched
-      if (!hasMatched && description.includes('bouteille')) {
-        const sizeMatch = description.match(/(\d+(?:\.\d+)?[Ll])/i);
-        const brandMatch = description.match(/bouteilles?\s+([^,]*)/i);
-        const brand = brandMatch?.[1]?.trim() || '';
-        
-        let key;
-        if (sizeMatch && brand) {
-          key = `${sizeMatch[1].replace(/l$/i, 'L').toUpperCase()} ${brand}`;
-        } else if (brand) {
-          key = `Bouteille ${brand}`;
-        } else if (sizeMatch) {
-          key = `${sizeMatch[1].replace(/l$/i, 'L').toUpperCase()} Bouteille`;
-        } else {
-          key = 'Bouteille';
+      // Handle items without explicit numbers (assume quantity 1)
+      // For multiple items in a single description, we need to count all occurrences
+      if (description.includes('bouteille')) {
+        // Find all pattern matches first
+        const bouteilleMatches: RegExpExecArray[] = [];
+        let bouteilleMatch: RegExpExecArray | null;
+        const tempBouteillePattern = /(\d+)\s+(?:(\d+(?:\.\d+)?[Ll])\s+)?bouteilles?(?:\s+([^,\(\)]*))?/gi;
+        while ((bouteilleMatch = tempBouteillePattern.exec(description)) !== null) {
+          bouteilleMatches.push(bouteilleMatch);
         }
         
-       // Skip if we've already processed this item type for this transaction
-       if (transactionItemTypes.has(key)) {
-         return; // Skip this transaction entirely
-       }
-       transactionItemTypes.add(key);
-        
-        if (!returnableItems[key]) {
-          returnableItems[key] = { total: 0, transactions: [] };
+        // Count standalone 'bouteille' occurrences
+        const standaloneBouteillePattern = /\bbouteilles?\b/gi;
+        let standaloneMatch: RegExpExecArray | null;
+        while ((standaloneMatch = standaloneBouteillePattern.exec(description)) !== null) {
+          // Check if this match is part of a pattern match
+          const isPartOfPattern = bouteilleMatches.some(match => 
+            standaloneMatch!.index >= match.index && 
+            standaloneMatch!.index < match.index + match[0].length
+          );
+          
+          if (!isPartOfPattern) {
+            const sizeMatch = description.substring(0, standaloneMatch.index).match(/(\d+(?:\.\d+)?[Ll])$/i);
+            const brandMatch = description.substring(standaloneMatch.index).match(/^bouteilles?\s+([^,]*)/i);
+            const brand = brandMatch?.[1]?.trim() || '';
+            
+            // Capitalize brand name properly
+            const capitalizedBrand = brand ? brand.split(' ').map(word => 
+              word.charAt(0).toUpperCase() + word.slice(1).toLowerCase()
+            ).join(' ') : '';
+            
+            let key;
+            if (sizeMatch && capitalizedBrand) {
+              key = `${sizeMatch[1].replace(/l$/gi, 'L')} ${capitalizedBrand}`;
+            } else if (capitalizedBrand) {
+              key = `Bouteille ${capitalizedBrand}`;
+            } else if (sizeMatch) {
+              key = `${sizeMatch[1].replace(/l$/gi, 'L')} Bouteille`;
+            } else {
+              key = 'Bouteille';
+            }
+            
+            // Remove the duplicate item type check to allow multiple occurrences
+            // of the same item type within a single transaction description
+            if (!returnableItems[key]) {
+              returnableItems[key] = { total: 0, transactions: [] };
+            }
+            returnableItems[key].total += 1;
+            returnableItems[key].transactions.push({
+              ...transaction,
+              quantity: 1
+            });
+            hasMatched = true;
+          }
         }
-        returnableItems[key].total += 1;
-        returnableItems[key].transactions.push({
-          ...transaction,
-          quantity: 1
-        });
-        hasMatched = true;
       }
       
-      if (!hasMatched && description.includes('chopine')) {
-        const brandMatch = description.match(/chopines?\s+([^,]*)/i);
-        const brand = brandMatch?.[1]?.trim() || '';
-        const key = brand ? `Chopine ${brand}` : 'Chopine';
-        
-       // Skip if we've already processed this item type for this transaction
-       if (transactionItemTypes.has(key)) {
-         return; // Skip this transaction entirely
-       }
-       transactionItemTypes.add(key);
-        
-        if (!returnableItems[key]) {
-          returnableItems[key] = { total: 0, transactions: [] };
+      if (description.includes('chopine')) {
+        // Find all pattern matches first
+        const chopineMatches: RegExpExecArray[] = [];
+        let chopineMatch: RegExpExecArray | null;
+        const tempChopinePattern = /(\d+)\s+chopines?(?:\s+([^,]*))?/gi;
+        while ((chopineMatch = tempChopinePattern.exec(description)) !== null) {
+          chopineMatches.push(chopineMatch);
         }
-        returnableItems[key].total += 1;
-        returnableItems[key].transactions.push({
-          ...transaction,
-          quantity: 1
-        });
+        
+        // Count standalone 'chopine' occurrences
+        const standaloneChopinePattern = /\bchopines?\b/gi;
+        let standaloneMatch: RegExpExecArray | null;
+        while ((standaloneMatch = standaloneChopinePattern.exec(description)) !== null) {
+          // Check if this match is part of a pattern match
+          const isPartOfPattern = chopineMatches.some(match => 
+            standaloneMatch!.index >= match.index && 
+            standaloneMatch!.index < match.index + match[0].length
+          );
+          
+          if (!isPartOfPattern) {
+            const brandMatch = description.substring(standaloneMatch.index).match(/^chopines?\s+([^,]*)/i);
+            const brand = brandMatch?.[1]?.trim() || '';
+            
+            // Capitalize brand name properly
+            const capitalizedBrand = brand ? brand.split(' ').map(word => 
+              word.charAt(0).toUpperCase() + word.slice(1).toLowerCase()
+            ).join(' ') : '';
+            
+            const key = capitalizedBrand ? `Chopine ${capitalizedBrand}` : 'Chopine';
+            
+            // Remove the duplicate item type check to allow multiple occurrences
+            // of the same item type within a single transaction description
+            if (!returnableItems[key]) {
+              returnableItems[key] = { total: 0, transactions: [] };
+            }
+            returnableItems[key].total += 1;
+            returnableItems[key].transactions.push({
+              ...transaction,
+              quantity: 1
+            });
+            hasMatched = true;
+          }
+        }
       }
      
      // Mark transaction as processed only after all patterns have been checked
@@ -396,9 +454,7 @@ const processItemReturn = async (itemType: string, returnQuantity: number) => {
       .reduce((total, transaction) => {
         const description = transaction.description.toLowerCase();
         // Use more precise matching to avoid substring conflicts
-        // For branded items like "Chopine Vin", match the exact pattern
         if (itemType.includes('Chopine')) {
-          // For Chopine items, be more specific about matching
           if (itemType === 'Chopine') {
             // For generic Chopine, match "Returned: X Chopine" but not "Chopine Brand"
             const genericChopinePattern = /returned:\s*(\d+)\s+chopines?(?!\s+\w)/i;
@@ -415,7 +471,7 @@ const processItemReturn = async (itemType: string, returnQuantity: number) => {
             }
           }
         } else {
-          // For other items, use the original logic but with word boundaries
+          // For other items, use word boundary matching
           const escapedItemType = itemType.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
           const pattern = new RegExp(`returned:\\s*(\\d+)\\s+${escapedItemType}`, 'i');
           const match = description.match(pattern);
@@ -760,15 +816,95 @@ const processItemReturn = async (itemType: string, returnQuantity: number) => {
                           }, []);
                           
                           // Only show transactions if there are still unreturned items
-                          const relevantTransactions = availableItems[itemType] && availableItems[itemType].total > 0 
-                            ? uniqueTransactions.slice(-2) // Show last 2 unique transactions
-                            : [];
+                          // Filter to only show recent transactions (not past ones)
+                          const now = new Date();
+                          const relevantTransactions = uniqueTransactions
+                            .filter(transaction => {
+                              // Only show transactions from today or in the future
+                              const transactionDate = new Date(transaction.date);
+                              const today = new Date(now.getFullYear(), now.getMonth(), now.getDate());
+                              return transactionDate >= today;
+                            })
+                            .slice(-2); // Show last 2 recent transactions
                           
                           return relevantTransactions.map((transaction, index) => {
+                            // Calculate the actual count of this item type in this transaction
+                            let itemCount = 0;
+                            const description = transaction.description.toLowerCase();
+                            
+                            if (itemType.includes('Chopine')) {
+                              const brand = itemType.replace('Chopine', '').trim();
+                              if (brand) {
+                                // For branded chopine, count occurrences of "chopine brand"
+                                const brandPattern = new RegExp(`chopines?\\s+${brand.toLowerCase()}`, 'gi');
+                                const brandMatches = description.match(brandPattern);
+                                itemCount = brandMatches ? brandMatches.length : 0;
+                              } else {
+                                // For generic chopine, count standalone "chopine" occurrences
+                                // that are not part of pattern matches like "2 chopine"
+                                const chopinePattern = /(\d+)\s+chopines?(?:\s+([^,]*))?/gi;
+                                const chopineMatches: RegExpExecArray[] = [];
+                                let chopineMatch: RegExpExecArray | null;
+                                while ((chopineMatch = chopinePattern.exec(description)) !== null) {
+                                  chopineMatches.push(chopineMatch);
+                                }
+                                
+                                const standaloneChopinePattern = /\bchopines?\b/gi;
+                                let standaloneMatch: RegExpExecArray | null;
+                                while ((standaloneMatch = standaloneChopinePattern.exec(description)) !== null) {
+                                  const isPartOfPattern = chopineMatches.some(match => 
+                                    standaloneMatch!.index >= match.index && 
+                                    standaloneMatch!.index < match.index + match[0].length
+                                  );
+                                  
+                                  if (!isPartOfPattern) {
+                                    itemCount++;
+                                  }
+                                }
+                              }
+                            } else {
+                              // For bouteille and other items
+                              const itemTypeLower = itemType.toLowerCase();
+                              if (itemTypeLower.includes('bouteille')) {
+                                const brand = itemType.replace(/.*bouteille/i, '').trim();
+                                if (brand) {
+                                  // For branded bouteille, count occurrences
+                                  const brandPattern = new RegExp(`bouteilles?\\s+${brand.toLowerCase()}`, 'gi');
+                                  const brandMatches = description.match(brandPattern);
+                                  itemCount = brandMatches ? brandMatches.length : 0;
+                                } else {
+                                  // For generic bouteille, count standalone "bouteille" occurrences
+                                  // that are not part of pattern matches like "2 bouteille"
+                                  const bouteillePattern = /(\d+)\s+(?:(\d+(?:\.\d+)?[Ll])\s+)?bouteilles?(?:\s+([^,\(\)]*))?/gi;
+                                  const bouteilleMatches: RegExpExecArray[] = [];
+                                  let bouteilleMatch: RegExpExecArray | null;
+                                  while ((bouteilleMatch = bouteillePattern.exec(description)) !== null) {
+                                    bouteilleMatches.push(bouteilleMatch);
+                                  }
+                                  
+                                  const standaloneBouteillePattern = /\bbouteilles?\b/gi;
+                                  let standaloneMatch: RegExpExecArray | null;
+                                  while ((standaloneMatch = standaloneBouteillePattern.exec(description)) !== null) {
+                                    const isPartOfPattern = bouteilleMatches.some(match => 
+                                      standaloneMatch!.index >= match.index && 
+                                      standaloneMatch!.index < match.index + match[0].length
+                                    );
+                                    
+                                    if (!isPartOfPattern) {
+                                      itemCount++;
+                                    }
+                                  }
+                                }
+                              } else {
+                                // For other item types, use the stored quantity
+                                itemCount = transaction.quantity;
+                              }
+                            }
+                          
                           return (
                             <p key={index} className="truncate">
                               • <ScrollingText 
-                                text={`${transaction.description} (${transaction.quantity} ${itemType}) - ${transaction.date.toLocaleDateString('en-GB', {
+                                text={`${transaction.description} (${itemCount} ${itemType}${itemCount > 1 ? 's' : ''}) - ${transaction.date.toLocaleDateString('en-GB', {
                                 day: '2-digit',
                                 month: '2-digit',
                                 year: 'numeric'
