@@ -1387,55 +1387,133 @@ const CreditManagement: React.FC = () => {
                     while ((chopineMatch = chopinePattern.exec(description)) !== null) {
                       const quantity = parseInt(chopineMatch[1]);
                       const brand = chopineMatch[2]?.trim() || '';
-                      const key = brand ? `Chopine ${brand}` : 'Chopine';
-                      returnableItems[key] = (returnableItems[key] || 0) + quantity;
+                      // Capitalize brand name properly
+                      const capitalizedBrand = brand ? brand.split(' ').map(word => 
+                        word.charAt(0).toUpperCase() + word.slice(1).toLowerCase()
+                      ).join(' ') : '';
+                      const key = capitalizedBrand ? `Chopine ${capitalizedBrand}` : 'Chopine';
+                      
+                      if (!returnableItems[key]) {
+                        returnableItems[key] = 0;
+                      }
+                      returnableItems[key] += quantity;
                     }
                     
                     // Parse bouteilles
-                    const bouteillePattern = /(\d+)\s+(?:(\d+(?:\.\d+)?[Ll])\s+)?bouteilles?(?:\s+([^,]*))?/gi;
+                    const bouteillePattern = /(\d+)\s+(?:(\d+(?:\.\d+)?[Ll])\s+)?bouteilles?(?:\s+([^,\(\)]*))?/gi;
                     let bouteilleMatch;
                     while ((bouteilleMatch = bouteillePattern.exec(description)) !== null) {
                       const quantity = parseInt(bouteilleMatch[1]);
                       const size = bouteilleMatch[2]?.trim().replace(/l$/gi, 'L') || '';
                       const brand = bouteilleMatch[3]?.trim() || '';
                       
+                      // Capitalize brand name properly
+                      const capitalizedBrand = brand ? brand.split(' ').map(word => 
+                        word.charAt(0).toUpperCase() + word.slice(1).toLowerCase()
+                      ).join(' ') : '';
+                      
                       let key;
-                      if (size && brand) {
-                        key = `${size} ${brand}`;
-                      } else if (brand) {
-                        key = `Bouteille ${brand}`;
+                      if (size && capitalizedBrand) {
+                        key = `${size} ${capitalizedBrand}`;
+                      } else if (capitalizedBrand) {
+                        key = `Bouteille ${capitalizedBrand}`;
                       } else if (size) {
                         key = `${size} Bouteille`;
                       } else {
                         key = 'Bouteille';
                       }
-                      returnableItems[key] = (returnableItems[key] || 0) + quantity;
-                    }
-                    
-                    // Handle items without explicit numbers
-                    if (description.includes('bouteille') && !bouteillePattern.test(description)) {
-                      const sizeMatch = description.match(/(\d+(?:\.\d+)?[Ll])/i);
-                      const brandMatch = description.match(/bouteilles?\s+([^,]*)/i);
-                      const brand = brandMatch?.[1]?.trim() || '';
                       
-                      let key;
-                      if (sizeMatch && brand) {
-                        key = `${sizeMatch[1].replace(/l$/gi, 'L')} ${brand}`;
-                      } else if (brand) {
-                        key = `Bouteille ${brand}`;
-                      } else if (sizeMatch) {
-                        key = `${sizeMatch[1].replace(/l$/gi, 'L')} Bouteille`;
-                      } else {
-                        key = 'Bouteille';
+                      if (!returnableItems[key]) {
+                        returnableItems[key] = 0;
                       }
-                      returnableItems[key] = (returnableItems[key] || 0) + 1;
+                      returnableItems[key] += quantity;
                     }
                     
-                    if (description.includes('chopine') && !chopinePattern.test(description)) {
-                      const brandMatch = description.match(/chopines?\s+([^,]*)/i);
-                      const brand = brandMatch?.[1]?.trim() || '';
-                      const key = brand ? `Chopine ${brand}` : 'Chopine';
-                      returnableItems[key] = (returnableItems[key] || 0) + 1;
+                    // Handle items without explicit numbers (assume quantity 1)
+                    if (description.includes('bouteille')) {
+                      // Find all pattern matches first
+                      const bouteilleMatches: RegExpExecArray[] = [];
+                      let bouteilleMatch: RegExpExecArray | null;
+                      const tempBouteillePattern = /(\d+)\s+(?:(\d+(?:\.\d+)?L)\s+)?bouteilles?(?:\s+([^,]*))?/gi;
+                      while ((bouteilleMatch = tempBouteillePattern.exec(description)) !== null) {
+                        bouteilleMatches.push(bouteilleMatch);
+                      }
+                      
+                      // Count standalone 'bouteille' occurrences
+                      const standaloneBouteillePattern = /\bbouteilles?\b/gi;
+                      let standaloneMatch: RegExpExecArray | null;
+                      while ((standaloneMatch = standaloneBouteillePattern.exec(description)) !== null) {
+                        // Check if this match is part of a pattern match
+                        const isPartOfPattern = bouteilleMatches.some(match => 
+                          standaloneMatch!.index >= match.index && 
+                          standaloneMatch!.index < match.index + match[0].length
+                        );
+                        
+                        if (!isPartOfPattern) {
+                          const sizeMatch = description.substring(0, standaloneMatch.index).match(/(\d+(?:\.\d+)?L)/i);
+                          const brandMatch = description.substring(standaloneMatch.index).match(/bouteilles?\s+([^,]*)/i);
+                          const brand = brandMatch?.[1]?.trim() || '';
+                          
+                          // Capitalize brand name properly
+                          const capitalizedBrand = brand ? brand.split(' ').map((word: string) => 
+                            word.charAt(0).toUpperCase() + word.slice(1).toLowerCase()
+                          ).join(' ') : '';
+                          
+                          let key;
+                          if (sizeMatch && brand) {
+                            key = `${sizeMatch[1].replace(/l$/i, 'L')} ${capitalizedBrand}`;
+                          } else if (brand) {
+                            key = `Bouteille ${capitalizedBrand}`;
+                          } else if (sizeMatch) {
+                            key = `${sizeMatch[1].replace(/l$/i, 'L')} Bouteille`;
+                          } else {
+                            key = 'Bouteille';
+                          }
+                          
+                          if (!returnableItems[key]) {
+                            returnableItems[key] = 0;
+                          }
+                          returnableItems[key] += 1;
+                        }
+                      }
+                    }
+                    
+                    if (description.includes('chopine')) {
+                      // Find all pattern matches first
+                      const chopineMatches: RegExpExecArray[] = [];
+                      let chopineMatch: RegExpExecArray | null;
+                      const tempChopinePattern = /(\d+)\s+chopines?(?:\s+([^,]*))?/gi;
+                      while ((chopineMatch = tempChopinePattern.exec(description)) !== null) {
+                        chopineMatches.push(chopineMatch);
+                      }
+                      
+                      // Count standalone 'chopine' occurrences
+                      const standaloneChopinePattern = /\bchopines?\b/gi;
+                      let standaloneMatch: RegExpExecArray | null;
+                      while ((standaloneMatch = standaloneChopinePattern.exec(description)) !== null) {
+                        // Check if this match is part of a pattern match
+                        const isPartOfPattern = chopineMatches.some(match => 
+                          standaloneMatch!.index >= match.index && 
+                          standaloneMatch!.index < match.index + match[0].length
+                        );
+                        
+                        if (!isPartOfPattern) {
+                          const brandMatch = description.substring(standaloneMatch.index).match(/chopines?\s+([^,]*)/i);
+                          const brand = brandMatch?.[1]?.trim() || '';
+                          
+                          // Capitalize brand name properly
+                          const capitalizedBrand = brand ? brand.split(' ').map((word: string) => 
+                            word.charAt(0).toUpperCase() + word.slice(1).toLowerCase()
+                          ).join(' ') : '';
+                          
+                          const key = capitalizedBrand ? `Chopine ${capitalizedBrand}` : 'Chopine';
+                          
+                          if (!returnableItems[key]) {
+                            returnableItems[key] = 0;
+                          }
+                          returnableItems[key] += 1;
+                        }
+                      }
                     }
                   });
                   
@@ -1455,7 +1533,7 @@ const CreditManagement: React.FC = () => {
                       });
                     });
                   
-                  // Calculate net returnable quantities
+                  // Calculate net returnable quantities - format to match client card display
                   const netReturnableItems: string[] = [];
                   Object.entries(returnableItems).forEach(([itemType, total]) => {
                     const returned = returnedQuantities[itemType] || 0;
