@@ -671,6 +671,12 @@ const CreditManagement: React.FC = () => {
     setIsCalculatorActive(false);
     // Close the client search modal to remove the keypad
     setShowClientSearch(false);
+    // Remove focus from any input fields to dismiss keyboard
+    if (document.activeElement instanceof HTMLElement) {
+      document.activeElement.blur();
+    }
+    // Scroll to top to ensure calculator is visible
+    window.scrollTo({ top: 0, behavior: 'smooth' });
   };
 
   const handleCalculatorCancel = () => {
