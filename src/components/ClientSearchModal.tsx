@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import { createPortal } from 'react-dom';
 import { X, Search, Plus, User, ArrowLeft, ArrowUp } from 'lucide-react';
 import { useCredit } from '../context/CreditContext';
@@ -36,6 +36,7 @@ const ClientSearchModal: React.FC<ClientSearchModalProps> = ({
   const [descriptionHistory, setDescriptionHistory] = useState<string[]>([]);
   const [pendingNumber, setPendingNumber] = useState('');
   const [error, setError] = useState('');
+  const wasOpenedRef = useRef(false); // Track if modal was opened before
 
   // Prevent background scrolling when modal is open
   React.useEffect(() => {
@@ -50,6 +51,9 @@ const ClientSearchModal: React.FC<ClientSearchModalProps> = ({
     document.body.style.position = 'fixed';
     document.body.style.top = `-${scrollY}px`;
     document.body.style.width = '100%';
+    
+    // Mark modal as opened
+    wasOpenedRef.current = true;
     
     return () => {
       // Restore original styles
@@ -72,6 +76,8 @@ const ClientSearchModal: React.FC<ClientSearchModalProps> = ({
     setSearchQuery('');
     setShowAddClient(false);
     setNewClientName(linkedClient?.name || '');
+    // Reset the opened flag
+    wasOpenedRef.current = false;
     // Only reset calculator when X button is pressed, not when going back
     if (onResetCalculator) {
       onResetCalculator();
@@ -83,28 +89,29 @@ const ClientSearchModal: React.FC<ClientSearchModalProps> = ({
   const handleBackClose = () => {
     // Preserve calculator state when back button is pressed
     // Only reset modal-specific state EXCEPT for description which should be preserved
-    // setDescription(''); // Remove this line to preserve description
-    // setDescriptionHistory([]); // Remove this line to preserve description history
     setPendingNumber('');
     setError('');
     setSearchQuery('');
     setShowAddClient(false);
     setNewClientName(linkedClient?.name || '');
-    // DON'T reset calculator - just close modal
+    // DON'T reset calculator or wasOpenedRef - just close modal
     onClose();
   };
 
-  // Reset all state when modal is opened
+  // Reset state when modal is opened for the first time in a session
   React.useEffect(() => {
-    // Only reset description when modal is first opened, not when navigating back
-    // setDescription(''); // Remove this line to preserve description
-    // setDescriptionHistory([]); // Remove this line to preserve description history
-    setPendingNumber('');
-    setError('');
-    setSearchQuery('');
-    setShowAddClient(false);
-    setNewClientName(linkedClient?.name || '');
-  }, [calculatorValue]); // Reset whenever calculatorValue changes (new modal session)
+    // Only reset if this is the first time the modal is opened in this session
+    if (!wasOpenedRef.current) {
+      setDescription('');
+      setDescriptionHistory([]);
+      setPendingNumber('');
+      setError('');
+      setSearchQuery('');
+      setShowAddClient(false);
+      setNewClientName(linkedClient?.name || '');
+      wasOpenedRef.current = true;
+    }
+  }, []); // Empty dependency array means this runs once when component mounts
   
   const filteredClients = searchClients(searchQuery).sort((a, b) => 
     a.name.localeCompare(b.name)
