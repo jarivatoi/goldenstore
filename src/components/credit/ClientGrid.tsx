@@ -149,6 +149,10 @@ const ClientGrid: React.FC<ClientGridProps> = ({
 
   const handleQuickAdd = (client: Client) => {
     onQuickAdd(client);
+    // Remove focus from any input fields to dismiss keyboard
+    if (document.activeElement instanceof HTMLElement) {
+      document.activeElement.blur();
+    }
     // Auto-scroll to top to access calculator
     window.scrollTo({ top: 0, behavior: 'smooth' });
   };
