@@ -199,6 +199,12 @@ const ClientCard: React.FC<ClientCardProps> = ({ client, onLongPress, onQuickAdd
                 e.stopPropagation();
                 if (!isLinked) {
                   onQuickAdd(client);
+                  // Remove focus from any input fields to dismiss keyboard
+                  if (document.activeElement instanceof HTMLElement) {
+                    document.activeElement.blur();
+                  }
+                  // Scroll to top to ensure calculator is visible
+                  window.scrollTo({ top: 0, behavior: 'smooth' });
                 }
               }}
               className={`w-full py-2 px-3 rounded-lg transition-colors flex items-center justify-center gap-2 text-sm font-medium ${
