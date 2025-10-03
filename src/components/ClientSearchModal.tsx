@@ -217,7 +217,7 @@ const ClientSearchModal: React.FC<ClientSearchModalProps> = ({
 
   const modalContent = (
     <div 
-      className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center p-4 z-[9999] select-none"
+      className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center p-4 z-[9999] select-none search-client-modal"
       style={{
         touchAction: 'none', // Prevent any touch actions on overlay
         overscrollBehavior: 'contain' // Prevent overscroll
@@ -432,7 +432,7 @@ const ClientSearchModal: React.FC<ClientSearchModalProps> = ({
                   value={searchQuery}
                   onChange={(e) => setSearchQuery(e.target.value)}
                   placeholder="Search clients by name or ID..."
-                  className="block w-full pl-10 pr-4 py-4 text-xl border-2 border-gray-300 rounded-xl focus:outline-none focus:ring-3 focus:ring-blue-500 focus:border-blue-500 shadow-sm"
+                  className="block w-full pl-10 pr-4 py-4 text-xl border-2 border-gray-300 rounded-xl focus:outline-none focus:ring-3 focus:ring-blue-500 focus:border-blue-500 shadow-sm search-client-input"
                 />
               </div>
               )}
@@ -440,7 +440,16 @@ const ClientSearchModal: React.FC<ClientSearchModalProps> = ({
               {/* Add New Client Button */}
               {!linkedClient && (
               <button
-                onClick={() => setShowAddClient(true)}
+                onClick={() => {
+                  // Remove focus from search input to dismiss keyboard
+                  const searchInput = document.querySelector('.search-client-input');
+                  if (searchInput) {
+                    (searchInput as HTMLInputElement).blur();
+                  }
+                  // Scroll to top to ensure calculator is visible
+                  window.scrollTo({ top: 0, behavior: 'smooth' });
+                  setShowAddClient(true);
+                }}
                 className="w-full flex items-center gap-3 p-3 bg-green-50 hover:bg-green-100 rounded-lg border border-green-200 transition-colors mb-4 select-none"
               >
                 <div className="bg-green-500 p-2 rounded-full select-none">
@@ -483,7 +492,16 @@ const ClientSearchModal: React.FC<ClientSearchModalProps> = ({
                     {filteredClients.map((client) => (
                       <button
                         key={client.id}
-                        onClick={() => handleAddToExistingClient(client)}
+                        onClick={() => {
+                          // Remove focus from search input to dismiss keyboard
+                          const searchInput = document.querySelector('.search-client-input');
+                          if (searchInput) {
+                            (searchInput as HTMLInputElement).blur();
+                          }
+                          // Scroll to top to ensure calculator is visible
+                          window.scrollTo({ top: 0, behavior: 'smooth' });
+                          handleAddToExistingClient(client);
+                        }}
                         disabled={!description.trim()}
                         className="w-full flex items-center gap-3 p-3 bg-gray-50 hover:bg-gray-100 rounded-lg transition-colors text-left disabled:opacity-50 disabled:cursor-not-allowed select-none"
                       >
