@@ -1,0 +1,419 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+body {
+  @apply text-gray-900 bg-gray-50;
+  -webkit-tap-highlight-color: transparent;
+  touch-action: manipulation;
+  /* Basic responsive viewport handling */
+  width: 100%;
+  min-height: 100vh;
+  overflow-x: hidden;
+}
+
+#root {
+  width: 100%;
+  min-height: 100vh;
+  display: flex;
+  flex-direction: column;
+}
+
+/* Basic responsive breakpoints */
+
+/* Mobile Portrait - Natural orientation */
+@media screen and (max-width: 767px) and (orientation: portrait) {
+  body {
+    font-size: 16px;
+  }
+}
+
+/* Mobile Landscape - Natural orientation */
+@media screen and (max-width: 767px) and (orientation: landscape) {
+  body {
+    font-size: 14px;
+  }
+  
+  /* Compact spacing in landscape */
+  .py-4 {
+    padding-top: 0.75rem;
+    padding-bottom: 0.75rem;
+  }
+  
+  .py-3 {
+    padding-top: 0.5rem;
+    padding-bottom: 0.5rem;
+  }
+  
+  /* Increase calculator width in landscape mode */
+  .calculator-container-landscape {
+    width: 30rem !important;
+  }
+  
+  /* Reduce padding for calculator buttons in landscape mode */
+  .calculator-buttons-grid button {
+    @apply p-1.5 sm:p-2;
+  }
+}
+
+/* Tablet Portrait */
+@media screen and (min-width: 768px) and (max-width: 1023px) and (orientation: portrait) {
+  body {
+    font-size: 18px;
+  }
+  
+  .container {
+    max-width: 600px;
+    margin: 0 auto;
+  }
+}
+
+/* Tablet Landscape */
+@media screen and (min-width: 768px) and (max-width: 1023px) and (orientation: landscape) {
+  /* Optimized for tablet landscape mode */
+  body {
+    font-size: 16px;
+  }
+  
+  .container {
+    max-width: 1200px;
+    margin: 0 auto;
+  }
+  
+  /* Tablet landscape layout optimizations */
+  .tablet-landscape-grid {
+    display: grid;
+    grid-template-columns: 1fr 400px;
+    gap: 2rem;
+  }
+  
+  /* Increase calculator width in tablet landscape mode */
+  .calculator-container-landscape {
+    width: 32rem !important;
+  }
+  
+  /* Reduce padding for calculator buttons in tablet landscape mode */
+  .calculator-buttons-grid button {
+    @apply p-2 sm:p-2.5;
+  }
+}
+
+/* Desktop and Large Tablets */
+@media screen and (min-width: 1024px) {
+  body {
+    font-size: 16px;
+  }
+  
+  .container {
+    max-width: 1200px;
+    margin: 0 auto;
+  }
+  
+  /* Desktop layout optimizations */
+  .desktop-grid {
+    display: grid;
+    grid-template-columns: 300px 1fr;
+    gap: 2rem;
+  }
+  
+  /* Increase calculator width in desktop mode */
+  .calculator-container-landscape {
+    width: 30rem !important;
+  }
+  
+  /* Optimize padding for calculator buttons in desktop mode */
+  .calculator-buttons-grid button {
+    @apply p-2 sm:p-3;
+  }
+}
+
+/* iOS Safari specific fixes */
+@supports (-webkit-touch-callout: none) {
+  body {
+    min-height: -webkit-fill-available;
+  }
+  
+  .min-h-screen {
+    min-height: -webkit-fill-available;
+  }
+}
+
+/* Custom animations */
+@keyframes fadeIn {
+  0% {
+    opacity: 0;
+  }
+  to {
+    opacity: 1;
+  }
+}
+
+
+
+.animate-fade-in {
+  animation: fadeIn .2s ease-out forwards;
+}
+
+@keyframes pulse {
+  0%, 100% {
+    opacity: 1;
+  }
+  50% {
+    opacity: 0.7;
+  }
+}
+
+.animate-pulse {
+  animation: pulse 2s cubic-bezier(0.4, 0, 0.6, 1) infinite;
+}
+
+/* Attention-grabbing animation for clicked tabs */
+@keyframes pulse-attention {
+  0% {
+    transform: scale(1);
+    box-shadow: 0 0 0 0 rgba(251, 191, 36, 0.7);
+  }
+  50% {
+    transform: scale(1.1);
+    box-shadow: 0 0 0 10px rgba(251, 191, 36, 0.3);
+  }
+  100% {
+    transform: scale(1.05);
+    box-shadow: 0 0 0 20px rgba(251, 191, 36, 0);
+  }
+}
+
+.animate-pulse-attention {
+  animation: pulse-attention 0.6s ease-out;
+}
+
+/* Persistent pulsating animation for selected tab */
+@keyframes pulse-persistent {
+  0%, 100% {
+    opacity: 1;
+    transform: scale(1.05);
+  }
+  50% {
+    opacity: 0.8;
+    transform: scale(1.08);
+  }
+}
+
+.animate-pulse-persistent {
+  animation: pulse-persistent 2s ease-in-out infinite;
+}
+
+/* Overdue returnables animation - urgent attention needed */
+@keyframes urgent-glow {
+  0%, 100% {
+    box-shadow: 0 0 5px rgba(239, 68, 68, 0.3), 0 0 10px rgba(239, 68, 68, 0.2), 0 0 15px rgba(239, 68, 68, 0.1);
+    border-color: rgba(239, 68, 68, 0.4);
+  }
+  50% {
+    box-shadow: 0 0 10px rgba(239, 68, 68, 0.6), 0 0 20px rgba(239, 68, 68, 0.4), 0 0 30px rgba(239, 68, 68, 0.2);
+    border-color: rgba(239, 68, 68, 0.8);
+  }
+}
+
+.animate-urgent-glow {
+  animation: urgent-glow 2s ease-in-out infinite;
+}
+
+/* Subtle shake animation for extra attention */
+@keyframes subtle-shake {
+  0%, 100% { transform: translateX(0) rotate(0deg); }
+  10% { transform: translateX(-4px) rotate(-1deg); }
+  20% { transform: translateX(4px) rotate(1deg); }
+  30% { transform: translateX(-3px) rotate(-0.7deg); }
+  40% { transform: translateX(3px) rotate(0.7deg); }
+  50% { transform: translateX(-2px) rotate(-0.5deg); }
+  60% { transform: translateX(2px) rotate(0.5deg); }
+  70% { transform: translateX(-1px) rotate(-0.2deg); }
+  80% { transform: translateX(1px) rotate(0.2deg); }
+}
+
+.animate-subtle-shake {
+  animation: subtle-shake 1.5s ease-in-out infinite;
+}
+
+/* Enhanced shake animation for returnables */
+@keyframes returnables-shake {
+  0%, 100% { transform: translateX(0) rotate(0deg); }
+  10% { transform: translateX(-2px) rotate(-1deg); }
+  20% { transform: translateX(2px) rotate(1deg); }
+  30% { transform: translateX(-2px) rotate(-0.5deg); }
+  40% { transform: translateX(2px) rotate(0.5deg); }
+  50% { transform: translateX(-1px) rotate(-0.2deg); }
+  60% { transform: translateX(1px) rotate(0.2deg); }
+  70% { transform: translateX(0) rotate(0deg); }
+}
+
+.animate-returnables-shake {
+  animation: returnables-shake 2s ease-in-out infinite;
+}
+
+/* Enhanced bounce animation for high debt */
+@keyframes high-debt-bounce {
+  0%, 100% { transform: translateY(0) scale(1); }
+  25% { transform: translateY(-8px) scale(1.05); }
+  50% { transform: translateY(-4px) scale(1.02); }
+  75% { transform: translateY(-2px) scale(1.01); }
+}
+
+.animate-high-debt-bounce {
+  animation: high-debt-bounce 2s ease-in-out infinite;
+}
+
+/* Wobble animation for very high debt amounts (>= Rs 1000) */
+@keyframes wobble {
+  0%, 100% { transform: translateX(0) rotate(0deg); }
+  15% { transform: translateX(-5px) rotate(-2deg); }
+  30% { transform: translateX(5px) rotate(2deg); }
+  45% { transform: translateX(-3px) rotate(-1deg); }
+  60% { transform: translateX(3px) rotate(1deg); }
+  75% { transform: translateX(-1px) rotate(-0.5deg); }
+}
+
+.animate-wobble {
+  animation: wobble 2s ease-in-out infinite;
+}
+
+/* Small debt shake animation for amounts under 105 */
+@keyframes small-debt-shake {
+  0%, 100% { transform: translateX(0); }
+  10% { transform: translateX(-3px) rotate(-1deg); }
+  20% { transform: translateX(3px) rotate(1deg); }
+  30% { transform: translateX(-2px) rotate(-0.5deg); }
+  40% { transform: translateX(2px) rotate(0.5deg); }
+  50% { transform: translateX(-1px) rotate(-0.2deg); }
+  60% { transform: translateX(1px) rotate(0.2deg); }
+  70% { transform: translateX(0) rotate(0deg); }
+}
+
+.animate-small-debt-shake {
+  animation: small-debt-shake 1.5s ease-in-out infinite;
+}
+
+/* Pulsate animation for high debt amounts (over 1000) */
+@keyframes high-debt-pulsate {
+  0%, 100% { transform: scale(1); opacity: 1; }
+  50% { transform: scale(1.1); opacity: 0.8; }
+}
+
+.animate-high-debt-pulsate {
+  animation: high-debt-pulsate 1.5s ease-in-out infinite;
+}
+
+/* Horizontal bounce animation for arrows */
+@keyframes bounceHorizontal {
+  0%, 100% {
+    transform: translateX(0px);
+  }
+  50% {
+    transform: translateX(8px);
+  }
+}
+
+.animate-bounce-horizontal {
+  animation: bounceHorizontal 1s ease-in-out infinite;
+}
+
+
+
+/* Pulsate animation for duplicate card */
+@keyframes pulsate {
+  0%, 100% {
+    box-shadow: 0 0 0 0 rgba(34, 197, 94, 0.8);
+    transform: scale(1);
+  }
+  50% {
+    box-shadow: 0 0 0 30px rgba(34, 197, 94, 0);
+    transform: scale(1.1);
+  }
+}
+
+.animate-pulsate {
+  animation: pulsate 2s ease-in-out infinite;
+}
+
+/* Smooth text alternation animations */
+@keyframes text-fade-out {
+  0% { opacity: 1; }
+  100% { opacity: 0; }
+}
+
+@keyframes text-fade-in {
+  0% { opacity: 0; }
+  100% { opacity: 1; }
+}
+
+.text-fade-transition {
+  transition: opacity 400ms ease-in-out;
+}
+
+/* Respect reduced motion preferences */
+@media (prefers-reduced-motion: reduce) {
+  .text-fade-transition {
+    transition: none;
+  }
+}
+.touch-manipulation {
+  touch-action: pan-y;
+  -webkit-user-select: none;
+  -moz-user-select: none;
+  user-select: none;
+}
+
+.overflow-y-auto::-webkit-scrollbar {
+  display: none;
+}
+
+.overflow-y-auto {
+  -ms-overflow-style: none;
+  scrollbar-width: none;
+}
+
+.overflow-x-auto::-webkit-scrollbar {
+  display: none;
+}
+
+.overflow-x-auto {
+  -ms-overflow-style: none;
+  scrollbar-width: none;
+}
+
+/* Hide all scrollbars globally */
+* {
+  scrollbar-width: none;
+  -ms-overflow-style: none;
+}
+
+*::-webkit-scrollbar {
+  display: none;
+}
+
+input[type=number]::-webkit-inner-spin-button,
+input[type=number]::-webkit-outer-spin-button {
+  -webkit-appearance: none;
+  margin: 0;
+}
+
+input[type=number] {
+  -moz-appearance: textfield;
+}
+
+/* Notification animations */
+@keyframes slideInRight {
+  from {
+    transform: translateX(100%);
+    opacity: 0;
+  }
+  to {
+    transform: translateX(0);
+    opacity: 1;
+  }
+}
+
+.animate-slide-in-right {
+  animation: slideInRight 0.3s ease-out;
+}
