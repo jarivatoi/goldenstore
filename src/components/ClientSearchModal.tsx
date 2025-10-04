@@ -11,6 +11,8 @@ interface ClientSearchModalProps {
   onAddToClient: (client: Client, description: string) => void;
   linkedClient?: Client | null; // Add optional linked client prop
   onResetCalculator?: () => void;
+  description?: string; // Add description prop
+  onDescriptionChange?: (description: string) => void; // Add callback for description changes
 }
 
 /**
@@ -24,12 +26,14 @@ const ClientSearchModal: React.FC<ClientSearchModalProps> = ({
   onClose,
   onAddToClient,
   linkedClient,
-  onResetCalculator
+  onResetCalculator,
+  description = '', // Default to empty string
+  onDescriptionChange
 }) => {
   const { addClient, searchClients } = useCredit();
   const { showAlert } = useNotification();
   const [searchQuery, setSearchQuery] = useState('');
-  const [description, setDescription] = useState('');
+  const [localDescription, setLocalDescription] = useState(description); // Use local state initialized with prop
   const [showAddClient, setShowAddClient] = useState(false);
   const [newClientName, setNewClientName] = useState(linkedClient?.name || '');
   const [isProcessing, setIsProcessing] = useState(false);
@@ -37,6 +41,21 @@ const ClientSearchModal: React.FC<ClientSearchModalProps> = ({
   const [pendingNumber, setPendingNumber] = useState('');
   const [error, setError] = useState('');
   const wasOpenedRef = useRef(false); // Track if modal was opened before
+
+  // Sync local description with prop when it changes
+  useEffect(() => {
+    if (description !== undefined && description !== localDescription) {
+      setLocalDescription(description);
+    }
+  }, [description, localDescription]);
+
+  // Update parent component when local description changes
+  const updateDescription = (newDescription: string) => {
+    setLocalDescription(newDescription);
+    if (onDescriptionChange) {
+      onDescriptionChange(newDescription);
+    }
+  };
 
   // Prevent background scrolling when modal is open
   React.useEffect(() => {
@@ -69,7 +88,7 @@ const ClientSearchModal: React.FC<ClientSearchModalProps> = ({
 
   const handleXClose = () => {
     // Reset all state when X button is pressed
-    setDescription('');
+    updateDescription('');
     setDescriptionHistory([]);
     setPendingNumber('');
     setError('');
@@ -102,7 +121,7 @@ const ClientSearchModal: React.FC<ClientSearchModalProps> = ({
   React.useEffect(() => {
     // Only reset if this is the first time the modal is opened in this session
     if (!wasOpenedRef.current) {
-      setDescription('');
+      setLocalDescription(description);
       setDescriptionHistory([]);
       setPendingNumber('');
       setError('');
@@ -118,7 +137,7 @@ const ClientSearchModal: React.FC<ClientSearchModalProps> = ({
   );
   
   const handleAddToExistingClient = (client: Client) => {
-    if (!description.trim()) {
+    if (!localDescription.trim()) {
       showAlert({
         type: 'warning',
         message: 'Please enter a description for this transaction'
@@ -128,7 +147,7 @@ const ClientSearchModal: React.FC<ClientSearchModalProps> = ({
     
     setError('');
     try {
-      onAddToClient(client, description.trim());
+      onAddToClient(client, localDescription.trim());
     } catch (err) {
       setError(err instanceof Error ? err.message : 'Failed to add transaction');
     }
@@ -136,18 +155,18 @@ const ClientSearchModal: React.FC<ClientSearchModalProps> = ({
 
   // If there's a linked client, automatically add to that client
   React.useEffect(() => {
-    if (linkedClient && description.trim()) {
+    if (linkedClient && localDescription.trim()) {
       // Auto-add when description is entered for linked client
       // This could be triggered by a timer or immediate action
     }
-  }, [linkedClient, description]);
+  }, [linkedClient, localDescription]);
   const handleAddNewClient = async () => {
     if (!newClientName.trim()) {
       showAlert({ type: 'warning', message: 'Please enter a client name' });
       return;
     }
     
-    if (!description.trim()) {
+    if (!localDescription.trim()) {
       showAlert({ type: 'warning', message: 'Please enter a description for this transaction' });
       return;
     }
@@ -160,7 +179,7 @@ const ClientSearchModal: React.FC<ClientSearchModalProps> = ({
     }
     try {
       const newClient = await addClient(newClientName);
-      onAddToClient(newClient, description.trim());
+      onAddToClient(newClient, localDescription.trim());
     } catch (error) {
       setError(error instanceof Error ? error.message : 'Failed to add client');
       if (error instanceof Error && error.name === 'DuplicateClientError') {
@@ -175,15 +194,15 @@ const ClientSearchModal: React.FC<ClientSearchModalProps> = ({
 
   const handleQuickAction = (action: string) => {
     // Save current description to history for undo
-    setDescriptionHistory(prev => [...prev, description]);
+    setDescriptionHistory(prev => [...prev, localDescription]);
     
     // Automatically insert pending number if it exists
     const newItem = pendingNumber ? `${pendingNumber} ${action}` : action;
     
-    if (description.trim() === '') {
-      setDescription(newItem + ' ');
+    if (localDescription.trim() === '') {
+      updateDescription(newItem + ' ');
     } else {
-      setDescription(prev => prev + ', ' + newItem + ' ');
+      updateDescription(prev => prev + ', ' + newItem + ' ');
     }
     
     // Clear pending number after use
@@ -193,14 +212,14 @@ const ClientSearchModal: React.FC<ClientSearchModalProps> = ({
   const handleUndo = () => {
     if (descriptionHistory.length > 0) {
       const previousDescription = descriptionHistory[descriptionHistory.length - 1];
-      setDescription(previousDescription);
+      updateDescription(previousDescription);
       setDescriptionHistory(prev => prev.slice(0, -1));
     }
   };
 
   const handleNumericInput = (value: string) => {
     if (value === 'clear') {
-      setDescription('');
+      updateDescription('');
       setPendingNumber('');
       setDescriptionHistory([]);
     } else if (value === 'number-backspace') {
@@ -208,7 +227,7 @@ const ClientSearchModal: React.FC<ClientSearchModalProps> = ({
       setPendingNumber(prev => prev.slice(0, -1));
     } else if (value === 'backspace') {
       // Remove the last complete item (e.g., "5 Cig, 10 Can" becomes "5 Cig")
-      setDescription(prev => {
+      updateDescription(prev => {
         const parts = prev.split(', ');
         if (parts.length > 1) {
           return parts.slice(0, -1).join(', ');
@@ -305,7 +324,7 @@ const ClientSearchModal: React.FC<ClientSearchModalProps> = ({
             </div>
             <input
               type="text"
-              value={description}
+              value={localDescription}
               onChange={(e) => {
                 // Auto-capitalize as user types while preserving spacing
                 const value = e.target.value;
@@ -313,7 +332,7 @@ const ClientSearchModal: React.FC<ClientSearchModalProps> = ({
                 // Also capitalize after "/" for items like "Petit/Gros"
                 let formatted = value.replace(/(^|\s|\/)\w/g, (char) => char.toUpperCase());
                 // Add space after comma if not already present
-                setDescription(formatted);
+                updateDescription(formatted);
               }}
               placeholder="Enter item or service description..."
               className="block w-full px-4 py-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
@@ -349,7 +368,7 @@ const ClientSearchModal: React.FC<ClientSearchModalProps> = ({
                     if (pendingNumber) {
                       // Insert pending number with space
                       const insertText = `${pendingNumber} `;
-                      setDescription(prev => prev + insertText);
+                      updateDescription(prev => prev + insertText);
                       setPendingNumber(''); // Clear pending number after insertion
                     }
                   }}
@@ -480,7 +499,7 @@ const ClientSearchModal: React.FC<ClientSearchModalProps> = ({
                   </div>
                   <button
                     onClick={() => handleAddToExistingClient(linkedClient)}
-                    disabled={!description.trim()}
+                    disabled={!localDescription.trim()}
                     className="w-full mt-3 px-4 py-2 bg-blue-500 text-white rounded-lg hover:bg-blue-600 transition-colors disabled:opacity-50 disabled:cursor-not-allowed select-none"
                   >
                     Add to {linkedClient.name}
@@ -509,7 +528,7 @@ const ClientSearchModal: React.FC<ClientSearchModalProps> = ({
                           window.scrollTo({ top: 0, behavior: 'smooth' });
                           handleAddToExistingClient(client);
                         }}
-                        disabled={!description.trim()}
+                        disabled={!localDescription.trim()}
                         className="w-full flex items-center gap-3 p-3 bg-gray-50 hover:bg-gray-100 rounded-lg transition-colors text-left disabled:opacity-50 disabled:cursor-not-allowed select-none"
                       >
                         <div className="bg-blue-100 p-2 rounded-full select-none">
@@ -562,7 +581,7 @@ const ClientSearchModal: React.FC<ClientSearchModalProps> = ({
                 </button>
                 <button
                   onClick={handleAddNewClient}
-                  disabled={isProcessing || !newClientName.trim() || !description.trim()}
+                  disabled={isProcessing || !newClientName.trim() || !localDescription.trim()}
                   className="flex-1 px-4 py-2 bg-green-500 text-white rounded-lg hover:bg-green-600 transition-colors disabled:opacity-50 select-none"
                 >
                   {isProcessing ? 'Adding...' : 'Add Client'}
