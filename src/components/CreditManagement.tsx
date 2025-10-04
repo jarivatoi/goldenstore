@@ -45,6 +45,7 @@ const CreditManagement: React.FC = () => {
   const [showFilterDropdown, setShowFilterDropdown] = useState(false);
   const [sortOption, setSortOption] = useState<'name' | 'date' | 'debt'>('date');
   const [showSortDropdown, setShowSortDropdown] = useState(false);
+  const [clientSearchDescription, setClientSearchDescription] = useState(''); // Add state to preserve description
 
   // Ref for tracking scrolling tabs timeline state
   const scrollingTabsTimelineRef = useRef<any>(null);
@@ -694,16 +695,15 @@ const CreditManagement: React.FC = () => {
     setShowClientSearch(false);
   };
 
-  const handleResetCalculatorFromModal = () => {
-    handleResetCalculator();
-  };
-
-
   const handleCloseClientSearchModal = () => {
     // Only close modal, preserve calculator state
     setShowClientSearch(false);
   };
   
+  const handleResetCalculatorFromModal = () => {
+    handleResetCalculator();
+  };
+
   // Mini calculator functions
   const createMiniCalculator = () => {
     const baseX = 100;
@@ -735,6 +735,17 @@ const CreditManagement: React.FC = () => {
     setRecentTransactionClient(null);
   };
 
+  // Add function to update description state
+  const handleClientSearchDescriptionChange = (description: string) => {
+    setClientSearchDescription(description);
+  };
+
+  // Add function to reset description when needed
+  const resetClientSearchDescription = () => {
+    setClientSearchDescription('');
+  };
+
+  // Modify the handleAddToClient function to reset the description after successful transaction
   const handleAddToClient = async (client: Client, description: string) => {
     try {
       const cleanValue = calculatorValue.startsWith('=') ? calculatorValue.substring(1) : calculatorValue;
@@ -801,6 +812,9 @@ const CreditManagement: React.FC = () => {
       setTimeout(() => {
         setCenteredWobbleClient(null);
       }, 8000);
+      
+      // Reset the description state after successful transaction
+      resetClientSearchDescription();
     } catch (error) {
       throw error; // Re-throw to be caught by the modal
     }
@@ -1266,7 +1280,7 @@ const CreditManagement: React.FC = () => {
               onClick={() => handleCalculatorInput('.')}
               className="bg-gray-800 hover:bg-gray-900 text-white p-2 sm:p-3 rounded-lg font-bold text-lg sm:text-xl shadow-md border border-gray-600 flex items-center justify-center calculator-button calculator-button-lg"
             >
-              •
+              • •
             </button>
             <button
               onClick={() => handleCalculatorInput('+')}
@@ -1330,6 +1344,8 @@ const CreditManagement: React.FC = () => {
           onResetCalculator={handleResetCalculatorFromModal}
           onAddToClient={handleAddToClient}
           linkedClient={linkedClient}
+          description={clientSearchDescription}
+          onDescriptionChange={handleClientSearchDescriptionChange}
         />
       )}
 
