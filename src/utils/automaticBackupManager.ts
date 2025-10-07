@@ -176,24 +176,17 @@ export class AutomaticBackupManager {
    */
   private createLocalBackup(databaseJson: any): void {
     try {
-      const jsonString = JSON.stringify(databaseJson, null, 2);
-      const dataBlob = new Blob([jsonString], { type: 'application/json' });
+      // Store backup data in localStorage instead of creating a download
+      // This prevents browser download notifications while still maintaining a local backup
+      const backupData = {
+        data: databaseJson,
+        timestamp: new Date().toISOString(),
+        version: '2.0'
+      };
       
-      // Create download link
-      const url = URL.createObjectURL(dataBlob);
-      const link = document.createElement('a');
-      link.href = url;
-      link.download = 'GoldenStore_Latest.json';
+      localStorage.setItem('GoldenStore_Latest_Backup', JSON.stringify(backupData));
       
-      // Temporarily add to DOM, click, and remove
-      document.body.appendChild(link);
-      link.click();
-      document.body.removeChild(link);
-      
-      // Clean up blob URL to prevent memory leaks
-      URL.revokeObjectURL(url);
-      
-      console.log('✅ Local backup created successfully: GoldenStore_Latest.json');
+      console.log('✅ Local backup saved silently to localStorage: GoldenStore_Latest_Backup');
     } catch (error) {
       console.error('❌ Local backup creation failed:', error);
       // Don't throw error as this is supplementary to the main backup
