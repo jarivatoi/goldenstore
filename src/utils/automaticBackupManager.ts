@@ -26,7 +26,7 @@ export interface BackupStatus {
 export class AutomaticBackupManager {
   private static instance: AutomaticBackupManager | null = null;
   private schedule: BackupSchedule = { hour: 18, minute: 0, enabled: true };
-  private checkInterval: NodeJS.Timeout | null = null;
+  private checkInterval: number | null = null;  // Changed from NodeJS.Timeout to number
   private isRunning = false;
 
   private constructor() {
@@ -172,21 +172,34 @@ export class AutomaticBackupManager {
   }
 
   /**
-   * Create local backup file with fixed filename
+   * Create local backup file with timestamped filename
    */
   private createLocalBackup(databaseJson: any): void {
     try {
-      // Store backup data in localStorage instead of creating a download
-      // This prevents browser download notifications while still maintaining a local backup
-      const backupData = {
-        data: databaseJson,
-        timestamp: new Date().toISOString(),
-        version: '2.0'
-      };
+      const jsonString = JSON.stringify(databaseJson, null, 2);
+      const dataBlob = new Blob([jsonString], { type: 'application/json' });
       
-      localStorage.setItem('GoldenStore_Latest_Backup', JSON.stringify(backupData));
+      // Create timestamp for filename
+      const now = new Date();
+      const dateStr = now.toLocaleDateString('en-GB').replace(/\//g, '-');
+      const timeStr = now.toLocaleTimeString('en-GB', { hour: '2-digit', minute: '2-digit' }).replace(/:/g, '-');
+      const filename = `GoldenStore_${dateStr}_${timeStr}.json`;
       
-      console.log('✅ Local backup saved silently to localStorage: GoldenStore_Latest_Backup');
+      // Create download link
+      const url = URL.createObjectURL(dataBlob);
+      const link = document.createElement('a');
+      link.href = url;
+      link.download = filename;
+      
+      // Temporarily add to DOM, click, and remove
+      document.body.appendChild(link);
+      link.click();
+      document.body.removeChild(link);
+      
+      // Clean up blob URL to prevent memory leaks
+      URL.revokeObjectURL(url);
+      
+      console.log(`✅ Local backup created successfully: ${filename}`);
     } catch (error) {
       console.error('❌ Local backup creation failed:', error);
       // Don't throw error as this is supplementary to the main backup
