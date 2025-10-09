@@ -561,10 +561,9 @@ const ClientSearchModal: React.FC<ClientSearchModalProps> = ({
                   type="text"
                   value={newClientName}
                   onChange={(e) => {
-                    // Smart capitalization that handles parentheses
-                    const formatted = e.target.value.replace(/(^|\s)\w/g, (word) => {
-                      return word.charAt(0).toUpperCase() + word.slice(1).toLowerCase();
-                    });
+                    // Auto-capitalize first letter of each word as text is typed (title case)
+                    const value = e.target.value;
+                    const formatted = value.replace(/(^|\s)\w/g, (match) => match.toUpperCase());
                     setNewClientName(formatted);
                   }}
                   placeholder="Enter client name..."
