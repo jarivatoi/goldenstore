@@ -412,7 +412,14 @@ const UnifiedDataManager: React.FC<UnifiedDataManagerProps> = ({ isOpen, onClose
           setModal({
             type: 'confirm',
             title: 'Import from Local File',
-            message: `This will import a complete Golden Store database with ${totalItems} total records across all modules:\n\n• Price List: ${data.priceList?.items?.length || 0} items\n• Credit: ${data.creditManagement?.clients?.length || 0} clients, ${data.creditManagement?.transactions?.length || 0} transactions\n• Over Items: ${data.overManagement?.items?.length || 0} items\n• Orders: ${data.orderManagement?.categories?.length || 0} categories, ${data.orderManagement?.orders?.length || 0} orders\n\nThis will REPLACE ALL your current data. This action cannot be undone.`,
+            message: `This will import a complete Golden Store database with ${totalItems} total records across all modules:
+
+• Price List: ${data.priceList?.items?.length || 0} items
+• Credit: ${data.creditManagement?.clients?.length || 0} clients, ${data.creditManagement?.transactions?.length || 0} transactions
+• Over Items: ${data.overManagement?.items?.length || 0} items
+• Orders: ${data.orderManagement?.categories?.length || 0} categories, ${data.orderManagement?.orders?.length || 0} orders
+
+This will REPLACE ALL your current data. This action cannot be undone.`,
             onConfirm: () => processImportData(data),
             onCancel: () => setModal({ type: null, title: '', message: '' })
           });
@@ -421,7 +428,11 @@ const UnifiedDataManager: React.FC<UnifiedDataManagerProps> = ({ isOpen, onClose
           setModal({
             type: 'error',
             title: 'Import Failed',
-            message: `Error processing database file:\n\n${importError instanceof Error ? importError.message : 'Unknown error'}\n\nPlease check the file format and try again.`,
+            message: `Error processing database file:
+
+${importError instanceof Error ? importError.message : 'Unknown error'}
+
+Please check the file format and try again.`,
             onConfirm: () => setModal({ type: null, title: '', message: '' })
           });
         } finally {
@@ -484,7 +495,17 @@ const UnifiedDataManager: React.FC<UnifiedDataManagerProps> = ({ isOpen, onClose
       setModal({
         type: 'confirm',
         title: 'Import from Server Backup',
-        message: `Found server backup: ${backupInfo?.backup_name || 'Unknown'}\nCreated: ${backupInfo?.created_at ? new Date(backupInfo.created_at).toLocaleString() : 'Unknown'}\n\nThis will import ${totalItems} total records across all modules:\n\n• Price List: ${data.priceList?.items?.length || 0} items\n• Credit: ${data.creditManagement?.clients?.length || 0} clients, ${data.creditManagement?.transactions?.length || 0} transactions\n• Over Items: ${data.overManagement?.items?.length || 0} items\n• Orders: ${data.orderManagement?.categories?.length || 0} categories, ${data.orderManagement?.orders?.length || 0} orders\n\nThis will REPLACE ALL your current data. This action cannot be undone.`,
+        message: `Found server backup: ${backupInfo?.backup_name || 'Unknown'}
+Created: ${backupInfo?.created_at ? new Date(backupInfo.created_at).toLocaleString() : 'Unknown'}
+
+This will import ${totalItems} total records across all modules:
+
+• Price List: ${data.priceList?.items?.length || 0} items
+• Credit: ${data.creditManagement?.clients?.length || 0} clients, ${data.creditManagement?.transactions?.length || 0} transactions
+• Over Items: ${data.overManagement?.items?.length || 0} items
+• Orders: ${data.orderManagement?.categories?.length || 0} categories, ${data.orderManagement?.orders?.length || 0} orders
+
+This will REPLACE ALL your current data. This action cannot be undone.`,
         onConfirm: () => processImportData(data),
         onCancel: () => setModal({ type: null, title: '', message: '' })
       });
@@ -503,11 +524,26 @@ const UnifiedDataManager: React.FC<UnifiedDataManagerProps> = ({ isOpen, onClose
   return (
     createPortal(
       <>
-        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center p-4 z-50 select-none">
-          <div className="bg-white rounded-xl shadow-lg w-full max-w-md max-h-[90vh] overflow-hidden select-none">
+        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center p-4 z-50 select-none"
+          style={{
+            touchAction: 'none',
+            overscrollBehavior: 'contain'
+          }}
+          onClick={(e) => {
+            if (e.target === e.currentTarget) {
+              onClose();
+            }
+          }}
+        >
+          <div className="bg-white rounded-xl shadow-lg w-full max-w-md max-h-[90vh] flex flex-col select-none"
+            style={{
+              touchAction: 'auto',
+              WebkitOverflowScrolling: 'touch'
+            }}
+          >
             
             {/* Header */}
-            <div className="flex justify-between items-center p-6 border-b border-gray-200 select-none">
+            <div className="flex justify-between items-center p-6 border-b border-gray-200 select-none flex-shrink-0">
               <div className="flex items-center gap-3 select-none">
                 <div className="bg-blue-100 p-2 rounded-full select-none">
                   <Database size={20} className="text-blue-600" />
@@ -523,10 +559,12 @@ const UnifiedDataManager: React.FC<UnifiedDataManagerProps> = ({ isOpen, onClose
             </div>
 
             {/* Content */}
-            <div className="p-6 overflow-y-auto flex-1 select-none" style={{ 
-              WebkitOverflowScrolling: 'touch',
-              touchAction: 'pan-y'
-            }}>
+            <div className="p-6 overflow-y-auto flex-1 select-none"
+              style={{ 
+                WebkitOverflowScrolling: 'touch',
+                touchAction: 'pan-y pinch-zoom'
+              }}
+            >
               <p className="text-sm text-gray-600 mb-6 select-none">
                 Manage your complete Golden Store database including Price List, Credit, Over Items, and Orders.
               </p>
