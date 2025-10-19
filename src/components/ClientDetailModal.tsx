@@ -1,59 +1,35 @@
-import React from 'react';
+import React, { useState, useEffect } from 'react';
 import { createPortal } from 'react-dom';
-import { X, Calendar, Receipt, CreditCard, Plus, Edit2, Minus, Filter, CheckCircle, AlertTriangle } from 'lucide-react';
-import { Client } from '../types';
+import { X, Edit2, Minus, Plus, CheckCircle, AlertTriangle, Receipt, Calendar, CreditCard } from 'lucide-react';
 import { useCredit } from '../context/CreditContext';
+import { Client } from '../types';
 import { useNotification } from '../context/NotificationContext';
 
 interface ClientDetailModalProps {
   client: Client;
   onClose: () => void;
-  onQuickAdd?: (client: Client) => void;
 }
 
-/**
- * CLIENT DETAIL MODAL COMPONENT
- * =============================
- * 
- * Shows detailed breakdown of client's transactions and payments
- */
-const ClientDetailModal: React.FC<ClientDetailModalProps> = ({ client, onClose, onQuickAdd }) => {
-  const { getClientTransactions, getClientPayments, getClientTotalDebt, updateClient, moveClientToFront, addTransaction } = useCredit();
+const ClientDetailModal: React.FC<ClientDetailModalProps> = ({ client, onClose }) => {
+  const { getClientTransactions, getClientPayments, updateClient, addTransaction } = useCredit();
   const { showAlert } = useNotification();
-  const [isEditingName, setIsEditingName] = React.useState(false);
-  const [editedName, setEditedName] = React.useState(client.name);
-  const [isSaving, setIsSaving] = React.useState(false);
-  const [transactionFilter, setTransactionFilter] = React.useState<'all' | 'returnable' | 'taken' | 'returned'>('all');
-  const [modal, setModal] = React.useState<{
-    type: 'success' | 'error' | 'confirm' | null;
+  const [isEditingName, setIsEditingName] = useState(false);
+  const [editedName, setEditedName] = useState(client.name);
+  const [isSaving, setIsSaving] = useState(false);
+  const [transactionFilter, setTransactionFilter] = useState<'all' | 'returnable' | 'taken' | 'returned'>('all');
+  const [modal, setModal] = useState<{
+    type: 'confirm' | 'success' | 'error' | null;
     title: string;
     message: string;
     onConfirm?: () => void;
     onCancel?: () => void;
   }>({ type: null, title: '', message: '' });
-  
+
   const transactions = getClientTransactions(client.id);
   const payments = getClientPayments(client.id);
-  const totalDebt = getClientTotalDebt(client.id);
+  const totalDebt = client.totalDebt;
 
-  // Reset transaction filter when credit data changes (e.g., after settlement)
-  React.useEffect(() => {
-    const handleCreditDataChanged = (event: CustomEvent) => {
-      // Reset filter to 'all' when account is settled
-      if (event.detail && event.detail.source && 
-          (event.detail.source === 'settle' || event.detail.source === 'settleFullClear')) {
-        setTransactionFilter('all');
-      }
-    };
-
-    window.addEventListener('creditDataChanged', handleCreditDataChanged as EventListener);
-    
-    return () => {
-      window.removeEventListener('creditDataChanged', handleCreditDataChanged as EventListener);
-    };
-  }, []);
-
-  // Get returnable items for this client
+  // Get returnable items for client
   const getReturnableItems = () => {
     const returnableItems: {[key: string]: number} = {};
     
@@ -88,20 +64,25 @@ const ClientDetailModal: React.FC<ClientDetailModalProps> = ({ client, onClose, 
       
       // Look for Bouteille items with improved parsing
       // Pattern: number + space + optional size + bouteille + optional brand
-      const bouteillePattern = /(\d+)\s+(?:(\d+(?:\.\d+)?[Ll])\s+)?bouteilles?(?:\s+([^,]*))?/gi;
+      const bouteillePattern = /(\d+)\s+(?:(\d+(?:\.\d+)?[Ll])\s+)?bouteilles?(?:\s+([^,\(\)]*))?/gi;
       let bouteilleMatch;
       
       while ((bouteilleMatch = bouteillePattern.exec(description)) !== null) {
         const quantity = parseInt(bouteilleMatch[1]);
-        const size = bouteilleMatch[2]?.trim().toUpperCase() || '';
+        const size = bouteilleMatch[2]?.trim().replace(/l$/gi, 'L') || '';
         const brand = bouteilleMatch[3]?.trim() || '';
         
-        // Format the key based on what we found
+        // Capitalize brand name properly
+        const capitalizedBrand = brand ? brand.split(' ').map((word: string) => 
+          word.charAt(0).toUpperCase() + word.slice(1).toLowerCase()
+        ).join(' ') : '';
+        
+        // Format the key based on what we found - consistent with Chopine approach
         let key;
-        if (size && brand) {
-          key = `${size} ${brand}`;
-        } else if (brand) {
-          key = `Bouteille ${brand}`;
+        if (size && capitalizedBrand) {
+          key = `${size} ${capitalizedBrand}`;
+        } else if (capitalizedBrand) {
+          key = `Bouteille ${capitalizedBrand}`;
         } else if (size) {
           key = `${size} Bouteille`;
         } else {
@@ -136,8 +117,33 @@ const ClientDetailModal: React.FC<ClientDetailModalProps> = ({ client, onClose, 
               }
             } else {
               // For branded Chopine like "Chopine Vin", match the exact brand
-              const brandedChopinePattern = new RegExp(`returned:\\s*(\\d+)\\s+${itemType.replace('Chopine', 'Chopines?')}`, 'i');
+              const pattern = `returned:\\s*(\\d+)\\s+${itemType.replace('Chopine', 'Chopines?')}`;
+              const brandedChopinePattern = new RegExp(pattern, 'i');
               const match = description.match(brandedChopinePattern);
+              if (match) {
+                if (!returnedQuantities[itemType]) {
+                  returnedQuantities[itemType] = 0;
+                }
+                returnedQuantities[itemType] += parseInt(match[1]);
+              }
+            }
+          } else if (itemType.includes('Bouteille')) {
+            // For Bouteille items, use more precise matching to avoid substring conflicts
+            if (itemType === 'Bouteille') {
+              // For generic Bouteille, match "Returned: X Bouteille" but not "Bouteille Brand"
+              const genericBouteillePattern = /returned:\s*(\d+)\s+bouteilles?(?!\\s+\w)/i;
+              const match = description.match(genericBouteillePattern);
+              if (match) {
+                if (!returnedQuantities[itemType]) {
+                  returnedQuantities[itemType] = 0;
+                }
+                returnedQuantities[itemType] += parseInt(match[1]);
+              }
+            } else {
+              // For branded Bouteille like "Bouteille Vin", match the exact brand
+              const pattern = `returned:\\s*(\\d+)\\s+${itemType.replace('Bouteille', 'Bouteilles?')}`;
+              const brandedBouteillePattern = new RegExp(pattern, 'i');
+              const match = description.match(brandedBouteillePattern);
               if (match) {
                 if (!returnedQuantities[itemType]) {
                   returnedQuantities[itemType] = 0;
@@ -327,7 +333,6 @@ const ClientDetailModal: React.FC<ClientDetailModalProps> = ({ client, onClose, 
             </button>
           </div>
         </div>
-
 
       {/* Modal for confirmations */}
       {modal.type && createPortal(
@@ -560,7 +565,7 @@ const ClientDetailModal: React.FC<ClientDetailModalProps> = ({ client, onClose, 
             <div>
               <div className="flex items-center gap-2 mb-4">
                 <CreditCard size={20} className="text-green-600" />
-                <h3 className="text-lg font-semibold text-gray-800">Payment History</h3>
+                <h3 className="text-lg font-semibold text-gray-8800">Payment History</h3>
               </div>
               
               <div className="space-y-3">
@@ -655,6 +660,7 @@ const ReturnableItemRow: React.FC<ReturnableItemRowProps> = ({ itemType, quantit
         returnDescription += itemType;
       } else if (itemType.includes('Bouteille')) {
         // For regular bottles: "Returned: 2 Bouteilles Green" (pluralize Bouteille, not brand)
+        // Use the same logic as Chopine
         const brand = itemType.replace('Bouteille', '').trim();
         returnDescription += `Bouteille${pendingQuantity > 1 ? 's' : ''}${brand ? ` ${brand}` : ''}`;
       } else {
