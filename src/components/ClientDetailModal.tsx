@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { createPortal } from 'react-dom';
-import { X, Edit2, Minus, Plus, CheckCircle, AlertTriangle, Receipt, Calendar, CreditCard } from 'lucide-react';
+import { X, Edit2, Minus, Plus, CheckCircle, AlertTriangle, Receipt, Calendar, CreditCard, Filter as FilterIcon } from 'lucide-react';
 import { useCredit } from '../context/CreditContext';
 import { Client } from '../types';
 import { useNotification } from '../context/NotificationContext';
@@ -506,7 +506,7 @@ const ClientDetailModal: React.FC<ClientDetailModalProps> = ({ client, onClose }
                   <option value="returned">Returned ({transactions && Array.isArray(transactions) ? transactions.filter(t => t.description.toLowerCase().includes('returned')).length : 0})</option>
                 </select>
                 <div className="absolute inset-y-0 right-0 flex items-center pr-2 pointer-events-none">
-                  <Filter size={16} className="text-gray-400" />
+                  <FilterIcon size={16} className="text-gray-400" />
                 </div>
               </div>
             </div>
