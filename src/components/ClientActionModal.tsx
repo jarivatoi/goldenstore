@@ -61,7 +61,7 @@ const ClientActionModal: React.FC<ClientActionModalProps> = ({ client, onClose, 
       // Filter out items that have already been returned
       Object.entries(allReturnableItems).forEach(([itemType, data]) => {
         // Calculate net quantity (original - returned)
-        const returnedQuantity = getReturnedQuantity(itemType);
+        const returnedQuantity = getReturnedQuantity(itemType, returnableItems);
         const availableQuantity = Math.max(0, data.total - returnedQuantity);
         
         if (availableQuantity > 0) {
@@ -391,13 +391,12 @@ const processItemReturn = async (itemType: string, returnQuantity: number) => {
 };
 
   // Helper function to calculate how much has already been returned
-  const getReturnedQuantity = (itemType: string): number => {
+  const getReturnedQuantity = (itemType: string, returnableItems: {[key: string]: {total: number, transactions: Array<{id: string, description: string, amount: number, quantity: number, date: Date}>}}): number => {
     return clientTransactions
       .filter(transaction => transaction.type === 'debt' && transaction.description.toLowerCase().includes('returned'))
       .reduce((total, transaction) => {
         const description = transaction.description.toLowerCase();
         // Use more precise matching to avoid substring conflicts
-        // For branded items like "Chopine Vin", match the exact pattern
         if (itemType.includes('Chopine')) {
           // For Chopine items, be more specific about matching
           if (itemType === 'Chopine') {
@@ -413,6 +412,47 @@ const processItemReturn = async (itemType: string, returnQuantity: number) => {
             const match = description.match(brandedChopinePattern);
             if (match) {
               return total + parseInt(match[1]);
+            }
+          }
+        } else if (itemType.includes('Bouteille')) {
+          if (itemType === 'Bouteille') {
+            // For generic Bouteille, match "Returned: X Bouteille" but not "Bouteille Brand"
+            // First check if any branded Bouteille would match this description
+            let isBrandedMatch = false;
+            for (const checkItemType of Object.keys(returnableItems)) {
+              if (checkItemType.includes('Bouteille') && checkItemType !== 'Bouteille') {
+                const brandName = checkItemType.replace('Bouteille', '').trim();
+                if (brandName) {
+                  // Create pattern that matches both "Bouteille Brand" and "Bouteilles Brand"
+                  const brandedPattern = new RegExp(`returned:\\s*(\\d+)\\s+bouteilles?\\s+${brandName.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')}(?=\\s*(?:-|$))`, 'i');
+                  if (description.match(brandedPattern)) {
+                    isBrandedMatch = true;
+                    break;
+                  }
+                }
+              }
+            }
+            
+            // Only match generic if it's not a branded match
+            if (!isBrandedMatch) {
+              // More precise pattern: match "Bouteille" or "Bouteilles" only when followed by a non-word character
+              // or end of string, but not when followed by a space and another word
+              const genericBouteillePattern = /returned:\s*(\d+)\s+(bouteille|bouteilles)(?=\s*(?:-|$))/i;
+              const match = description.match(genericBouteillePattern);
+              if (match) {
+                return total + parseInt(match[1]);
+              }
+            }
+          } else {
+            // For branded Bouteille like "Bouteille Vin", match the exact brand
+            const brandName = itemType.replace('Bouteille', '').trim();
+            if (brandName) {
+              // Create pattern that matches both "Bouteille Brand" and "Bouteilles Brand"
+              const brandedPattern = new RegExp(`returned:\\s*(\\d+)\\s+bouteilles?\\s+${brandName.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')}(?=\\s*(?:-|$))`, 'i');
+              const match = description.match(brandedPattern);
+              if (match) {
+                return total + parseInt(match[1]);
+              }
             }
           }
         } else {
@@ -436,7 +476,7 @@ const processItemReturn = async (itemType: string, returnQuantity: number) => {
   
   Object.entries(returnableItems).forEach(([itemType, data]) => {
     // Calculate net quantity (original - returned)
-    const returnedQuantity = getReturnedQuantity(itemType);
+    const returnedQuantity = getReturnedQuantity(itemType, returnableItems);
     const availableQuantity = Math.max(0, data.total - returnedQuantity);
     
     if (availableQuantity > 0) {
@@ -732,7 +772,7 @@ const processItemReturn = async (itemType: string, returnQuantity: number) => {
                         <p className="font-medium mb-1">Recent transactions:</p>
                         {(() => {
                           // Get unique transactions for this item type (prevent duplicates)
-                          const returnedQuantity = getReturnedQuantity(itemType);
+                          const returnedQuantity = getReturnedQuantity(itemType, returnableItems);
                           const totalOriginal = data.total + returnedQuantity;
                           
                           // Get unique transactions for this item type
