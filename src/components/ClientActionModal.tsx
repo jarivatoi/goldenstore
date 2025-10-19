@@ -757,7 +757,7 @@ const processItemReturn = async (itemType: string, returnQuantity: number) => {
                           
                           return relevantTransactions.map((transaction, index) => {
                           return (
-                            <p key={index} className="truncate">
+                            <div key={index} className="truncate">
                               • <ScrollingText 
                                 text={`${transaction.description} (${transaction.quantity} ${itemType}) - ${transaction.date.toLocaleDateString('en-GB', {
                                 day: '2-digit',
@@ -773,7 +773,7 @@ const processItemReturn = async (itemType: string, returnQuantity: number) => {
                                 scrollDuration={3}
                                 easing="power1.inOut"
                               />
-                            </p>
+                            </div>
                           );
                           });
                         })()}
@@ -805,7 +805,7 @@ const processItemReturn = async (itemType: string, returnQuantity: number) => {
                             .slice(-2); // Show last 2 relevant returned transactions
                           
                           return returnedTransactions.map((transaction, index) => (
-                            <p key={`returned-${index}`} className="truncate text-green-600">
+                            <div key={`returned-${index}`} className="truncate text-green-600">
                               • <ScrollingText 
                                 text={`${transaction.description} - ${transaction.date.toLocaleDateString('en-GB', {
                                   day: '2-digit',
@@ -821,7 +821,7 @@ const processItemReturn = async (itemType: string, returnQuantity: number) => {
                                 scrollDuration={3}
                                 easing="power1.inOut"
                               />
-                            </p>
+                            </div>
                           ));
                         })()}
                       </div>
