@@ -1,11 +1,11 @@
-import { Transaction } from '../types';
+import { CreditTransaction } from '../types';
 
 /**
  * Calculates returnable items for a client
  * @param clientTransactions - Array of client transactions
  * @returns Array of returnable items with text, date, and time
  */
-export const calculateReturnableItemsWithDates = (clientTransactions: Transaction[]): {text: string, date: string, time: string}[] => {
+export const calculateReturnableItemsWithDates = (clientTransactions: CreditTransaction[]): {text: string, date: string, time: string}[] => {
   const returnableItems: {[key: string]: number} = {};
   
   clientTransactions.forEach(transaction => {
@@ -29,7 +29,7 @@ export const calculateReturnableItemsWithDates = (clientTransactions: Transactio
       const quantity = parseInt(chopineMatch[1]);
       const brand = chopineMatch[2]?.trim() || '';
       // Capitalize brand name properly
-      const capitalizedBrand = brand ? brand.split(' ').map(word => 
+      const capitalizedBrand = brand ? brand.split(' ').map((word: string) => 
         word.charAt(0).toUpperCase() + word.slice(1).toLowerCase()
       ).join(' ') : '';
       const key = capitalizedBrand ? `Chopine ${capitalizedBrand}` : 'Chopine';
@@ -50,7 +50,7 @@ export const calculateReturnableItemsWithDates = (clientTransactions: Transactio
       const brand = bouteilleMatch[3]?.trim() || '';
       
       // Capitalize brand name properly
-      const capitalizedBrand = brand ? brand.split(' ').map(word => 
+      const capitalizedBrand = brand ? brand.split(' ').map((word: string) => 
         word.charAt(0).toUpperCase() + word.slice(1).toLowerCase()
       ).join(' ') : '';
       
@@ -98,7 +98,7 @@ export const calculateReturnableItemsWithDates = (clientTransactions: Transactio
           const brand = brandMatch?.[1]?.trim() || '';
           
           // Capitalize brand name properly
-          const capitalizedBrand = brand ? brand.split(' ').map(word => 
+          const capitalizedBrand = brand ? brand.split(' ').map((word: string) => 
             word.charAt(0).toUpperCase() + word.slice(1).toLowerCase()
           ).join(' ') : '';
           
@@ -145,7 +145,7 @@ export const calculateReturnableItemsWithDates = (clientTransactions: Transactio
           const brand = brandMatch?.[1]?.trim() || '';
           
           // Capitalize brand name properly
-          const capitalizedBrand = brand ? brand.split(' ').map(word => 
+          const capitalizedBrand = brand ? brand.split(' ').map((word: string) => 
             word.charAt(0).toUpperCase() + word.slice(1).toLowerCase()
           ).join(' ') : '';
           
@@ -183,6 +183,32 @@ export const calculateReturnableItemsWithDates = (clientTransactions: Transactio
             // For branded Chopine like "Chopine Vin", match the exact brand
             const brandedChopinePattern = new RegExp(`returned:\\s*(\\d+)\\s+${itemType.replace('Chopine', 'Chopines?')}`, 'i');
             const match = description.match(brandedChopinePattern);
+            if (match) {
+              if (!returnedQuantities[itemType]) {
+                returnedQuantities[itemType] = 0;
+              }
+              returnedQuantities[itemType] += parseInt(match[1]);
+            }
+          }
+        } else if (itemType.includes('Bouteille')) {
+          // For Bouteille items, use more precise matching to avoid substring conflicts
+          if (itemType === 'Bouteille') {
+            // For generic Bouteille, match "Returned: X Bouteille" but not "Bouteille Brand"
+            const genericBouteillePattern = /returned:\s*(\d+)\s+bouteilles?(?!\s+\w)/i;
+            const match = description.match(genericBouteillePattern);
+            if (match) {
+              if (!returnedQuantities[itemType]) {
+                returnedQuantities[itemType] = 0;
+              }
+              returnedQuantities[itemType] += parseInt(match[1]);
+            }
+          } else {
+            // For branded Bouteille like "Bouteille Vin", match the exact brand
+            // Escape special regex characters and ensure exact matching
+            const escapedItemType = itemType.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+            // Use word boundaries to ensure exact matching
+            const pattern = new RegExp(`returned:\\s*(\\d+)\\s+${escapedItemType.replace(/\s+/g, '\\s+')}(?!\\w)`, 'i');
+            const match = description.match(pattern);
             if (match) {
               if (!returnedQuantities[itemType]) {
                 returnedQuantities[itemType] = 0;
@@ -301,7 +327,7 @@ export const calculateReturnableItemsWithDates = (clientTransactions: Transactio
  * @param clientTransactions - Array of client transactions
  * @returns Array of returnable item strings
  */
-export const calculateReturnableItems = (clientTransactions: Transaction[]): string[] => {
+export const calculateReturnableItems = (clientTransactions: CreditTransaction[]): string[] => {
   const returnableItems: {[key: string]: number} = {};
   
   clientTransactions.forEach(transaction => {
@@ -325,7 +351,7 @@ export const calculateReturnableItems = (clientTransactions: Transaction[]): str
       const quantity = parseInt(chopineMatch[1]);
       const brand = chopineMatch[2]?.trim() || '';
       // Capitalize brand name properly
-      const capitalizedBrand = brand ? brand.split(' ').map(word => 
+      const capitalizedBrand = brand ? brand.split(' ').map((word: string) => 
         word.charAt(0).toUpperCase() + word.slice(1).toLowerCase()
       ).join(' ') : '';
       const key = capitalizedBrand ? `Chopine ${capitalizedBrand}` : 'Chopine';
@@ -346,7 +372,7 @@ export const calculateReturnableItems = (clientTransactions: Transaction[]): str
       const brand = bouteilleMatch[3]?.trim() || '';
       
       // Capitalize brand name properly
-      const capitalizedBrand = brand ? brand.split(' ').map(word => 
+      const capitalizedBrand = brand ? brand.split(' ').map((word: string) => 
         word.charAt(0).toUpperCase() + word.slice(1).toLowerCase()
       ).join(' ') : '';
       
@@ -394,7 +420,7 @@ export const calculateReturnableItems = (clientTransactions: Transaction[]): str
           const brand = brandMatch?.[1]?.trim() || '';
           
           // Capitalize brand name properly
-          const capitalizedBrand = brand ? brand.split(' ').map(word => 
+          const capitalizedBrand = brand ? brand.split(' ').map((word: string) => 
             word.charAt(0).toUpperCase() + word.slice(1).toLowerCase()
           ).join(' ') : '';
           
@@ -441,7 +467,7 @@ export const calculateReturnableItems = (clientTransactions: Transaction[]): str
           const brand = brandMatch?.[1]?.trim() || '';
           
           // Capitalize brand name properly
-          const capitalizedBrand = brand ? brand.split(' ').map(word => 
+          const capitalizedBrand = brand ? brand.split(' ').map((word: string) => 
             word.charAt(0).toUpperCase() + word.slice(1).toLowerCase()
           ).join(' ') : '';
           
@@ -479,6 +505,28 @@ export const calculateReturnableItems = (clientTransactions: Transaction[]): str
             // For branded Chopine like "Chopine Vin", match the exact brand
             const brandedChopinePattern = new RegExp(`returned:\\s*(\\d+)\\s+${itemType.replace('Chopine', 'Chopines?')}`, 'i');
             const match = description.match(brandedChopinePattern);
+            if (match) {
+              if (!returnedQuantities[itemType]) {
+                returnedQuantities[itemType] = 0;
+              }
+              returnedQuantities[itemType] += parseInt(match[1]);
+            }
+          }
+        } else if (itemType.includes('Bouteille')) {
+          if (itemType === 'Bouteille') {
+            // For generic Bouteille, match "Returned: X Bouteille" but not "Bouteille Brand"
+            const genericBouteillePattern = /returned:\s*(\d+)\s+bouteilles?(?!\s+\w)/i;
+            const match = description.match(genericBouteillePattern);
+            if (match) {
+              if (!returnedQuantities[itemType]) {
+                returnedQuantities[itemType] = 0;
+              }
+              returnedQuantities[itemType] += parseInt(match[1]);
+            }
+          } else {
+            // For branded Bouteille like "Bouteille Vin", match the exact brand
+            const brandedBouteillePattern = new RegExp(`returned:\\s*(\\d+)\\s+${itemType.replace('Bouteille', 'Bouteilles?')}`, 'i');
+            const match = description.match(brandedBouteillePattern);
             if (match) {
               if (!returnedQuantities[itemType]) {
                 returnedQuantities[itemType] = 0;
