@@ -4,6 +4,7 @@ import { X, Edit2, Minus, Plus, CheckCircle, AlertTriangle, Receipt, Calendar, C
 import { useCredit } from '../context/CreditContext';
 import { Client } from '../types';
 import { useNotification } from '../context/NotificationContext';
+import { calculateReturnableItems } from '../utils/returnableItemsUtils';
 
 interface ClientDetailModalProps {
   client: Client;
@@ -24,160 +25,70 @@ const ClientDetailModal: React.FC<ClientDetailModalProps> = ({ client, onClose }
     onConfirm?: () => void;
     onCancel?: () => void;
   }>({ type: null, title: '', message: '' });
+  const [forceUpdate, setForceUpdate] = useState(0);
+  
+  // Listen for credit data changes to force re-render
+  React.useEffect(() => {
+    const handleCreditDataChanged = () => {
+      setForceUpdate(prev => prev + 1);
+    };
+
+    window.addEventListener('creditDataChanged', handleCreditDataChanged);
+    
+    return () => {
+      window.removeEventListener('creditDataChanged', handleCreditDataChanged);
+    };
+  }, []);
 
   const transactions = getClientTransactions(client.id);
   const payments = getClientPayments(client.id);
   const totalDebt = client.totalDebt;
 
-  // Get returnable items for client
-  const getReturnableItems = () => {
+  // Get returnable items for client using the same logic as ClientCard
+  const returnableItems = React.useMemo(() => {
+    // Use the utility function to get returnable items as strings
+    const returnableItemsStrings = calculateReturnableItems(transactions);
+    
+    // Convert the string format back to the object format used by the modal
     const returnableItems: {[key: string]: number} = {};
     
-    transactions.forEach(transaction => {
-      // Only process debt transactions (not payments) AND exclude return transactions
-      if (transaction.type === 'payment' || transaction.description.toLowerCase().includes('returned')) {
-        return;
-      }
-      
-      const description = transaction.description.toLowerCase();
-      
-      // Only process items that contain "chopine" or "bouteille"
-      if (!description.includes('chopine') && !description.includes('bouteille')) {
-        return;
-      }
-      
-      // Look for Chopine items
-      const chopinePattern = /(\d+)\s+chopines?(?:\s+([^,]*))?/gi;
-      let chopineMatch;
-      
-      while ((chopineMatch = chopinePattern.exec(description)) !== null) {
-        const quantity = parseInt(chopineMatch[1]);
-        const brand = chopineMatch[2]?.trim() || '';
-        // Create more precise key for generic vs branded chopines
-        const key = brand ? `Chopine ${brand}` : 'Chopine';
+    returnableItemsStrings.forEach(itemString => {
+      // Parse the string format "3 Bouteilles", "1 Bouteille Vin", "2 Chopines Beer", etc.
+      const match = itemString.match(/^(\d+)\s+(.+)$/);
+      if (match) {
+        const quantity = parseInt(match[1]);
+        const displayText = match[2];
         
-        if (!returnableItems[key]) {
-          returnableItems[key] = 0;
-        }
-        returnableItems[key] += quantity;
-      }
-      
-      // Look for Bouteille items with improved parsing
-      // Pattern: number + space + optional size + bouteille + optional brand
-      const bouteillePattern = /(\d+)\s+(?:(\d+(?:\.\d+)?[Ll])\s+)?bouteilles?(?:\s+([^,\(\)]*))?/gi;
-      let bouteilleMatch;
-      
-      while ((bouteilleMatch = bouteillePattern.exec(description)) !== null) {
-        const quantity = parseInt(bouteilleMatch[1]);
-        const size = bouteilleMatch[2]?.trim().replace(/l$/gi, 'L') || '';
-        const brand = bouteilleMatch[3]?.trim() || '';
+        // Create the key based on the display text
+        let key = displayText;
         
-        // Capitalize brand name properly
-        const capitalizedBrand = brand ? brand.split(' ').map((word: string) => 
-          word.charAt(0).toUpperCase() + word.slice(1).toLowerCase()
-        ).join(' ') : '';
-        
-        // Format the key based on what we found - consistent with Chopine approach
-        let key;
-        if (size && capitalizedBrand) {
-          key = `${size} ${capitalizedBrand}`;
-        } else if (capitalizedBrand) {
-          key = `Bouteille ${capitalizedBrand}`;
-        } else if (size) {
-          key = `${size} Bouteille`;
-        } else {
+        // For branded items like "Bouteille Vin", use that as the key
+        if (displayText.startsWith('Bouteille ') || displayText.startsWith('Chopine ')) {
+          key = displayText;
+        } 
+        // For generic items like "Bouteilles", convert to "Bouteille"
+        else if (displayText === 'Bouteilles') {
           key = 'Bouteille';
         }
-        
-        if (!returnableItems[key]) {
-          returnableItems[key] = 0;
+        // For generic items like "Chopines", convert to "Chopine"
+        else if (displayText === 'Chopines') {
+          key = 'Chopine';
         }
-        returnableItems[key] += quantity;
+        // For sized bottles like "1.5L Bouteilles Green", keep as is
+        else if (/\d+(?:\.\d+)?L Bouteilles? /.test(displayText)) {
+          // key is already correct
+        }
+        // For sized bottles like "1.5L Bouteilles", convert to "1.5L Bouteille"
+        else if (/\d+(?:\.\d+)?L Bouteilles$/.test(displayText)) {
+          key = displayText.replace('Bouteilles', 'Bouteille');
+        }
+        
+        returnableItems[key] = quantity;
       }
     });
     
-    // Calculate returned quantities with improved matching
-    const returnedQuantities: {[key: string]: number} = {};
-    transactions
-      .filter(transaction => transaction.type === 'debt' && transaction.description.toLowerCase().includes('returned'))
-      .forEach(transaction => {
-        const description = transaction.description.toLowerCase();
-        Object.keys(returnableItems).forEach(itemType => {
-          // Use more precise matching to avoid substring conflicts
-          if (itemType.includes('Chopine')) {
-            if (itemType === 'Chopine') {
-              // For generic Chopine, match "Returned: X Chopine" but not "Chopine Brand"
-              const genericChopinePattern = /returned:\s*(\d+)\s+chopines?(?!\s+\w)/i;
-              const match = description.match(genericChopinePattern);
-              if (match) {
-                if (!returnedQuantities[itemType]) {
-                  returnedQuantities[itemType] = 0;
-                }
-                returnedQuantities[itemType] += parseInt(match[1]);
-              }
-            } else {
-              // For branded Chopine like "Chopine Vin", match the exact brand
-              const pattern = `returned:\\s*(\\d+)\\s+${itemType.replace('Chopine', 'Chopines?')}`;
-              const brandedChopinePattern = new RegExp(pattern, 'i');
-              const match = description.match(brandedChopinePattern);
-              if (match) {
-                if (!returnedQuantities[itemType]) {
-                  returnedQuantities[itemType] = 0;
-                }
-                returnedQuantities[itemType] += parseInt(match[1]);
-              }
-            }
-          } else if (itemType.includes('Bouteille')) {
-            // For Bouteille items, use more precise matching to avoid substring conflicts
-            if (itemType === 'Bouteille') {
-              // For generic Bouteille, match "Returned: X Bouteille" but not "Bouteille Brand"
-              const genericBouteillePattern = /returned:\s*(\d+)\s+bouteilles?(?!\\s+\w)/i;
-              const match = description.match(genericBouteillePattern);
-              if (match) {
-                if (!returnedQuantities[itemType]) {
-                  returnedQuantities[itemType] = 0;
-                }
-                returnedQuantities[itemType] += parseInt(match[1]);
-              }
-            } else {
-              // For branded Bouteille like "Bouteille Vin", match the exact brand
-              const pattern = `returned:\\s*(\\d+)\\s+${itemType.replace('Bouteille', 'Bouteilles?')}`;
-              const brandedBouteillePattern = new RegExp(pattern, 'i');
-              const match = description.match(brandedBouteillePattern);
-              if (match) {
-                if (!returnedQuantities[itemType]) {
-                  returnedQuantities[itemType] = 0;
-                }
-                returnedQuantities[itemType] += parseInt(match[1]);
-              }
-            }
-          } else {
-            // For other items, use word boundary matching
-            const escapedItemType = itemType.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
-            const pattern = new RegExp(`returned:\\s*(\\d+)\\s+${escapedItemType}`, 'i');
-            const match = description.match(pattern);
-            if (match) {
-              if (!returnedQuantities[itemType]) {
-                returnedQuantities[itemType] = 0;
-              }
-              returnedQuantities[itemType] += parseInt(match[1]);
-            }
-          }
-        });
-      });
-    
-    // Calculate net returnable quantities
-    const netReturnableItems: {[key: string]: number} = {};
-    Object.entries(returnableItems).forEach(([itemType, total]) => {
-      const returned = returnedQuantities[itemType] || 0;
-      const remaining = Math.max(0, total - returned);
-      if (remaining > 0) {
-        netReturnableItems[itemType] = remaining;
-      }
-    });
-    
-    return netReturnableItems;
-  };
+    return returnableItems;
+  }, [transactions, forceUpdate]);
 
   const handleSaveName = async () => {
     if (!editedName.trim() || editedName.trim() === client.name) {
@@ -403,7 +314,6 @@ const ClientDetailModal: React.FC<ClientDetailModalProps> = ({ client, onClose }
 
           {/* Returnable Items Section */}
           {(() => {
-            const returnableItems = getReturnableItems();
             const hasReturnableItems = Object.keys(returnableItems).length > 0;
             
             return hasReturnableItems ? (
