@@ -496,14 +496,14 @@ const ClientDetailModal: React.FC<ClientDetailModalProps> = ({ client, onClose }
                   onChange={(e) => setTransactionFilter(e.target.value as 'all' | 'returnable' | 'taken' | 'returned')}
                   className="appearance-none bg-white border border-gray-300 rounded-lg px-3 py-2 pr-8 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
                 >
-                  <option value="all">All ({transactions.filter(t => t.amount >= 0).length})</option>
-                  <option value="returnable">Returnable ({transactions.filter(t => {
+                  <option value="all">All ({transactions && Array.isArray(transactions) ? transactions.filter(t => t.amount >= 0).length : 0})</option>
+                  <option value="returnable">Returnable ({transactions && Array.isArray(transactions) ? transactions.filter(t => {
                     if (t.description.toLowerCase().includes('returned')) return false;
                     const desc = t.description.toLowerCase();
                     return desc.includes('chopine') || desc.includes('bouteille');
-                  }).length})</option>
-                  <option value="taken">Taken ({transactions.filter(t => t.amount > 0 && !t.description.toLowerCase().includes('returned')).length})</option>
-                  <option value="returned">Returned ({transactions.filter(t => t.description.toLowerCase().includes('returned')).length})</option>
+                  }).length : 0})</option>
+                  <option value="taken">Taken ({transactions && Array.isArray(transactions) ? transactions.filter(t => t.amount > 0 && !t.description.toLowerCase().includes('returned')).length : 0})</option>
+                  <option value="returned">Returned ({transactions && Array.isArray(transactions) ? transactions.filter(t => t.description.toLowerCase().includes('returned')).length : 0})</option>
                 </select>
                 <div className="absolute inset-y-0 right-0 flex items-center pr-2 pointer-events-none">
                   <Filter size={16} className="text-gray-400" />
