@@ -26,7 +26,7 @@ const CreditManagement: React.FC = () => {
     addTransaction, 
     getClientTotalDebt, 
     deleteClient, 
-    getClientTransactions 
+    getClientTransactions  
   } = useCredit();
   
   // State management
