@@ -358,7 +358,28 @@ const ClientActionModal: React.FC<ClientActionModalProps> = ({ client, onClose, 
 const processItemReturn = async (itemType: string, returnQuantity: number) => {
   
   // Create a return transaction (negative transaction)
-  const returnDescription = `Returned: ${returnQuantity} ${itemType}${returnQuantity > 1 ? 's' : ''} - ${new Date().toLocaleDateString('en-GB')}`;
+  // Fix pluralization for branded items to match the exact format used in aggregation
+  let returnDescription = `Returned: ${returnQuantity} `;
+  
+  if (itemType.includes('Chopine')) {
+    // For Chopine items: "Returned: 2 Chopines Beer" (pluralize Chopine, not brand)
+    const brand = itemType.replace('Chopine', '').trim();
+    returnDescription += `Chopine${returnQuantity > 1 ? 's' : ''}${brand ? ` ${brand}` : ''}`;
+  } else if (itemType.includes('L ')) {
+    // For sized bottles: "Returned: 2 1.5L Green" (don't pluralize brand)
+    returnDescription += itemType;
+  } else if (itemType.includes('Bouteille')) {
+    // For regular bottles: "Returned: 2 Bouteilles Green" (pluralize Bouteille, not brand)
+    const brand = itemType.replace('Bouteille', '').trim();
+    returnDescription += `Bouteille${returnQuantity > 1 ? 's' : ''}${brand ? ` ${brand}` : ''}`;
+  } else {
+    // For other items: add 's' only if quantity > 1
+    returnDescription += `${itemType}${returnQuantity > 1 ? 's' : ''}`;
+  }
+  
+  // Add date to make it unique (match the format used in ClientDetailModal for consistency)
+  const now = new Date();
+  returnDescription += ` - ${now.toLocaleDateString('en-GB')} ${now.toLocaleTimeString('en-GB', { hour: '2-digit', minute: '2-digit' })}`;
   
   try {
     // Add a return transaction with zero amount and unique description
