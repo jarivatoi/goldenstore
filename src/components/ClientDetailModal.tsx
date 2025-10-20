@@ -99,12 +99,17 @@ const ClientDetailModal: React.FC<ClientDetailModalProps> = ({ client, onClose }
 
     setIsSaving(true);
     try {
+      // Improved capitalization that handles special characters like / and (
+      const capitalizeWords = (str: string): string => {
+        return str
+          .trim()
+          .toLowerCase()
+          .replace(/(^|[\s\/\(\)\-\[\]\{\}])\w/g, (match) => match.toUpperCase());
+      };
+      
       const updatedClient = {
         ...client,
-        name: editedName.trim()
-          .split(' ')
-          .map(word => word.charAt(0).toUpperCase() + word.slice(1).toLowerCase())
-          .join(' ')
+        name: capitalizeWords(editedName)
       };
       
       await updateClient(updatedClient);
@@ -200,11 +205,13 @@ const ClientDetailModal: React.FC<ClientDetailModalProps> = ({ client, onClose }
                   type="text"
                   value={editedName}
                   onChange={(e) => {
-                    // Smart capitalization that handles parentheses
-                    const formatted = e.target.value.replace(/(^|\s)\w/g, (word) => {
-                      return word.charAt(0).toUpperCase() + word.slice(1).toLowerCase();
-                    });
-                    setEditedName(formatted);
+                    // Smart capitalization that handles special characters like / and (
+                    const capitalizeWords = (str: string): string => {
+                      return str
+                        .toLowerCase()
+                        .replace(/(^|[\s\/\(\)\-\[\]\{\}])\w/g, (match) => match.toUpperCase());
+                    };
+                    setEditedName(capitalizeWords(e.target.value));
                   }}
                   className="text-2xl font-semibold text-gray-900 bg-transparent border-b-2 border-blue-500 focus:outline-none select-text"
                   disabled={isSaving}
