@@ -667,5 +667,5 @@ const ReturnableItemRow: React.FC<ReturnableItemRowProps> = ({ itemType, quantit
     </div>
   );
 };
-
+ 
 export default ClientDetailModal;
