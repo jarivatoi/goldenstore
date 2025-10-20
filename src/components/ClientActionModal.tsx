@@ -192,35 +192,26 @@ const ClientActionModal: React.FC<ClientActionModalProps> = ({ client, onClose, 
       
       // Track which patterns have matched to prevent duplicates
       let hasMatched = false;
-     const transactionItemTypes = new Set<string>(); // Track item types for this transaction
-      
+      const transactionItemCounts: {[key: string]: number} = {}; // Track cumulative counts for this transaction
+
       // Look for Chopine items with improved parsing
       // Pattern: number + space + chopine (with optional brand after)
       const chopinePattern = /(\d+)\s+chopines?(?:\s+([^,]*))?/gi;
       let chopineMatch;
-      
+
       while ((chopineMatch = chopinePattern.exec(description)) !== null) {
         const quantity = parseInt(chopineMatch[1]);
         const brand = chopineMatch[2]?.trim() || '';
         const key = brand ? `Chopine ${brand}` : 'Chopine';
-        
-       // Skip if we've already processed this item type for this transaction
-       if (transactionItemTypes.has(key)) {
-         continue;
-       }
-       transactionItemTypes.add(key);
-        
-        if (!returnableItems[key]) {
-          returnableItems[key] = { total: 0, transactions: [] };
+
+        // Accumulate quantities for the same item type within this transaction
+        if (!transactionItemCounts[key]) {
+          transactionItemCounts[key] = 0;
         }
-        returnableItems[key].total += quantity;
-        returnableItems[key].transactions.push({
-          ...transaction,
-          quantity: quantity
-        });
+        transactionItemCounts[key] += quantity;
         hasMatched = true;
       }
-      
+
       // Look for Bouteille items with improved parsing
       // Pattern: number + space + optional size + bouteille + optional brand
       const bouteillePattern = /(\d+)\s+(?:(\d+(?:\.\d+)?[Ll])\s+)?bouteilles?(?:\s+([^,\(\)]*))?/gi;
@@ -230,7 +221,7 @@ const ClientActionModal: React.FC<ClientActionModalProps> = ({ client, onClose, 
         const quantity = parseInt(bouteilleMatch[1]);
         const size = bouteilleMatch[2]?.trim().toUpperCase() || '';
         const brand = bouteilleMatch[3]?.trim() || '';
-        
+
         // Format the key based on what we found
         let key;
         if (size && brand) {
@@ -242,30 +233,33 @@ const ClientActionModal: React.FC<ClientActionModalProps> = ({ client, onClose, 
         } else {
           key = 'Bouteille';
         }
-        
-       // Skip if we've already processed this item type for this transaction
-       if (transactionItemTypes.has(key)) {
-         continue;
-       }
-       transactionItemTypes.add(key);
-        
+
+        // Accumulate quantities for the same item type within this transaction
+        if (!transactionItemCounts[key]) {
+          transactionItemCounts[key] = 0;
+        }
+        transactionItemCounts[key] += quantity;
+        hasMatched = true;
+      }
+
+      // Add all accumulated quantities to returnableItems (both chopine and bouteille)
+      Object.entries(transactionItemCounts).forEach(([key, totalQuantity]) => {
         if (!returnableItems[key]) {
           returnableItems[key] = { total: 0, transactions: [] };
         }
-        returnableItems[key].total += quantity;
+        returnableItems[key].total += totalQuantity;
         returnableItems[key].transactions.push({
           ...transaction,
-          quantity: quantity
+          quantity: totalQuantity
         });
-        hasMatched = true;
-      }
+      });
       
       // Handle items without explicit numbers (assume quantity 1) - only if no pattern matched
       if (!hasMatched && description.includes('bouteille')) {
         const sizeMatch = description.match(/(\d+(?:\.\d+)?[Ll])/i);
         const brandMatch = description.match(/bouteilles?\s+([^,]*)/i);
         const brand = brandMatch?.[1]?.trim() || '';
-        
+
         let key;
         if (sizeMatch && brand) {
           key = `${sizeMatch[1].replace(/l$/i, 'L').toUpperCase()} ${brand}`;
@@ -276,13 +270,7 @@ const ClientActionModal: React.FC<ClientActionModalProps> = ({ client, onClose, 
         } else {
           key = 'Bouteille';
         }
-        
-       // Skip if we've already processed this item type for this transaction
-       if (transactionItemTypes.has(key)) {
-         return; // Skip this transaction entirely
-       }
-       transactionItemTypes.add(key);
-        
+
         if (!returnableItems[key]) {
           returnableItems[key] = { total: 0, transactions: [] };
         }
@@ -293,18 +281,12 @@ const ClientActionModal: React.FC<ClientActionModalProps> = ({ client, onClose, 
         });
         hasMatched = true;
       }
-      
+
       if (!hasMatched && description.includes('chopine')) {
         const brandMatch = description.match(/chopines?\s+([^,]*)/i);
         const brand = brandMatch?.[1]?.trim() || '';
         const key = brand ? `Chopine ${brand}` : 'Chopine';
-        
-       // Skip if we've already processed this item type for this transaction
-       if (transactionItemTypes.has(key)) {
-         return; // Skip this transaction entirely
-       }
-       transactionItemTypes.add(key);
-        
+
         if (!returnableItems[key]) {
           returnableItems[key] = { total: 0, transactions: [] };
         }
