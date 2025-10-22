@@ -8,7 +8,7 @@ import ScrollingTabs from './credit/ScrollingTabs';
 import CreditHeader from './credit/CreditHeader';
 import ClientGrid from './credit/ClientGrid';
 import CreditModals from './credit/CreditModals';
-import MiniCalculator from './cr+edit/MiniCalculator';
+import MiniCalculator from './credit/MiniCalculator';
 import { Client, CalculationStep, DuplicateCard } from '../types';
 import { CalculatorEngine } from '../calculator/CalculatorEngine';
 import { evaluateExpression } from '../utils/creditCalculatorUtils';
