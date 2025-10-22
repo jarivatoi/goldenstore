@@ -205,13 +205,9 @@ const ClientDetailModal: React.FC<ClientDetailModalProps> = ({ client, onClose }
                   type="text"
                   value={editedName}
                   onChange={(e) => {
-                    // Smart capitalization that handles special characters like / and (
-                    const capitalizeWords = (str: string): string => {
-                      return str
-                        .toLowerCase()
-                        .replace(/(^|[\s\/\(\)\-\[\]\{\}])\w/g, (match) => match.toUpperCase());
-                    };
-                    setEditedName(capitalizeWords(e.target.value));
+                    // Store the raw input value without automatic capitalization
+                    // Capitalization will be applied when saving
+                    setEditedName(e.target.value);
                   }}
                   className="text-2xl font-semibold text-gray-900 bg-transparent border-b-2 border-blue-500 focus:outline-none select-text"
                   disabled={isSaving}
