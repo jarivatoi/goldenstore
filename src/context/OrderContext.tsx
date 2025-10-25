@@ -180,6 +180,7 @@ export const OrderProvider: React.FC<{ children: React.ReactNode }> = ({ childre
                   quantity: item.quantity,
                   unitPrice: item.unit_price,
                   isVatNil: item.is_vat_nil || false,
+                  isVatIncluded: item.is_vat_included || false,
                   vatAmount: item.vat_amount || 0,
                   totalPrice: item.total_price,
                   isAvailable: item.is_available !== false
@@ -677,6 +678,7 @@ export const OrderProvider: React.FC<{ children: React.ReactNode }> = ({ childre
             quantity: item.quantity,
             unit_price: item.unitPrice,
             is_vat_nil: item.isVatNil,
+            is_vat_included: item.isVatIncluded || false,
             vat_amount: item.vatAmount,
             total_price: item.totalPrice,
             is_available: item.isAvailable
@@ -748,6 +750,7 @@ export const OrderProvider: React.FC<{ children: React.ReactNode }> = ({ childre
             quantity: item.quantity,
             unit_price: item.unitPrice,
             is_vat_nil: item.isVatNil,
+            is_vat_included: item.isVatIncluded || false,
             vat_amount: item.vatAmount,
             total_price: item.totalPrice,
             is_available: item.isAvailable
