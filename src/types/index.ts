@@ -193,6 +193,7 @@ export interface OrderItem {
   quantity: number; // Quantity ordered
   unitPrice: number; // Price per unit
   isVatNil: boolean; // Whether item is VAT exempt
+  isVatIncluded: boolean; // Whether VAT is included in the price
   vatAmount: number; // VAT amount (15% of unit price * quantity)
   totalPrice: number; // (quantity * unitPrice) + vatAmount
   isAvailable: boolean; // Whether item is available (affects calculation)
