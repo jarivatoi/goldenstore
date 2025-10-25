@@ -1049,7 +1049,12 @@ const OrderCard: React.FC<OrderCardProps> = ({ order, itemTemplates, onDelete, o
                 {getItemTemplateName(item.templateId)}
               </span>
               <div className="text-xs text-gray-600 mt-1 select-none">
-                Rs {item.unitPrice.toLocaleString('en-IN', { minimumFractionDigits: 2, maximumFractionDigits: 2 })} + {item.isVatNil ? 'VAT Nil' : `VAT15%(Rs ${item.vatAmount.toLocaleString('en-IN', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`} <span className="consistent-arrow">→</span> Rs {item.totalPrice.toLocaleString('en-IN', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
+                Rs {item.unitPrice.toLocaleString('en-IN', { minimumFractionDigits: 2, maximumFractionDigits: 2 })} + 
+                {item.isVatNil ? 'VAT Nil' : 
+                 item.isVatIncluded ? (
+                   <span className="text-gray-500 italic">VAT Included</span>
+                 ) : `VAT15%(Rs ${item.vatAmount.toLocaleString('en-IN', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`}
+                {' '}<span className="consistent-arrow">→</span> Rs {item.totalPrice.toLocaleString('en-IN', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
               </div>
             </div>
             <div className="flex items-center gap-2 select-none">
@@ -1661,7 +1666,11 @@ const CreateOrderModal: React.FC<CreateOrderModalProps> = ({ category, itemTempl
                           {(() => {
                             const orderItem = orderItems.find(oi => oi.templateId === template.id);
                             if (!orderItem || orderItem.quantity === 0) return 'Rs 0.00';
-                            return template.isVatNil ? 'VAT Nil' : `Rs ${orderItem.vatAmount.toLocaleString('en-IN', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`;
+                            if (template.isVatNil) return 'VAT Nil';
+                            if (template.isVatIncluded) return (
+                              <span className="text-gray-500 italic">VAT Included</span>
+                            );
+                            return `Rs ${orderItem.vatAmount.toLocaleString('en-IN', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`;
                           })()}
                         </td>
                         <td className="border border-gray-300 px-4 py-2 text-right font-semibold select-none">
@@ -1868,12 +1877,19 @@ const EditOrderModal: React.FC<EditOrderModalProps> = ({ order, itemTemplates, o
                         {getItemTemplateName(item.templateId)}
                       </span>
                       <div className="text-xs text-gray-600 mt-1 select-none">
-                        Rs {item.unitPrice.toLocaleString('en-IN', { minimumFractionDigits: 2, maximumFractionDigits: 2 })} + {item.isVatNil ? 'VAT Nil' : `VAT15%(Rs ${item.vatAmount.toLocaleString('en-IN', { minimumFractionDigits: 2, maximumFractionDigits: 2 })})`} → Rs {item.totalPrice.toLocaleString('en-IN', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
+                        Rs {item.unitPrice.toLocaleString('en-IN', { minimumFractionDigits: 2, maximumFractionDigits: 2 })} + 
+                        {item.isVatNil ? 'VAT Nil' : 
+                         item.isVatIncluded ? (
+                           <span className="text-gray-500 italic">VAT Included</span>
+                         ) : `VAT15%(Rs ${item.vatAmount.toLocaleString('en-IN', { minimumFractionDigits: 2, maximumFractionDigits: 2 })})`} 
+                        → Rs {item.totalPrice.toLocaleString('en-IN', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
                       </div>
                     </div>
                     <div className="flex items-center gap-3 select-none">
                       <span className={`text-xs select-none ${!item.isAvailable ? 'line-through text-gray-400' : ''}`}>
-                        {item.isVatNil ? 'VAT Nil' : `VAT(Rs ${item.vatAmount.toFixed(2)})`}
+                        {item.isVatNil ? 'VAT Nil' : item.isVatIncluded ? (
+                          <span className="text-gray-500 italic">VAT Included</span>
+                        ) : `VAT(Rs ${item.vatAmount.toFixed(2)})`}
                       </span>
                       <span className={`font-medium select-none ${!item.isAvailable ? 'line-through text-gray-400' : ''}`}>
                         Rs {item.totalPrice.toLocaleString('en-IN', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
