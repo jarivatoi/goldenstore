@@ -911,7 +911,8 @@ const OrderCard: React.FC<OrderCardProps> = ({ order, itemTemplates, onDelete, o
 
   const addItemToOrder = (template: OrderItemTemplate) => {
     const baseAmount = template.unitPrice;
-    const vatAmount = template.isVatNil ? 0 : (baseAmount * (template.vatPercentage || 15)) / 100;
+    const isVatIncluded = template.isVatIncluded || false;
+    const vatAmount = template.isVatNil || isVatIncluded ? 0 : (baseAmount * (template.vatPercentage || 15)) / 100;
 
     const newOrderItem: OrderItem = {
       id: crypto.randomUUID(),
@@ -919,8 +920,9 @@ const OrderCard: React.FC<OrderCardProps> = ({ order, itemTemplates, onDelete, o
       quantity: 1,
       unitPrice: template.unitPrice,
       isVatNil: template.isVatNil,
+      isVatIncluded: isVatIncluded,
       vatAmount: vatAmount,
-      totalPrice: template.isVatNil ? template.unitPrice : template.unitPrice + vatAmount,
+      totalPrice: isVatIncluded ? template.unitPrice : (template.isVatNil ? template.unitPrice : template.unitPrice + vatAmount),
       isAvailable: true
     };
     
@@ -938,8 +940,10 @@ const OrderCard: React.FC<OrderCardProps> = ({ order, itemTemplates, onDelete, o
         // Recalculate totals when quantity, unit price, or availability changes
         if (field === 'quantity' || field === 'unitPrice' || field === 'isAvailable') {
           const subtotal = updated.quantity * updated.unitPrice;
-          updated.vatAmount = updated.isVatNil ? 0 : subtotal * 0.15; // 15% VAT only if not VAT Nil
-          updated.totalPrice = subtotal + updated.vatAmount;
+          // Check if the item has VAT included
+          const isVatIncluded = updated.isVatIncluded || false;
+          updated.vatAmount = updated.isVatNil || isVatIncluded ? 0 : subtotal * 0.15; // 15% VAT only if not VAT Nil
+          updated.totalPrice = isVatIncluded ? subtotal : subtotal + updated.vatAmount;
         }
         
         return updated;
@@ -1412,8 +1416,11 @@ const CreateOrderModal: React.FC<CreateOrderModalProps> = ({ category, itemTempl
         // Recalculate totals when quantity or unit price changes
         if (field === 'quantity' || field === 'unitPrice') {
           const subtotal = updated.quantity * updated.unitPrice;
-          updated.vatAmount = updated.isVatNil ? 0 : subtotal * 0.15; // 15% VAT
-          updated.totalPrice = subtotal + updated.vatAmount;
+          // Check if the item template has VAT included
+          const template = itemTemplates.find(t => t.id === updated.templateId);
+          const isVatIncluded = template && template.isVatIncluded;
+          updated.vatAmount = updated.isVatNil || isVatIncluded ? 0 : subtotal * 0.15; // 15% VAT
+          updated.totalPrice = isVatIncluded ? subtotal : subtotal + updated.vatAmount;
         }
         
         return updated;
@@ -1536,12 +1543,12 @@ const CreateOrderModal: React.FC<CreateOrderModalProps> = ({ category, itemTempl
                   <tbody className="select-none">
                     {itemTemplates.map((template) => (
                       <tr key={template.id} className="hover:bg-gray-50 select-none">
-                        <td className="border border-gray-300 px-4 py-2 select-none">
+                        <td className="border border-gray-300 px-4 py-2 text-center select-none">
                           <div className="select-none">
                             <div className="font-medium text-gray-800 select-none">{template.name}</div>
                           </div>
                         </td>
-                        <td className="border border-gray-300 px-4 py-2 select-none">
+                        <td className="border border-gray-300 px-4 py-2 text-center select-none">
                           <div className="flex items-center gap-1 justify-center">
                             <button
                               type="button"
@@ -1555,8 +1562,8 @@ const CreateOrderModal: React.FC<CreateOrderModalProps> = ({ category, itemTempl
                                     setOrderItems(prev => prev.filter((_, i) => i !== existingIndex));
                                   }
                                 } else {
-                                  const vatAmount = template.isVatNil ? 0 : (template.unitPrice * newQuantity * template.vatPercentage) / 100;
-                                  const totalPrice = (template.unitPrice * newQuantity) + vatAmount;
+                                  const vatAmount = template.isVatNil || template.isVatIncluded ? 0 : (template.unitPrice * newQuantity * template.vatPercentage) / 100;
+                                  const totalPrice = template.isVatIncluded ? (template.unitPrice * newQuantity) : (template.unitPrice * newQuantity) + vatAmount;
                                   
                                   const newOrderItem: OrderItem = {
                                     id: existingIndex >= 0 ? orderItems[existingIndex].id : crypto.randomUUID(),
@@ -1600,8 +1607,8 @@ const CreateOrderModal: React.FC<CreateOrderModalProps> = ({ category, itemTempl
                                     setOrderItems(prev => prev.filter((_, i) => i !== existingIndex));
                                   }
                                 } else {
-                                  const vatAmount = template.isVatNil ? 0 : (template.unitPrice * quantity * template.vatPercentage) / 100;
-                                  const totalPrice = (template.unitPrice * quantity) + vatAmount;
+                                  const vatAmount = template.isVatNil || template.isVatIncluded ? 0 : (template.unitPrice * quantity * template.vatPercentage) / 100;
+                                  const totalPrice = template.isVatIncluded ? (template.unitPrice * quantity) : (template.unitPrice * quantity) + vatAmount;
                                   
                                   const newOrderItem: OrderItem = {
                                     id: existingIndex >= 0 ? orderItems[existingIndex].id : crypto.randomUUID(),
@@ -1633,8 +1640,8 @@ const CreateOrderModal: React.FC<CreateOrderModalProps> = ({ category, itemTempl
                                 const newQuantity = currentQuantity + 1;
                                 const existingIndex = orderItems.findIndex(oi => oi.templateId === template.id);
                                 
-                                const vatAmount = template.isVatNil ? 0 : (template.unitPrice * newQuantity * template.vatPercentage) / 100;
-                                const totalPrice = (template.unitPrice * newQuantity) + vatAmount;
+                                const vatAmount = template.isVatNil || template.isVatIncluded ? 0 : (template.unitPrice * newQuantity * template.vatPercentage) / 100;
+                                const totalPrice = template.isVatIncluded ? (template.unitPrice * newQuantity) : (template.unitPrice * newQuantity) + vatAmount;
                                 
                                 const newOrderItem: OrderItem = {
                                   id: existingIndex >= 0 ? orderItems[existingIndex].id : crypto.randomUUID(),
@@ -1659,10 +1666,10 @@ const CreateOrderModal: React.FC<CreateOrderModalProps> = ({ category, itemTempl
                             </button>
                           </div>
                         </td>
-                        <td className="border border-gray-300 px-4 py-2 text-right select-none">
+                        <td className="border border-gray-300 px-4 py-2 text-center select-none">
                           Rs {template.unitPrice.toLocaleString('en-IN', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
                         </td>
-                        <td className="border border-gray-300 px-4 py-2 text-right select-none">
+                        <td className="border border-gray-300 px-4 py-2 text-center select-none">
                           {(() => {
                             const orderItem = orderItems.find(oi => oi.templateId === template.id);
                             if (!orderItem || orderItem.quantity === 0) return 'Rs 0.00';
@@ -1673,7 +1680,7 @@ const CreateOrderModal: React.FC<CreateOrderModalProps> = ({ category, itemTempl
                             return `Rs ${orderItem.vatAmount.toLocaleString('en-IN', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`;
                           })()}
                         </td>
-                        <td className="border border-gray-300 px-4 py-2 text-right font-semibold select-none">
+                        <td className="border border-gray-300 px-4 py-2 text-center font-semibold select-none">
                           {(() => {
                             const orderItem = orderItems.find(oi => oi.templateId === template.id);
                             if (!orderItem || orderItem.quantity === 0) return 'Rs 0.00';
@@ -1745,10 +1752,12 @@ const EditOrderModal: React.FC<EditOrderModalProps> = ({ order, itemTemplates, o
         if (field === 'quantity' || field === 'unitPrice' || field === 'isAvailable') {
           const subtotal = updated.quantity * updated.unitPrice;
           const template = itemTemplates.find(t => t.id === updated.templateId);
-          const baseAmount = subtotal;
-          const vatAmount = template && template.isVatNil ? 0 : (baseAmount * (template && template.vatPercentage || 15)) / 100;
-          updated.vatAmount = updated.isVatNil ? 0 : vatAmount;
-          updated.totalPrice = subtotal + updated.vatAmount;
+          
+          // For VAT included items, no VAT is added
+          const isVatIncluded = template && template.isVatIncluded;
+          const vatAmount = template && (template.isVatNil || isVatIncluded) ? 0 : (subtotal * (template && template.vatPercentage || 15)) / 100;
+          updated.vatAmount = updated.isVatNil || isVatIncluded ? 0 : vatAmount;
+          updated.totalPrice = isVatIncluded ? subtotal : subtotal + vatAmount;
           
           // If not available, set totals to 0 for calculation purposes
           if (!updated.isAvailable) {
