@@ -265,6 +265,7 @@ export type Database = {
           quantity: number;
           unit_price: number;
           is_vat_nil: boolean | null;
+          is_vat_included: boolean | null;
           vat_amount: number | null;
           total_price: number;
           is_available: boolean | null;
@@ -276,6 +277,7 @@ export type Database = {
           quantity: number;
           unit_price: number;
           is_vat_nil?: boolean | null;
+          is_vat_included?: boolean | null;
           vat_amount?: number | null;
           total_price: number;
           is_available?: boolean | null;
@@ -287,6 +289,7 @@ export type Database = {
           quantity?: number;
           unit_price?: number;
           is_vat_nil?: boolean | null;
+          is_vat_included?: boolean | null;
           vat_amount?: number | null;
           total_price?: number;
           is_available?: boolean | null;
