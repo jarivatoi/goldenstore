@@ -437,15 +437,99 @@ const CreditManagement: React.FC = () => {
       }
     });
     
-    // Calculate returned quantities
+    // Calculate returned quantities with improved matching
     const returnedQuantities: {[key: string]: number} = {};
     clientTransactions
       .filter(transaction => transaction.type === 'debt' && transaction.description.toLowerCase().includes('returned'))
       .forEach(transaction => {
         const description = transaction.description.toLowerCase();
         Object.keys(returnableItems).forEach(itemType => {
-          if (description.includes(itemType.toLowerCase())) {
-            const match = description.match(/returned:\s*(\d+)\s+/);
+          // Use more precise matching to avoid substring conflicts
+          if (itemType.includes('Chopine')) {
+            if (itemType === 'Chopine') {
+              // For generic Chopine, match "Returned: X Chopine" but not "Chopine Brand"
+              const genericChopinePattern = /returned:\s*(\d+)\s+chopines?(?!\s+\w)/i;
+              const match = description.match(genericChopinePattern);
+              if (match) {
+                if (!returnedQuantities[itemType]) {
+                  returnedQuantities[itemType] = 0;
+                }
+                returnedQuantities[itemType] += parseInt(match[1]);
+              }
+            } else {
+              // For branded Chopine like "Chopine Vin", match the exact brand
+              const brandedChopinePattern = new RegExp(`returned:\\s*(\\d+)\\s+${itemType.replace('Chopine', 'Chopines?')}`, 'i');
+              const match = description.match(brandedChopinePattern);
+              if (match) {
+                if (!returnedQuantities[itemType]) {
+                  returnedQuantities[itemType] = 0;
+                }
+                returnedQuantities[itemType] += parseInt(match[1]);
+              }
+            }
+          } else if (itemType.includes('Bouteille')) {
+            if (itemType === 'Bouteille') {
+              // For generic Bouteille, match "Returned: X Bouteille" but not "Bouteille Brand"
+              // First check if any branded Bouteille would match this description
+              let isBrandedMatch = false;
+              for (const checkItemType of Object.keys(returnableItems)) {
+                if (checkItemType.includes('Bouteille') && checkItemType !== 'Bouteille') {
+                  const brandName = checkItemType.replace('Bouteille', '').trim();
+                  if (brandName) {
+                    // Create pattern that matches both "Bouteille Brand" and "Bouteilles Brand"
+                    const brandedPattern = new RegExp(`returned:\\s*(\\d+)\\s+bouteilles?\\s+${brandName.replace(/[.*+?^${}()|[\\]\\/g, '\\$&')}(?=\\s*(?:-|$))`, 'i');
+                    if (description.match(brandedPattern)) {
+                      isBrandedMatch = true;
+                      break;
+                    }
+                  }
+                }
+              }
+              
+              // Only match generic if it's not a branded match
+              if (!isBrandedMatch) {
+                // More precise pattern: match "Bouteille" or "Bouteilles" only when followed by a non-word character
+                // or end of string, but not when followed by a space and another word
+                const genericBouteillePattern = /returned:\s*(\d+)\s+(bouteille|bouteilles)(?=\s*(?:-|$))/i;
+                const match = description.match(genericBouteillePattern);
+                if (match) {
+                  if (!returnedQuantities[itemType]) {
+                    returnedQuantities[itemType] = 0;
+                  }
+                  returnedQuantities[itemType] += parseInt(match[1]);
+                }
+              }
+            } else {
+              // For branded Bouteille like "Bouteille Vin", match the exact brand
+              const brandName = itemType.replace('Bouteille', '').trim();
+              if (brandName) {
+                // Create pattern that matches both "Bouteille Brand" and "Bouteilles Brand"
+                const brandedPattern = new RegExp(`returned:\\s*(\\d+)\\s+bouteilles?\\s+${brandName.replace(/[.*+?^${}()|[\\]\\/g, '\\$&')}(?=\\s*(?:-|$))`, 'i');
+                const match = description.match(brandedPattern);
+                if (match) {
+                  if (!returnedQuantities[itemType]) {
+                    returnedQuantities[itemType] = 0;
+                  }
+                  returnedQuantities[itemType] += parseInt(match[1]);
+                } else {
+                  // Handle cases where items were added without explicit quantities (e.g., "bouteille vin")
+                  // Try a more flexible pattern that matches the brand name anywhere in the return description
+                  const flexiblePattern = new RegExp(`returned:\\s*(\\d+).*?${brandName.replace(/[.*+?^${}()|[\\]\\/g, '\\$&')}`, 'i');
+                  const flexibleMatch = description.match(flexiblePattern);
+                  if (flexibleMatch) {
+                    if (!returnedQuantities[itemType]) {
+                      returnedQuantities[itemType] = 0;
+                    }
+                    returnedQuantities[itemType] += parseInt(flexibleMatch[1]);
+                  }
+                }
+              }
+            }
+          } else {
+            // For other items, use word boundary matching
+            const escapedItemType = itemType.replace(/[.*+?^${}()|[\\]\\/g, '\\$&');
+            const pattern = new RegExp(`returned:\\s*(\\d+)\\s+${escapedItemType}`, 'i');
+            const match = description.match(pattern);
             if (match) {
               if (!returnedQuantities[itemType]) {
                 returnedQuantities[itemType] = 0;
