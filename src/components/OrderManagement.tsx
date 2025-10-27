@@ -1401,6 +1401,7 @@ const CreateOrderModal: React.FC<CreateOrderModalProps> = ({ category, itemTempl
       quantity: 0,
       unitPrice: template.unitPrice,
       isVatNil: template.isVatNil,
+      isVatIncluded: template.isVatIncluded || false,
       vatAmount: 0,
       totalPrice: 0,
       isAvailable: true
