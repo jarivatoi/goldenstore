@@ -239,7 +239,11 @@ export const OrderProvider: React.FC<{ children: React.ReactNode }> = ({ childre
               ...order,
               orderDate: new Date(order.orderDate),
               createdAt: new Date(order.createdAt),
-              lastEditedAt: order.lastEditedAt ? new Date(order.lastEditedAt) : undefined
+              lastEditedAt: order.lastEditedAt ? new Date(order.lastEditedAt) : undefined,
+              items: (order.items || []).map((item: any) => ({
+                ...item,
+                isVatIncluded: item.isVatIncluded || false
+              }))
             })) : [];
             
             setCategories(transformedCategories);
@@ -266,7 +270,11 @@ export const OrderProvider: React.FC<{ children: React.ReactNode }> = ({ childre
             ...order,
             orderDate: new Date(order.orderDate),
             createdAt: new Date(order.createdAt),
-            lastEditedAt: order.lastEditedAt ? new Date(order.lastEditedAt) : undefined
+            lastEditedAt: order.lastEditedAt ? new Date(order.lastEditedAt) : undefined,
+            items: (order.items || []).map((item: any) => ({
+              ...item,
+              isVatIncluded: item.isVatIncluded || false
+            }))
           })) : [];
           
           setCategories(transformedCategories);
