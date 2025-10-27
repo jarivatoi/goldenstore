@@ -7,6 +7,7 @@ import ClientActionModal from '../ClientActionModal';
 import ClientDetailModal from '../ClientDetailModal';
 import { useCredit } from '../../context/CreditContext';
 import FlipCard from './FlipCard';
+import { calculateReturnableItems } from '../../utils/returnableItemsUtils';
 
 // Register GSAP plugins
 gsap.registerPlugin(Draggable);
@@ -553,159 +554,56 @@ const ScrollingTabs: React.FC<ScrollingTabsProps> = ({
               
               // Force recalculation of returnable items by calling the function fresh each render
               const currentReturnableItems = (() => {
+                // Use the shared utility function to calculate returnable items
                 const clientTransactions = getTransactions(client.id);
-                const returnableItems: {[key: string]: number} = {};
+                const fullReturnableItems = calculateReturnableItems(clientTransactions);
                 
-                clientTransactions.forEach(transaction => {
-                  if (transaction.type === 'payment' || transaction.description.toLowerCase().includes('returned')) {
-                    return;
-                  }
-                  
-                  const description = transaction.description.toLowerCase();
-                  
-                  if (!description.includes('chopine') && !description.includes('bouteille')) {
-                    return;
-                  }
-                  
-                  const chopinePattern = /(\d+)\s+chopines?(?:\s+([^,]*))?/gi;
-                  let chopineMatch;
-                  
-                  while ((chopineMatch = chopinePattern.exec(description)) !== null) {
-                    const quantity = parseInt(chopineMatch[1]);
-                    const brand = chopineMatch[2]?.trim() || '';
-                    const key = brand ? `Chopine ${brand}` : 'Chopine';
-                    
-                    if (!returnableItems[key]) {
-                      returnableItems[key] = 0;
-                    }
-                    returnableItems[key] += quantity;
-                  }
-                  
-                  const bouteillePattern = /(\d+)\s+(?:(\d+(?:\.\d+)?L)\s+)?bouteilles?(?:\s+([^,]*))?/gi;
-                  let bouteilleMatch;
-                  
-                  while ((bouteilleMatch = bouteillePattern.exec(description)) !== null) {
-                    const quantity = parseInt(bouteilleMatch[1]);
-                    const size = bouteilleMatch[2]?.trim().toUpperCase() || '';
-                    const brand = bouteilleMatch[3]?.trim() || '';
-                    
-                    let key;
-                    if (size && brand) {
-                      key = `${size} ${brand}`;
-                    } else if (brand) {
-                      key = `Bouteille ${brand}`;
-                    } else if (size) {
-                      key = `${size} Bouteille`;
-                    } else {
-                      key = 'Bouteille';
-                    }
-                    
-                    if (!returnableItems[key]) {
-                      returnableItems[key] = 0;
-                    }
-                    returnableItems[key] += quantity;
-                  }
-                  
-                  if (description.includes('bouteille') && !bouteillePattern.test(description)) {
-                    const sizeMatch = description.match(/(\d+(?:\.\d+)?L)/i);
-                    const brandMatch = description.match(/bouteilles?\s+([^,]*)/i);
-                    const brand = brandMatch?.[1]?.trim() || '';
-                    
-                    let key;
-                    if (sizeMatch && sizeMatch[1] && brand) {
-                      key = `${sizeMatch[1].toUpperCase()} Bouteille ${brand}`;
-                    } else if (brand) {
-                      key = `Bouteille ${brand}`;
-                    } else if (sizeMatch && sizeMatch[1]) {
-                      key = `${sizeMatch[1].toUpperCase()} Bouteille`;
-                    } else {
-                      key = 'Bouteille';
-                    }
-                    
-                    if (!returnableItems[key]) {
-                      returnableItems[key] = 0;
-                    }
-                    returnableItems[key] += 1;
-                  }
-                  
-                  if (description.includes('chopine') && !chopinePattern.test(description)) {
-                    const brandMatch = description.match(/chopines?\s+([^,]*)/i);
-                    const brand = brandMatch?.[1]?.trim() || '';
-                    const key = brand ? `Chopine ${brand}` : 'Chopine';
-                    
-                    if (!returnableItems[key]) {
-                      returnableItems[key] = 0;
-                    }
-                    returnableItems[key] += 1;
-                  }
-                });
-                
-                // Calculate returned quantities with improved matching
-                const returnedQuantities: {[key: string]: number} = {};
-                clientTransactions
-                  .filter(transaction => transaction.type === 'debt' && transaction.description.toLowerCase().includes('returned'))
-                  .forEach(transaction => {
-                    const description = transaction.description.toLowerCase();
-                    Object.keys(returnableItems).forEach(itemType => {
-                      // Use more precise matching to avoid substring conflicts
-                      if (itemType.includes('Chopine')) {
-                        if (itemType === 'Chopine') {
-                          // For generic Chopine, match "Returned: X Chopine" but not "Chopine Brand"
-                          const genericChopinePattern = /returned:\s*(\d+)\s+chopines?(?!\s+\w)/i;
-                          const match = description.match(genericChopinePattern);
-                          if (match) {
-                            if (!returnedQuantities[itemType]) {
-                              returnedQuantities[itemType] = 0;
-                            }
-                            returnedQuantities[itemType] += parseInt(match[1]);
-                          }
-                        } else {
-                          // For branded Chopine like "Chopine Vin", match the exact brand
-                          const brandedChopinePattern = new RegExp(`returned:\\s*(\\d+)\\s+${itemType.replace('Chopine', 'Chopines?')}`, 'i');
-                          const match = description.match(brandedChopinePattern);
-                          if (match) {
-                            if (!returnedQuantities[itemType]) {
-                              returnedQuantities[itemType] = 0;
-                            }
-                            returnedQuantities[itemType] += parseInt(match[1]);
-                          }
-                        }
-                      } else {
-                        // For other items, use word boundary matching
-                        const escapedItemType = itemType.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
-                        const pattern = new RegExp(`returned:\\s*(\\d+)\\s+${escapedItemType}`, 'i');
-                        const match = description.match(pattern);
-                        if (match) {
-                          if (!returnedQuantities[itemType]) {
-                            returnedQuantities[itemType] = 0;
-                          }
-                          returnedQuantities[itemType] += parseInt(match[1]);
-                        }
-                      }
-                    });
-                });
-                
+                // Truncate the returnable items for display in scrolling tabs
                 const truncatedItems: string[] = [];
-                Object.entries(returnableItems).forEach(([itemType, total]) => {
-                  const returned = returnedQuantities[itemType] || 0;
-                  const remaining = Math.max(0, total - returned);
-                  if (remaining > 0) {
-                    let truncated = '';
-                    if (itemType.includes('Chopine')) {
-                      truncated = `${remaining} (Ch)`;
-                    } else if (itemType.match(/(\d+(?:\.\d+)?L)/i)) {
-                      // For sized bottles like "1.5L Green" -> "4 (1.5L)"
-                      const sizeMatch = itemType.match(/(\d+(?:\.\d+)?L)/i);
-                      truncated = sizeMatch ? `${remaining} (${sizeMatch[1]})` : `${remaining}`;
-                    } else if (itemType.includes('Bouteille')) {
-                      // For regular bottles like "Bouteille Green" -> "4 (Bt)"
-                      truncated = `${remaining} (Bt)`;
+                fullReturnableItems.forEach(itemText => {
+                  let truncated = '';
+                  if (itemText.includes('Chopine')) {
+                    // For Chopine items: "8 Chopines Beer" -> "8 (Ch)"
+                    const quantityMatch = itemText.match(/^(\d+)/);
+                    if (quantityMatch) {
+                      truncated = `${quantityMatch[1]} (Ch)`;
                     } else {
-                      // For other items, use first 3 characters
-                      truncated = `${remaining} (${itemType.substring(0, 3)})`;
+                      truncated = itemText.substring(0, 10); // Fallback
                     }
-                    truncatedItems.push(truncated);
+                  } else if (itemText.match(/(\d+(?:\.\d+)?L)/i)) {
+                    // For sized bottles like "3 1.5L Bouteilles Green" -> "3 (1.5L)"
+                    const quantityMatch = itemText.match(/^(\d+)/);
+                    const sizeMatch = itemText.match(/(\d+(?:\.\d+)?L)/i);
+                    if (quantityMatch && sizeMatch) {
+                      truncated = `${quantityMatch[1]} (${sizeMatch[1]})`;
+                    } else {
+                      truncated = itemText.substring(0, 10); // Fallback
+                    }
+                  } else if (itemText.includes('Bouteille')) {
+                    // For regular bottles like "3 Bouteilles Green" -> "3 (Bt)"
+                    const quantityMatch = itemText.match(/^(\d+)/);
+                    if (quantityMatch) {
+                      truncated = `${quantityMatch[1]} (Bt)`;
+                    } else {
+                      truncated = itemText.substring(0, 10); // Fallback
+                    }
+                  } else {
+                    // For other items, use first 3 characters of item type
+                    const quantityMatch = itemText.match(/^(\d+)/);
+                    if (quantityMatch) {
+                      // Extract item type name for abbreviation
+                      const itemTypeMatch = itemText.match(/\(([^)]+)\)/);
+                      if (itemTypeMatch) {
+                        const itemType = itemTypeMatch[1];
+                        truncated = `${quantityMatch[1]} (${itemType.substring(0, 3)})`;
+                      } else {
+                        truncated = itemText.substring(0, 10); // Fallback
+                      }
+                    } else {
+                      truncated = itemText.substring(0, 10); // Fallback
+                    }
                   }
+                  truncatedItems.push(truncated);
                 });
                 
                 return truncatedItems.join(', ');
@@ -997,10 +895,6 @@ const ScrollingTabs: React.FC<ScrollingTabsProps> = ({
           client={selectedClientForDetail}
           onClose={() => {
             setSelectedClientForDetail(null);
-          }}
-          onQuickAdd={(client) => {
-            console.log('🔗 ScrollingTabs: onQuickAdd from detail modal called with client:', client.name);
-            onQuickAdd(client);
           }}
         />
       )}
