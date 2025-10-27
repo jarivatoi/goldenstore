@@ -234,6 +234,17 @@ export const calculateReturnableItemsWithDates = (clientTransactions: CreditTran
                   returnedQuantities[itemType] = 0;
                 }
                 returnedQuantities[itemType] += parseInt(match[1]);
+              } else {
+                // Handle cases where items were added without explicit quantities (e.g., "bouteille vin")
+                // Try a more flexible pattern that matches the brand name anywhere in the return description
+                const flexiblePattern = new RegExp(`returned:\\s*(\\d+).*?${brandName.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')}`, 'i');
+                const flexibleMatch = description.match(flexiblePattern);
+                if (flexibleMatch) {
+                  if (!returnedQuantities[itemType]) {
+                    returnedQuantities[itemType] = 0;
+                  }
+                  returnedQuantities[itemType] += parseInt(flexibleMatch[1]);
+                }
               }
             }
           }
@@ -577,6 +588,17 @@ export const calculateReturnableItems = (clientTransactions: CreditTransaction[]
                   returnedQuantities[itemType] = 0;
                 }
                 returnedQuantities[itemType] += parseInt(match[1]);
+              } else {
+                // Handle cases where items were added without explicit quantities (e.g., "bouteille vin")
+                // Try a more flexible pattern that matches the brand name anywhere in the return description
+                const flexiblePattern = new RegExp(`returned:\\s*(\\d+).*?${brandName.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')}`, 'i');
+                const flexibleMatch = description.match(flexiblePattern);
+                if (flexibleMatch) {
+                  if (!returnedQuantities[itemType]) {
+                    returnedQuantities[itemType] = 0;
+                  }
+                  returnedQuantities[itemType] += parseInt(flexibleMatch[1]);
+                }
               }
             }
           }
