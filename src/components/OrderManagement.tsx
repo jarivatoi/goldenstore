@@ -956,7 +956,6 @@ const OrderCard: React.FC<OrderCardProps> = ({ order, itemTemplates, onDelete, o
     // Auto-save the changes
     handleAutoSave(updatedItems);
   };
-
   const removeOrderItem = (id: string) => {
     const updatedItems = orderItems.filter(item => item.id !== id);
     setOrderItems(updatedItems);
