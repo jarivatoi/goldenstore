@@ -854,19 +854,19 @@ const ItemTemplateCard: React.FC<ItemTemplateCardProps> = ({
   return (
     <div className="bg-blue-50 rounded-lg p-4 border border-blue-200 select-none">
       <div className="flex justify-between items-center select-none">
-        <div className="select-none">
+        <div className="flex flex-col select-none">
           <h5 className="font-medium text-gray-800 select-none">{item.name}</h5>
           <div className="text-sm text-gray-600 select-none">
             {item.isVatIncluded ? (
-              <p className="select-none">Rs {item.unitPrice.toLocaleString('en-IN', { minimumFractionDigits: 2, maximumFractionDigits: 2 })} (VAT Included)</p>
+              <p className="select-none">Rs {item.unitPrice.toLocaleString('en-IN', { minimumFractionDigits: 2, maximumFractionDigits: 2 })} (VAT Included) → Rs {item.unitPrice.toLocaleString('en-IN', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</p>
             ) : item.isVatNil ? (
-              <p className="select-none">Rs {item.unitPrice.toLocaleString('en-IN', { minimumFractionDigits: 2, maximumFractionDigits: 2 })} (VAT Nil)</p>
+              <p className="select-none">Rs {item.unitPrice.toLocaleString('en-IN', { minimumFractionDigits: 2, maximumFractionDigits: 2 })} (VAT Nil) → Rs {item.unitPrice.toLocaleString('en-IN', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</p>
             ) : (
               (() => {
                 const vatAmount = (item.unitPrice * item.vatPercentage) / 100;
                 const totalPrice = item.unitPrice + vatAmount;
                 return (
-                  <p className="select-none">Rs {item.unitPrice.toLocaleString('en-IN', { minimumFractionDigits: 2, maximumFractionDigits: 2 })} VAT({item.vatPercentage}%)(Rs {vatAmount.toLocaleString('en-IN', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}) → Rs {totalPrice.toLocaleString('en-IN', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</p>
+                  <p className="select-none">Rs {item.unitPrice.toLocaleString('en-IN', { minimumFractionDigits: 2, maximumFractionDigits: 2 })} + VAT {item.vatPercentage}% (Rs {vatAmount.toLocaleString('en-IN', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}) → Rs {totalPrice.toLocaleString('en-IN', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</p>
                 );
               })()
             )}
@@ -944,6 +944,12 @@ const OrderCard: React.FC<OrderCardProps> = ({ order, itemTemplates, onDelete, o
           const isVatIncluded = updated.isVatIncluded || false;
           updated.vatAmount = updated.isVatNil || isVatIncluded ? 0 : subtotal * 0.15; // 15% VAT only if not VAT Nil
           updated.totalPrice = isVatIncluded ? subtotal : subtotal + updated.vatAmount;
+          
+          // If not available, set totals to 0 for calculation purposes
+          if (!updated.isAvailable) {
+            updated.vatAmount = 0;
+            updated.totalPrice = 0;
+          }
         }
         
         return updated;
@@ -958,8 +964,14 @@ const OrderCard: React.FC<OrderCardProps> = ({ order, itemTemplates, onDelete, o
   };
   const removeOrderItem = (id: string) => {
     const updatedItems = orderItems.filter(item => item.id !== id);
-    setOrderItems(updatedItems);
-    handleAutoSave(updatedItems);
+    
+    // If no items left, delete the entire order
+    if (updatedItems.length === 0) {
+      onDelete();
+    } else {
+      setOrderItems(updatedItems);
+      handleAutoSave(updatedItems);
+    }
   };
   
   const handleAutoSave = async (items: OrderItem[]) => {
@@ -1048,16 +1060,18 @@ const OrderCard: React.FC<OrderCardProps> = ({ order, itemTemplates, onDelete, o
                   <Plus size={12} />
                 </button>
               </div>
-              <span className={`font-medium select-none ${!item.isAvailable ? 'line-through text-gray-400' : ''}`}>
-                {getItemTemplateName(item.templateId)}
-              </span>
-              <div className="text-xs text-gray-600 mt-1 select-none">
-                Rs {item.unitPrice.toLocaleString('en-IN', { minimumFractionDigits: 2, maximumFractionDigits: 2 })} 
-                {item.isVatNil ? '(VAT Nil)' : 
-                 item.isVatIncluded ? (
-                   <span>(VAT Included)</span>
-                 ) : `+ VAT15%(Rs ${item.vatAmount.toLocaleString('en-IN', { minimumFractionDigits: 2, maximumFractionDigits: 2 })})`} 
-                <span className="consistent-arrow">→</span> Rs {item.totalPrice.toLocaleString('en-IN', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
+              <div className="flex flex-col select-none">
+                <span className={`font-medium select-none ${!item.isAvailable ? 'line-through text-gray-400' : ''}`}>
+                  {getItemTemplateName(item.templateId)}
+                </span>
+                <div className="text-xs text-gray-600 select-none">
+                  Rs {item.unitPrice.toLocaleString('en-IN', { minimumFractionDigits: 2, maximumFractionDigits: 2 })} 
+                  {item.isVatNil ? ' (VAT Nil) ' : 
+                   item.isVatIncluded ? (
+                     <span> (VAT Included) </span>
+                   ) : ` + VAT 15% (Rs ${item.vatAmount.toLocaleString('en-IN', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}) `} 
+                  <span className="consistent-arrow">→</span> Rs {item.totalPrice.toLocaleString('en-IN', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
+                </div>
               </div>
             </div>
             <div className="flex items-center gap-2 select-none">
@@ -1074,6 +1088,7 @@ const OrderCard: React.FC<OrderCardProps> = ({ order, itemTemplates, onDelete, o
                 type="button"
                 onClick={() => removeOrderItem(item.id)}
                 className="w-6 h-6 bg-red-500 hover:bg-red-600 text-white rounded-full flex items-center justify-center transition-colors"
+                title={orderItems.length === 1 ? "Remove item and delete order" : "Remove item"}
               >
                 <Trash2 size={12} />
               </button>
@@ -1571,6 +1586,7 @@ const CreateOrderModal: React.FC<CreateOrderModalProps> = ({ category, itemTempl
                                     quantity: newQuantity,
                                     unitPrice: template.unitPrice,
                                     isVatNil: template.isVatNil,
+                                    isVatIncluded: template.isVatIncluded || false,
                                     vatAmount,
                                     totalPrice,
                                     isAvailable: true
@@ -1616,6 +1632,7 @@ const CreateOrderModal: React.FC<CreateOrderModalProps> = ({ category, itemTempl
                                     quantity,
                                     unitPrice: template.unitPrice,
                                     isVatNil: template.isVatNil,
+                                    isVatIncluded: template.isVatIncluded || false,
                                     vatAmount,
                                     totalPrice,
                                     isAvailable: true
@@ -1649,6 +1666,7 @@ const CreateOrderModal: React.FC<CreateOrderModalProps> = ({ category, itemTempl
                                   quantity: newQuantity,
                                   unitPrice: template.unitPrice,
                                   isVatNil: template.isVatNil,
+                                  isVatIncluded: template.isVatIncluded || false,
                                   vatAmount,
                                   totalPrice,
                                   isAvailable: true
@@ -1887,10 +1905,10 @@ const EditOrderModal: React.FC<EditOrderModalProps> = ({ order, itemTemplates, o
                       </span>
                       <div className="text-xs text-gray-600 mt-1 select-none">
                         Rs {item.unitPrice.toLocaleString('en-IN', { minimumFractionDigits: 2, maximumFractionDigits: 2 })} 
-                        {item.isVatNil ? '(VAT Nil)' : 
+                        {item.isVatNil ? ' (VAT Nil) ' : 
                          item.isVatIncluded ? (
-                           <span>(VAT Included)</span>
-                         ) : `+ VAT15%(Rs ${item.vatAmount.toLocaleString('en-IN', { minimumFractionDigits: 2, maximumFractionDigits: 2 })})`} 
+                           <span> (VAT Included) </span>
+                         ) : ` + VAT 15% (Rs ${item.vatAmount.toLocaleString('en-IN', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}) `} 
                         <span className="consistent-arrow">→</span> Rs {item.totalPrice.toLocaleString('en-IN', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
                       </div>
                     </div>
