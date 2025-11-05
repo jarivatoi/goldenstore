@@ -553,12 +553,18 @@ export const PriceListProvider: React.FC<{ children: React.ReactNode }> = ({ chi
         (isNaN(grossPrice) ? 0 : grossPrice) : 
         (isNaN(existingItem.grossPrice) ? 0 : existingItem.grossPrice);
       
+      // Check if the item has actually changed
+      const hasChanged = existingItem.name !== capitalizedName || 
+                         existingItem.price !== price || 
+                         existingItem.grossPrice !== finalGrossPrice;
+      
+      // Only set lastEditedAt if the item has actually changed
       const updatedItem: PriceItem = {
         ...existingItem,
         name: capitalizedName,
         price,
         grossPrice: finalGrossPrice,
-        lastEditedAt: new Date()
+        ...(hasChanged && { lastEditedAt: new Date() })
       };
       
       if (supabase) {
@@ -569,7 +575,7 @@ export const PriceListProvider: React.FC<{ children: React.ReactNode }> = ({ chi
             name: updatedItem.name,
             price: updatedItem.price,
             gross_price: updatedItem.grossPrice,
-            last_edited_at: updatedItem.lastEditedAt?.toISOString()
+            ...(hasChanged && { last_edited_at: updatedItem.lastEditedAt?.toISOString() })
           })
           .eq('id', id);
         
