@@ -580,16 +580,16 @@ const SwipeableItem: React.FC<SwipeableItemProps> = ({ item, onEdit, onDelete })
                 )}
               </div>
               {/* Last edited date display */}
-              {item.lastEditedAt && (
-                <div 
-                  className="text-xs text-gray-500 truncate"
-                  style={{ 
-                    fontSize: '11px',
-                    zIndex: 12, // Above main card background
-                    maxWidth: '100%'
-                  }}
-                >
-                  Last edited on {item.lastEditedAt.toLocaleDateString('en-GB', {
+              <div 
+                className="text-xs text-gray-500 truncate"
+                style={{ 
+                  fontSize: '11px',
+                  zIndex: 12, // Above main card background
+                  maxWidth: '100%'
+                }}
+              >
+                {item.lastEditedAt ? (
+                  <>Last edited on {item.lastEditedAt.toLocaleDateString('en-GB', {
                     day: '2-digit',
                     month: 'short',
                     year: 'numeric'
@@ -597,9 +597,19 @@ const SwipeableItem: React.FC<SwipeableItemProps> = ({ item, onEdit, onDelete })
                     hour: '2-digit',
                     minute: '2-digit',
                     hour12: false
-                  })}
-                </div>
-              )}
+                  })}</>
+                ) : (
+                  <>Added on {item.createdAt.toLocaleDateString('en-GB', {
+                    day: '2-digit',
+                    month: 'short',
+                    year: 'numeric'
+                  }).replace(/\s/g, '-')} {item.createdAt.toLocaleTimeString('en-GB', {
+                    hour: '2-digit',
+                    minute: '2-digit',
+                    hour12: false
+                  })}</>
+                )}
+              </div>
             </div>
           </div>
         </div>
