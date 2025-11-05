@@ -829,6 +829,6 @@ export const PriceListProvider: React.FC<{ children: React.ReactNode }> = ({ chi
   return (
     <PriceListContext.Provider value={value}>
       {children}
-    </PriceListContext.Provider>
+    </PriceListContext.Provider> 
   );
 };
