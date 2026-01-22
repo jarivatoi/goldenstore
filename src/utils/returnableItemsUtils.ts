@@ -41,8 +41,8 @@ export const calculateReturnableItemsWithDates = (clientTransactions: CreditTran
     }
     
     // Look for Bouteille items - handle multiple patterns: "quantity bouteille brand" and "quantity size bouteille brand"
-    // Pattern 1: "1 Bouteille 1.5L Pepsi" or "1 Bouteille Pepsi"
-    const bouteillePattern1 = /\b(\d+)\s+bouteilles?\s+(?:(\d+(?:\.\d+)?[Ll])\s+)?([^,()]+)/gi;
+    // Pattern 1: "1 Bouteille 1.5L Pepsi" or "1 Bouteille Pepsi" (more restrictive to prevent overlaps)
+    const bouteillePattern1 = /(?<=^|\s)(\d+)\s+bouteilles?(?:\s+(\d+(?:\.\d+)?[Ll]))?(?:\s+([^,()]+))?$/gi;
     let bouteilleMatch1;
     
     while ((bouteilleMatch1 = bouteillePattern1.exec(description)) !== null) {
@@ -74,79 +74,21 @@ export const calculateReturnableItemsWithDates = (clientTransactions: CreditTran
     }
     
     // Additional pattern to catch cases like "1 1.5L Bouteille Pepsi" (size before bouteille)
-    const bouteillePatternSizeFirst = /\b(\d+)\s+(\d+(?:\.\d+)?[Ll])\s+bouteilles?\s+([^,()]+)/gi;
-    let bouteilleSizeFirstMatch;
-    
-    while ((bouteilleSizeFirstMatch = bouteillePatternSizeFirst.exec(description)) !== null) {
-      const quantity = parseInt(bouteilleSizeFirstMatch[1]);
-      const size = bouteilleSizeFirstMatch[2]?.trim().replace(/l$/gi, 'L');
-      const brand = bouteilleSizeFirstMatch[3]?.trim() || '';
-      
-      // Capitalize brand name properly
-      const capitalizedBrand = brand ? brand.split(' ').map((word: string) => 
-        word.charAt(0).toUpperCase() + word.slice(1).toLowerCase()
-      ).join(' ') : '';
-      
-      const key = `Bouteille ${size} ${capitalizedBrand}`;
-      
-      if (!returnableItems[key]) {
-        returnableItems[key] = 0;
-      }
-      returnableItems[key] += quantity;
-    }
+    // REMOVED to prevent duplicate counting - Pattern 1 already handles most cases
     
     // Handle items without explicit numbers (assume quantity 1)
     // For multiple items in a single description, we need to count all occurrences
+    // Only process standalone 'bouteille' occurrences if Pattern 1 didn't match anything
     if (description.includes('bouteille')) {
-      // Find all pattern matches first - improved to handle simple cases like "2 Bouteille"
-      const bouteilleMatches: RegExpExecArray[] = [];
-      let bouteilleMatch: RegExpExecArray | null;
-      // Enhanced pattern to better match simple cases like "2 Bouteille" and "1 Bouteille"
-      const tempBouteillePattern = /(\d+)\s+(?:(\d+(?:\.\d+)?[Ll])\s+)?bouteilles?(?:\s+([^,()]*))?/gi;
-      while ((bouteilleMatch = tempBouteillePattern.exec(description)) !== null) {
-        bouteilleMatches.push(bouteilleMatch);
-      }
+      // Check if Pattern 1 already matched this description
+      const pattern1Matched = /(?<=^|\s)(\d+)\s+bouteilles?(?:\s+(\d+(?:\.\d+)?[Ll]))?(?:\s+([^,()]+))?$/gi.test(description);
       
-      // Process pattern matches first to handle quantified items
-      bouteilleMatches.forEach(match => {
-        const quantity = parseInt(match[1]);
-        const size = match[2] ? match[2].replace(/l$/gi, 'L') : '';
-        const brand = match[3] ? match[3].trim() : '';
-        
-        // Capitalize brand name properly
-        const capitalizedBrand = brand ? brand.split(' ').map((word: string) => 
-          word.charAt(0).toUpperCase() + word.slice(1).toLowerCase()
-        ).join(' ') : '';
-        
-        let key;
-        if (size && capitalizedBrand) {
-          key = `Bouteille ${size} ${capitalizedBrand}`;
-        } else if (capitalizedBrand) {
-          key = `Bouteille ${capitalizedBrand}`;
-        } else if (size) {
-          key = `Bouteille ${size}`;
-        } else {
-          // Handle simple "2 Bouteille" case
-          key = 'Bouteille';
-        }
-        
-        if (!returnableItems[key]) {
-          returnableItems[key] = 0;
-        }
-        returnableItems[key] += quantity;
-      });
-      
-      // Count standalone 'bouteille' occurrences - for items without explicit numbers
-      const standaloneBouteillePattern = /\bbouteilles?\b/gi;
-      let standaloneMatch: RegExpExecArray | null;
-      while ((standaloneMatch = standaloneBouteillePattern.exec(description)) !== null) {
-        // Check if this match is part of a pattern match - if so, skip it
-        const isPartOfPattern = bouteilleMatches.some(match => 
-          standaloneMatch!.index >= match.index && 
-          standaloneMatch!.index < match.index + match[0].length
-        );
-        
-        if (!isPartOfPattern) {
+      // Only process standalone if Pattern 1 didn't match
+      if (!pattern1Matched) {
+        // Count standalone 'bouteille' occurrences - for items without explicit numbers
+        const standaloneBouteillePattern = /\bbouteilles?\b/gi;
+        let standaloneMatch: RegExpExecArray | null;
+        while ((standaloneMatch = standaloneBouteillePattern.exec(description)) !== null) {
           // Look for size before the bouteille word
           const sizeMatch = description.substring(0, standaloneMatch.index).match(/(\d+(?:\.\d+)?[Ll])$/i);
           // Look for brand after the bouteille word
@@ -496,8 +438,8 @@ export const calculateReturnableItems = (clientTransactions: CreditTransaction[]
     }
     
     // Look for Bouteille items - handle multiple patterns: "quantity bouteille brand" and "quantity size bouteille brand"
-    // Pattern 1: "1 Bouteille 1.5L Pepsi" or "1 Bouteille Pepsi"
-    const bouteillePattern1 = /\b(\d+)\s+bouteilles?\s+(?:(\d+(?:\.\d+)?[Ll])\s+)?([^,()]+)/gi;
+    // Pattern 1: "1 Bouteille 1.5L Pepsi" or "1 Bouteille Pepsi" (more restrictive to prevent overlaps)
+    const bouteillePattern1 = /(?<=^|\s)(\d+)\s+bouteilles?(?:\s+(\d+(?:\.\d+)?[Ll]))?(?:\s+([^,()]+))?$/gi;
     let bouteilleMatch1;
     
     while ((bouteilleMatch1 = bouteillePattern1.exec(description)) !== null) {
@@ -529,79 +471,21 @@ export const calculateReturnableItems = (clientTransactions: CreditTransaction[]
     }
     
     // Additional pattern to catch cases like "1 1.5L Bouteille Pepsi" (size before bouteille)
-    const bouteillePatternSizeFirst = /\b(\d+)\s+(\d+(?:\.\d+)?[Ll])\s+bouteilles?\s+([^,()]+)/gi;
-    let bouteilleSizeFirstMatch;
-    
-    while ((bouteilleSizeFirstMatch = bouteillePatternSizeFirst.exec(description)) !== null) {
-      const quantity = parseInt(bouteilleSizeFirstMatch[1]);
-      const size = bouteilleSizeFirstMatch[2]?.trim().replace(/l$/gi, 'L');
-      const brand = bouteilleSizeFirstMatch[3]?.trim() || '';
-      
-      // Capitalize brand name properly
-      const capitalizedBrand = brand ? brand.split(' ').map((word: string) => 
-        word.charAt(0).toUpperCase() + word.slice(1).toLowerCase()
-      ).join(' ') : '';
-      
-      const key = `Bouteille ${size} ${capitalizedBrand}`;
-      
-      if (!returnableItems[key]) {
-        returnableItems[key] = 0;
-      }
-      returnableItems[key] += quantity;
-    }
+    // REMOVED to prevent duplicate counting - Pattern 1 already handles most cases
     
     // Handle items without explicit numbers (assume quantity 1)
     // For multiple items in a single description, we need to count all occurrences
+    // Only process standalone 'bouteille' occurrences if Pattern 1 didn't match anything
     if (description.includes('bouteille')) {
-      // Find all pattern matches first - improved to handle simple cases like "2 Bouteille"
-      const bouteilleMatches: RegExpExecArray[] = [];
-      let bouteilleMatch: RegExpExecArray | null;
-      // Enhanced pattern to better match simple cases like "2 Bouteille" and "1 Bouteille"
-      const tempBouteillePattern = /(\d+)\s+(?:(\d+(?:\.\d+)?[Ll])\s+)?bouteilles?(?:\s+([^,()]*))?/gi;
-      while ((bouteilleMatch = tempBouteillePattern.exec(description)) !== null) {
-        bouteilleMatches.push(bouteilleMatch);
-      }
+      // Check if Pattern 1 already matched this description
+      const pattern1Matched = /(?<=^|\s)(\d+)\s+bouteilles?(?:\s+(\d+(?:\.\d+)?[Ll]))?(?:\s+([^,()]+))?$/gi.test(description);
       
-      // Process pattern matches first to handle quantified items
-      bouteilleMatches.forEach(match => {
-        const quantity = parseInt(match[1]);
-        const size = match[2] ? match[2].replace(/l$/gi, 'L') : '';
-        const brand = match[3] ? match[3].trim() : '';
-        
-        // Capitalize brand name properly
-        const capitalizedBrand = brand ? brand.split(' ').map((word: string) => 
-          word.charAt(0).toUpperCase() + word.slice(1).toLowerCase()
-        ).join(' ') : '';
-        
-        let key;
-        if (size && capitalizedBrand) {
-          key = `Bouteille ${size} ${capitalizedBrand}`;
-        } else if (capitalizedBrand) {
-          key = `Bouteille ${capitalizedBrand}`;
-        } else if (size) {
-          key = `Bouteille ${size}`;
-        } else {
-          // Handle simple "2 Bouteille" case
-          key = 'Bouteille';
-        }
-        
-        if (!returnableItems[key]) {
-          returnableItems[key] = 0;
-        }
-        returnableItems[key] += quantity;
-      });
-      
-      // Count standalone 'bouteille' occurrences - for items without explicit numbers
-      const standaloneBouteillePattern = /\bbouteilles?\b/gi;
-      let standaloneMatch: RegExpExecArray | null;
-      while ((standaloneMatch = standaloneBouteillePattern.exec(description)) !== null) {
-        // Check if this match is part of a pattern match - if so, skip it
-        const isPartOfPattern = bouteilleMatches.some(match => 
-          standaloneMatch!.index >= match.index && 
-          standaloneMatch!.index < match.index + match[0].length
-        );
-        
-        if (!isPartOfPattern) {
+      // Only process standalone if Pattern 1 didn't match
+      if (!pattern1Matched) {
+        // Count standalone 'bouteille' occurrences - for items without explicit numbers
+        const standaloneBouteillePattern = /\bbouteilles?\b/gi;
+        let standaloneMatch: RegExpExecArray | null;
+        while ((standaloneMatch = standaloneBouteillePattern.exec(description)) !== null) {
           // Look for size before the bouteille word
           const sizeMatch = description.substring(0, standaloneMatch.index).match(/(\d+(?:\.\d+)?[Ll])$/i);
           // Look for brand after the bouteille word
