@@ -187,6 +187,8 @@ export const calculateReturnableItemsWithDates = (clientTransactions: CreditTran
       }
     }
     
+    // Handle items without explicit numbers (assume quantity 1)
+    // For multiple items in a single description, we need to count all occurrences
     if (description.includes('chopine')) {
       // Find all pattern matches first
       const chopineMatches: RegExpExecArray[] = [];
@@ -196,17 +198,36 @@ export const calculateReturnableItemsWithDates = (clientTransactions: CreditTran
         chopineMatches.push(chopineMatch);
       }
       
-      // Count standalone 'chopine' occurrences - improved detection for quick actions
+      // Process pattern matches first to handle quantified items
+      chopineMatches.forEach(match => {
+        const quantity = parseInt(match[1]);
+        const brand = match[2] ? match[2].trim() : '';
+        
+        // Capitalize brand name properly
+        const capitalizedBrand = brand ? brand.split(' ').map((word: string) => 
+          word.charAt(0).toUpperCase() + word.slice(1).toLowerCase()
+        ).join(' ') : '';
+        
+        const key = capitalizedBrand ? `Chopine ${capitalizedBrand}` : 'Chopine';
+        
+        if (!returnableItems[key]) {
+          returnableItems[key] = 0;
+        }
+        returnableItems[key] += quantity;
+      });
+      
+      // Count standalone 'chopine' occurrences - for items without explicit numbers
       const standaloneChopinePattern = /\bchopines?\b/gi;
       let standaloneMatch: RegExpExecArray | null;
       while ((standaloneMatch = standaloneChopinePattern.exec(description)) !== null) {
-        // Check if this match is part of a pattern match
+        // Check if this match is part of a pattern match - if so, skip it
         const isPartOfPattern = chopineMatches.some(match => 
           standaloneMatch!.index >= match.index && 
           standaloneMatch!.index < match.index + match[0].length
         );
         
         if (!isPartOfPattern) {
+          // Look for brand after the chopine word
           const brandMatch = description.substring(standaloneMatch.index).match(/^chopines?\s+([^,()]*)/i);
           const brand = brandMatch?.[1]?.trim() || '';
           
@@ -621,6 +642,8 @@ export const calculateReturnableItems = (clientTransactions: CreditTransaction[]
       }
     }
     
+    // Handle items without explicit numbers (assume quantity 1)
+    // For multiple items in a single description, we need to count all occurrences
     if (description.includes('chopine')) {
       // Find all pattern matches first
       const chopineMatches: RegExpExecArray[] = [];
@@ -630,17 +653,36 @@ export const calculateReturnableItems = (clientTransactions: CreditTransaction[]
         chopineMatches.push(chopineMatch);
       }
       
-      // Count standalone 'chopine' occurrences - improved detection for quick actions
+      // Process pattern matches first to handle quantified items
+      chopineMatches.forEach(match => {
+        const quantity = parseInt(match[1]);
+        const brand = match[2] ? match[2].trim() : '';
+        
+        // Capitalize brand name properly
+        const capitalizedBrand = brand ? brand.split(' ').map((word: string) => 
+          word.charAt(0).toUpperCase() + word.slice(1).toLowerCase()
+        ).join(' ') : '';
+        
+        const key = capitalizedBrand ? `Chopine ${capitalizedBrand}` : 'Chopine';
+        
+        if (!returnableItems[key]) {
+          returnableItems[key] = 0;
+        }
+        returnableItems[key] += quantity;
+      });
+      
+      // Count standalone 'chopine' occurrences - for items without explicit numbers
       const standaloneChopinePattern = /\bchopines?\b/gi;
       let standaloneMatch: RegExpExecArray | null;
       while ((standaloneMatch = standaloneChopinePattern.exec(description)) !== null) {
-        // Check if this match is part of a pattern match
+        // Check if this match is part of a pattern match - if so, skip it
         const isPartOfPattern = chopineMatches.some(match => 
           standaloneMatch!.index >= match.index && 
           standaloneMatch!.index < match.index + match[0].length
         );
         
         if (!isPartOfPattern) {
+          // Look for brand after the chopine word
           const brandMatch = description.substring(standaloneMatch.index).match(/^chopines?\s+([^,()]*)/i);
           const brand = brandMatch?.[1]?.trim() || '';
           
