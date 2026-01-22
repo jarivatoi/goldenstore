@@ -106,7 +106,7 @@ export const calculateReturnableItemsWithDates = (clientTransactions: CreditTran
         bouteilleMatches.push(bouteilleMatch);
       }
       
-      // Count standalone 'bouteille' occurrences
+      // Count standalone 'bouteille' occurrences - improved detection for quick actions
       const standaloneBouteillePattern = /\bbouteilles?\b/gi;
       let standaloneMatch: RegExpExecArray | null;
       while ((standaloneMatch = standaloneBouteillePattern.exec(description)) !== null) {
@@ -117,8 +117,10 @@ export const calculateReturnableItemsWithDates = (clientTransactions: CreditTran
         );
         
         if (!isPartOfPattern) {
+          // Look for size before the bouteille word
           const sizeMatch = description.substring(0, standaloneMatch.index).match(/(\d+(?:\.\d+)?[Ll])$/i);
-          const brandMatch = description.substring(standaloneMatch.index).match(/^bouteilles?\s+(\d+(?:\.\d+)?[Ll])?\s*([^,]*)/i);
+          // Look for brand after the bouteille word
+          const brandMatch = description.substring(standaloneMatch.index).match(/^bouteilles?\s+(\d+(?:\.\d+)?[Ll])?\s*([^,()]*)/i);
           let sizeFromBrand = brandMatch?.[1]?.trim() || '';
           let brand = brandMatch?.[2]?.trim() || '';
           
@@ -144,6 +146,7 @@ export const calculateReturnableItemsWithDates = (clientTransactions: CreditTran
           } else if (finalSize) {
             key = `Bouteille ${finalSize}`;
           } else {
+            // Handle simple "Bouteille" case from quick actions - this was missing!
             key = 'Bouteille';
           }
           
@@ -164,7 +167,7 @@ export const calculateReturnableItemsWithDates = (clientTransactions: CreditTran
         chopineMatches.push(chopineMatch);
       }
       
-      // Count standalone 'chopine' occurrences
+      // Count standalone 'chopine' occurrences - improved detection for quick actions
       const standaloneChopinePattern = /\bchopines?\b/gi;
       let standaloneMatch: RegExpExecArray | null;
       while ((standaloneMatch = standaloneChopinePattern.exec(description)) !== null) {
@@ -175,7 +178,7 @@ export const calculateReturnableItemsWithDates = (clientTransactions: CreditTran
         );
         
         if (!isPartOfPattern) {
-          const brandMatch = description.substring(standaloneMatch.index).match(/^chopines?\s+([^,]*)/i);
+          const brandMatch = description.substring(standaloneMatch.index).match(/^chopines?\s+([^,()]*)/i);
           const brand = brandMatch?.[1]?.trim() || '';
           
           // Capitalize brand name properly
@@ -508,7 +511,7 @@ export const calculateReturnableItems = (clientTransactions: CreditTransaction[]
         bouteilleMatches.push(bouteilleMatch);
       }
       
-      // Count standalone 'bouteille' occurrences
+      // Count standalone 'bouteille' occurrences - improved detection for quick actions
       const standaloneBouteillePattern = /\bbouteilles?\b/gi;
       let standaloneMatch: RegExpExecArray | null;
       while ((standaloneMatch = standaloneBouteillePattern.exec(description)) !== null) {
@@ -519,8 +522,10 @@ export const calculateReturnableItems = (clientTransactions: CreditTransaction[]
         );
         
         if (!isPartOfPattern) {
+          // Look for size before the bouteille word
           const sizeMatch = description.substring(0, standaloneMatch.index).match(/(\d+(?:\.\d+)?[Ll])$/i);
-          const brandMatch = description.substring(standaloneMatch.index).match(/^bouteilles?\s+(\d+(?:\.\d+)?[Ll])?\s*([^,]*)/i);
+          // Look for brand after the bouteille word
+          const brandMatch = description.substring(standaloneMatch.index).match(/^bouteilles?\s+(\d+(?:\.\d+)?[Ll])?\s*([^,()]*)/i);
           let sizeFromBrand = brandMatch?.[1]?.trim() || '';
           let brand = brandMatch?.[2]?.trim() || '';
           
@@ -546,6 +551,7 @@ export const calculateReturnableItems = (clientTransactions: CreditTransaction[]
           } else if (finalSize) {
             key = `Bouteille ${finalSize}`;
           } else {
+            // Handle simple "Bouteille" case from quick actions - this was missing!
             key = 'Bouteille';
           }
           
@@ -566,7 +572,7 @@ export const calculateReturnableItems = (clientTransactions: CreditTransaction[]
         chopineMatches.push(chopineMatch);
       }
       
-      // Count standalone 'chopine' occurrences
+      // Count standalone 'chopine' occurrences - improved detection for quick actions
       const standaloneChopinePattern = /\bchopines?\b/gi;
       let standaloneMatch: RegExpExecArray | null;
       while ((standaloneMatch = standaloneChopinePattern.exec(description)) !== null) {
@@ -577,7 +583,7 @@ export const calculateReturnableItems = (clientTransactions: CreditTransaction[]
         );
         
         if (!isPartOfPattern) {
-          const brandMatch = description.substring(standaloneMatch.index).match(/^chopines?\s+([^,]*)/i);
+          const brandMatch = description.substring(standaloneMatch.index).match(/^chopines?\s+([^,()]*)/i);
           const brand = brandMatch?.[1]?.trim() || '';
           
           // Capitalize brand name properly
