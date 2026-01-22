@@ -98,19 +98,49 @@ export const calculateReturnableItemsWithDates = (clientTransactions: CreditTran
     // Handle items without explicit numbers (assume quantity 1)
     // For multiple items in a single description, we need to count all occurrences
     if (description.includes('bouteille')) {
-      // Find all pattern matches first
+      // Find all pattern matches first - improved to handle simple cases like "2 Bouteille"
       const bouteilleMatches: RegExpExecArray[] = [];
       let bouteilleMatch: RegExpExecArray | null;
+      // Enhanced pattern to better match simple cases like "2 Bouteille" and "1 Bouteille"
       const tempBouteillePattern = /(\d+)\s+(?:(\d+(?:\.\d+)?[Ll])\s+)?bouteilles?(?:\s+([^,()]*))?/gi;
       while ((bouteilleMatch = tempBouteillePattern.exec(description)) !== null) {
         bouteilleMatches.push(bouteilleMatch);
       }
       
-      // Count standalone 'bouteille' occurrences - improved detection for quick actions
+      // Process pattern matches first to handle quantified items
+      bouteilleMatches.forEach(match => {
+        const quantity = parseInt(match[1]);
+        const size = match[2] ? match[2].replace(/l$/gi, 'L') : '';
+        const brand = match[3] ? match[3].trim() : '';
+        
+        // Capitalize brand name properly
+        const capitalizedBrand = brand ? brand.split(' ').map((word: string) => 
+          word.charAt(0).toUpperCase() + word.slice(1).toLowerCase()
+        ).join(' ') : '';
+        
+        let key;
+        if (size && capitalizedBrand) {
+          key = `Bouteille ${size} ${capitalizedBrand}`;
+        } else if (capitalizedBrand) {
+          key = `Bouteille ${capitalizedBrand}`;
+        } else if (size) {
+          key = `Bouteille ${size}`;
+        } else {
+          // Handle simple "2 Bouteille" case
+          key = 'Bouteille';
+        }
+        
+        if (!returnableItems[key]) {
+          returnableItems[key] = 0;
+        }
+        returnableItems[key] += quantity;
+      });
+      
+      // Count standalone 'bouteille' occurrences - for items without explicit numbers
       const standaloneBouteillePattern = /\bbouteilles?\b/gi;
       let standaloneMatch: RegExpExecArray | null;
       while ((standaloneMatch = standaloneBouteillePattern.exec(description)) !== null) {
-        // Check if this match is part of a pattern match
+        // Check if this match is part of a pattern match - if so, skip it
         const isPartOfPattern = bouteilleMatches.some(match => 
           standaloneMatch!.index >= match.index && 
           standaloneMatch!.index < match.index + match[0].length
@@ -139,14 +169,13 @@ export const calculateReturnableItemsWithDates = (clientTransactions: CreditTran
           
           let key;
           if (finalSize && capitalizedBrand) {
-            // Format as "Bouteille 1.5L Pepsi" to maintain the proper structure
             key = `Bouteille ${finalSize} ${capitalizedBrand}`;
           } else if (capitalizedBrand) {
             key = `Bouteille ${capitalizedBrand}`;
           } else if (finalSize) {
             key = `Bouteille ${finalSize}`;
           } else {
-            // Handle simple "Bouteille" case from quick actions - this was missing!
+            // Handle simple "Bouteille" case from quick actions
             key = 'Bouteille';
           }
           
@@ -503,19 +532,49 @@ export const calculateReturnableItems = (clientTransactions: CreditTransaction[]
     // Handle items without explicit numbers (assume quantity 1)
     // For multiple items in a single description, we need to count all occurrences
     if (description.includes('bouteille')) {
-      // Find all pattern matches first
+      // Find all pattern matches first - improved to handle simple cases like "2 Bouteille"
       const bouteilleMatches: RegExpExecArray[] = [];
       let bouteilleMatch: RegExpExecArray | null;
+      // Enhanced pattern to better match simple cases like "2 Bouteille" and "1 Bouteille"
       const tempBouteillePattern = /(\d+)\s+(?:(\d+(?:\.\d+)?[Ll])\s+)?bouteilles?(?:\s+([^,()]*))?/gi;
       while ((bouteilleMatch = tempBouteillePattern.exec(description)) !== null) {
         bouteilleMatches.push(bouteilleMatch);
       }
       
-      // Count standalone 'bouteille' occurrences - improved detection for quick actions
+      // Process pattern matches first to handle quantified items
+      bouteilleMatches.forEach(match => {
+        const quantity = parseInt(match[1]);
+        const size = match[2] ? match[2].replace(/l$/gi, 'L') : '';
+        const brand = match[3] ? match[3].trim() : '';
+        
+        // Capitalize brand name properly
+        const capitalizedBrand = brand ? brand.split(' ').map((word: string) => 
+          word.charAt(0).toUpperCase() + word.slice(1).toLowerCase()
+        ).join(' ') : '';
+        
+        let key;
+        if (size && capitalizedBrand) {
+          key = `Bouteille ${size} ${capitalizedBrand}`;
+        } else if (capitalizedBrand) {
+          key = `Bouteille ${capitalizedBrand}`;
+        } else if (size) {
+          key = `Bouteille ${size}`;
+        } else {
+          // Handle simple "2 Bouteille" case
+          key = 'Bouteille';
+        }
+        
+        if (!returnableItems[key]) {
+          returnableItems[key] = 0;
+        }
+        returnableItems[key] += quantity;
+      });
+      
+      // Count standalone 'bouteille' occurrences - for items without explicit numbers
       const standaloneBouteillePattern = /\bbouteilles?\b/gi;
       let standaloneMatch: RegExpExecArray | null;
       while ((standaloneMatch = standaloneBouteillePattern.exec(description)) !== null) {
-        // Check if this match is part of a pattern match
+        // Check if this match is part of a pattern match - if so, skip it
         const isPartOfPattern = bouteilleMatches.some(match => 
           standaloneMatch!.index >= match.index && 
           standaloneMatch!.index < match.index + match[0].length
@@ -544,14 +603,13 @@ export const calculateReturnableItems = (clientTransactions: CreditTransaction[]
           
           let key;
           if (finalSize && capitalizedBrand) {
-            // Format as "Bouteille 1.5L Pepsi" to maintain the proper structure
             key = `Bouteille ${finalSize} ${capitalizedBrand}`;
           } else if (capitalizedBrand) {
             key = `Bouteille ${capitalizedBrand}`;
           } else if (finalSize) {
             key = `Bouteille ${finalSize}`;
           } else {
-            // Handle simple "Bouteille" case from quick actions - this was missing!
+            // Handle simple "Bouteille" case from quick actions
             key = 'Bouteille';
           }
           
