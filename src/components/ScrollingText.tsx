@@ -98,6 +98,15 @@ export const ScrollingText: React.FC<ScrollingTextProps> = ({
         scrollListenerRef.current = handleScroll;
       } else {
         setNeedsScrolling(false);
+        
+        // Reset the text position to the left when text no longer overflows
+        textElement.style.transform = 'translateX(0px)';
+        
+        // Stop any existing animation
+        if (animatorRef.current) {
+          (animatorRef.current as ScrollingTextAnimator).stop();
+          animatorRef.current = null;
+        }
       }
     };
 
@@ -112,8 +121,24 @@ export const ScrollingText: React.FC<ScrollingTextProps> = ({
     window.addEventListener('resize', handleResize);
     
     // Recheck when content changes
+    let timeoutId: NodeJS.Timeout;
     const observer = new MutationObserver(() => {
-      checkAndAnimate();
+      // Clear any existing timeout to debounce multiple rapid changes
+      clearTimeout(timeoutId);
+      
+      // When content changes, stop current animation and restart with a delay
+      if (animatorRef.current) {
+        (animatorRef.current as ScrollingTextAnimator).stop();
+        animatorRef.current = null;
+      }
+      
+      // Reset transform to initial state to prevent jumping
+      if (textRef.current) {
+        textRef.current.style.transform = 'translateX(0px)';
+      }
+      
+      // Restart animation after a brief delay to handle rapid updates properly
+      timeoutId = setTimeout(checkAndAnimate, 50);
     });
     
     if (containerRef.current) {
@@ -125,6 +150,7 @@ export const ScrollingText: React.FC<ScrollingTextProps> = ({
     }
     
     return () => {
+      clearTimeout(timeoutId);
       window.removeEventListener('resize', handleResize);
       observer.disconnect();
       
