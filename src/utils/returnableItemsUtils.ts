@@ -229,7 +229,7 @@ export const calculateReturnableItemsWithDates = (clientTransactions: CreditTran
                 const brandName = checkItemType.replace('Bouteille', '').trim();
                 if (brandName) {
                   // Create pattern that matches both "Bouteille Brand" and "Bouteilles Brand"
-                  const brandedPattern = new RegExp(`returned:\\s*(\\d+)\\s+bouteilles?\\s+${brandName.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')}(?=\\s*(?:-|$))`, 'i');
+                  const brandedPattern = new RegExp(`returned:\\s*(\\d+)\\s+bouteilles?\\s+${brandName.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')}(?=\\s*(?:-|$|\\s))`, 'i');
                   if (description.match(brandedPattern)) {
                     isBrandedMatch = true;
                     break;
@@ -242,7 +242,7 @@ export const calculateReturnableItemsWithDates = (clientTransactions: CreditTran
             if (!isBrandedMatch) {
               // More precise pattern: match "Bouteille" or "Bouteilles" only when followed by a non-word character
               // or end of string, but not when followed by a space and another word
-              const genericBouteillePattern = /returned:\s*(\d+)\s+(bouteille|bouteilles)(?=\s*(?:-|$))/i;
+              const genericBouteillePattern = /returned:\s*(\d+)\s+(bouteille|bouteilles)(?=\s*(?:-|$|\s))/i;
               const match = description.match(genericBouteillePattern);
               if (match) {
                 if (!returnedQuantities[itemType]) {
@@ -256,7 +256,7 @@ export const calculateReturnableItemsWithDates = (clientTransactions: CreditTran
             const brandName = itemType.replace('Bouteille', '').trim();
             if (brandName) {
               // Create pattern that matches both "Bouteille Brand" and "Bouteilles Brand"
-              const brandedPattern = new RegExp(`returned:\\s*(\\d+)\\s+bouteilles?\\s+${brandName.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')}(?=\\s*(?:-|$))`, 'i');
+              const brandedPattern = new RegExp(`returned:\\s*(\\d+)\\s+bouteilles?\\s+${brandName.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')}(?=\\s*(?:-|$|\\s))`, 'i');
               const match = description.match(brandedPattern);
               if (match) {
                 if (!returnedQuantities[itemType]) {
@@ -626,7 +626,7 @@ export const calculateReturnableItems = (clientTransactions: CreditTransaction[]
                 const brandName = checkItemType.replace('Bouteille', '').trim();
                 if (brandName) {
                   // Create pattern that matches both "Bouteille Brand" and "Bouteilles Brand"
-                  const brandedPattern = new RegExp(`returned:\\s*(\\d+)\\s+bouteilles?\\s+${brandName.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')}(?=\\s*(?:-|$))`, 'i');
+                  const brandedPattern = new RegExp(`returned:\\s*(\\d+)\\s+bouteilles?\\s+${brandName.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')}(?=\\s*(?:-|$|\\s))`, 'i');
                   if (description.match(brandedPattern)) {
                     isBrandedMatch = true;
                     break;
@@ -639,7 +639,7 @@ export const calculateReturnableItems = (clientTransactions: CreditTransaction[]
             if (!isBrandedMatch) {
               // More precise pattern: match "Bouteille" or "Bouteilles" only when followed by a non-word character
               // or end of string, but not when followed by a space and another word
-              const genericBouteillePattern = /returned:\s*(\d+)\s+(bouteille|bouteilles)(?=\s*(?:-|$))/i;
+              const genericBouteillePattern = /returned:\s*(\d+)\s+(bouteille|bouteilles)(?=\s*(?:-|$|\s))/i;
               const match = description.match(genericBouteillePattern);
               if (match) {
                 if (!returnedQuantities[itemType]) {
@@ -653,7 +653,7 @@ export const calculateReturnableItems = (clientTransactions: CreditTransaction[]
             const brandName = itemType.replace('Bouteille', '').trim();
             if (brandName) {
               // Create pattern that matches both "Bouteille Brand" and "Bouteilles Brand"
-              const brandedPattern = new RegExp(`returned:\\s*(\\d+)\\s+bouteilles?\\s+${brandName.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')}(?=\\s*(?:-|$))`, 'i');
+              const brandedPattern = new RegExp(`returned:\\s*(\\d+)\\s+bouteilles?\\s+${brandName.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')}(?=\\s*(?:-|$|\\s))`, 'i');
               const match = description.match(brandedPattern);
               if (match) {
                 if (!returnedQuantities[itemType]) {
