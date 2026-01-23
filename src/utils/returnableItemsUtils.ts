@@ -129,21 +129,28 @@ export const calculateReturnableItemsWithDates = (clientTransactions: CreditTran
       }
     }
     
-    // Handle items without explicit numbers (assume quantity 1)
-    // For multiple items in a single description, we need to count all occurrences
-    if (description.includes('chopine')) {
-      // Find all pattern matches first
-      const chopineMatches: RegExpExecArray[] = [];
-      let chopineMatch: RegExpExecArray | null;
-      const tempChopinePattern = /(\d+)\s+chopines?(?:\s+([^,]*))?/gi;
-      while ((chopineMatch = tempChopinePattern.exec(description)) !== null) {
-        chopineMatches.push(chopineMatch);
-      }
+    // Count standalone 'chopine' occurrences - for items without explicit numbers
+    // First find all quantified matches to avoid double-counting
+    const tempChopinePattern = /(\d+)\s+chopines?(?:\s+([^,]*))?/gi;
+    let tempChopineMatch;
+    const quantifiedMatches: RegExpExecArray[] = [];
+    while ((tempChopineMatch = tempChopinePattern.exec(description)) !== null) {
+      quantifiedMatches.push(tempChopineMatch);
+    }
+    
+    const standaloneChopinePattern = /\bchopines?\b/gi;
+    let standaloneMatch: RegExpExecArray | null;
+    while ((standaloneMatch = standaloneChopinePattern.exec(description)) !== null) {
+      // Skip if this match is part of a quantified match
+      const isPartOfQuantified = quantifiedMatches.some(match => 
+        standaloneMatch!.index >= match.index && 
+        standaloneMatch!.index < match.index + match[0].length
+      );
       
-      // Process pattern matches first to handle quantified items
-      chopineMatches.forEach(match => {
-        const quantity = parseInt(match[1]);
-        const brand = match[2] ? match[2].trim() : '';
+      if (!isPartOfQuantified) {
+        // Look for brand after the chopine word
+        const brandMatch = description.substring(standaloneMatch.index).match(/^chopines?\s+([^,()]*)/i);
+        const brand = brandMatch?.[1]?.trim() || '';
         
         // Capitalize brand name properly
         const capitalizedBrand = brand ? brand.split(' ').map((word: string) => 
@@ -155,36 +162,7 @@ export const calculateReturnableItemsWithDates = (clientTransactions: CreditTran
         if (!returnableItems[key]) {
           returnableItems[key] = 0;
         }
-        returnableItems[key] += quantity;
-      });
-      
-      // Count standalone 'chopine' occurrences - for items without explicit numbers
-      const standaloneChopinePattern = /\bchopines?\b/gi;
-      let standaloneMatch: RegExpExecArray | null;
-      while ((standaloneMatch = standaloneChopinePattern.exec(description)) !== null) {
-        // Check if this match is part of a pattern match - if so, skip it
-        const isPartOfPattern = chopineMatches.some(match => 
-          standaloneMatch!.index >= match.index && 
-          standaloneMatch!.index < match.index + match[0].length
-        );
-        
-        if (!isPartOfPattern) {
-          // Look for brand after the chopine word
-          const brandMatch = description.substring(standaloneMatch.index).match(/^chopines?\s+([^,()]*)/i);
-          const brand = brandMatch?.[1]?.trim() || '';
-          
-          // Capitalize brand name properly
-          const capitalizedBrand = brand ? brand.split(' ').map((word: string) => 
-            word.charAt(0).toUpperCase() + word.slice(1).toLowerCase()
-          ).join(' ') : '';
-          
-          const key = capitalizedBrand ? `Chopine ${capitalizedBrand}` : 'Chopine';
-          
-          if (!returnableItems[key]) {
-            returnableItems[key] = 0;
-          }
-          returnableItems[key] += 1;
-        }
+        returnableItems[key] += 1;
       }
     }
   });
@@ -199,25 +177,58 @@ export const calculateReturnableItemsWithDates = (clientTransactions: CreditTran
         // Use more precise matching to avoid substring conflicts
         if (itemType.includes('Chopine')) {
           if (itemType === 'Chopine') {
-            // For generic Chopine, match "Returned: X Chopine" but not "Chopine Brand"
-            const genericChopinePattern = /returned:\s*(\d+)\s+chopines?(?=\s|$|,|\.)/i;
-            const match = description.match(genericChopinePattern);
-            if (match) {
-              if (!returnedQuantities[itemType]) {
-                returnedQuantities[itemType] = 0;
+            // For generic Chopine, first check if any branded Chopine would match this description
+            let isBrandedMatch = false;
+            for (const checkItemType of Object.keys(returnableItems)) {
+              if (checkItemType.includes('Chopine') && checkItemType !== 'Chopine') {
+                const brandName = checkItemType.replace('Chopine', '').trim();
+                if (brandName) {
+                  // Create pattern that matches both "Chopine Brand" and "Chopines Brand"
+                  const brandedPattern = new RegExp(`returned:\\s*(\\d+)\\s+chopines?\\s+${brandName.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')}(?=\\s*(?:-|$|\\s))`, 'i');
+                  if (description.match(brandedPattern)) {
+                    isBrandedMatch = true;
+                    break;
+                  }
+                }
               }
-              returnedQuantities[itemType] += parseInt(match[1]);
+            }
+            
+            // Only match generic if it's not a branded match
+            if (!isBrandedMatch) {
+              // For generic Chopine, match "Returned: X Chopine" but not "Chopine Brand"
+              const genericChopinePattern = /returned:\s*(\d+)\s+chopines?(?!\s+\w)/i;
+              const match = description.match(genericChopinePattern);
+              if (match) {
+                if (!returnedQuantities[itemType]) {
+                  returnedQuantities[itemType] = 0;
+                }
+                returnedQuantities[itemType] += parseInt(match[1]);
+              }
             }
           } else {
             // For branded Chopine like "Chopine Vin", match the exact brand
-            const escapedItemType = itemType.replace('Chopine', 'Chopines?').replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
-            const brandedChopinePattern = new RegExp(`returned:\\s*(\\d+)\\s+${escapedItemType}(?=\\s|$|,|\\.)`, 'i');
-            const match = description.match(brandedChopinePattern);
-            if (match) {
-              if (!returnedQuantities[itemType]) {
-                returnedQuantities[itemType] = 0;
+            const brandName = itemType.replace('Chopine', '').trim();
+            if (brandName) {
+              // Create pattern that matches both "Chopine Brand" and "Chopines Brand"
+              const brandedPattern = new RegExp(`returned:\\s*(\\d+)\\s+chopines?\\s+${brandName.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')}(?=\\s|$|,|\\.)`, 'i');
+              const match = description.match(brandedPattern);
+              if (match) {
+                if (!returnedQuantities[itemType]) {
+                  returnedQuantities[itemType] = 0;
+                }
+                returnedQuantities[itemType] += parseInt(match[1]);
+              } else {
+                // Handle cases where items were added without explicit quantities (e.g., "chopine vin")
+                // Try a more flexible pattern that matches the brand name anywhere in the return description
+                const flexiblePattern = new RegExp(`returned:\\s*(\\d+).*?${brandName.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')}(?=\\s|$|,|\\.)`, 'i');
+                const flexibleMatch = description.match(flexiblePattern);
+                if (flexibleMatch) {
+                  if (!returnedQuantities[itemType]) {
+                    returnedQuantities[itemType] = 0;
+                  }
+                  returnedQuantities[itemType] += parseInt(flexibleMatch[1]);
+                }
               }
-              returnedQuantities[itemType] += parseInt(match[1]);
             }
           }
         } else if (itemType.includes('Bouteille')) {
@@ -527,21 +538,28 @@ export const calculateReturnableItems = (clientTransactions: CreditTransaction[]
       }
     }
     
-    // Handle items without explicit numbers (assume quantity 1)
-    // For multiple items in a single description, we need to count all occurrences
-    if (description.includes('chopine')) {
-      // Find all pattern matches first
-      const chopineMatches: RegExpExecArray[] = [];
-      let chopineMatch: RegExpExecArray | null;
-      const tempChopinePattern = /(\d+)\s+chopines?(?:\s+([^,]*))?/gi;
-      while ((chopineMatch = tempChopinePattern.exec(description)) !== null) {
-        chopineMatches.push(chopineMatch);
-      }
+    // Count standalone 'chopine' occurrences - for items without explicit numbers
+    // First find all quantified matches to avoid double-counting
+    const tempChopinePattern = /(\d+)\s+chopines?(?:\s+([^,]*))?/gi;
+    let tempChopineMatch;
+    const quantifiedMatches: RegExpExecArray[] = [];
+    while ((tempChopineMatch = tempChopinePattern.exec(description)) !== null) {
+      quantifiedMatches.push(tempChopineMatch);
+    }
+    
+    const standaloneChopinePattern = /\bchopines?\b/gi;
+    let standaloneMatch: RegExpExecArray | null;
+    while ((standaloneMatch = standaloneChopinePattern.exec(description)) !== null) {
+      // Skip if this match is part of a quantified match
+      const isPartOfQuantified = quantifiedMatches.some(match => 
+        standaloneMatch!.index >= match.index && 
+        standaloneMatch!.index < match.index + match[0].length
+      );
       
-      // Process pattern matches first to handle quantified items
-      chopineMatches.forEach(match => {
-        const quantity = parseInt(match[1]);
-        const brand = match[2] ? match[2].trim() : '';
+      if (!isPartOfQuantified) {
+        // Look for brand after the chopine word
+        const brandMatch = description.substring(standaloneMatch.index).match(/^chopines?\s+([^,()]*)/i);
+        const brand = brandMatch?.[1]?.trim() || '';
         
         // Capitalize brand name properly
         const capitalizedBrand = brand ? brand.split(' ').map((word: string) => 
@@ -553,36 +571,7 @@ export const calculateReturnableItems = (clientTransactions: CreditTransaction[]
         if (!returnableItems[key]) {
           returnableItems[key] = 0;
         }
-        returnableItems[key] += quantity;
-      });
-      
-      // Count standalone 'chopine' occurrences - for items without explicit numbers
-      const standaloneChopinePattern = /\bchopines?\b/gi;
-      let standaloneMatch: RegExpExecArray | null;
-      while ((standaloneMatch = standaloneChopinePattern.exec(description)) !== null) {
-        // Check if this match is part of a pattern match - if so, skip it
-        const isPartOfPattern = chopineMatches.some(match => 
-          standaloneMatch!.index >= match.index && 
-          standaloneMatch!.index < match.index + match[0].length
-        );
-        
-        if (!isPartOfPattern) {
-          // Look for brand after the chopine word
-          const brandMatch = description.substring(standaloneMatch.index).match(/^chopines?\s+([^,()]*)/i);
-          const brand = brandMatch?.[1]?.trim() || '';
-          
-          // Capitalize brand name properly
-          const capitalizedBrand = brand ? brand.split(' ').map((word: string) => 
-            word.charAt(0).toUpperCase() + word.slice(1).toLowerCase()
-          ).join(' ') : '';
-          
-          const key = capitalizedBrand ? `Chopine ${capitalizedBrand}` : 'Chopine';
-          
-          if (!returnableItems[key]) {
-            returnableItems[key] = 0;
-          }
-          returnableItems[key] += 1;
-        }
+        returnableItems[key] += 1;
       }
     }
   });
@@ -597,25 +586,58 @@ export const calculateReturnableItems = (clientTransactions: CreditTransaction[]
         // Use more precise matching to avoid substring conflicts
         if (itemType.includes('Chopine')) {
           if (itemType === 'Chopine') {
-            // For generic Chopine, match "Returned: X Chopine" but not "Chopine Brand"
-            const genericChopinePattern = /returned:\s*(\d+)\s+chopines?(?=\s|$|,|\.)/i;
-            const match = description.match(genericChopinePattern);
-            if (match) {
-              if (!returnedQuantities[itemType]) {
-                returnedQuantities[itemType] = 0;
+            // For generic Chopine, first check if any branded Chopine would match this description
+            let isBrandedMatch = false;
+            for (const checkItemType of Object.keys(returnableItems)) {
+              if (checkItemType.includes('Chopine') && checkItemType !== 'Chopine') {
+                const brandName = checkItemType.replace('Chopine', '').trim();
+                if (brandName) {
+                  // Create pattern that matches both "Chopine Brand" and "Chopines Brand"
+                  const brandedPattern = new RegExp(`returned:\\s*(\\d+)\\s+chopines?\\s+${brandName.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')}(?=\\s*(?:-|$|\\s))`, 'i');
+                  if (description.match(brandedPattern)) {
+                    isBrandedMatch = true;
+                    break;
+                  }
+                }
               }
-              returnedQuantities[itemType] += parseInt(match[1]);
+            }
+            
+            // Only match generic if it's not a branded match
+            if (!isBrandedMatch) {
+              // For generic Chopine, match "Returned: X Chopine" but not "Chopine Brand"
+              const genericChopinePattern = /returned:\s*(\d+)\s+chopines?(?!\s+\w)/i;
+              const match = description.match(genericChopinePattern);
+              if (match) {
+                if (!returnedQuantities[itemType]) {
+                  returnedQuantities[itemType] = 0;
+                }
+                returnedQuantities[itemType] += parseInt(match[1]);
+              }
             }
           } else {
             // For branded Chopine like "Chopine Vin", match the exact brand
-            const escapedItemType = itemType.replace('Chopine', 'Chopines?').replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
-            const brandedChopinePattern = new RegExp(`returned:\\s*(\\d+)\\s+${escapedItemType}(?=\\s|$|,|\\.)`, 'i');
-            const match = description.match(brandedChopinePattern);
-            if (match) {
-              if (!returnedQuantities[itemType]) {
-                returnedQuantities[itemType] = 0;
+            const brandName = itemType.replace('Chopine', '').trim();
+            if (brandName) {
+              // Create pattern that matches both "Chopine Brand" and "Chopines Brand"
+              const brandedPattern = new RegExp(`returned:\\s*(\\d+)\\s+chopines?\\s+${brandName.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')}(?=\\s|$|,|\\.)`, 'i');
+              const match = description.match(brandedPattern);
+              if (match) {
+                if (!returnedQuantities[itemType]) {
+                  returnedQuantities[itemType] = 0;
+                }
+                returnedQuantities[itemType] += parseInt(match[1]);
+              } else {
+                // Handle cases where items were added without explicit quantities (e.g., "chopine vin")
+                // Try a more flexible pattern that matches the brand name anywhere in the return description
+                const flexiblePattern = new RegExp(`returned:\\s*(\\d+).*?${brandName.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')}(?=\\s|$|,|\\.)`, 'i');
+                const flexibleMatch = description.match(flexiblePattern);
+                if (flexibleMatch) {
+                  if (!returnedQuantities[itemType]) {
+                    returnedQuantities[itemType] = 0;
+                  }
+                  returnedQuantities[itemType] += parseInt(flexibleMatch[1]);
+                }
               }
-              returnedQuantities[itemType] += parseInt(match[1]);
             }
           }
         } else if (itemType.includes('Bouteille')) {
