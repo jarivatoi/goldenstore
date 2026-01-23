@@ -61,15 +61,10 @@ const ClientActionModal: React.FC<ClientActionModalProps> = ({ client, onClose, 
       
       // Filter out items that have already been returned
       Object.entries(allReturnableItems).forEach(([itemType, data]) => {
-        // Calculate net quantity (original - returned)
-        const returnedQuantity = getReturnedQuantity(itemType, returnableItems);
-        const availableQuantity = Math.max(0, data.total - returnedQuantity);
-        
-        if (availableQuantity > 0) {
-          availableItems[itemType] = {
-            ...data,
-            total: availableQuantity
-          };
+        // Since allReturnableItems comes from getReturnableItems which uses calculateReturnableItems 
+        // that already accounts for returns, we can directly use the total
+        if (data.total > 0) {
+          availableItems[itemType] = data;
         }
       });
       
@@ -324,102 +319,20 @@ const processItemReturn = async (itemType: string, returnQuantity: number) => {
   }
 };
 
-  // Helper function to calculate how much has already been returned
-  const getReturnedQuantity = (itemType: string, returnableItems: {[key: string]: {total: number, transactions: Array<{id: string, description: string, amount: number, quantity: number, date: Date}>}}): number => {
-    return clientTransactions
-      .filter(transaction => transaction.type === 'debt' && transaction.description.toLowerCase().startsWith('returned:'))
-      .reduce((total, transaction) => {
-        const description = transaction.description.toLowerCase();
-        // Use more precise matching to avoid substring conflicts
-        if (itemType.includes('Chopine')) {
-          // For Chopine items, be more specific about matching
-          if (itemType === 'Chopine') {
-            // For generic Chopine, match "Returned: X Chopine" but not "Chopine Brand"
-            const genericChopinePattern = /returned:\s*(\d+)\s+chopines?(?!\s+\w)/i;
-            const match = description.match(genericChopinePattern);
-            if (match) {
-              return total + parseInt(match[1]);
-            }
-          } else {
-            // For branded Chopine like "Chopine Vin", match the exact brand
-            const brandedChopinePattern = new RegExp(`returned:\\s*(\\d+)\\s+chopines?\\s+${itemType.replace('Chopine', '').trim().replace(/[.*+?^${}()|[\]\\]/g, '\\$&')}(?=\\s*(?:-|$|\\s))`, 'i');
-            const match = description.match(brandedChopinePattern);
-            if (match) {
-              return total + parseInt(match[1]);
-            }
-          }
-        } else if (itemType.includes('Bouteille')) {
-          if (itemType === 'Bouteille') {
-            // For generic Bouteille, match "Returned: X Bouteille" but not "Bouteille Brand"
-            // First check if any branded Bouteille would match this description
-            let isBrandedMatch = false;
-            for (const checkItemType of Object.keys(returnableItems)) {
-              if (checkItemType.includes('Bouteille') && checkItemType !== 'Bouteille') {
-                const brandName = checkItemType.replace('Bouteille', '').trim();
-                if (brandName) {
-                  // Create pattern that matches both "Bouteille Brand" and "Bouteilles Brand"
-                  const brandedPattern = new RegExp(`returned:\\s*(\\d+)\\s+bouteilles?\\s+${brandName.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')}(?=\\s*(?:-|$|\\s))`, 'i');
-                  if (description.match(brandedPattern)) {
-                    isBrandedMatch = true;
-                    break;
-                  }
-                }
-              }
-            }
-            
-            // Only match generic if it's not a branded match
-            if (!isBrandedMatch) {
-              // More precise pattern: match "Bouteille" or "Bouteilles" only when followed by a non-word character
-              // or end of string, but not when followed by a space and another word
-              const genericBouteillePattern = /returned:\s*(\d+)\s+(bouteille|bouteilles)(?=\s*(?:-|$|\s))/i;
-              const match = description.match(genericBouteillePattern);
-              if (match) {
-                return total + parseInt(match[1]);
-              }
-            }
-          } else {
-            // For branded Bouteille like "Bouteille Vin", match the exact brand
-            const brandName = itemType.replace('Bouteille', '').trim();
-            if (brandName) {
-              // Create pattern that matches both "Bouteille Brand" and "Bouteilles Brand"
-              // Use word boundary and end anchor to be more precise
-              const brandedPattern = new RegExp(`returned:\\s*(\\d+)\\s+bouteilles?\\s+${brandName.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')}(?=\\s*(?:-|$|\\s))`, 'i');
-              const match = description.match(brandedPattern);
-              if (match) {
-                return total + parseInt(match[1]);
-              }
-            }
-          }
-        } else {
-          // For other items, use the original logic but with word boundaries
-          const escapedItemType = itemType.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
-          const pattern = new RegExp(`returned:\\s*(\\d+)\\s+${escapedItemType}(?=\\s*(?:-|$|\\s))`, 'i');
-          const match = description.match(pattern);
-          if (match) {
-            return total + parseInt(match[1]);
-          }
-        }
-        return total;
-      }, 0);
-  };
+
 
   // Memoize returnable items to recalculate when transactions change
   const { returnableItems, availableItems } = useMemo(() => {
     const returnableItems = getReturnableItems();
     
-    // Filter out items that have already been returned
+    // Since getReturnableItems uses calculateReturnableItems which already accounts for returns,
+    // the returnableItems represent the available items (net of returns)
+    // So availableItems is the same as returnableItems, but only include items with quantity > 0
     const availableItems: {[key: string]: {total: number, transactions: Array<{id: string, description: string, amount: number, quantity: number, date: Date}>}} = {};
     
     Object.entries(returnableItems).forEach(([itemType, data]) => {
-      // Calculate net quantity (original - returned)
-      const returnedQuantity = getReturnedQuantity(itemType, returnableItems);
-      const availableQuantity = Math.max(0, data.total - returnedQuantity);
-      
-      if (availableQuantity > 0) {
-        availableItems[itemType] = {
-          ...data,
-          total: availableQuantity
-        };
+      if (data.total > 0) {
+        availableItems[itemType] = data;
       }
     });
     
@@ -760,9 +673,51 @@ const processItemReturn = async (itemType: string, returnQuantity: number) => {
                       <div className="text-xs text-gray-500">
                         <p className="font-medium mb-1">Recent transactions:</p>
                         {(() => {
-                          // Get unique transactions for this item type (prevent duplicates)
-                          const returnedQuantity = getReturnedQuantity(itemType, returnableItems);
-                          const totalOriginal = data.total + returnedQuantity;
+                          // Calculate the original total by considering all transactions
+                          // Since data.total already reflects the net available after returns,
+                          // we need to reconstruct the original amount for display purposes
+                          // by finding original transactions that created these items
+                          
+                          // Get the original total from the original transactions before returns were applied
+                          // For display purposes, we'll calculate based on transaction analysis
+                          const originalTransactions = clientTransactions.filter(t => 
+                            !t.description.toLowerCase().includes('returned') &&
+                            (t.description.toLowerCase().includes('bouteille') || 
+                             t.description.toLowerCase().includes('chopine'))
+                          );
+                          
+                          // Find transactions that match this item type
+                          const matchingOriginalTransactions = originalTransactions.filter(t => 
+                            t.description.toLowerCase().includes(itemType.toLowerCase().split(' ')[0])
+                          );
+                          
+                          // Sum up quantities from matching original transactions
+                          let originalTotal = 0;
+                          matchingOriginalTransactions.forEach(t => {
+                            // Extract quantity from transaction description
+                            const quantityMatch = t.description.match(/(\d+)\s+/);
+                            if (quantityMatch) {
+                              originalTotal += parseInt(quantityMatch[1]);
+                            }
+                          });
+                          
+                          // Calculate returned quantity by finding return transactions for this item
+                          const returnTransactions = clientTransactions.filter(t =>
+                            t.type === 'debt' &&
+                            t.description.toLowerCase().includes('returned') &&
+                            t.description.toLowerCase().includes(itemType.toLowerCase())
+                          );
+                          
+                          let returnedTotal = 0;
+                          returnTransactions.forEach(t => {
+                            // Extract quantity from return transaction
+                            const quantityMatch = t.description.toLowerCase().match(/returned:\s*(\d+)/i);
+                            if (quantityMatch) {
+                              returnedTotal += parseInt(quantityMatch[1]);
+                            }
+                          });
+                          
+                          const totalOriginal = originalTotal; // Use original total calculated from transactions
                           
                           // Get unique transactions for this item type
                           const uniqueTransactions = data.transactions.reduce((unique: any[], transaction) => {
