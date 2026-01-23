@@ -220,17 +220,25 @@ const ClientActionModal: React.FC<ClientActionModalProps> = ({ client, onClose, 
             // For Bouteille items like "Bouteille Pepsi", format as "1 Bouteille Pepsi"
             const brand = itemType.replace('Bouteille', '').trim();
             if (brand) {
-              return `${quantity} Bouteille${quantity > 1 ? 's' : ''} ${brand}`;
+              // Check if item type already ends with 's' to avoid double pluralization
+              const needsPlural = quantity > 1 && !itemType.toLowerCase().endsWith('s');
+              return `${quantity} Bouteille${needsPlural ? 's' : ''} ${brand}`;
             } else {
-              return `${quantity} Bouteille${quantity > 1 ? 's' : ''}`;
+              // For generic Bouteille, check if already plural
+              const needsPlural = quantity > 1 && !itemType.toLowerCase().endsWith('s');
+              return `${quantity} Bouteille${needsPlural ? 's' : ''}`;
             }
           } else if (itemType.includes('Chopine')) {
             // For chopine items
             const brand = itemType.replace('Chopine', '').trim();
             if (brand) {
-              return `${quantity} Chopine${quantity > 1 ? 's' : ''} ${brand}`;
+              // Check if item type already ends with 's' to avoid double pluralization
+              const needsPlural = quantity > 1 && !itemType.toLowerCase().endsWith('s');
+              return `${quantity} Chopine${needsPlural ? 's' : ''} ${brand}`;
             } else {
-              return `${quantity} Chopine${quantity > 1 ? 's' : ''}`;
+              // For generic Chopine, check if already plural
+              const needsPlural = quantity > 1 && !itemType.toLowerCase().endsWith('s');
+              return `${quantity} Chopine${needsPlural ? 's' : ''}`;
             }
           }
           // Fallback for other formats
@@ -279,7 +287,9 @@ const processItemReturn = async (itemType: string, returnQuantity: number) => {
   if (itemType.includes('Chopine')) {
     // For Chopine items: "Returned: 2 Chopines Beer" (pluralize Chopine, not brand)
     const brand = itemType.replace('Chopine', '').trim();
-    returnDescription += `Chopine${returnQuantity > 1 ? 's' : ''}${brand ? ` ${brand}` : ''}`;
+    // Check if item type already ends with 's' to avoid double pluralization
+    const needsPlural = returnQuantity > 1 && !itemType.toLowerCase().endsWith('s');
+    returnDescription += `Chopine${needsPlural ? 's' : ''}${brand ? ` ${brand}` : ''}`;
   } else if (itemType.includes('Bouteille')) {
     // For Bouteille items: handle both formats
     // Format 1: "Bouteille 1.5L Sprite" (includes size)
@@ -292,15 +302,20 @@ const processItemReturn = async (itemType: string, returnQuantity: number) => {
       // This is "Bouteille 1.5L Sprite" format
       const size = sizeMatch[1];
       const brand = bouteilleRemoved.replace(size, '').trim();
-      returnDescription += `Bouteille${returnQuantity > 1 ? 's' : ''} ${size}${brand ? ` ${brand}` : ''}`;
+      // Check if item type already ends with 's' to avoid double pluralization
+      const needsPlural = returnQuantity > 1 && !itemType.toLowerCase().endsWith('s');
+      returnDescription += `Bouteille${needsPlural ? 's' : ''} ${size}${brand ? ` ${brand}` : ''}`;
     } else {
       // This is "Bouteille Sprite" format
       const brand = bouteilleRemoved;
-      returnDescription += `Bouteille${returnQuantity > 1 ? 's' : ''}${brand ? ` ${brand}` : ''}`;
+      // Check if item type already ends with 's' to avoid double pluralization
+      const needsPlural = returnQuantity > 1 && !itemType.toLowerCase().endsWith('s');
+      returnDescription += `Bouteille${needsPlural ? 's' : ''}${brand ? ` ${brand}` : ''}`;
     }
   } else {
-    // For other items: add 's' only if quantity > 1
-    returnDescription += `${itemType}${returnQuantity > 1 ? 's' : ''}`;
+    // For other items: add 's' only if quantity > 1 and not already plural
+    const needsPlural = returnQuantity > 1 && !itemType.toLowerCase().endsWith('s');
+    returnDescription += `${itemType}${needsPlural ? 's' : ''}`;
   }
     
   // Add date to make it unique (match the format used in ClientDetailModal for consistency)
