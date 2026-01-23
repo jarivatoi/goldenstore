@@ -143,7 +143,8 @@ export const calculateReturnableItemsWithDates = (clientTransactions: CreditTran
         if (itemType.includes('Chopine')) {
           if (itemType === 'Chopine') {
             // For generic Chopine, match "Returned: X Chopine" but not "Chopine Brand"
-            const genericChopinePattern = /returned:\s*(\d+)\s+chopines?(?!\s+\w)/i;
+            // Updated to include lookahead for potential date/time suffix like Bouteille pattern
+            const genericChopinePattern = /returned:\s*(\d+)\s+chopines?(?=\s*(?:-|$|\s))/i;
             const match = description.match(genericChopinePattern);
             if (match) {
               if (!returnedQuantities[itemType]) {
@@ -153,9 +154,10 @@ export const calculateReturnableItemsWithDates = (clientTransactions: CreditTran
             }
           } else {
             // For branded Chopine like "Chopine Vin", match the exact brand
-            // Need to escape special characters and add lookahead for potential date/time suffix
-            const escapedItemType = itemType.replace('Chopine', 'Chopines?').replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
-            const brandedChopinePattern = new RegExp(`returned:\\s*(\\d+)\\s+${escapedItemType}(?=\\s*(?:-|$|\\s))`, 'i');
+            // Need to handle both singular and plural forms (Chopine vs Chopines) and add lookahead for potential date/time suffix
+            const baseType = itemType.replace('Chopine', '');
+            const escapedBaseType = baseType.trim().replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+            const brandedChopinePattern = new RegExp(`returned:\\s*(\\d+)\\s+chopine(?:s)?\\s+${escapedBaseType}(?=\\s*(?:-|$|\\s))`, 'i');
             const match = description.match(brandedChopinePattern);
             if (match) {
               if (!returnedQuantities[itemType]) {
@@ -486,7 +488,8 @@ export const calculateReturnableItems = (clientTransactions: CreditTransaction[]
         if (itemType.includes('Chopine')) {
           if (itemType === 'Chopine') {
             // For generic Chopine, match "Returned: X Chopine" but not "Chopine Brand"
-            const genericChopinePattern = /returned:\s*(\d+)\s+chopines?(?!\s+\w)/i;
+            // Updated to include lookahead for potential date/time suffix like Bouteille pattern
+            const genericChopinePattern = /returned:\s*(\d+)\s+chopines?(?=\s*(?:-|$|\s))/i;
             const match = description.match(genericChopinePattern);
             if (match) {
               if (!returnedQuantities[itemType]) {
@@ -496,9 +499,10 @@ export const calculateReturnableItems = (clientTransactions: CreditTransaction[]
             }
           } else {
             // For branded Chopine like "Chopine Vin", match the exact brand
-            // Need to escape special characters and add lookahead for potential date/time suffix
-            const escapedItemType = itemType.replace('Chopine', 'Chopines?').replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
-            const brandedChopinePattern = new RegExp(`returned:\\s*(\\d+)\\s+${escapedItemType}(?=\\s*(?:-|$|\\s))`, 'i');
+            // Need to handle both singular and plural forms (Chopine vs Chopines) and add lookahead for potential date/time suffix
+            const baseType = itemType.replace('Chopine', '');
+            const escapedBaseType = baseType.trim().replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+            const brandedChopinePattern = new RegExp(`returned:\\s*(\\d+)\\s+chopine(?:s)?\\s+${escapedBaseType}(?=\\s*(?:-|$|\\s))`, 'i');
             const match = description.match(brandedChopinePattern);
             if (match) {
               if (!returnedQuantities[itemType]) {
@@ -801,7 +805,8 @@ export const getReturnableItems = (clientTransactions: CreditTransaction[]): {[k
         if (itemType.includes('Chopine')) {
           if (itemType === 'Chopine') {
             // For generic Chopine, match "Returned: X Chopine" but not "Chopine Brand"
-            const genericChopinePattern = /returned:\s*(\d+)\s+chopines?(?!\s+\w)/i;
+            // Updated to include lookahead for potential date/time suffix like Bouteille pattern
+            const genericChopinePattern = /returned:\s*(\d+)\s+chopines?(?=\s*(?:-|$|\s))/i;
             const match = description.match(genericChopinePattern);
             if (match) {
               if (!returnedQuantities[itemType]) {
@@ -811,9 +816,10 @@ export const getReturnableItems = (clientTransactions: CreditTransaction[]): {[k
             }
           } else {
             // For branded Chopine like "Chopine Vin", match the exact brand
-            // Need to escape special characters and add lookahead for potential date/time suffix
-            const escapedItemType = itemType.replace('Chopine', 'Chopines?').replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
-            const brandedChopinePattern = new RegExp(`returned:\\s*(\\d+)\\s+${escapedItemType}(?=\\s*(?:-|$|\\s))`, 'i');
+            // Need to handle both singular and plural forms (Chopine vs Chopines) and add lookahead for potential date/time suffix
+            const baseType = itemType.replace('Chopine', '');
+            const escapedBaseType = baseType.trim().replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+            const brandedChopinePattern = new RegExp(`returned:\\s*(\\d+)\\s+chopine(?:s)?\\s+${escapedBaseType}(?=\\s*(?:-|$|\\s))`, 'i');
             const match = description.match(brandedChopinePattern);
             if (match) {
               if (!returnedQuantities[itemType]) {
