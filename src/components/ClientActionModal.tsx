@@ -7,6 +7,7 @@ import SettleConfirmationModal from './SettleConfirmationModal';
 import ClientDetailModal from './ClientDetailModal';
 import { ScrollingText } from './ScrollingText';
 import { useNotification } from '../context/NotificationContext';
+import { calculateReturnableItemsWithDates, calculateReturnableItems } from '../utils/returnableItemsUtils';
 
 interface ClientActionModalProps {
   client: Client;
@@ -165,157 +166,40 @@ const ClientActionModal: React.FC<ClientActionModalProps> = ({ client, onClose, 
     }
   };
 
-  // Parse transactions to find returnable items (Chopine and Bouteille)
+  // Get returnable items using the same logic as ClientCard and ClientDetailModal
   const getReturnableItems = () => {
+    // Use the utility function to get returnable items as strings (same as ClientDetailModal)
+    const returnableItemsStrings = calculateReturnableItems(clientTransactions);
+    
+    // Convert the string format back to the object format used by the modal
     const returnableItems: {[key: string]: {total: number, transactions: Array<{id: string, description: string, amount: number, quantity: number, date: Date}>}} = {};
     
-    // Track processed transactions to prevent duplicates
-    const processedTransactions = new Set<string>();
-    
-    clientTransactions.forEach(transaction => {
-      // Skip if already processed
-      if (processedTransactions.has(transaction.id)) {
-        return;
-      }
-      
-      // Only process debt transactions (not payments) AND exclude return transactions
-      if (transaction.type === 'payment' || transaction.description.toLowerCase().includes('returned')) {
-        return;
-      }
-      
-      const description = transaction.description.toLowerCase();
-      
-      // Only process items that contain "chopine" or "bouteille"
-      if (!description.includes('chopine') && !description.includes('bouteille')) {
-        return;
-      }
-      
-      // Track which patterns have matched to prevent duplicates
-      let hasMatched = false;
-      const transactionItemCounts: {[key: string]: number} = {}; // Track cumulative counts for this transaction
-
-      // Look for Chopine items with improved parsing
-      // Pattern: number + space + chopine (with optional brand after)
-      const chopinePattern = /(\d+)\s+chopines?(?:\s+([^,]*))?/gi;
-      let chopineMatch;
-
-      while ((chopineMatch = chopinePattern.exec(description)) !== null) {
-        const quantity = parseInt(chopineMatch[1]);
-        const brand = chopineMatch[2]?.trim() || '';
-        const key = brand ? `Chopine ${brand}` : 'Chopine';
-
-        // Accumulate quantities for the same item type within this transaction
-        if (!transactionItemCounts[key]) {
-          transactionItemCounts[key] = 0;
-        }
-        transactionItemCounts[key] += quantity;
-        hasMatched = true;
-      }
-
-      // Look for Bouteille items with improved parsing
-      // Pattern: number + space + optional size + bouteille + optional brand
-      const bouteillePattern = /(\d+)\s+(?:(\d+(?:\.\d+)?[Ll])\s+)?bouteilles?(?:\s+([^,\(\)]*))?/gi;
-      let bouteilleMatch;
-
-      while ((bouteilleMatch = bouteillePattern.exec(description)) !== null) {
-        const quantity = parseInt(bouteilleMatch[1]);
-        const size = bouteilleMatch[2]?.trim().toUpperCase() || '';
-        const brand = bouteilleMatch[3]?.trim() || '';
-
-        // Format the key based on what we found
-        let key;
-        if (size && brand) {
-          key = `${size} ${brand}`;
-        } else if (brand) {
-          key = `Bouteille ${brand}`;
-        } else if (size) {
-          key = `${size} Bouteille`;
+    // Process each returnable item string
+    returnableItemsStrings.forEach((itemString: string) => {
+      // Parse the string format "3 Bouteille Vin" or "2 Chopine Beer"
+      const match = itemString.match(/^(\d+)\s+(.+)$/);
+      if (match) {
+        const quantity = parseInt(match[1]);
+        const displayText = match[2]; // e.g., "Bouteille Vin" or "Chopine Beer"
+        
+        // The displayText is the key we'll use - this ensures consistency with ClientCard and ClientDetailModal
+        const key = displayText;
+        
+        if (!returnableItems[key]) {
+          returnableItems[key] = { total: quantity, transactions: [] };
         } else {
-          key = 'Bouteille';
+          returnableItems[key].total += quantity;
         }
-
-        // Accumulate quantities for the same item type within this transaction
-        if (!transactionItemCounts[key]) {
-          transactionItemCounts[key] = 0;
-        }
-        transactionItemCounts[key] += quantity;
-        hasMatched = true;
-      }
-
-      // Add all accumulated quantities to returnableItems (both chopine and bouteille)
-      Object.entries(transactionItemCounts).forEach(([key, totalQuantity]) => {
-        if (!returnableItems[key]) {
-          returnableItems[key] = { total: 0, transactions: [] };
-        }
-        returnableItems[key].total += totalQuantity;
+        
+        // Add a dummy transaction entry for this item type
         returnableItems[key].transactions.push({
-          ...transaction,
-          quantity: totalQuantity
-        });
-      });
-      
-      // Handle items without explicit numbers (assume quantity 1) - only if no pattern matched
-      if (!hasMatched && description.includes('bouteille')) {
-        const sizeMatch = description.match(/(\d+(?:\.\d+)?[Ll])/i);
-        const brandMatch = description.match(/bouteilles?\s+(\d+(?:\.\d+)?[Ll])?\s*([^,]*)/i);
-        let sizeFromBrand = brandMatch?.[1]?.trim() || '';
-        let brand = brandMatch?.[2]?.trim() || '';
-        
-        // If no separate size was found at the beginning, check if size is in the brand part
-        if (!sizeMatch && sizeFromBrand) {
-          sizeFromBrand = sizeFromBrand.replace(/l$/i, 'L').toUpperCase();
-        }
-        
-        // Use size from either source, prioritize the one from the beginning of description
-        const finalSize = sizeMatch ? sizeMatch[1].replace(/l$/i, 'L').toUpperCase() : sizeFromBrand;
-        
-        let key;
-        if (finalSize && brand) {
-          key = `${finalSize} ${brand}`;
-        } else if (brand) {
-          key = `Bouteille ${brand}`;
-        } else if (finalSize) {
-          key = `${finalSize} Bouteille`;
-        } else {
-          key = 'Bouteille';
-        }
-
-        if (!returnableItems[key]) {
-          returnableItems[key] = { total: 0, transactions: [] };
-        }
-        returnableItems[key].total += 1;
-        returnableItems[key].transactions.push({
-          ...transaction,
-          quantity: 1
-        });
-        hasMatched = true;
-      }
-
-      if (!hasMatched && description.includes('chopine')) {
-        const brandMatch = description.match(/chopines?\s+([^,]*)/i);
-        let brand = brandMatch?.[1]?.trim() || '';
-        
-        // Capitalize brand name properly
-        const capitalizedBrand = brand ? brand.split(' ').map((word: string) => 
-          word.charAt(0).toUpperCase() + word.slice(1).toLowerCase()
-        ).join(' ') : '';
-        
-        const key = capitalizedBrand ? `Chopine ${capitalizedBrand}` : 'Chopine';
-
-        if (!returnableItems[key]) {
-          returnableItems[key] = { total: 0, transactions: [] };
-        }
-        returnableItems[key].total += 1;
-        returnableItems[key].transactions.push({
-          ...transaction,
-          quantity: 1
+          id: `dummy-${key}`,
+          description: displayText,
+          amount: 0,
+          quantity: quantity,
+          date: new Date()
         });
       }
-     
-     // Mark transaction as processed only after all patterns have been checked
-     if (hasMatched) {
-       processedTransactions.add(transaction.id);
-     }
     });
     
     return returnableItems;
@@ -392,7 +276,7 @@ const ClientActionModal: React.FC<ClientActionModalProps> = ({ client, onClose, 
 };
 
 const processItemReturn = async (itemType: string, returnQuantity: number) => {
-    
+  
   // Create a return transaction (negative transaction)
   // Fix pluralization for branded items to match the exact format used in aggregation
   let returnDescription = `Returned: ${returnQuantity} `;
@@ -402,10 +286,23 @@ const processItemReturn = async (itemType: string, returnQuantity: number) => {
     const brand = itemType.replace('Chopine', '').trim();
     returnDescription += `Chopine${returnQuantity > 1 ? 's' : ''}${brand ? ` ${brand}` : ''}`;
   } else if (itemType.includes('Bouteille')) {
-    // For Bouteille items: "Returned: 2 Bouteilles Green" (pluralize Bouteille, not brand)
-    // Use the same logic as Chopine
-    const brand = itemType.replace('Bouteille', '').trim();
-    returnDescription += `Bouteille${returnQuantity > 1 ? 's' : ''}${brand ? ` ${brand}` : ''}`;
+    // For Bouteille items: handle both formats
+    // Format 1: "Bouteille 1.5L Sprite" (includes size)
+    // Format 2: "Bouteille Sprite" (no size)
+    const bouteilleRemoved = itemType.replace('Bouteille', '').trim();
+    
+    // Check if it has a size pattern like "1.5L"
+    const sizeMatch = bouteilleRemoved.match(/(\d+(?:\.\d+)?[Ll])/i);
+    if (sizeMatch) {
+      // This is "Bouteille 1.5L Sprite" format
+      const size = sizeMatch[1];
+      const brand = bouteilleRemoved.replace(size, '').trim();
+      returnDescription += `Bouteille${returnQuantity > 1 ? 's' : ''} ${size}${brand ? ` ${brand}` : ''}`;
+    } else {
+      // This is "Bouteille Sprite" format
+      const brand = bouteilleRemoved;
+      returnDescription += `Bouteille${returnQuantity > 1 ? 's' : ''}${brand ? ` ${brand}` : ''}`;
+    }
   } else {
     // For other items: add 's' only if quantity > 1
     returnDescription += `${itemType}${returnQuantity > 1 ? 's' : ''}`;
@@ -430,7 +327,7 @@ const processItemReturn = async (itemType: string, returnQuantity: number) => {
   // Helper function to calculate how much has already been returned
   const getReturnedQuantity = (itemType: string, returnableItems: {[key: string]: {total: number, transactions: Array<{id: string, description: string, amount: number, quantity: number, date: Date}>}}): number => {
     return clientTransactions
-      .filter(transaction => transaction.type === 'debt' && transaction.description.toLowerCase().includes('returned'))
+      .filter(transaction => transaction.type === 'debt' && transaction.description.toLowerCase().startsWith('returned:'))
       .reduce((total, transaction) => {
         const description = transaction.description.toLowerCase();
         // Use more precise matching to avoid substring conflicts
@@ -445,7 +342,7 @@ const processItemReturn = async (itemType: string, returnQuantity: number) => {
             }
           } else {
             // For branded Chopine like "Chopine Vin", match the exact brand
-            const brandedChopinePattern = new RegExp(`returned:\\s*(\\d+)\\s+${itemType.replace('Chopine', 'Chopines?')}`, 'i');
+            const brandedChopinePattern = new RegExp(`returned:\\s*(\\d+)\\s+chopines?\\s+${itemType.replace('Chopine', '').trim().replace(/[.*+?^${}()|[\]\\]/g, '\\$&')}(?=\\s*(?:-|$|\\s))`, 'i');
             const match = description.match(brandedChopinePattern);
             if (match) {
               return total + parseInt(match[1]);
@@ -461,7 +358,7 @@ const processItemReturn = async (itemType: string, returnQuantity: number) => {
                 const brandName = checkItemType.replace('Bouteille', '').trim();
                 if (brandName) {
                   // Create pattern that matches both "Bouteille Brand" and "Bouteilles Brand"
-                  const brandedPattern = new RegExp(`returned:\\s*(\\d+)\\s+bouteilles?\\s+${brandName.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')}(?=\\s*(?:-|$))`, 'i');
+                  const brandedPattern = new RegExp(`returned:\\s*(\\d+)\\s+bouteilles?\\s+${brandName.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')}(?=\\s*(?:-|$|\\s))`, 'i');
                   if (description.match(brandedPattern)) {
                     isBrandedMatch = true;
                     break;
@@ -474,7 +371,7 @@ const processItemReturn = async (itemType: string, returnQuantity: number) => {
             if (!isBrandedMatch) {
               // More precise pattern: match "Bouteille" or "Bouteilles" only when followed by a non-word character
               // or end of string, but not when followed by a space and another word
-              const genericBouteillePattern = /returned:\s*(\d+)\s+(bouteille|bouteilles)(?=\s*(?:-|$))/i;
+              const genericBouteillePattern = /returned:\s*(\d+)\s+(bouteille|bouteilles)(?=\s*(?:-|$|\s))/i;
               const match = description.match(genericBouteillePattern);
               if (match) {
                 return total + parseInt(match[1]);
@@ -485,7 +382,8 @@ const processItemReturn = async (itemType: string, returnQuantity: number) => {
             const brandName = itemType.replace('Bouteille', '').trim();
             if (brandName) {
               // Create pattern that matches both "Bouteille Brand" and "Bouteilles Brand"
-              const brandedPattern = new RegExp(`returned:\\s*(\\d+)\\s+bouteilles?\\s+${brandName.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')}(?=\\s*(?:-|$))`, 'i');
+              // Use word boundary and end anchor to be more precise
+              const brandedPattern = new RegExp(`returned:\\s*(\\d+)\\s+bouteilles?\\s+${brandName.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')}(?=\\s*(?:-|$|\\s))`, 'i');
               const match = description.match(brandedPattern);
               if (match) {
                 return total + parseInt(match[1]);
@@ -495,7 +393,7 @@ const processItemReturn = async (itemType: string, returnQuantity: number) => {
         } else {
           // For other items, use the original logic but with word boundaries
           const escapedItemType = itemType.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
-          const pattern = new RegExp(`returned:\\s*(\\d+)\\s+${escapedItemType}`, 'i');
+          const pattern = new RegExp(`returned:\\s*(\\d+)\\s+${escapedItemType}(?=\\s*(?:-|$|\\s))`, 'i');
           const match = description.match(pattern);
           if (match) {
             return total + parseInt(match[1]);
