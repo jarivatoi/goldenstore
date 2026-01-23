@@ -250,8 +250,8 @@ const ClientActionModal: React.FC<ClientActionModalProps> = ({ client, onClose, 
       detail: { 
         ...client,
         isAccountClear: false,
-        message: `${itemsBeingReturned} Returned Successfully!`,
-        transactionDescription: `Returned: ${itemsBeingReturned}`
+        message: `${itemsBeingReturned} returned successfully!`,
+        transactionDescription: `Returned: ${itemsBeingReturned} - ${new Date().toLocaleDateString('en-GB')} ${new Date().toLocaleTimeString('en-GB', { hour: '2-digit', minute: '2-digit' })}`
       }
     }));
     
