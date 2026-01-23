@@ -281,24 +281,40 @@ const ClientActionModal: React.FC<ClientActionModalProps> = ({ client, onClose, 
 const processItemReturn = async (itemType: string, returnQuantity: number) => {
   
   // Create a return transaction (negative transaction)
-  // Use the same format as ClientDetailModal to ensure proper matching
+  // Fix pluralization for branded items to match the exact format used in aggregation
   let returnDescription = `Returned: ${returnQuantity} `;
     
   if (itemType.includes('Chopine')) {
-    // For Chopine items: match the exact format used in ClientDetailModal
+    // For Chopine items: "Returned: 2 Chopines Beer" (pluralize Chopine, not brand)
     const brand = itemType.replace('Chopine', '').trim();
-    // Use consistent pluralization: only add 's' if quantity > 1
-    const needsPlural = returnQuantity > 1;
+    // Check if item type already ends with 's' to avoid double pluralization
+    const needsPlural = returnQuantity > 1 && !itemType.toLowerCase().endsWith('s');
     returnDescription += `Chopine${needsPlural ? 's' : ''}${brand ? ` ${brand}` : ''}`;
   } else if (itemType.includes('Bouteille')) {
-    // For Bouteille items: match the exact format used in ClientDetailModal
-    const brand = itemType.replace('Bouteille', '').trim();
-    // Use consistent pluralization: only add 's' if quantity > 1
-    const needsPlural = returnQuantity > 1;
-    returnDescription += `Bouteille${needsPlural ? 's' : ''}${brand ? ` ${brand}` : ''}`;
+    // For Bouteille items: handle both formats
+    // Format 1: "Bouteille 1.5L Sprite" (includes size)
+    // Format 2: "Bouteille Sprite" (no size)
+    const bouteilleRemoved = itemType.replace('Bouteille', '').trim();
+    
+    // Check if it has a size pattern like "1.5L"
+    const sizeMatch = bouteilleRemoved.match(/(\d+(?:\.\d+)?[Ll])/i);
+    if (sizeMatch) {
+      // This is "Bouteille 1.5L Sprite" format
+      const size = sizeMatch[1];
+      const brand = bouteilleRemoved.replace(size, '').trim();
+      // Check if item type already ends with 's' to avoid double pluralization
+      const needsPlural = returnQuantity > 1 && !itemType.toLowerCase().endsWith('s');
+      returnDescription += `Bouteille${needsPlural ? 's' : ''} ${size}${brand ? ` ${brand}` : ''}`;
+    } else {
+      // This is "Bouteille Sprite" format
+      const brand = bouteilleRemoved;
+      // Check if item type already ends with 's' to avoid double pluralization
+      const needsPlural = returnQuantity > 1 && !itemType.toLowerCase().endsWith('s');
+      returnDescription += `Bouteille${needsPlural ? 's' : ''}${brand ? ` ${brand}` : ''}`;
+    }
   } else {
-    // For other items: add 's' only if quantity > 1
-    const needsPlural = returnQuantity > 1;
+    // For other items: add 's' only if quantity > 1 and not already plural
+    const needsPlural = returnQuantity > 1 && !itemType.toLowerCase().endsWith('s');
     returnDescription += `${itemType}${needsPlural ? 's' : ''}`;
   }
     
