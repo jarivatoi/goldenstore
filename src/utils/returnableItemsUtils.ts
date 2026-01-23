@@ -153,7 +153,9 @@ export const calculateReturnableItemsWithDates = (clientTransactions: CreditTran
             }
           } else {
             // For branded Chopine like "Chopine Vin", match the exact brand
-            const brandedChopinePattern = new RegExp(`returned:\\s*(\\d+)\\s+${itemType.replace('Chopine', 'Chopines?')}`, 'i');
+            // Need to escape special characters and add lookahead for potential date/time suffix
+            const escapedItemType = itemType.replace('Chopine', 'Chopines?').replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+            const brandedChopinePattern = new RegExp(`returned:\\s*(\\d+)\\s+${escapedItemType}(?=\\s*(?:-|$|\\s))`, 'i');
             const match = description.match(brandedChopinePattern);
             if (match) {
               if (!returnedQuantities[itemType]) {
@@ -209,7 +211,8 @@ export const calculateReturnableItemsWithDates = (clientTransactions: CreditTran
               } else {
                 // Handle cases where items were added without explicit quantities (e.g., "bouteille vin")
                 // Try a more flexible pattern that matches the brand name anywhere in the return description
-                const flexiblePattern = new RegExp(`returned:\\s*(\\d+).*?${brandName.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')}`, 'i');
+                // Add lookahead to handle potential date/time suffix after the brand
+                const flexiblePattern = new RegExp(`returned:\\s*(\\d+).*?${brandName.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')}(?=\\s*(?:-|$|\\s))`, 'i');
                 const flexibleMatch = description.match(flexiblePattern);
                 if (flexibleMatch) {
                   if (!returnedQuantities[itemType]) {
@@ -493,7 +496,9 @@ export const calculateReturnableItems = (clientTransactions: CreditTransaction[]
             }
           } else {
             // For branded Chopine like "Chopine Vin", match the exact brand
-            const brandedChopinePattern = new RegExp(`returned:\\s*(\\d+)\\s+${itemType.replace('Chopine', 'Chopines?')}`, 'i');
+            // Need to escape special characters and add lookahead for potential date/time suffix
+            const escapedItemType = itemType.replace('Chopine', 'Chopines?').replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+            const brandedChopinePattern = new RegExp(`returned:\\s*(\\d+)\\s+${escapedItemType}(?=\\s*(?:-|$|\\s))`, 'i');
             const match = description.match(brandedChopinePattern);
             if (match) {
               if (!returnedQuantities[itemType]) {
@@ -549,7 +554,8 @@ export const calculateReturnableItems = (clientTransactions: CreditTransaction[]
               } else {
                 // Handle cases where items were added without explicit quantities (e.g., "bouteille vin")
                 // Try a more flexible pattern that matches the brand name anywhere in the return description
-                const flexiblePattern = new RegExp(`returned:\\s*(\\d+).*?${brandName.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')}`, 'i');
+                // Add lookahead to handle potential date/time suffix after the brand
+                const flexiblePattern = new RegExp(`returned:\\s*(\\d+).*?${brandName.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')}(?=\\s*(?:-|$|\\s))`, 'i');
                 const flexibleMatch = description.match(flexiblePattern);
                 if (flexibleMatch) {
                   if (!returnedQuantities[itemType]) {
@@ -805,7 +811,9 @@ export const getReturnableItems = (clientTransactions: CreditTransaction[]): {[k
             }
           } else {
             // For branded Chopine like "Chopine Vin", match the exact brand
-            const brandedChopinePattern = new RegExp(`returned:\\s*(\\d+)\\s+${itemType.replace('Chopine', 'Chopines?')}`, 'i');
+            // Need to escape special characters and add lookahead for potential date/time suffix
+            const escapedItemType = itemType.replace('Chopine', 'Chopines?').replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+            const brandedChopinePattern = new RegExp(`returned:\\s*(\\d+)\\s+${escapedItemType}(?=\\s*(?:-|$|\\s))`, 'i');
             const match = description.match(brandedChopinePattern);
             if (match) {
               if (!returnedQuantities[itemType]) {
@@ -861,7 +869,8 @@ export const getReturnableItems = (clientTransactions: CreditTransaction[]): {[k
               } else {
                 // Handle cases where items were added without explicit quantities (e.g., "bouteille vin")
                 // Try a more flexible pattern that matches the brand name anywhere in the return description
-                const flexiblePattern = new RegExp(`returned:\\s*(\\d+).*?${brandName.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')}`, 'i');
+                // Add lookahead to handle potential date/time suffix after the brand
+                const flexiblePattern = new RegExp(`returned:\\s*(\\d+).*?${brandName.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')}(?=\\s*(?:-|$|\\s))`, 'i');
                 const flexibleMatch = description.match(flexiblePattern);
                 if (flexibleMatch) {
                   if (!returnedQuantities[itemType]) {
