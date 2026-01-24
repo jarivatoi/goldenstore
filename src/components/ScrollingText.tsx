@@ -31,6 +31,9 @@ export const ScrollingText: React.FC<ScrollingTextProps> = ({
       const container = containerRef.current;
       const textElement = textRef.current;
       
+      // Ensure initial state is set correctly
+      textElement.style.willChange = 'transform';
+      
       // Stop any existing animation
       if (animatorRef.current) {
         animatorRef.current.stop();
@@ -99,8 +102,16 @@ export const ScrollingText: React.FC<ScrollingTextProps> = ({
       } else {
         setNeedsScrolling(false);
         
-        // Reset the text position to the left when text no longer overflows
-        textElement.style.transform = 'translateX(0px)';
+        // Smoothly reset the text position to the left when text no longer overflows
+        if (textElement.style.transform !== 'translateX(0px)') {
+          textElement.style.transition = 'transform 0.3s ease-out';
+          textElement.style.transform = 'translateX(0px)';
+          
+          // Remove transition after animation completes
+          setTimeout(() => {
+            textElement.style.transition = '';
+          }, 300);
+        }
         
         // Stop any existing animation
         if (animatorRef.current) {
@@ -120,25 +131,34 @@ export const ScrollingText: React.FC<ScrollingTextProps> = ({
     
     window.addEventListener('resize', handleResize);
     
-    // Recheck when content changes
+    // Recheck when content changes with smoother handling
     let timeoutId: NodeJS.Timeout;
     const observer = new MutationObserver(() => {
       // Clear any existing timeout to debounce multiple rapid changes
       clearTimeout(timeoutId);
       
-      // When content changes, stop current animation and restart with a delay
+      // When content changes, smoothly stop current animation
       if (animatorRef.current) {
         (animatorRef.current as ScrollingTextAnimator).stop();
         animatorRef.current = null;
       }
       
-      // Reset transform to initial state to prevent jumping
+      // Smoothly reset transform to initial state to prevent jumping
       if (textRef.current) {
+        // Use CSS transition for smooth reset instead of instant jump
+        textRef.current.style.transition = 'transform 0.3s ease-out';
         textRef.current.style.transform = 'translateX(0px)';
+        
+        // Remove transition after animation completes
+        setTimeout(() => {
+          if (textRef.current) {
+            textRef.current.style.transition = '';
+          }
+        }, 300);
       }
       
       // Restart animation after a brief delay to handle rapid updates properly
-      timeoutId = setTimeout(checkAndAnimate, 50);
+      timeoutId = setTimeout(checkAndAnimate, 100);
     });
     
     if (containerRef.current) {
