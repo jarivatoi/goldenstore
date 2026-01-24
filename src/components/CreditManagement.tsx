@@ -43,7 +43,7 @@ const CreditManagement: React.FC = () => {
   const [showUnifiedDataManager, setShowUnifiedDataManager] = useState(false);
   const [clientFilter, setClientFilter] = useState<'all' | 'returnables' | 'overdue' | 'overlimit'>('all');
   const [showFilterDropdown, setShowFilterDropdown] = useState(false);
-  const [sortOption, setSortOption] = useState<'name' | 'date' | 'debt'>('date');
+  const [sortOption, setSortOption] = useState<'name' | 'date' | 'date-oldest' | 'debt'>('date');
   const [showSortDropdown, setShowSortDropdown] = useState(false);
   const [clientSearchDescription, setClientSearchDescription] = useState(''); // Add state to preserve description
 
