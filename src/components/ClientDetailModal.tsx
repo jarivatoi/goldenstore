@@ -566,12 +566,14 @@ const ReturnableItemRow: React.FC<ReturnableItemRowProps> = ({ itemType, quantit
       
       if (itemType.includes('Chopine')) {
         // For Chopine items: "Returned: 2 Chopines Beer" (pluralize Chopine, not brand)
-        const brand = itemType.replace('Chopine', '').trim();
+        // Handle both singular and plural forms
+        const brand = itemType.replace(/^(Chopines?)/i, '').trim();
         returnDescription += `Chopine${pendingQuantity > 1 ? 's' : ''}${brand ? ` ${brand}` : ''}`;
       } else if (itemType.includes('Bouteille')) {
         // For Bouteille items: "Returned: 2 Bouteilles Green" (pluralize Bouteille, not brand)
         // Use the same logic as Chopine
-        const brand = itemType.replace('Bouteille', '').trim();
+        // Handle both singular and plural forms
+        const brand = itemType.replace(/^(Bouteilles?)/i, '').trim();
         returnDescription += `Bouteille${pendingQuantity > 1 ? 's' : ''}${brand ? ` ${brand}` : ''}`;
       } else {
         // For other items: add 's' only if quantity > 1
@@ -585,10 +587,12 @@ const ReturnableItemRow: React.FC<ReturnableItemRowProps> = ({ itemType, quantit
       // Update displayItemType for the button text
       let newDisplayItemType = itemType;
       if (itemType.includes('Chopine')) {
-        const brand = itemType.replace('Chopine', '').trim();
+        // Handle both singular and plural forms
+        const brand = itemType.replace(/^(Chopines?)/i, '').trim();
         newDisplayItemType = `Chopine${pendingQuantity > 1 ? 's' : ''}${brand ? ` ${brand}` : ''}`;
       } else if (itemType.includes('Bouteille')) {
-        const brand = itemType.replace('Bouteille', '').trim();
+        // Handle both singular and plural forms
+        const brand = itemType.replace(/^(Bouteilles?)/i, '').trim();
         newDisplayItemType = `Bouteille${pendingQuantity > 1 ? 's' : ''}${brand ? ` ${brand}` : ''}`;
       } else if (pendingQuantity > 1) {
         newDisplayItemType = `${itemType}s`;
