@@ -196,7 +196,7 @@ export const calculateReturnableItemsWithDates = (clientTransactions: CreditTran
             // Only match generic if it's not a branded match
             if (!isBrandedMatch) {
               // For generic Chopine, match "Returned: X Chopine" but not "Chopine Brand"
-              const genericChopinePattern = /returned:\s*(\d+)\s+chopines?(?!\s+\w)/i;
+              const genericChopinePattern = /returned:\s*(\d+)\s+chopines?(?=\s*(?:-|$))/i;
               const match = description.match(genericChopinePattern);
               if (match) {
                 if (!returnedQuantities[itemType]) {
@@ -254,7 +254,7 @@ export const calculateReturnableItemsWithDates = (clientTransactions: CreditTran
             if (!isBrandedMatch) {
               // More precise pattern: match "Bouteille" or "Bouteilles" only when NOT followed by a space and additional word
               // This prevents matching "bouteille" in "bouteille vin"
-              const genericBouteillePattern = /returned:\s*(\d+)\s+(bouteille|bouteilles)(?!\s+\w)/i;
+              const genericBouteillePattern = /returned:\s*(\d+)\s+(bouteille|bouteilles)(?=\s*(?:-|$))/i;
               const match = description.match(genericBouteillePattern);
               if (match) {
                 if (!returnedQuantities[itemType]) {
@@ -605,7 +605,7 @@ export const calculateReturnableItems = (clientTransactions: CreditTransaction[]
             // Only match generic if it's not a branded match
             if (!isBrandedMatch) {
               // For generic Chopine, match "Returned: X Chopine" but not "Chopine Brand"
-              const genericChopinePattern = /returned:\s*(\d+)\s+chopines?(?!\s+\w)/i;
+              const genericChopinePattern = /returned:\s*(\d+)\s+chopines?(?=\s*(?:-|$))/i;
               const match = description.match(genericChopinePattern);
               if (match) {
                 if (!returnedQuantities[itemType]) {
@@ -663,7 +663,7 @@ export const calculateReturnableItems = (clientTransactions: CreditTransaction[]
             if (!isBrandedMatch) {
               // More precise pattern: match "Bouteille" or "Bouteilles" only when NOT followed by a space and additional word
               // This prevents matching "bouteille" in "bouteille vin"
-              const genericBouteillePattern = /returned:\s*(\d+)\s+(bouteille|bouteilles)(?!\s+\w)/i;
+              const genericBouteillePattern = /returned:\s*(\d+)\s+(bouteille|bouteilles)(?=\s*(?:-|$))/i;
               const match = description.match(genericBouteillePattern);
               if (match) {
                 if (!returnedQuantities[itemType]) {
