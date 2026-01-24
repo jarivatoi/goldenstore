@@ -307,7 +307,8 @@ const processItemReturn = async (itemType: string, returnQuantity: number) => {
     
   if (itemType.includes('Chopine')) {
     // For Chopine items: "Returned: 2 Chopines Beer" (pluralize Chopine, not brand)
-    const brand = itemType.replace('Chopine', '').trim();
+    // Handle both singular and plural forms
+    const brand = itemType.replace(/^(Chopines?)/i, '').trim();
     // Always pluralize Chopine when quantity > 1, regardless of existing 's'
     const needsPlural = returnQuantity > 1;
     returnDescription += `Chopine${needsPlural ? 's' : ''}${brand ? ` ${brand}` : ''}`;
@@ -315,7 +316,8 @@ const processItemReturn = async (itemType: string, returnQuantity: number) => {
     // For Bouteille items: handle both formats
     // Format 1: "Bouteille 1.5L Sprite" (includes size)
     // Format 2: "Bouteille Sprite" (no size)
-    const bouteilleRemoved = itemType.replace('Bouteille', '').trim();
+    // Handle both singular and plural forms
+    const bouteilleRemoved = itemType.replace(/^(Bouteilles?)/i, '').trim();
     
     // Check if it has a size pattern like "1.5L"
     const sizeMatch = bouteilleRemoved.match(/(\d+(?:\.\d+)?[Ll])/i);
