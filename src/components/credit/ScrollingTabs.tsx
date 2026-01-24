@@ -18,7 +18,7 @@ interface ScrollingTabsProps {
   onQuickAdd: (client: Client) => void;
   clientFilter: 'all' | 'returnables' | 'overdue' | 'overlimit';
   getClientTotalDebt: (clientId: string) => number;
-  sortOption: 'name' | 'date' | 'debt';
+  sortOption: 'name' | 'date' | 'date-oldest' | 'debt';
   onResetCalculator?: () => void;
   isBigCard?: boolean; // New prop to identify if it's the big card
 }
@@ -87,6 +87,23 @@ const ScrollingTabs: React.FC<ScrollingTabsProps> = ({
           
           // Otherwise sort by lastTransactionAt descending
           return b.lastTransactionAt.getTime() - a.lastTransactionAt.getTime();
+        });
+      
+      case 'date-oldest':
+        // Sort by lastTransactionAt ascending (oldest first), but prioritize recently updated client
+        return clientsToSort.sort((a, b) => {
+          // If one of them is the recently updated client, prioritize it
+          if (recentlyUpdatedClient) {
+            if (a.id === recentlyUpdatedClient) {
+              return -1; // a comes first
+            }
+            if (b.id === recentlyUpdatedClient) {
+              return 1; // b comes first
+            }
+          }
+          
+          // Otherwise sort by lastTransactionAt ascending
+          return a.lastTransactionAt.getTime() - b.lastTransactionAt.getTime();
         });
       
       case 'debt':
