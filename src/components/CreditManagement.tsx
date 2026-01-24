@@ -420,6 +420,8 @@ const CreditManagement: React.FC = () => {
       }
       
       if (description.includes('chopine') && !chopinePattern.test(description)) {
+        // Look for size in chopine items too, similar to bouteille
+        const sizeMatch = description.match(/(\d+(?:\.\d+)?[Ll])/i);
         const brandMatch = description.match(/chopines?\s+([^,]*)/i);
         const brand = brandMatch?.[1]?.trim() || '';
         
@@ -428,7 +430,16 @@ const CreditManagement: React.FC = () => {
           word.charAt(0).toUpperCase() + word.slice(1).toLowerCase()
         ).join(' ') : '';
         
-        const key = capitalizedBrand ? `Chopine ${capitalizedBrand}` : 'Chopine';
+        let key;
+        if (sizeMatch && brand) {
+          key = `${sizeMatch[1].replace(/l$/i, 'L')} ${capitalizedBrand}`;
+        } else if (brand) {
+          key = `Chopine ${capitalizedBrand}`;
+        } else if (sizeMatch) {
+          key = `${sizeMatch[1].replace(/l$/i, 'L')} Chopine`;
+        } else {
+          key = 'Chopine';
+        }
         
         if (!returnableItems[key]) {
           returnableItems[key] = 0;
@@ -650,9 +661,26 @@ const CreditManagement: React.FC = () => {
           }
           
           if (description.includes('chopine') && !chopinePattern.test(description)) {
+            // Look for size in chopine items too, similar to bouteille
+            const sizeMatch = description.match(/(\d+(?:\.\d+)?L)/i);
             const brandMatch = description.match(/chopines?\s+([^,]*)/i);
             const brand = brandMatch?.[1]?.trim() || '';
-            const key = brand ? `Chopine ${brand}` : 'Chopine';
+            
+            // Capitalize brand name properly
+            const capitalizedBrand = brand ? brand.split(' ').map((word: string) => 
+              word.charAt(0).toUpperCase() + word.slice(1).toLowerCase()
+            ).join(' ') : '';
+            
+            let key;
+            if (sizeMatch && brand) {
+              key = `${sizeMatch[1].replace(/l$/i, 'L')} ${capitalizedBrand}`;
+            } else if (brand) {
+              key = `Chopine ${capitalizedBrand}`;
+            } else if (sizeMatch) {
+              key = `${sizeMatch[1].replace(/l$/i, 'L')} Chopine`;
+            } else {
+              key = 'Chopine';
+            }
             
             if (!returnableItems[key]) {
               returnableItems[key] = 0;
