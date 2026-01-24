@@ -42,7 +42,7 @@ export const calculateReturnableItemsWithDates = (clientTransactions: CreditTran
     
     // Look for Bouteille items - handle multiple patterns: "quantity bouteille brand" and "quantity size bouteille brand"
     // Pattern 1: "1 Bouteille 1.5L Pepsi" or "1 Bouteille Pepsi" (updated to match anywhere in string)
-    const bouteillePattern1 = /(?<=^|\s)(\d+)\s+bouteilles?(?:\s+(\d+(?:\.\d+)?[Ll]))?(?:\s+([^,()]+))?(?=\s|$|,|\.)/gi;
+    const bouteillePattern1 = /(\d+)\s+bouteilles?(?:\s+(\d+(?:\.\d+)?[Ll]))?(?:\s+([^,()]+))?(?=\s|$|,|\.)/gi;
     let bouteilleMatch1;
     
     while ((bouteilleMatch1 = bouteillePattern1.exec(description)) !== null) {
@@ -81,7 +81,7 @@ export const calculateReturnableItemsWithDates = (clientTransactions: CreditTran
     // Only process standalone 'bouteille' occurrences if Pattern 1 didn't match anything
     if (description.includes('bouteille')) {
       // Check if Pattern 1 already matched this description
-      const pattern1Matched = /(?<=^|\s)(\d+)\s+bouteilles?(?:\s+(\d+(?:\.\d+)?[Ll]))?(?:\s+([^,()]+))?(?=\s|$|,|\.)/gi.test(description);
+      const pattern1Matched = /(\d+)\s+bouteilles?(?:\s+(\d+(?:\.\d+)?[Ll]))?(?:\s+([^,()]+))?(?=\s|$|,|\.)/gi.test(description);
       
       // Only process standalone if Pattern 1 didn't match
       if (!pattern1Matched) {
@@ -451,7 +451,7 @@ export const calculateReturnableItems = (clientTransactions: CreditTransaction[]
     
     // Look for Bouteille items - handle multiple patterns: "quantity bouteille brand" and "quantity size bouteille brand"
     // Pattern 1: "1 Bouteille 1.5L Pepsi" or "1 Bouteille Pepsi" (updated to match anywhere in string)
-    const bouteillePattern1 = /(?<=^|\s)(\d+)\s+bouteilles?(?:\s+(\d+(?:\.\d+)?[Ll]))?(?:\s+([^,()]+))?(?=\s|$|,|\.)/gi;
+    const bouteillePattern1 = /(\d+)\s+bouteilles?(?:\s+(\d+(?:\.\d+)?[Ll]))?(?:\s+([^,()]+))?(?=\s|$|,|\.)/gi;
     let bouteilleMatch1;
     
     while ((bouteilleMatch1 = bouteillePattern1.exec(description)) !== null) {
@@ -490,7 +490,7 @@ export const calculateReturnableItems = (clientTransactions: CreditTransaction[]
     // Only process standalone 'bouteille' occurrences if Pattern 1 didn't match anything
     if (description.includes('bouteille')) {
       // Check if Pattern 1 already matched this description
-      const pattern1Matched = /(?<=^|\s)(\d+)\s+bouteilles?(?:\s+(\d+(?:\.\d+)?[Ll]))?(?:\s+([^,()]+))?(?=\s|$|,|\.)/gi.test(description);
+      const pattern1Matched = /(\d+)\s+bouteilles?(?:\s+(\d+(?:\.\d+)?[Ll]))?(?:\s+([^,()]+))?(?=\s|$|,|\.)/gi.test(description);
       
       // Only process standalone if Pattern 1 didn't match
       if (!pattern1Matched) {
