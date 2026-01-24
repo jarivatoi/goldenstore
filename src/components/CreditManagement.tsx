@@ -512,7 +512,7 @@ const CreditManagement: React.FC = () => {
               }
             } else {
               // For branded Bouteille like "Bouteille Vin", match the exact brand
-              const brandName = itemType.replace('Bouteille', '').trim();
+              const brandName = itemType.replace(/^(Bouteilles?)/i, '').trim();
               if (brandName) {
                 // Create pattern that matches both "Bouteille Brand" and "Bouteilles Brand"
                 const brandedPattern = new RegExp(`returned:\\s*(\\d+)\\s+bouteilles?\\s+${brandName.replace(/[.*+?^${}()|[\\]\\/g, '\\$&')}(?=\\s*(?:-|$))`, 'i');
