@@ -207,7 +207,7 @@ export const calculateReturnableItemsWithDates = (clientTransactions: CreditTran
             }
           } else {
             // For branded Chopine like "Chopine Vin", match the exact brand
-            const brandName = itemType.replace('Chopine', '').trim();
+            const brandName = itemType.replace(/^(Chopines?)/i, '').trim();
             if (brandName) {
               // Create pattern that matches both "Chopine Brand" and "Chopines Brand"
               const brandedPattern = new RegExp(`returned:\\s*(\\d+)\\s+chopines?\\s+${brandName.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')}(?=\\s|$|,|\\.)`, 'i');
@@ -265,7 +265,7 @@ export const calculateReturnableItemsWithDates = (clientTransactions: CreditTran
             }
           } else {
             // For branded Bouteille like "Bouteille Vin", match the exact brand
-            const brandName = itemType.replace('Bouteille', '').trim();
+            const brandName = itemType.replace(/^(Bouteilles?)/i, '').trim();
             if (brandName) {
               // Create pattern that matches both "Bouteille Brand" and "Bouteilles Brand"
               const brandedPattern = new RegExp(`returned:\\s*(\\d+)\\s+bouteilles?\\s+${brandName.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')}(?=\\s|$|,|\\.)`, 'i');
@@ -338,7 +338,7 @@ export const calculateReturnableItemsWithDates = (clientTransactions: CreditTran
       
       if (itemType.includes('Chopine')) {
         // For Chopine items: "8 Chopines Beer" (with proper pluralization and capitalization)
-        const brand = itemType.replace('Chopine', '').trim();
+        const brand = itemType.replace(/^(Chopines?)/i, '').trim();
         // Ensure brand is title case
         const titleCaseBrand = brand ? brand.split(' ').map(word => 
           word.charAt(0).toUpperCase() + word.slice(1).toLowerCase()
@@ -354,7 +354,7 @@ export const calculateReturnableItemsWithDates = (clientTransactions: CreditTran
         if (sizeMatch) {
           // For sized bottles, ensure size is properly formatted with uppercase L
           const formattedSize = sizeMatch[1].replace(/l$/gi, 'L');
-          const bouteilleRemoved = itemType.replace('Bouteille', '').trim();
+          const bouteilleRemoved = itemType.replace(/^(Bouteilles?)/i, '').trim();
           
           // Check if the format is "Bouteille 1.5L Pepsi" (size and brand after Bouteille)
           if (bouteilleRemoved.includes(formattedSize)) {
@@ -378,7 +378,7 @@ export const calculateReturnableItemsWithDates = (clientTransactions: CreditTran
           }
         } else {
           // For regular bottles: "3 Bouteilles Green" (with proper pluralization)
-          const brand = itemType.replace('Bouteille', '').trim();
+          const brand = itemType.replace(/^(Bouteilles?)/i, '').trim();
           // Ensure brand is title case
           const titleCaseBrand = brand ? brand.split(' ').map(word => 
             word.charAt(0).toUpperCase() + word.slice(1).toLowerCase()
@@ -616,7 +616,7 @@ export const calculateReturnableItems = (clientTransactions: CreditTransaction[]
             }
           } else {
             // For branded Chopine like "Chopine Vin", match the exact brand
-            const brandName = itemType.replace('Chopine', '').trim();
+            const brandName = itemType.replace(/^(Chopines?)/i, '').trim();
             if (brandName) {
               // Create pattern that matches both "Chopine Brand" and "Chopines Brand"
               const brandedPattern = new RegExp(`returned:\\s*(\\d+)\\s+chopines?\\s+${brandName.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')}(?=\\s|$|,|\\.)`, 'i');
@@ -674,7 +674,7 @@ export const calculateReturnableItems = (clientTransactions: CreditTransaction[]
             }
           } else {
             // For branded Bouteille like "Bouteille Vin", match the exact brand
-            const brandName = itemType.replace('Bouteille', '').trim();
+            const brandName = itemType.replace(/^(Bouteilles?)/i, '').trim();
             if (brandName) {
               // Create pattern that matches both "Bouteille Brand" and "Bouteilles Brand"
               const brandedPattern = new RegExp(`returned:\\s*(\\d+)\\s+bouteilles?\\s+${brandName.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')}(?=\\s|$|,|\\.)`, 'i');
@@ -724,7 +724,7 @@ export const calculateReturnableItems = (clientTransactions: CreditTransaction[]
       
       if (itemType.includes('Chopine')) {
         // For Chopine items: "8 Chopines Beer" (with proper pluralization and capitalization)
-        const brand = itemType.replace('Chopine', '').trim();
+        const brand = itemType.replace(/^(Chopines?)/i, '').trim();
         // Ensure brand is title case
         const titleCaseBrand = brand ? brand.split(' ').map(word => 
           word.charAt(0).toUpperCase() + word.slice(1).toLowerCase()
@@ -740,7 +740,7 @@ export const calculateReturnableItems = (clientTransactions: CreditTransaction[]
         if (sizeMatch) {
           // For sized bottles, ensure size is properly formatted with uppercase L
           const formattedSize = sizeMatch[1].replace(/l$/gi, 'L');
-          const bouteilleRemoved = itemType.replace('Bouteille', '').trim();
+          const bouteilleRemoved = itemType.replace(/^(Bouteilles?)/i, '').trim();
           
           // Check if the format is "Bouteille 1.5L Pepsi" (size and brand after Bouteille)
           if (bouteilleRemoved.includes(formattedSize)) {
@@ -764,7 +764,7 @@ export const calculateReturnableItems = (clientTransactions: CreditTransaction[]
           }
         } else {
           // For regular bottles: "3 Bouteilles Green" (with proper pluralization)
-          const brand = itemType.replace('Bouteille', '').trim();
+          const brand = itemType.replace(/^(Bouteilles?)/i, '').trim();
           // Ensure brand is title case
           const titleCaseBrand = brand ? brand.split(' ').map(word => 
             word.charAt(0).toUpperCase() + word.slice(1).toLowerCase()
