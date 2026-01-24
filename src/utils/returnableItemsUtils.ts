@@ -10,7 +10,7 @@ export const calculateReturnableItemsWithDates = (clientTransactions: CreditTran
   
   clientTransactions.forEach(transaction => {
     // Only process debt transactions (not payments) AND exclude return transactions
-    if (transaction.type === 'payment' || transaction.description.toLowerCase().includes('returned')) {
+    if (transaction.type === 'payment' || transaction.description.toLowerCase().includes('returned') || transaction.description.toLowerCase().includes('return') || (transaction.description.toLowerCase().includes('caisse') && transaction.description.toLowerCase().includes('returned'))) {
       return;
     }
     
@@ -170,7 +170,7 @@ export const calculateReturnableItemsWithDates = (clientTransactions: CreditTran
   // Calculate returned quantities with improved matching
   const returnedQuantities: {[key: string]: number} = {};
   clientTransactions
-    .filter(transaction => transaction.type === 'debt' && transaction.description.toLowerCase().includes('returned'))
+    .filter(transaction => transaction.type === 'debt' && (transaction.description.toLowerCase().includes('returned') || transaction.description.toLowerCase().includes('return') || transaction.description.toLowerCase().includes('caisse')))
     .forEach(transaction => {
       const description = transaction.description.toLowerCase();
       Object.keys(returnableItems).forEach(itemType => {
@@ -419,7 +419,7 @@ export const calculateReturnableItems = (clientTransactions: CreditTransaction[]
   
   clientTransactions.forEach(transaction => {
     // Only process debt transactions (not payments) AND exclude return transactions
-    if (transaction.type === 'payment' || transaction.description.toLowerCase().includes('returned')) {
+    if (transaction.type === 'payment' || transaction.description.toLowerCase().includes('returned') || transaction.description.toLowerCase().includes('return') || (transaction.description.toLowerCase().includes('caisse') && transaction.description.toLowerCase().includes('returned'))) {
       return;
     }
     
@@ -579,7 +579,7 @@ export const calculateReturnableItems = (clientTransactions: CreditTransaction[]
   // Calculate returned quantities with improved matching
   const returnedQuantities: {[key: string]: number} = {};
   clientTransactions
-    .filter(transaction => transaction.type === 'debt' && transaction.description.toLowerCase().includes('returned'))
+    .filter(transaction => transaction.type === 'debt' && (transaction.description.toLowerCase().includes('returned') || transaction.description.toLowerCase().includes('return') || transaction.description.toLowerCase().includes('caisse')))
     .forEach(transaction => {
       const description = transaction.description.toLowerCase();
       Object.keys(returnableItems).forEach(itemType => {
