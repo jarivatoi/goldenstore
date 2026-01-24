@@ -8,6 +8,7 @@ interface ScrollingTextProps {
   pauseDuration?: number;
   scrollDuration?: number;
   easing?: string;
+  onReset?: () => void; // Callback when animation is reset
 }
 
 export const ScrollingText: React.FC<ScrollingTextProps> = ({ 
@@ -16,7 +17,8 @@ export const ScrollingText: React.FC<ScrollingTextProps> = ({
   children,
   pauseDuration = 2,
   scrollDuration = 6,
-  easing = 'power2.inOut'
+  easing = 'power2.inOut',
+  onReset
 }) => {
   const containerRef = useRef<HTMLDivElement>(null);
   const textRef = useRef<HTMLDivElement>(null);
@@ -110,6 +112,10 @@ export const ScrollingText: React.FC<ScrollingTextProps> = ({
           // Remove transition after animation completes
           setTimeout(() => {
             textElement.style.transition = '';
+            // Notify that reset occurred
+            if (onReset) {
+              onReset();
+            }
           }, 300);
         }
         
@@ -131,34 +137,46 @@ export const ScrollingText: React.FC<ScrollingTextProps> = ({
     
     window.addEventListener('resize', handleResize);
     
-    // Recheck when content changes with smoother handling
+    // Recheck when content changes with smarter handling for add/remove scenarios
     let timeoutId: NodeJS.Timeout;
-    const observer = new MutationObserver(() => {
+    const observer = new MutationObserver((mutations) => {
       // Clear any existing timeout to debounce multiple rapid changes
       clearTimeout(timeoutId);
       
-      // When content changes, smoothly stop current animation
-      if (animatorRef.current) {
-        (animatorRef.current as ScrollingTextAnimator).stop();
-        animatorRef.current = null;
-      }
+      // Detect if this is likely an add/remove item scenario
+      const isContentChange = mutations.some(mutation => 
+        mutation.type === 'childList' || 
+        mutation.type === 'characterData'
+      );
       
-      // Smoothly reset transform to initial state to prevent jumping
-      if (textRef.current) {
-        // Use CSS transition for smooth reset instead of instant jump
-        textRef.current.style.transition = 'transform 0.3s ease-out';
-        textRef.current.style.transform = 'translateX(0px)';
+      if (isContentChange) {
+        // When content changes (add/remove items), smoothly reset and restart
+        if (animatorRef.current) {
+          (animatorRef.current as ScrollingTextAnimator).stop();
+          animatorRef.current = null;
+        }
         
-        // Remove transition after animation completes
-        setTimeout(() => {
-          if (textRef.current) {
-            textRef.current.style.transition = '';
-          }
-        }, 300);
+        // Smoothly reset transform to initial state for clean restart
+        if (textRef.current) {
+          // Use CSS transition for smooth reset
+          textRef.current.style.transition = 'transform 0.2s ease-out';
+          textRef.current.style.transform = 'translateX(0px)';
+          
+          // Remove transition after animation completes
+          setTimeout(() => {
+            if (textRef.current) {
+              textRef.current.style.transition = '';
+            }
+            // Notify that reset occurred
+            if (onReset) {
+              onReset();
+            }
+          }, 200);
+        }
+        
+        // Restart animation after a brief delay to handle rapid updates
+        timeoutId = setTimeout(checkAndAnimate, 150);
       }
-      
-      // Restart animation after a brief delay to handle rapid updates properly
-      timeoutId = setTimeout(checkAndAnimate, 100);
     });
     
     if (containerRef.current) {
