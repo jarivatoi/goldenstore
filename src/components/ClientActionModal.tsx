@@ -239,7 +239,7 @@ const ClientActionModal: React.FC<ClientActionModalProps> = ({ client, onClose, 
           // Properly format the item type for display in return success message
           if (itemType.includes('Bouteille')) {
             // For Bouteille items like "Bouteille Pepsi", format as "1 Bouteille Pepsi"
-            const brand = itemType.replace('Bouteille', '').trim();
+            const brand = itemType.replace(/^(Bouteilles?)/i, '').trim();
             if (brand) {
               // Always pluralize Bouteille when quantity > 1
               const needsPlural = quantity > 1;
@@ -251,7 +251,7 @@ const ClientActionModal: React.FC<ClientActionModalProps> = ({ client, onClose, 
             }
           } else if (itemType.includes('Chopine')) {
             // For chopine items
-            const brand = itemType.replace('Chopine', '').trim();
+            const brand = itemType.replace(/^(Chopines?)/i, '').trim();
             if (brand) {
               // Always pluralize Chopine when quantity > 1
               const needsPlural = quantity > 1;
@@ -939,7 +939,7 @@ const processItemReturn = async (itemType: string, returnQuantity: number) => {
                 let formattedItemDisplay = settleAction.itemType;
                 if (settleAction.itemType.includes('Bouteille')) {
                   // For Bouteille items like "Bouteille Pepsi", format as "1 Bouteille Pepsi"
-                  const brand = settleAction.itemType.replace('Bouteille', '').trim();
+                  const brand = settleAction.itemType.replace(/^(Bouteilles?)/i, '').trim();
                   if (brand) {
                     formattedItemDisplay = `Bouteille${(settleAction.quantity || 0) > 1 ? 's' : ''} ${brand}`;
                   } else {
@@ -947,7 +947,7 @@ const processItemReturn = async (itemType: string, returnQuantity: number) => {
                   }
                 } else if (settleAction.itemType.includes('Chopine')) {
                   // For chopine items
-                  const brand = settleAction.itemType.replace('Chopine', '').trim();
+                  const brand = settleAction.itemType.replace(/^(Chopines?)/i, '').trim();
                   if (brand) {
                     formattedItemDisplay = `Chopine${(settleAction.quantity || 0) > 1 ? 's' : ''} ${brand}`;
                   } else {
