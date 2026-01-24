@@ -605,13 +605,13 @@ const ReturnableItemRow: React.FC<ReturnableItemRowProps> = ({ itemType, quantit
         }
       }));
       
-      // Force a re-render of the parent component to update scrolling tabs
-      window.dispatchEvent(new CustomEvent('creditDataChanged', {
-        detail: {
-          clientId: client.id,
-          source: 'return'
-        }
-      }));
+      // Don't dispatch creditDataChanged - let MutationObserver handle it automatically
+      // window.dispatchEvent(new CustomEvent('creditDataChanged', {
+      //   detail: {
+      //     clientId: client.id,
+      //     source: 'return'
+      //   }
+      // }));
       
       // Don't close modal automatically - let user see the update and close manually
       // This allows the big card to update properly
