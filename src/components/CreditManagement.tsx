@@ -319,9 +319,12 @@ const CreditManagement: React.FC = () => {
             }
             
             // If we find at least one returnable item, check if it has unreturned quantities
-            return hasUnreturnedItems(clientTransactions);
+            if (hasUnreturnedItems(clientTransactions)) {
+              return true;
+            }
           }
           
+          // Exclude clients with zero debt and no returnable items
           return false;
         });
     }
