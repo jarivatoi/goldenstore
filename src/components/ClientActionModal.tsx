@@ -177,8 +177,29 @@ const ClientActionModal: React.FC<ClientActionModalProps> = ({ client, onClose, 
         const quantity = parseInt(match[1]);
         const displayText = match[2]; // e.g., "Bouteille Vin" or "Chopine Beer"
         
-        // The displayText is the key we'll use - this ensures consistency with ClientCard and ClientDetailModal
-        const key = displayText;
+        // Create the key based on the display text (same logic as ClientDetailModal)
+        let key = displayText;
+        
+        // For branded items like "Bouteille Vin", use that as the key
+        if (displayText.startsWith('Bouteille ') || displayText.startsWith('Chopine ')) {
+          key = displayText;
+        } 
+        // For generic items like "Bouteilles", convert to "Bouteille"
+        else if (displayText === 'Bouteilles') {
+          key = 'Bouteille';
+        }
+        // For generic items like "Chopines", convert to "Chopine"
+        else if (displayText === 'Chopines') {
+          key = 'Chopine';
+        }
+        // For sized bottles like "1.5L Bouteilles Green", keep as is
+        else if (/\d+(?:\.\d+)?L Bouteilles? /.test(displayText)) {
+          // key is already correct
+        }
+        // For sized bottles like "1.5L Bouteilles", convert to "1.5L Bouteille"
+        else if (/\d+(?:\.\d+)?L Bouteilles$/.test(displayText)) {
+          key = displayText.replace('Bouteilles', 'Bouteille');
+        }
         
         if (!returnableItems[key]) {
           returnableItems[key] = { total: quantity, transactions: [] };
@@ -220,24 +241,24 @@ const ClientActionModal: React.FC<ClientActionModalProps> = ({ client, onClose, 
             // For Bouteille items like "Bouteille Pepsi", format as "1 Bouteille Pepsi"
             const brand = itemType.replace('Bouteille', '').trim();
             if (brand) {
-              // Check if item type already ends with 's' to avoid double pluralization
-              const needsPlural = quantity > 1 && !itemType.toLowerCase().endsWith('s');
+              // Always pluralize Bouteille when quantity > 1
+              const needsPlural = quantity > 1;
               return `${quantity} Bouteille${needsPlural ? 's' : ''} ${brand}`;
             } else {
-              // For generic Bouteille, check if already plural
-              const needsPlural = quantity > 1 && !itemType.toLowerCase().endsWith('s');
+              // For generic Bouteille, always pluralize when quantity > 1
+              const needsPlural = quantity > 1;
               return `${quantity} Bouteille${needsPlural ? 's' : ''}`;
             }
           } else if (itemType.includes('Chopine')) {
             // For chopine items
             const brand = itemType.replace('Chopine', '').trim();
             if (brand) {
-              // Check if item type already ends with 's' to avoid double pluralization
-              const needsPlural = quantity > 1 && !itemType.toLowerCase().endsWith('s');
+              // Always pluralize Chopine when quantity > 1
+              const needsPlural = quantity > 1;
               return `${quantity} Chopine${needsPlural ? 's' : ''} ${brand}`;
             } else {
-              // For generic Chopine, check if already plural
-              const needsPlural = quantity > 1 && !itemType.toLowerCase().endsWith('s');
+              // For generic Chopine, always pluralize when quantity > 1
+              const needsPlural = quantity > 1;
               return `${quantity} Chopine${needsPlural ? 's' : ''}`;
             }
           }
@@ -263,9 +284,9 @@ const ClientActionModal: React.FC<ClientActionModalProps> = ({ client, onClose, 
       }
     }));
     
-    // Force update of duplicate card and other UI components
-    console.log('📱 ClientActionModal: Dispatching creditDataChanged event with clientActionReturn source');
-    window.dispatchEvent(new CustomEvent('creditDataChanged', { detail: { source: 'clientActionReturn' } }));
+    // Don't dispatch creditDataChanged - let MutationObserver handle it automatically
+    // console.log('📱 ClientActionModal: Dispatching creditDataChanged event with clientActionReturn source');
+    // window.dispatchEvent(new CustomEvent('creditDataChanged', { detail: { source: 'clientActionReturn' } }));
     
     setShowSettleConfirm(false);
     setSettleAction(null);
@@ -287,8 +308,8 @@ const processItemReturn = async (itemType: string, returnQuantity: number) => {
   if (itemType.includes('Chopine')) {
     // For Chopine items: "Returned: 2 Chopines Beer" (pluralize Chopine, not brand)
     const brand = itemType.replace('Chopine', '').trim();
-    // Check if item type already ends with 's' to avoid double pluralization
-    const needsPlural = returnQuantity > 1 && !itemType.toLowerCase().endsWith('s');
+    // Always pluralize Chopine when quantity > 1, regardless of existing 's'
+    const needsPlural = returnQuantity > 1;
     returnDescription += `Chopine${needsPlural ? 's' : ''}${brand ? ` ${brand}` : ''}`;
   } else if (itemType.includes('Bouteille')) {
     // For Bouteille items: handle both formats
@@ -302,19 +323,19 @@ const processItemReturn = async (itemType: string, returnQuantity: number) => {
       // This is "Bouteille 1.5L Sprite" format
       const size = sizeMatch[1];
       const brand = bouteilleRemoved.replace(size, '').trim();
-      // Check if item type already ends with 's' to avoid double pluralization
-      const needsPlural = returnQuantity > 1 && !itemType.toLowerCase().endsWith('s');
+      // Always pluralize Bouteille when quantity > 1, regardless of existing 's'
+      const needsPlural = returnQuantity > 1;
       returnDescription += `Bouteille${needsPlural ? 's' : ''} ${size}${brand ? ` ${brand}` : ''}`;
     } else {
       // This is "Bouteille Sprite" format
       const brand = bouteilleRemoved;
-      // Check if item type already ends with 's' to avoid double pluralization
-      const needsPlural = returnQuantity > 1 && !itemType.toLowerCase().endsWith('s');
+      // Always pluralize Bouteille when quantity > 1, regardless of existing 's'
+      const needsPlural = returnQuantity > 1;
       returnDescription += `Bouteille${needsPlural ? 's' : ''}${brand ? ` ${brand}` : ''}`;
     }
   } else {
-    // For other items: add 's' only if quantity > 1 and not already plural
-    const needsPlural = returnQuantity > 1 && !itemType.toLowerCase().endsWith('s');
+    // For other items: add 's' only if quantity > 1
+    const needsPlural = returnQuantity > 1;
     returnDescription += `${itemType}${needsPlural ? 's' : ''}`;
   }
     
@@ -942,8 +963,8 @@ const processItemReturn = async (itemType: string, returnQuantity: number) => {
                 }));
               }
               
-              // Force update of duplicate card and other UI components
-              window.dispatchEvent(new CustomEvent('creditDataChanged', { detail: { source: 'clientActionReturn' } }));
+              // Don't dispatch creditDataChanged - let MutationObserver handle it automatically
+              // window.dispatchEvent(new CustomEvent('creditDataChanged', { detail: { source: 'clientActionReturn' } }));
               
               setShowSettleConfirm(false);
               setSettleAction(null);
