@@ -12,8 +12,8 @@ interface CreditHeaderProps {
   onToggleFilterDropdown: () => void;
   onShowSettings: () => void;
   onShowUnifiedDataManager: () => void;
-  sortOption: 'name' | 'date' | 'debt';
-  onSortChange: (sort: 'name' | 'date' | 'debt') => void;
+  sortOption: 'name' | 'date' | 'date-oldest' | 'debt';
+  onSortChange: (sort: 'name' | 'date' | 'date-oldest' | 'debt') => void;
   showSortDropdown: boolean;
   onToggleSortDropdown: () => void;
   onAddToClientFromMini: (client: any, description: string) => Promise<void>;
@@ -173,6 +173,17 @@ const CreditHeader: React.FC<CreditHeaderProps> = ({
                   }`}
                 >
                   Date (Recent)
+                </button>
+                <button
+                  onClick={() => {
+                    onSortChange('date-oldest');
+                    onToggleSortDropdown();
+                  }}
+                  className={`w-full px-4 py-2 text-left text-sm hover:bg-gray-50 transition-colors ${
+                    sortOption === 'date-oldest' ? 'bg-blue-50 text-blue-700 font-medium' : 'text-gray-700'
+                  }`}
+                >
+                  Date (Oldest)
                 </button>
                 <button
                   onClick={() => {
