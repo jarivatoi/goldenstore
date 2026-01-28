@@ -116,11 +116,11 @@ const ClientActionModal: React.FC<ClientActionModalProps> = ({ client, onClose, 
         const hasReturnables = Object.keys(availableItems).length > 0;
         
         if (hasReturnables) {
-          // If client has returnables, still use settleClientWithFullClear to clear all transactions
-          await settleClientWithFullClear(client.id);
+          // If client has returnables, use settleClient to preserve returnables
+          await settleClient(client.id);
         } else {
-          // If client has no returnables, use settleClientWithFullClear (clears all transactions)
-          await settleClientWithFullClear(client.id);
+          // If client has no returnables, use settleClient (clears only debt transactions)
+          await settleClient(client.id);
         }
       }
       
