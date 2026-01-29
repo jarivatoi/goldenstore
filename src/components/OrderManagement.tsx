@@ -1250,7 +1250,7 @@ const AddItemModal: React.FC<AddItemModalProps> = ({
                         return word.toUpperCase();
                       }
                       // Regular capitalization for other words
-                      return word.charAt(0).toUpperCase() + word.slice(1).toLowerCase();
+                      return word.charAt(0).toUpperCase() + word.slice(1);
                     })
                     .join(' ');
                   setItemName(formatted);
@@ -2092,7 +2092,7 @@ const EditItemModal: React.FC<EditItemModalProps> = ({
                         return word.toUpperCase();
                       }
                       // Regular capitalization for other words
-                      return word.charAt(0).toUpperCase() + word.slice(1).toLowerCase();
+                      return word.charAt(0).toUpperCase() + word.slice(1);
                     })
                     .join(' ');
                   setItemName(formatted);
