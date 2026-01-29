@@ -127,10 +127,10 @@ const EditItemModal: React.FC<EditItemModalProps> = ({
               type="text"
               value={name}
               onChange={(e) => {
-                // Smart capitalization that handles parentheses
-                const formatted = e.target.value.replace(/(^|\s)\w/g, (word) => {
-                  // Don't capitalize words that are entirely within parentheses content
-                  return word.charAt(0).toUpperCase() + word.slice(1).toLowerCase();
+                // Smart capitalization that handles parentheses while preserving existing case
+                const formatted = e.target.value.replace(/(^|\s)([a-zA-Z])/g, (match, separator, letter) => {
+                  // Only capitalize the first letter, preserve the rest of the word's case
+                  return separator + letter.toUpperCase();
                 });
                 setName(formatted);
               }}
