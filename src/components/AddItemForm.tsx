@@ -235,11 +235,11 @@ const AddItemForm: React.FC = () => {
                 type="text"
                 value={name}
                 onChange={(e) => {
-                  // Smart capitalization that handles parentheses and "/"
+                  // Smart capitalization that handles parentheses and "/" while preserving existing case
                   const value = e.target.value;
-                  const formatted = value.replace(/(^|\s|\/)\w/g, (word) => {
-                    // Don't capitalize words that are entirely within parentheses content
-                    return word.charAt(0).toUpperCase() + word.slice(1).toLowerCase();
+                  const formatted = value.replace(/(^|\s|\/)([a-zA-Z])/g, (match, separator, letter) => {
+                    // Only capitalize the first letter, preserve the rest of the word's case
+                    return separator + letter.toUpperCase();
                   });
                   setName(formatted);
                 }}
