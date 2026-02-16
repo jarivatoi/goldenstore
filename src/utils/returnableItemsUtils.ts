@@ -84,22 +84,15 @@ export const calculateReturnableItemsWithDates = (clientTransactions: CreditTran
 
       if (!isPartOfQuantified) {
         // Look for brand after the bouteille word
-        const substring = description.substring(standaloneBouteilleMatch.index);
-        console.log('STANDALONE DEBUG - Full description:', description);
-        console.log('STANDALONE DEBUG - Substring from match:', substring);
-        const brandMatch = substring.match(/^bouteilles?\s+([^,]*)/i);
-        console.log('STANDALONE DEBUG - brandMatch result:', brandMatch);
+        const brandMatch = description.substring(standaloneBouteilleMatch.index).match(/^bouteilles?\s+([^,()]*)/i);
         const brand = brandMatch?.[1]?.trim() || '';
-        console.log('STANDALONE DEBUG - Extracted brand:', brand);
 
         // Capitalize brand name properly
         const capitalizedBrand = brand ? brand.split(' ').map((word: string) =>
           word.charAt(0).toUpperCase() + word.slice(1).toLowerCase()
         ).join(' ') : '';
-        console.log('STANDALONE DEBUG - Capitalized brand:', capitalizedBrand);
 
         const key = capitalizedBrand ? `Bouteille ${capitalizedBrand}` : 'Bouteille';
-        console.log('STANDALONE DEBUG - Final key:', key);
 
         if (!returnableItems[key]) {
           returnableItems[key] = 0;
@@ -484,22 +477,15 @@ export const calculateReturnableItems = (clientTransactions: CreditTransaction[]
 
       if (!isPartOfQuantified) {
         // Look for brand after the bouteille word
-        const substring = description.substring(standaloneBouteilleMatch.index);
-        console.log('STANDALONE DEBUG - Full description:', description);
-        console.log('STANDALONE DEBUG - Substring from match:', substring);
-        const brandMatch = substring.match(/^bouteilles?\s+([^,]*)/i);
-        console.log('STANDALONE DEBUG - brandMatch result:', brandMatch);
+        const brandMatch = description.substring(standaloneBouteilleMatch.index).match(/^bouteilles?\s+([^,()]*)/i);
         const brand = brandMatch?.[1]?.trim() || '';
-        console.log('STANDALONE DEBUG - Extracted brand:', brand);
 
         // Capitalize brand name properly
         const capitalizedBrand = brand ? brand.split(' ').map((word: string) =>
           word.charAt(0).toUpperCase() + word.slice(1).toLowerCase()
         ).join(' ') : '';
-        console.log('STANDALONE DEBUG - Capitalized brand:', capitalizedBrand);
 
         const key = capitalizedBrand ? `Bouteille ${capitalizedBrand}` : 'Bouteille';
-        console.log('STANDALONE DEBUG - Final key:', key);
 
         if (!returnableItems[key]) {
           returnableItems[key] = 0;
