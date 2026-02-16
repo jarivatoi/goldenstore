@@ -29,7 +29,14 @@ export const calculateReturnableItemsWithDates = (clientTransactions: CreditTran
 
     while ((chopineMatch = chopinePattern.exec(description)) !== null) {
       const quantity = parseInt(chopineMatch[1]);
-      const brand = chopineMatch[2]?.trim() || '';
+      let brand = chopineMatch[2]?.trim() || '';
+
+      // Extract only the brand name, stop at common delimiters (dash, parentheses, dates, "returned")
+      const brandCleanMatch = brand.match(/^([a-zA-Z0-9\s]+?)(?:\s*[-–—(]|\s+returned|\s+\d{1,2}\/|\s*$)/i);
+      if (brandCleanMatch) {
+        brand = brandCleanMatch[1].trim();
+      }
+
       // Capitalize brand name properly
       const capitalizedBrand = brand ? brand.split(' ').map((word: string) =>
         word.charAt(0).toUpperCase() + word.slice(1).toLowerCase()
@@ -48,7 +55,7 @@ export const calculateReturnableItemsWithDates = (clientTransactions: CreditTran
 
     while ((bouteilleMatch = bouteillePattern.exec(description)) !== null) {
       const quantity = parseInt(bouteilleMatch[1]);
-      const brand = bouteilleMatch[2]?.trim() || '';
+      let brand = bouteilleMatch[2]?.trim() || '';
       if (DEBUG) {
         console.log('[DEBUG] Bouteille quantified:', {
           description,
@@ -57,6 +64,12 @@ export const calculateReturnableItemsWithDates = (clientTransactions: CreditTran
           match: bouteilleMatch[0],
           fullMatch: bouteilleMatch
         });
+      }
+
+      // Extract only the brand name, stop at common delimiters (dash, parentheses, dates, "returned")
+      const brandCleanMatch = brand.match(/^([a-zA-Z0-9\s]+?)(?:\s*[-–—(]|\s+returned|\s+\d{1,2}\/|\s*$)/i);
+      if (brandCleanMatch) {
+        brand = brandCleanMatch[1].trim();
       }
 
       // Capitalize brand name properly
@@ -101,7 +114,7 @@ export const calculateReturnableItemsWithDates = (clientTransactions: CreditTran
       if (!isPartOfQuantified) {
         // Look for brand after the bouteille word
         const brandMatch = description.substring(standaloneBouteilleMatch.index).match(/^bouteilles?\s+([^,()]*)/i);
-        const brand = brandMatch?.[1]?.trim() || '';
+        let brand = brandMatch?.[1]?.trim() || '';
 
         if (DEBUG) {
           console.log('[DEBUG] Bouteille standalone:', {
@@ -111,6 +124,12 @@ export const calculateReturnableItemsWithDates = (clientTransactions: CreditTran
             brandMatch: brandMatch ? brandMatch[0] : null,
             substringUsed: description.substring(standaloneBouteilleMatch.index)
           });
+        }
+
+        // Extract only the brand name, stop at common delimiters (dash, parentheses, dates, "returned")
+        const brandCleanMatch = brand.match(/^([a-zA-Z0-9\s]+?)(?:\s*[-–—(]|\s+returned|\s+\d{1,2}\/|\s*$)/i);
+        if (brandCleanMatch) {
+          brand = brandCleanMatch[1].trim();
         }
 
         // Capitalize brand name properly
@@ -158,7 +177,13 @@ export const calculateReturnableItemsWithDates = (clientTransactions: CreditTran
       if (!isPartOfQuantified) {
         // Look for brand after the chopine word
         const brandMatch = description.substring(standaloneMatch.index).match(/^chopines?\s+([^,()]*)/i);
-        const brand = brandMatch?.[1]?.trim() || '';
+        let brand = brandMatch?.[1]?.trim() || '';
+
+        // Extract only the brand name, stop at common delimiters (dash, parentheses, dates, "returned")
+        const brandCleanMatch = brand.match(/^([a-zA-Z0-9\s]+?)(?:\s*[-–—(]|\s+returned|\s+\d{1,2}\/|\s*$)/i);
+        if (brandCleanMatch) {
+          brand = brandCleanMatch[1].trim();
+        }
 
         // Capitalize brand name properly
         const capitalizedBrand = brand ? brand.split(' ').map((word: string) =>
@@ -495,7 +520,14 @@ export const calculateReturnableItems = (clientTransactions: CreditTransaction[]
 
     while ((chopineMatch = chopinePattern.exec(description)) !== null) {
       const quantity = parseInt(chopineMatch[1]);
-      const brand = chopineMatch[2]?.trim() || '';
+      let brand = chopineMatch[2]?.trim() || '';
+
+      // Extract only the brand name, stop at common delimiters (dash, parentheses, dates, "returned")
+      const brandCleanMatch = brand.match(/^([a-zA-Z0-9\s]+?)(?:\s*[-–—(]|\s+returned|\s+\d{1,2}\/|\s*$)/i);
+      if (brandCleanMatch) {
+        brand = brandCleanMatch[1].trim();
+      }
+
       // Capitalize brand name properly
       const capitalizedBrand = brand ? brand.split(' ').map((word: string) =>
         word.charAt(0).toUpperCase() + word.slice(1).toLowerCase()
@@ -514,7 +546,7 @@ export const calculateReturnableItems = (clientTransactions: CreditTransaction[]
 
     while ((bouteilleMatch = bouteillePattern.exec(description)) !== null) {
       const quantity = parseInt(bouteilleMatch[1]);
-      const brand = bouteilleMatch[2]?.trim() || '';
+      let brand = bouteilleMatch[2]?.trim() || '';
       if (DEBUG) {
         console.log('[DEBUG] Bouteille quantified:', {
           description,
@@ -523,6 +555,12 @@ export const calculateReturnableItems = (clientTransactions: CreditTransaction[]
           match: bouteilleMatch[0],
           fullMatch: bouteilleMatch
         });
+      }
+
+      // Extract only the brand name, stop at common delimiters (dash, parentheses, dates, "returned")
+      const brandCleanMatch = brand.match(/^([a-zA-Z0-9\s]+?)(?:\s*[-–—(]|\s+returned|\s+\d{1,2}\/|\s*$)/i);
+      if (brandCleanMatch) {
+        brand = brandCleanMatch[1].trim();
       }
 
       // Capitalize brand name properly
@@ -567,7 +605,7 @@ export const calculateReturnableItems = (clientTransactions: CreditTransaction[]
       if (!isPartOfQuantified) {
         // Look for brand after the bouteille word
         const brandMatch = description.substring(standaloneBouteilleMatch.index).match(/^bouteilles?\s+([^,()]*)/i);
-        const brand = brandMatch?.[1]?.trim() || '';
+        let brand = brandMatch?.[1]?.trim() || '';
 
         if (DEBUG) {
           console.log('[DEBUG] Bouteille standalone:', {
@@ -577,6 +615,12 @@ export const calculateReturnableItems = (clientTransactions: CreditTransaction[]
             brandMatch: brandMatch ? brandMatch[0] : null,
             substringUsed: description.substring(standaloneBouteilleMatch.index)
           });
+        }
+
+        // Extract only the brand name, stop at common delimiters (dash, parentheses, dates, "returned")
+        const brandCleanMatch = brand.match(/^([a-zA-Z0-9\s]+?)(?:\s*[-–—(]|\s+returned|\s+\d{1,2}\/|\s*$)/i);
+        if (brandCleanMatch) {
+          brand = brandCleanMatch[1].trim();
         }
 
         // Capitalize brand name properly
@@ -624,7 +668,13 @@ export const calculateReturnableItems = (clientTransactions: CreditTransaction[]
       if (!isPartOfQuantified) {
         // Look for brand after the chopine word
         const brandMatch = description.substring(standaloneMatch.index).match(/^chopines?\s+([^,()]*)/i);
-        const brand = brandMatch?.[1]?.trim() || '';
+        let brand = brandMatch?.[1]?.trim() || '';
+
+        // Extract only the brand name, stop at common delimiters (dash, parentheses, dates, "returned")
+        const brandCleanMatch = brand.match(/^([a-zA-Z0-9\s]+?)(?:\s*[-–—(]|\s+returned|\s+\d{1,2}\/|\s*$)/i);
+        if (brandCleanMatch) {
+          brand = brandCleanMatch[1].trim();
+        }
 
         // Capitalize brand name properly
         const capitalizedBrand = brand ? brand.split(' ').map((word: string) =>
