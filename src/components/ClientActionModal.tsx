@@ -657,11 +657,19 @@ const processItemReturn = async (itemType: string, returnQuantity: number) => {
                                       capitalizedParts.push(part);
                                       if (/\d+[Ll]$/.test(part)) foundSize = true;
                                     } else if (foundSize) {
-                                      // This is a brand name after the size, capitalize it
-                                      capitalizedParts.push(part.charAt(0).toUpperCase() + part.slice(1).toLowerCase());
+                                      // This is a brand name after the size, capitalize it (preserve alphanumeric brands like "7les")
+                                      if (/^\d/.test(part)) {
+                                        capitalizedParts.push(part.toLowerCase());
+                                      } else {
+                                        capitalizedParts.push(part.charAt(0).toUpperCase() + part.slice(1).toLowerCase());
+                                      }
                                     } else {
-                                      // This is a brand name before the size, capitalize it
-                                      capitalizedParts.push(part.charAt(0).toUpperCase() + part.slice(1).toLowerCase());
+                                      // This is a brand name before the size, capitalize it (preserve alphanumeric brands like "7les")
+                                      if (/^\d/.test(part)) {
+                                        capitalizedParts.push(part.toLowerCase());
+                                      } else {
+                                        capitalizedParts.push(part.charAt(0).toUpperCase() + part.slice(1).toLowerCase());
+                                      }
                                     }
                                   }
                                   return capitalizedParts.join(' ');
@@ -673,19 +681,25 @@ const processItemReturn = async (itemType: string, returnQuantity: number) => {
                                 // Also ensure proper capitalization
                                 const parts = itemType.split(' ');
                                 if (parts.length >= 2) {
-                                  // Capitalize the brand name part
-                                  const brand = parts.slice(1).map(word => 
-                                    word.charAt(0).toUpperCase() + word.slice(1).toLowerCase()
-                                  ).join(' ');
+                                  // Capitalize the brand name part (preserve alphanumeric brands like "7les")
+                                  const brand = parts.slice(1).map(word => {
+                                    if (/^\d/.test(word)) {
+                                      return word.toLowerCase();
+                                    }
+                                    return word.charAt(0).toUpperCase() + word.slice(1).toLowerCase();
+                                  }).join(' ');
                                   return `Bouteille ${parts[0]} ${brand}`;
                                 }
                                 return `Bouteille ${itemType}`;
                               } else {
                                 // This is likely a general brand, format as "Bouteille Brand"
-                                // Capitalize the brand name properly
-                                const capitalizedBrand = itemType.split(' ').map(word => 
-                                  word.charAt(0).toUpperCase() + word.slice(1).toLowerCase()
-                                ).join(' ');
+                                // Capitalize the brand name properly (preserve alphanumeric brands like "7les")
+                                const capitalizedBrand = itemType.split(' ').map(word => {
+                                  if (/^\d/.test(word)) {
+                                    return word.toLowerCase();
+                                  }
+                                  return word.charAt(0).toUpperCase() + word.slice(1).toLowerCase();
+                                }).join(' ');
                                 return `Bouteille ${capitalizedBrand}`;
                               }
                             })()}
@@ -815,18 +829,24 @@ const processItemReturn = async (itemType: string, returnQuantity: number) => {
                                     return itemType;
                                   } else if (itemType.includes('L ') && itemType.includes(' ')) {
                                     // This is likely a sized bottle like "1.5L Pepsi", format as "Bouteille 1.5L Pepsi"
-                                    // Capitalize brand name properly
+                                    // Capitalize brand name properly (preserve alphanumeric brands like "7les")
                                     const parts = itemType.split(' ');
-                                    const brand = parts.slice(1).map(word => 
-                                      word.charAt(0).toUpperCase() + word.slice(1).toLowerCase()
-                                    ).join(' ');
+                                    const brand = parts.slice(1).map(word => {
+                                      if (/^\d/.test(word)) {
+                                        return word.toLowerCase();
+                                      }
+                                      return word.charAt(0).toUpperCase() + word.slice(1).toLowerCase();
+                                    }).join(' ');
                                     return `Bouteille ${parts[0]} ${brand}`;
                                   } else {
                                     // This is likely a general brand, format as "Bouteille Brand"
-                                    // Capitalize brand name properly
-                                    const capitalizedBrand = itemType.split(' ').map(word => 
-                                      word.charAt(0).toUpperCase() + word.slice(1).toLowerCase()
-                                    ).join(' ');
+                                    // Capitalize brand name properly (preserve alphanumeric brands like "7les")
+                                    const capitalizedBrand = itemType.split(' ').map(word => {
+                                      if (/^\d/.test(word)) {
+                                        return word.toLowerCase();
+                                      }
+                                      return word.charAt(0).toUpperCase() + word.slice(1).toLowerCase();
+                                    }).join(' ');
                                     return `Bouteille ${capitalizedBrand}`;
                                   }
                                 })()}) - ${transaction.date.toLocaleDateString('en-GB', {
