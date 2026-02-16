@@ -258,10 +258,10 @@ const ClientGrid: React.FC<ClientGridProps> = ({
             {searchQuery && (
               <button
                 onClick={() => onSearchChange('')}
-                className="absolute top-3 right-3 w-8 h-8 bg-gray-200 hover:bg-gray-300 text-gray-600 rounded-full flex items-center justify-center shadow-md border border-gray-300 transition-all duration-200"
+                className="absolute inset-y-0 right-3 my-auto px-3 h-8 bg-red-500 hover:bg-red-600 text-white rounded-md flex items-center justify-center shadow-md border border-red-600 transition-all duration-200 text-sm font-medium"
                 title="Clear search"
               >
-                <X size={14} strokeWidth={3} />
+                Clear
               </button>
             )}
           </div>
