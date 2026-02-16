@@ -309,76 +309,42 @@ const ClientActionModal: React.FC<ClientActionModalProps> = ({ client, onClose, 
 };
 
 const processItemReturn = async (itemType: string, returnQuantity: number) => {
-  
-  // Create a return transaction (negative transaction)
-  // Fix pluralization for branded items to match the exact format used in aggregation
-  let returnDescription = `Returned: ${returnQuantity} `;
-    
-  if (itemType.includes('Chopine')) {
-    // For Chopine items: "Returned: 2 Chopines Beer" (pluralize Chopine, not brand)
-    // Handle both singular and plural forms
-    const brand = itemType.replace(/^(Chopines?)/i, '').trim();
-    // Always pluralize Chopine when quantity > 1, regardless of existing 's'
-    const needsPlural = returnQuantity > 1;
-    returnDescription += `Chopine${needsPlural ? 's' : ''}${brand ? ` ${brand}` : ''}`;
-  } else if (itemType.includes('Bouteille')) {
-    // For Bouteille items: handle both formats
-    // Format 1: "Bouteille 1.5L Sprite" (includes size)
-    // Format 2: "Bouteille Sprite" (no size)
-    // Handle both singular and plural forms
-    const bouteilleRemoved = itemType.replace(/^(Bouteilles?)/i, '').trim();
-    
-    // Check if it has a size pattern like "1.5L"
-    const sizeMatch = bouteilleRemoved.match(/(\d+(?:\.\d+)?[Ll])/i);
-    if (sizeMatch) {
-      // This is "Bouteille 1.5L Sprite" format
-      const size = sizeMatch[1];
-      let brand = bouteilleRemoved.replace(size, '').trim();
-      // Always pluralize Bouteille when quantity > 1, regardless of existing 's'
-      const needsPlural = returnQuantity > 1;
-      // Singularize French plural words when quantity is 1 (e.g., "Vins" → "Vin")
-      // But don't singularize brand names like "7seas"
-      if (returnQuantity === 1 && brand.endsWith('s') && !brand.match(/^\d/)) {
-        const lowerBrand = brand.toLowerCase();
-        const frenchPlurals = ['vins', 'bières', 'jus', 'sodas'];
-        if (frenchPlurals.some(plural => lowerBrand === plural)) {
-          brand = brand.slice(0, -1);
-        }
-      }
-      returnDescription += `Bouteille${needsPlural ? 's' : ''} ${size}${brand ? ` ${brand}` : ''}`;
-    } else {
-      // This is "Bouteille Sprite" format
-      let brand = bouteilleRemoved;
-      // Always pluralize Bouteille when quantity > 1, regardless of existing 's'
-      const needsPlural = returnQuantity > 1;
-      // Singularize French plural words when quantity is 1 (e.g., "Vins" → "Vin")
-      // But don't singularize brand names like "7seas"
-      if (returnQuantity === 1 && brand.endsWith('s') && !brand.match(/^\d/)) {
-        const lowerBrand = brand.toLowerCase();
-        const frenchPlurals = ['vins', 'bières', 'jus', 'sodas'];
-        if (frenchPlurals.some(plural => lowerBrand === plural)) {
-          brand = brand.slice(0, -1);
-        }
-      }
-      returnDescription += `Bouteille${needsPlural ? 's' : ''}${brand ? ` ${brand}` : ''}`;
-    }
-  } else {
-    // For other items: add 's' only if quantity > 1
-    const needsPlural = returnQuantity > 1;
-    returnDescription += `${itemType}${needsPlural ? 's' : ''}`;
-  }
-    
-  // Add date to make it unique (match the format used in ClientDetailModal for consistency)
-  const now = new Date();
-  returnDescription += ` - ${now.toLocaleDateString('en-GB')} ${now.toLocaleTimeString('en-GB', { hour: '2-digit', minute: '2-digit' })}`;
-    
   try {
-    // Add a return transaction with zero amount and unique description
-    await addTransaction(client, returnDescription, 0);
-      
+    // Create unique return transaction with timestamp to prevent ID conflicts
+    // Don't pluralize brand names - only add 's' to the base item type
+    // EXACT SAME LOGIC AS ClientDetailModal
+    let returnDescription = `Returned: ${returnQuantity} `;
+
+    if (itemType.includes('Chopine')) {
+      // For Chopine items: "Returned: 2 Chopines Beer" (pluralize Chopine, not brand)
+      // Handle both singular and plural forms
+      const brand = itemType.replace(/^(Chopines?)/i, '').trim();
+      returnDescription += `Chopine${returnQuantity > 1 ? 's' : ''}${brand ? ` ${brand}` : ''}`;
+    } else if (itemType.includes('Bouteille')) {
+      // For Bouteille items: "Returned: 2 Bouteilles Green" (pluralize Bouteille, not brand)
+      // Use the same logic as Chopine
+      // Handle both singular and plural forms
+      let brand = itemType.replace(/^(Bouteilles?)/i, '').trim();
+      // Singularize French plural words when quantity is 1 (e.g., "Vins" → "Vin")
+      // But don't singularize brand names like "7seas"
+      if (returnQuantity === 1 && brand.endsWith('s') && !brand.match(/^\d/)) {
+        const lowerBrand = brand.toLowerCase();
+        const frenchPlurals = ['vins', 'bières', 'jus', 'sodas'];
+        if (frenchPlurals.some(plural => lowerBrand === plural)) {
+          brand = brand.slice(0, -1);
+        }
+      }
+      returnDescription += `Bouteille${returnQuantity > 1 ? 's' : ''}${brand ? ` ${brand}` : ''}`;
+    } else {
+      // For other items: add 's' only if quantity > 1
+      returnDescription += `${itemType}${returnQuantity > 1 ? 's' : ''}`;
+    }
+
+    const uniqueReturnDescription = `${returnDescription} - ${new Date().toLocaleDateString('en-GB')} ${new Date().toLocaleTimeString('en-GB', { hour: '2-digit', minute: '2-digit' })}`;
+    await addTransaction(client, uniqueReturnDescription, 0);
+
     // NOTE: We don't dispatch showDuplicateCard here because it's handled at a higher level
     // This prevents duplicate animations when processing multiple items
-      
   } catch (error) {
     throw error;
   }
