@@ -7,17 +7,20 @@ import { CreditTransaction } from '../types';
  */
 export const calculateReturnableItemsWithDates = (clientTransactions: CreditTransaction[]): {text: string, date: string, time: string}[] => {
   const returnableItems: {[key: string]: number} = {};
-  
+
   clientTransactions.forEach(transaction => {
     // Only process debt transactions (not payments) AND exclude return transactions
     if (transaction.type === 'payment' || transaction.description.toLowerCase().includes('returned') || transaction.description.toLowerCase().includes('return') || (transaction.description.toLowerCase().includes('caisse') && transaction.description.toLowerCase().includes('returned'))) {
       return;
     }
-    
+
     const description = transaction.description.toLowerCase();
-    
+
+    console.log('DEBUG Processing transaction:', transaction.description);
+
     // Only process items that contain "chopine" or "bouteille"
     if (!description.includes('chopine') && !description.includes('bouteille')) {
+      console.log('DEBUG Skipping - no chopine or bouteille');
       return;
     }
     
@@ -46,15 +49,26 @@ export const calculateReturnableItemsWithDates = (clientTransactions: CreditTran
     const bouteillePattern1 = /(\d+)\s+bouteilles?(?:\s+([^,()]+?))?(?=\s*(?:,|\(|$))/gi;
     let bouteilleMatch1;
 
+    console.log('DEBUG Looking for Bouteille in:', description);
+
     while ((bouteilleMatch1 = bouteillePattern1.exec(description)) !== null) {
       const quantity = parseInt(bouteilleMatch1[1]);
       const brand = bouteilleMatch1[2]?.trim() || '';
+
+      console.log('DEBUG Bouteille Pattern1 Match:', {
+        fullMatch: bouteilleMatch1[0],
+        quantity: bouteilleMatch1[1],
+        rawBrand: bouteilleMatch1[2],
+        trimmedBrand: brand
+      });
 
       // Capitalize brand name properly
       const capitalizedBrand = brand ? brand.split(' ').map((word: string) =>
         word.charAt(0).toUpperCase() + word.slice(1).toLowerCase()
       ).join(' ') : '';
       const key = capitalizedBrand ? `Bouteille ${capitalizedBrand}` : 'Bouteille';
+
+      console.log('DEBUG Bouteille Key Created:', key, 'with quantity:', quantity);
 
       if (!returnableItems[key]) {
         returnableItems[key] = 0;
@@ -134,7 +148,9 @@ export const calculateReturnableItemsWithDates = (clientTransactions: CreditTran
       }
     }
   });
-  
+
+  console.log('DEBUG Final returnableItems:', returnableItems);
+
   // Calculate returned quantities with improved matching
   const returnedQuantities: {[key: string]: number} = {};
   clientTransactions
@@ -423,15 +439,26 @@ export const calculateReturnableItems = (clientTransactions: CreditTransaction[]
     const bouteillePattern1 = /(\d+)\s+bouteilles?(?:\s+([^,()]+?))?(?=\s*(?:,|\(|$))/gi;
     let bouteilleMatch1;
 
+    console.log('DEBUG Looking for Bouteille in:', description);
+
     while ((bouteilleMatch1 = bouteillePattern1.exec(description)) !== null) {
       const quantity = parseInt(bouteilleMatch1[1]);
       const brand = bouteilleMatch1[2]?.trim() || '';
+
+      console.log('DEBUG Bouteille Pattern1 Match:', {
+        fullMatch: bouteilleMatch1[0],
+        quantity: bouteilleMatch1[1],
+        rawBrand: bouteilleMatch1[2],
+        trimmedBrand: brand
+      });
 
       // Capitalize brand name properly
       const capitalizedBrand = brand ? brand.split(' ').map((word: string) =>
         word.charAt(0).toUpperCase() + word.slice(1).toLowerCase()
       ).join(' ') : '';
       const key = capitalizedBrand ? `Bouteille ${capitalizedBrand}` : 'Bouteille';
+
+      console.log('DEBUG Bouteille Key Created:', key, 'with quantity:', quantity);
 
       if (!returnableItems[key]) {
         returnableItems[key] = 0;
@@ -511,7 +538,9 @@ export const calculateReturnableItems = (clientTransactions: CreditTransaction[]
       }
     }
   });
-  
+
+  console.log('DEBUG Final returnableItems:', returnableItems);
+
   // Calculate returned quantities with improved matching
   const returnedQuantities: {[key: string]: number} = {};
   clientTransactions
