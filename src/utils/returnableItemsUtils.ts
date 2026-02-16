@@ -47,6 +47,8 @@ export const calculateReturnableItemsWithDates = (clientTransactions: CreditTran
     while ((bouteilleMatch = bouteillePattern.exec(description)) !== null) {
       const quantity = parseInt(bouteilleMatch[1]);
       const brand = bouteilleMatch[2]?.trim() || '';
+      console.log('[DEBUG] Bouteille quantified:', { description, quantity, brand, match: bouteilleMatch[0] });
+
       // Capitalize brand name properly
       const capitalizedBrand = brand ? brand.split(' ').map((word: string) =>
         word.charAt(0).toUpperCase() + word.slice(1).toLowerCase()
@@ -57,6 +59,7 @@ export const calculateReturnableItemsWithDates = (clientTransactions: CreditTran
         returnableItems[key] = 0;
       }
       returnableItems[key] += quantity;
+      console.log('[DEBUG] Added Bouteille:', key, '=', returnableItems[key]);
     }
 
     // Count standalone 'bouteille' occurrences - for items without explicit numbers
@@ -82,6 +85,13 @@ export const calculateReturnableItemsWithDates = (clientTransactions: CreditTran
         const brandMatch = description.substring(standaloneBouteilleMatch.index).match(/^bouteilles?\s+([^,()]*)/i);
         const brand = brandMatch?.[1]?.trim() || '';
 
+        console.log('[DEBUG] Bouteille standalone:', {
+          description,
+          match: standaloneBouteilleMatch[0],
+          brand,
+          brandMatch: brandMatch ? brandMatch[0] : null
+        });
+
         // Capitalize brand name properly
         const capitalizedBrand = brand ? brand.split(' ').map((word: string) =>
           word.charAt(0).toUpperCase() + word.slice(1).toLowerCase()
@@ -93,6 +103,8 @@ export const calculateReturnableItemsWithDates = (clientTransactions: CreditTran
           returnableItems[key] = 0;
         }
         returnableItems[key] += 1;
+
+        console.log('[DEBUG] Added standalone Bouteille:', key, '=', returnableItems[key]);
       }
     }
 
@@ -435,6 +447,8 @@ export const calculateReturnableItems = (clientTransactions: CreditTransaction[]
     while ((bouteilleMatch = bouteillePattern.exec(description)) !== null) {
       const quantity = parseInt(bouteilleMatch[1]);
       const brand = bouteilleMatch[2]?.trim() || '';
+      console.log('[DEBUG] Bouteille quantified:', { description, quantity, brand, match: bouteilleMatch[0] });
+
       // Capitalize brand name properly
       const capitalizedBrand = brand ? brand.split(' ').map((word: string) =>
         word.charAt(0).toUpperCase() + word.slice(1).toLowerCase()
@@ -445,6 +459,7 @@ export const calculateReturnableItems = (clientTransactions: CreditTransaction[]
         returnableItems[key] = 0;
       }
       returnableItems[key] += quantity;
+      console.log('[DEBUG] Added Bouteille:', key, '=', returnableItems[key]);
     }
 
     // Count standalone 'bouteille' occurrences - for items without explicit numbers
@@ -470,6 +485,13 @@ export const calculateReturnableItems = (clientTransactions: CreditTransaction[]
         const brandMatch = description.substring(standaloneBouteilleMatch.index).match(/^bouteilles?\s+([^,()]*)/i);
         const brand = brandMatch?.[1]?.trim() || '';
 
+        console.log('[DEBUG] Bouteille standalone:', {
+          description,
+          match: standaloneBouteilleMatch[0],
+          brand,
+          brandMatch: brandMatch ? brandMatch[0] : null
+        });
+
         // Capitalize brand name properly
         const capitalizedBrand = brand ? brand.split(' ').map((word: string) =>
           word.charAt(0).toUpperCase() + word.slice(1).toLowerCase()
@@ -481,6 +503,8 @@ export const calculateReturnableItems = (clientTransactions: CreditTransaction[]
           returnableItems[key] = 0;
         }
         returnableItems[key] += 1;
+
+        console.log('[DEBUG] Added standalone Bouteille:', key, '=', returnableItems[key]);
       }
     }
 
