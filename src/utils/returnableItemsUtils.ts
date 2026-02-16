@@ -69,8 +69,8 @@ export const calculateReturnableItemsWithDates = (clientTransactions: CreditTran
     // For multiple items in a single description, we need to count all occurrences
     // Only process standalone 'bouteille' occurrences if Pattern 1 didn't match anything
     if (description.includes('bouteille')) {
-      // Check if Pattern 1 already matched this description
-      const pattern1Matched = /(\d+)\s+bouteilles?(?:\s+([^,()]*))?/gi.test(description);
+      // Check if Pattern 1 already matched this description (use the same pattern as extraction)
+      const pattern1Matched = /(\d+)\s+bouteilles?(?:\s+([^,()]+?))?(?=\s*(?:,|\(|$))/gi.test(description);
       
       // Only process standalone if Pattern 1 didn't match
       if (!pattern1Matched) {
@@ -446,8 +446,8 @@ export const calculateReturnableItems = (clientTransactions: CreditTransaction[]
     // For multiple items in a single description, we need to count all occurrences
     // Only process standalone 'bouteille' occurrences if Pattern 1 didn't match anything
     if (description.includes('bouteille')) {
-      // Check if Pattern 1 already matched this description
-      const pattern1Matched = /(\d+)\s+bouteilles?(?:\s+([^,()]*))?/gi.test(description);
+      // Check if Pattern 1 already matched this description (use the same pattern as extraction)
+      const pattern1Matched = /(\d+)\s+bouteilles?(?:\s+([^,()]+?))?(?=\s*(?:,|\(|$))/gi.test(description);
       
       // Only process standalone if Pattern 1 didn't match
       if (!pattern1Matched) {
