@@ -574,9 +574,14 @@ const ReturnableItemRow: React.FC<ReturnableItemRowProps> = ({ itemType, quantit
         // Use the same logic as Chopine
         // Handle both singular and plural forms
         let brand = itemType.replace(/^(Bouteilles?)/i, '').trim();
-        // Singularize brand name when quantity is 1 (e.g., "Vins" → "Vin")
-        if (pendingQuantity === 1 && brand.endsWith('s')) {
-          brand = brand.slice(0, -1);
+        // Singularize French plural words when quantity is 1 (e.g., "Vins" → "Vin")
+        // But don't singularize brand names like "7seas"
+        if (pendingQuantity === 1 && brand.endsWith('s') && !brand.match(/^\d/)) {
+          const lowerBrand = brand.toLowerCase();
+          const frenchPlurals = ['vins', 'bières', 'jus', 'sodas'];
+          if (frenchPlurals.some(plural => lowerBrand === plural)) {
+            brand = brand.slice(0, -1);
+          }
         }
         returnDescription += `Bouteille${pendingQuantity > 1 ? 's' : ''}${brand ? ` ${brand}` : ''}`;
       } else {
@@ -597,9 +602,14 @@ const ReturnableItemRow: React.FC<ReturnableItemRowProps> = ({ itemType, quantit
       } else if (itemType.includes('Bouteille')) {
         // Handle both singular and plural forms
         let brand = itemType.replace(/^(Bouteilles?)/i, '').trim();
-        // Singularize brand name when quantity is 1 (e.g., "Vins" → "Vin")
-        if (pendingQuantity === 1 && brand.endsWith('s')) {
-          brand = brand.slice(0, -1);
+        // Singularize French plural words when quantity is 1 (e.g., "Vins" → "Vin")
+        // But don't singularize brand names like "7seas"
+        if (pendingQuantity === 1 && brand.endsWith('s') && !brand.match(/^\d/)) {
+          const lowerBrand = brand.toLowerCase();
+          const frenchPlurals = ['vins', 'bières', 'jus', 'sodas'];
+          if (frenchPlurals.some(plural => lowerBrand === plural)) {
+            brand = brand.slice(0, -1);
+          }
         }
         newDisplayItemType = `Bouteille${pendingQuantity > 1 ? 's' : ''}${brand ? ` ${brand}` : ''}`;
       } else if (pendingQuantity > 1) {

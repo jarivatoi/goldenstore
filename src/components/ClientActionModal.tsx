@@ -243,9 +243,14 @@ const ClientActionModal: React.FC<ClientActionModalProps> = ({ client, onClose, 
             if (brand) {
               // Always pluralize Bouteille when quantity > 1
               const needsPlural = quantity > 1;
-              // Singularize brand name when quantity is 1 (e.g., "Vins" → "Vin")
-              if (quantity === 1 && brand.endsWith('s')) {
-                brand = brand.slice(0, -1);
+              // Singularize French plural words when quantity is 1 (e.g., "Vins" → "Vin")
+              // But don't singularize brand names like "7seas"
+              if (quantity === 1 && brand.endsWith('s') && !brand.match(/^\d/)) {
+                const lowerBrand = brand.toLowerCase();
+                const frenchPlurals = ['vins', 'bières', 'jus', 'sodas'];
+                if (frenchPlurals.some(plural => lowerBrand === plural)) {
+                  brand = brand.slice(0, -1);
+                }
               }
               return `${quantity} Bouteille${needsPlural ? 's' : ''} ${brand}`;
             } else {
@@ -331,9 +336,14 @@ const processItemReturn = async (itemType: string, returnQuantity: number) => {
       let brand = bouteilleRemoved.replace(size, '').trim();
       // Always pluralize Bouteille when quantity > 1, regardless of existing 's'
       const needsPlural = returnQuantity > 1;
-      // Singularize brand name when quantity is 1 (e.g., "Vins" → "Vin")
-      if (returnQuantity === 1 && brand.endsWith('s')) {
-        brand = brand.slice(0, -1);
+      // Singularize French plural words when quantity is 1 (e.g., "Vins" → "Vin")
+      // But don't singularize brand names like "7seas"
+      if (returnQuantity === 1 && brand.endsWith('s') && !brand.match(/^\d/)) {
+        const lowerBrand = brand.toLowerCase();
+        const frenchPlurals = ['vins', 'bières', 'jus', 'sodas'];
+        if (frenchPlurals.some(plural => lowerBrand === plural)) {
+          brand = brand.slice(0, -1);
+        }
       }
       returnDescription += `Bouteille${needsPlural ? 's' : ''} ${size}${brand ? ` ${brand}` : ''}`;
     } else {
@@ -341,9 +351,14 @@ const processItemReturn = async (itemType: string, returnQuantity: number) => {
       let brand = bouteilleRemoved;
       // Always pluralize Bouteille when quantity > 1, regardless of existing 's'
       const needsPlural = returnQuantity > 1;
-      // Singularize brand name when quantity is 1 (e.g., "Vins" → "Vin")
-      if (returnQuantity === 1 && brand.endsWith('s')) {
-        brand = brand.slice(0, -1);
+      // Singularize French plural words when quantity is 1 (e.g., "Vins" → "Vin")
+      // But don't singularize brand names like "7seas"
+      if (returnQuantity === 1 && brand.endsWith('s') && !brand.match(/^\d/)) {
+        const lowerBrand = brand.toLowerCase();
+        const frenchPlurals = ['vins', 'bières', 'jus', 'sodas'];
+        if (frenchPlurals.some(plural => lowerBrand === plural)) {
+          brand = brand.slice(0, -1);
+        }
       }
       returnDescription += `Bouteille${needsPlural ? 's' : ''}${brand ? ` ${brand}` : ''}`;
     }
@@ -953,9 +968,14 @@ const processItemReturn = async (itemType: string, returnQuantity: number) => {
                   // For Bouteille items like "Bouteille Pepsi", format as "1 Bouteille Pepsi"
                   let brand = settleAction.itemType.replace(/^(Bouteilles?)/i, '').trim();
                   if (brand) {
-                    // Singularize brand name when quantity is 1 (e.g., "Vins" → "Vin")
-                    if ((settleAction.quantity || 0) === 1 && brand.endsWith('s')) {
-                      brand = brand.slice(0, -1);
+                    // Singularize French plural words when quantity is 1 (e.g., "Vins" → "Vin")
+                    // But don't singularize brand names like "7seas"
+                    if ((settleAction.quantity || 0) === 1 && brand.endsWith('s') && !brand.match(/^\d/)) {
+                      const lowerBrand = brand.toLowerCase();
+                      const frenchPlurals = ['vins', 'bières', 'jus', 'sodas'];
+                      if (frenchPlurals.some(plural => lowerBrand === plural)) {
+                        brand = brand.slice(0, -1);
+                      }
                     }
                     formattedItemDisplay = `Bouteille${(settleAction.quantity || 0) > 1 ? 's' : ''} ${brand}`;
                   } else {

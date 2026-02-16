@@ -364,9 +364,15 @@ export const calculateReturnableItemsWithDates = (clientTransactions: CreditTran
             word.charAt(0).toUpperCase() + word.slice(1).toLowerCase()
           ).join(' ') : '';
 
-          // Singularize brand name when quantity is 1 (e.g., "Vins" → "Vin")
-          if (remaining === 1 && titleCaseBrand.endsWith('s')) {
-            titleCaseBrand = titleCaseBrand.slice(0, -1);
+          // Singularize French plural words when quantity is 1 (e.g., "Vins" → "Vin")
+          // But don't singularize brand names like "7seas" or words that don't follow French plural rules
+          if (remaining === 1 && titleCaseBrand.endsWith('s') && !titleCaseBrand.match(/^\d/)) {
+            // Only singularize if it looks like a French plural word (not a brand name)
+            const lowerBrand = titleCaseBrand.toLowerCase();
+            const frenchPlurals = ['vins', 'bières', 'jus', 'sodas'];
+            if (frenchPlurals.some(plural => lowerBrand === plural)) {
+              titleCaseBrand = titleCaseBrand.slice(0, -1);
+            }
           }
 
           if (titleCaseBrand) {
@@ -736,9 +742,15 @@ export const calculateReturnableItems = (clientTransactions: CreditTransaction[]
             word.charAt(0).toUpperCase() + word.slice(1).toLowerCase()
           ).join(' ') : '';
 
-          // Singularize brand name when quantity is 1 (e.g., "Vins" → "Vin")
-          if (remaining === 1 && titleCaseBrand.endsWith('s')) {
-            titleCaseBrand = titleCaseBrand.slice(0, -1);
+          // Singularize French plural words when quantity is 1 (e.g., "Vins" → "Vin")
+          // But don't singularize brand names like "7seas" or words that don't follow French plural rules
+          if (remaining === 1 && titleCaseBrand.endsWith('s') && !titleCaseBrand.match(/^\d/)) {
+            // Only singularize if it looks like a French plural word (not a brand name)
+            const lowerBrand = titleCaseBrand.toLowerCase();
+            const frenchPlurals = ['vins', 'bières', 'jus', 'sodas'];
+            if (frenchPlurals.some(plural => lowerBrand === plural)) {
+              titleCaseBrand = titleCaseBrand.slice(0, -1);
+            }
           }
 
           if (titleCaseBrand) {
