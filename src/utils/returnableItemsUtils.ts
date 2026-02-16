@@ -41,20 +41,21 @@ export const calculateReturnableItemsWithDates = (clientTransactions: CreditTran
     }
     
     // Look for Bouteille items - handle multiple patterns: "quantity bouteille brand" and "quantity size bouteille brand"
-    // Pattern 1: "1 Bouteille 1.5L Pepsi" or "1 Bouteille Pepsi" (updated to match anywhere in string)
-    const bouteillePattern1 = /(\d+)\s+bouteilles?(?:\s+([^,()]*))?/gi;
+    // Pattern 1: "1 Bouteille 1.5L Pepsi" or "1 Bouteille Pepsi" or "1 Bouteille 7seas"
+    // Use a more precise pattern that captures brand names properly (non-greedy)
+    const bouteillePattern1 = /(\d+)\s+bouteilles?(?:\s+([^,()]+?))?(?=\s*(?:,|\(|$))/gi;
     let bouteilleMatch1;
-    
+
     while ((bouteilleMatch1 = bouteillePattern1.exec(description)) !== null) {
       const quantity = parseInt(bouteilleMatch1[1]);
       const brand = bouteilleMatch1[2]?.trim() || '';
-      
+
       // Capitalize brand name properly
-      const capitalizedBrand = brand ? brand.split(' ').map((word: string) => 
+      const capitalizedBrand = brand ? brand.split(' ').map((word: string) =>
         word.charAt(0).toUpperCase() + word.slice(1).toLowerCase()
       ).join(' ') : '';
       const key = capitalizedBrand ? `Bouteille ${capitalizedBrand}` : 'Bouteille';
-      
+
       if (!returnableItems[key]) {
         returnableItems[key] = 0;
       }
@@ -417,20 +418,21 @@ export const calculateReturnableItems = (clientTransactions: CreditTransaction[]
     }
     
     // Look for Bouteille items - handle multiple patterns: "quantity bouteille brand" and "quantity size bouteille brand"
-    // Pattern 1: "1 Bouteille 1.5L Pepsi" or "1 Bouteille Pepsi" (updated to match anywhere in string)
-    const bouteillePattern1 = /(\d+)\s+bouteilles?(?:\s+([^,()]*))?/gi;
+    // Pattern 1: "1 Bouteille 1.5L Pepsi" or "1 Bouteille Pepsi" or "1 Bouteille 7seas"
+    // Use a more precise pattern that captures brand names properly (non-greedy)
+    const bouteillePattern1 = /(\d+)\s+bouteilles?(?:\s+([^,()]+?))?(?=\s*(?:,|\(|$))/gi;
     let bouteilleMatch1;
-    
+
     while ((bouteilleMatch1 = bouteillePattern1.exec(description)) !== null) {
       const quantity = parseInt(bouteilleMatch1[1]);
       const brand = bouteilleMatch1[2]?.trim() || '';
-      
+
       // Capitalize brand name properly
-      const capitalizedBrand = brand ? brand.split(' ').map((word: string) => 
+      const capitalizedBrand = brand ? brand.split(' ').map((word: string) =>
         word.charAt(0).toUpperCase() + word.slice(1).toLowerCase()
       ).join(' ') : '';
       const key = capitalizedBrand ? `Bouteille ${capitalizedBrand}` : 'Bouteille';
-      
+
       if (!returnableItems[key]) {
         returnableItems[key] = 0;
       }
