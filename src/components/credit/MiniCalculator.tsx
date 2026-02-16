@@ -177,10 +177,16 @@ const MiniCalculator: React.FC<MiniCalculatorProps> = ({
           setLastOperand(result);
         }
       } else if (lastOperation && lastOperand !== null && isNewNumber) {
-        // User pressed operator after operator, just change the operation
+        // User pressed operator after operator or after equals, just change the operation
         // Keep the last operand, just update the operation
-        // Remove the last character (previous operator) and add the new one
-        setCalculatorValue(calculatorValue.slice(0, -1) + input);
+        // Check if calculatorValue ends with an operator
+        if (/[+\-*/]$/.test(calculatorValue)) {
+          // If it ends with an operator, replace it with the new one
+          setCalculatorValue(calculatorValue.slice(0, -1) + input);
+        } else {
+          // If it doesn't end with an operator, append the new operator
+          setCalculatorValue(calculatorValue + input);
+        }
       } else {
         // First operation, store the current number
         const currentNumber = parseFloat(calculatorValue);
