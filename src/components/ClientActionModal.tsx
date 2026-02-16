@@ -385,7 +385,20 @@ const processItemReturn = async (itemType: string, returnQuantity: number) => {
   });
 
   const modalContent = (
-    <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-[9999] p-4 select-none">
+    <div 
+      className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-[9999] p-4 select-none"
+      onDoubleClick={(e) => {
+        // Prevent double-click events from reaching buttons underneath
+        e.preventDefault();
+        e.stopPropagation();
+      }}
+      onClick={(e) => {
+        // Close modal when clicking overlay (but not the modal content)
+        if (e.target === e.currentTarget) {
+          onClose();
+        }
+      }}
+    >
       <div className="bg-white rounded-2xl w-full max-w-md max-h-[90vh] overflow-y-auto select-none">
         {/* Header */}
         <div className="flex items-center justify-between p-6 border-b border-gray-200 select-none">
