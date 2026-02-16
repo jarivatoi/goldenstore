@@ -40,15 +40,13 @@ export const calculateReturnableItemsWithDates = (clientTransactions: CreditTran
       returnableItems[key] += quantity;
     }
 
-    // Look for Bouteille items - handle multiple patterns: "quantity bouteille brand" and "quantity size bouteille brand"
-    // Pattern 1: "1 Bouteille 1.5L Pepsi" or "1 Bouteille Pepsi" or "1 Bouteille 7seas"
-    const bouteillePattern1 = /(\d+)\s+bouteilles?(?:\s+([^,]*))?/gi;
-    let bouteilleMatch1;
+    // Look for Bouteille items
+    const bouteillePattern = /(\d+)\s+bouteilles?(?:\s+([^,]*))?/gi;
+    let bouteilleMatch;
 
-    while ((bouteilleMatch1 = bouteillePattern1.exec(description)) !== null) {
-      const quantity = parseInt(bouteilleMatch1[1]);
-      const brand = bouteilleMatch1[2]?.trim() || '';
-
+    while ((bouteilleMatch = bouteillePattern.exec(description)) !== null) {
+      const quantity = parseInt(bouteilleMatch[1]);
+      const brand = bouteilleMatch[2]?.trim() || '';
       // Capitalize brand name properly
       const capitalizedBrand = brand ? brand.split(' ').map((word: string) =>
         word.charAt(0).toUpperCase() + word.slice(1).toLowerCase()
@@ -60,9 +58,6 @@ export const calculateReturnableItemsWithDates = (clientTransactions: CreditTran
       }
       returnableItems[key] += quantity;
     }
-
-    // Additional pattern to catch cases like "1 1.5L Bouteille Pepsi" (size before bouteille)
-    // REMOVED to prevent duplicate counting - Pattern 1 already handles most cases
 
     // Count standalone 'bouteille' occurrences - for items without explicit numbers
     // First find all quantified matches to avoid double-counting
@@ -433,15 +428,13 @@ export const calculateReturnableItems = (clientTransactions: CreditTransaction[]
       returnableItems[key] += quantity;
     }
 
-    // Look for Bouteille items - handle multiple patterns: "quantity bouteille brand" and "quantity size bouteille brand"
-    // Pattern 1: "1 Bouteille 1.5L Pepsi" or "1 Bouteille Pepsi" or "1 Bouteille 7seas"
-    const bouteillePattern1 = /(\d+)\s+bouteilles?(?:\s+([^,]*))?/gi;
-    let bouteilleMatch1;
+    // Look for Bouteille items
+    const bouteillePattern = /(\d+)\s+bouteilles?(?:\s+([^,]*))?/gi;
+    let bouteilleMatch;
 
-    while ((bouteilleMatch1 = bouteillePattern1.exec(description)) !== null) {
-      const quantity = parseInt(bouteilleMatch1[1]);
-      const brand = bouteilleMatch1[2]?.trim() || '';
-
+    while ((bouteilleMatch = bouteillePattern.exec(description)) !== null) {
+      const quantity = parseInt(bouteilleMatch[1]);
+      const brand = bouteilleMatch[2]?.trim() || '';
       // Capitalize brand name properly
       const capitalizedBrand = brand ? brand.split(' ').map((word: string) =>
         word.charAt(0).toUpperCase() + word.slice(1).toLowerCase()
@@ -453,9 +446,6 @@ export const calculateReturnableItems = (clientTransactions: CreditTransaction[]
       }
       returnableItems[key] += quantity;
     }
-
-    // Additional pattern to catch cases like "1 1.5L Bouteille Pepsi" (size before bouteille)
-    // REMOVED to prevent duplicate counting - Pattern 1 already handles most cases
 
     // Count standalone 'bouteille' occurrences - for items without explicit numbers
     // First find all quantified matches to avoid double-counting
