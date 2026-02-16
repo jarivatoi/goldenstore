@@ -42,8 +42,7 @@ export const calculateReturnableItemsWithDates = (clientTransactions: CreditTran
     
     // Look for Bouteille items - handle multiple patterns: "quantity bouteille brand" and "quantity size bouteille brand"
     // Pattern 1: "1 Bouteille 1.5L Pepsi" or "1 Bouteille Pepsi" or "1 Bouteille 7seas"
-    // Use a more precise pattern that captures brand names properly (non-greedy)
-    const bouteillePattern1 = /(\d+)\s+bouteilles?(?:\s+([^,()]+?))?(?=\s*(?:,|\(|$))/gi;
+    const bouteillePattern1 = /(\d+)\s+bouteilles?(?:\s+([^,()]*))?/gi;
     let bouteilleMatch1;
 
     while ((bouteilleMatch1 = bouteillePattern1.exec(description)) !== null) {
@@ -67,7 +66,7 @@ export const calculateReturnableItemsWithDates = (clientTransactions: CreditTran
     
     // Count standalone 'bouteille' occurrences - for items without explicit numbers
     // First find all quantified matches to avoid double-counting
-    const tempBouteillePattern = /(\d+)\s+bouteilles?(?:\s+([^,()]+?))?(?=\s*(?:,|\(|$))/gi;
+    const tempBouteillePattern = /(\d+)\s+bouteilles?(?:\s+([^,()]*))?/gi;
     let tempBouteilleMatch;
     const quantifiedBouteilleMatches: RegExpExecArray[] = [];
     while ((tempBouteilleMatch = tempBouteillePattern.exec(description)) !== null) {
@@ -443,8 +442,7 @@ export const calculateReturnableItems = (clientTransactions: CreditTransaction[]
     
     // Look for Bouteille items - handle multiple patterns: "quantity bouteille brand" and "quantity size bouteille brand"
     // Pattern 1: "1 Bouteille 1.5L Pepsi" or "1 Bouteille Pepsi" or "1 Bouteille 7seas"
-    // Use a more precise pattern that captures brand names properly (non-greedy)
-    const bouteillePattern1 = /(\d+)\s+bouteilles?(?:\s+([^,()]+?))?(?=\s*(?:,|\(|$))/gi;
+    const bouteillePattern1 = /(\d+)\s+bouteilles?(?:\s+([^,()]*))?/gi;
     let bouteilleMatch1;
 
     while ((bouteilleMatch1 = bouteillePattern1.exec(description)) !== null) {
@@ -468,7 +466,7 @@ export const calculateReturnableItems = (clientTransactions: CreditTransaction[]
     
     // Count standalone 'bouteille' occurrences - for items without explicit numbers
     // First find all quantified matches to avoid double-counting
-    const tempBouteillePattern = /(\d+)\s+bouteilles?(?:\s+([^,()]+?))?(?=\s*(?:,|\(|$))/gi;
+    const tempBouteillePattern = /(\d+)\s+bouteilles?(?:\s+([^,()]*))?/gi;
     let tempBouteilleMatch;
     const quantifiedBouteilleMatches: RegExpExecArray[] = [];
     while ((tempBouteilleMatch = tempBouteillePattern.exec(description)) !== null) {
