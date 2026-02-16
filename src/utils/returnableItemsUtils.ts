@@ -42,7 +42,7 @@ export const calculateReturnableItemsWithDates = (clientTransactions: CreditTran
     
     // Look for Bouteille items - handle multiple patterns: "quantity bouteille brand" and "quantity size bouteille brand"
     // Pattern 1: "1 Bouteille 1.5L Pepsi" or "1 Bouteille Pepsi" or "1 Bouteille 7seas"
-    const bouteillePattern1 = /(\d+)\s+bouteilles?(?:\s+([^,()]*))?/gi;
+    const bouteillePattern1 = /(\d+)\s+bouteilles?(?:\s+([^,]*))?/gi;
     let bouteilleMatch1;
 
     while ((bouteilleMatch1 = bouteillePattern1.exec(description)) !== null) {
@@ -66,7 +66,7 @@ export const calculateReturnableItemsWithDates = (clientTransactions: CreditTran
     
     // Count standalone 'bouteille' occurrences - for items without explicit numbers
     // First find all quantified matches to avoid double-counting
-    const tempBouteillePattern = /(\d+)\s+bouteilles?(?:\s+([^,()]*))?/gi;
+    const tempBouteillePattern = /(\d+)\s+bouteilles?(?:\s+([^,]*))?/gi;
     let tempBouteilleMatch;
     const quantifiedBouteilleMatches: RegExpExecArray[] = [];
     while ((tempBouteilleMatch = tempBouteillePattern.exec(description)) !== null) {
@@ -87,7 +87,7 @@ export const calculateReturnableItemsWithDates = (clientTransactions: CreditTran
         const substring = description.substring(standaloneBouteilleMatch.index);
         console.log('STANDALONE DEBUG - Full description:', description);
         console.log('STANDALONE DEBUG - Substring from match:', substring);
-        const brandMatch = substring.match(/^bouteilles?\s+([^,()]*)/i);
+        const brandMatch = substring.match(/^bouteilles?\s+([^,]*)/i);
         console.log('STANDALONE DEBUG - brandMatch result:', brandMatch);
         const brand = brandMatch?.[1]?.trim() || '';
         console.log('STANDALONE DEBUG - Extracted brand:', brand);
@@ -442,7 +442,7 @@ export const calculateReturnableItems = (clientTransactions: CreditTransaction[]
     
     // Look for Bouteille items - handle multiple patterns: "quantity bouteille brand" and "quantity size bouteille brand"
     // Pattern 1: "1 Bouteille 1.5L Pepsi" or "1 Bouteille Pepsi" or "1 Bouteille 7seas"
-    const bouteillePattern1 = /(\d+)\s+bouteilles?(?:\s+([^,()]*))?/gi;
+    const bouteillePattern1 = /(\d+)\s+bouteilles?(?:\s+([^,]*))?/gi;
     let bouteilleMatch1;
 
     while ((bouteilleMatch1 = bouteillePattern1.exec(description)) !== null) {
@@ -466,7 +466,7 @@ export const calculateReturnableItems = (clientTransactions: CreditTransaction[]
     
     // Count standalone 'bouteille' occurrences - for items without explicit numbers
     // First find all quantified matches to avoid double-counting
-    const tempBouteillePattern = /(\d+)\s+bouteilles?(?:\s+([^,()]*))?/gi;
+    const tempBouteillePattern = /(\d+)\s+bouteilles?(?:\s+([^,]*))?/gi;
     let tempBouteilleMatch;
     const quantifiedBouteilleMatches: RegExpExecArray[] = [];
     while ((tempBouteilleMatch = tempBouteillePattern.exec(description)) !== null) {
@@ -487,7 +487,7 @@ export const calculateReturnableItems = (clientTransactions: CreditTransaction[]
         const substring = description.substring(standaloneBouteilleMatch.index);
         console.log('STANDALONE DEBUG - Full description:', description);
         console.log('STANDALONE DEBUG - Substring from match:', substring);
-        const brandMatch = substring.match(/^bouteilles?\s+([^,()]*)/i);
+        const brandMatch = substring.match(/^bouteilles?\s+([^,]*)/i);
         console.log('STANDALONE DEBUG - brandMatch result:', brandMatch);
         const brand = brandMatch?.[1]?.trim() || '';
         console.log('STANDALONE DEBUG - Extracted brand:', brand);
