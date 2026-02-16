@@ -3,10 +3,12 @@ import { CreditTransaction } from '../types';
 /**
  * Calculates returnable items for a client
  * @param clientTransactions - Array of client transactions
+ * @param clientName - Optional client name for debug logging (only logs if name is "viraj")
  * @returns Array of returnable items with text, date, and time
  */
-export const calculateReturnableItemsWithDates = (clientTransactions: CreditTransaction[]): {text: string, date: string, time: string}[] => {
+export const calculateReturnableItemsWithDates = (clientTransactions: CreditTransaction[], clientName?: string): {text: string, date: string, time: string}[] => {
   const returnableItems: {[key: string]: number} = {};
+  const DEBUG = clientName?.toLowerCase() === 'viraj';
 
   clientTransactions.forEach(transaction => {
     // Only process debt transactions (not payments) AND exclude return transactions
@@ -47,13 +49,15 @@ export const calculateReturnableItemsWithDates = (clientTransactions: CreditTran
     while ((bouteilleMatch = bouteillePattern.exec(description)) !== null) {
       const quantity = parseInt(bouteilleMatch[1]);
       const brand = bouteilleMatch[2]?.trim() || '';
-      console.log('[DEBUG] Bouteille quantified:', {
-        description,
-        quantity,
-        brand,
-        match: bouteilleMatch[0],
-        fullMatch: bouteilleMatch
-      });
+      if (DEBUG) {
+        console.log('[DEBUG] Bouteille quantified:', {
+          description,
+          quantity,
+          brand,
+          match: bouteilleMatch[0],
+          fullMatch: bouteilleMatch
+        });
+      }
 
       // Capitalize brand name properly
       const capitalizedBrand = brand ? brand.split(' ').map((word: string) =>
@@ -61,17 +65,19 @@ export const calculateReturnableItemsWithDates = (clientTransactions: CreditTran
       ).join(' ') : '';
       const key = capitalizedBrand ? `Bouteille ${capitalizedBrand}` : 'Bouteille';
 
-      console.log('[DEBUG] Brand processing (quantified):', {
-        rawBrand: brand,
-        capitalizedBrand,
-        finalKey: key
-      });
+      if (DEBUG) {
+        console.log('[DEBUG] Brand processing (quantified):', {
+          rawBrand: brand,
+          capitalizedBrand,
+          finalKey: key
+        });
+      }
 
       if (!returnableItems[key]) {
         returnableItems[key] = 0;
       }
       returnableItems[key] += quantity;
-      console.log('[DEBUG] Added Bouteille:', key, '=', returnableItems[key]);
+      if (DEBUG) console.log('[DEBUG] Added Bouteille:', key, '=', returnableItems[key]);
     }
 
     // Count standalone 'bouteille' occurrences - for items without explicit numbers
@@ -97,13 +103,15 @@ export const calculateReturnableItemsWithDates = (clientTransactions: CreditTran
         const brandMatch = description.substring(standaloneBouteilleMatch.index).match(/^bouteilles?\s+([^,()]*)/i);
         const brand = brandMatch?.[1]?.trim() || '';
 
-        console.log('[DEBUG] Bouteille standalone:', {
-          description,
-          match: standaloneBouteilleMatch[0],
-          brand,
-          brandMatch: brandMatch ? brandMatch[0] : null,
-          substringUsed: description.substring(standaloneBouteilleMatch.index)
-        });
+        if (DEBUG) {
+          console.log('[DEBUG] Bouteille standalone:', {
+            description,
+            match: standaloneBouteilleMatch[0],
+            brand,
+            brandMatch: brandMatch ? brandMatch[0] : null,
+            substringUsed: description.substring(standaloneBouteilleMatch.index)
+          });
+        }
 
         // Capitalize brand name properly
         const capitalizedBrand = brand ? brand.split(' ').map((word: string) =>
@@ -112,18 +120,20 @@ export const calculateReturnableItemsWithDates = (clientTransactions: CreditTran
 
         const key = capitalizedBrand ? `Bouteille ${capitalizedBrand}` : 'Bouteille';
 
-        console.log('[DEBUG] Brand processing:', {
-          rawBrand: brand,
-          capitalizedBrand,
-          finalKey: key
-        });
+        if (DEBUG) {
+          console.log('[DEBUG] Brand processing:', {
+            rawBrand: brand,
+            capitalizedBrand,
+            finalKey: key
+          });
+        }
 
         if (!returnableItems[key]) {
           returnableItems[key] = 0;
         }
         returnableItems[key] += 1;
 
-        console.log('[DEBUG] Added standalone Bouteille:', key, '=', returnableItems[key]);
+        if (DEBUG) console.log('[DEBUG] Added standalone Bouteille:', key, '=', returnableItems[key]);
       }
     }
 
@@ -165,7 +175,7 @@ export const calculateReturnableItemsWithDates = (clientTransactions: CreditTran
     }
   });
 
-  console.log('[DEBUG] All returnable items collected:', returnableItems);
+  if (DEBUG) console.log('[DEBUG] All returnable items collected:', returnableItems);
 
   // Calculate returned quantities with improved matching
   const returnedQuantities: {[key: string]: number} = {};
@@ -173,7 +183,7 @@ export const calculateReturnableItemsWithDates = (clientTransactions: CreditTran
     .filter(transaction => transaction.type === 'debt' && (transaction.description.toLowerCase().includes('returned') || transaction.description.toLowerCase().includes('return') || transaction.description.toLowerCase().includes('caisse')))
     .forEach(transaction => {
       const description = transaction.description.toLowerCase();
-      console.log('[DEBUG] Processing return transaction:', description);
+      if (DEBUG) console.log('[DEBUG] Processing return transaction:', description);
       Object.keys(returnableItems).forEach(itemType => {
         // Use more precise matching to avoid substring conflicts
         if (itemType.includes('Chopine')) {
@@ -272,40 +282,44 @@ export const calculateReturnableItemsWithDates = (clientTransactions: CreditTran
               const brandedPattern = new RegExp(`returned:\\s*(\\d+)\\s+bouteilles?\\s+${brandName.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')}(?=\\s|$|,|\\.)`, 'i');
               const match = description.match(brandedPattern);
 
-              console.log('[DEBUG RETURN] Checking return for:', itemType, {
-                description,
-                brandName,
-                pattern: brandedPattern.source,
-                matched: !!match,
-                matchedText: match ? match[0] : null,
-                quantity: match ? parseInt(match[1]) : 0
-              });
+              if (DEBUG) {
+                console.log('[DEBUG RETURN] Checking return for:', itemType, {
+                  description,
+                  brandName,
+                  pattern: brandedPattern.source,
+                  matched: !!match,
+                  matchedText: match ? match[0] : null,
+                  quantity: match ? parseInt(match[1]) : 0
+                });
+              }
 
               if (match) {
                 if (!returnedQuantities[itemType]) {
                   returnedQuantities[itemType] = 0;
                 }
                 returnedQuantities[itemType] += parseInt(match[1]);
-                console.log('[DEBUG RETURN] Added return for', itemType, '=', returnedQuantities[itemType]);
+                if (DEBUG) console.log('[DEBUG RETURN] Added return for', itemType, '=', returnedQuantities[itemType]);
               } else {
                 // Handle cases where items were added without explicit quantities (e.g., "bouteille vin")
                 // Try a more flexible pattern that matches the brand name anywhere in the return description
                 const flexiblePattern = new RegExp(`returned:\\s*(\\d+).*?${brandName.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')}(?=\\s|$|,|\\.)`, 'i');
                 const flexibleMatch = description.match(flexiblePattern);
 
-                console.log('[DEBUG RETURN FLEXIBLE] Trying flexible pattern:', {
-                  itemType,
-                  pattern: flexiblePattern.source,
-                  matched: !!flexibleMatch,
-                  matchedText: flexibleMatch ? flexibleMatch[0] : null
-                });
+                if (DEBUG) {
+                  console.log('[DEBUG RETURN FLEXIBLE] Trying flexible pattern:', {
+                    itemType,
+                    pattern: flexiblePattern.source,
+                    matched: !!flexibleMatch,
+                    matchedText: flexibleMatch ? flexibleMatch[0] : null
+                  });
+                }
 
                 if (flexibleMatch) {
                   if (!returnedQuantities[itemType]) {
                     returnedQuantities[itemType] = 0;
                   }
                   returnedQuantities[itemType] += parseInt(flexibleMatch[1]);
-                  console.log('[DEBUG RETURN FLEXIBLE] Added return for', itemType, '=', returnedQuantities[itemType]);
+                  if (DEBUG) console.log('[DEBUG RETURN FLEXIBLE] Added return for', itemType, '=', returnedQuantities[itemType]);
                 }
               }
             }
@@ -331,12 +345,14 @@ export const calculateReturnableItemsWithDates = (clientTransactions: CreditTran
     const returned = returnedQuantities[itemType] || 0;
     const remaining = Math.max(0, total - returned);
 
-    console.log('[DEBUG FINAL]', itemType, {
-      total,
-      returned,
-      remaining,
-      willDisplay: remaining > 0
-    });
+    if (DEBUG) {
+      console.log('[DEBUG FINAL]', itemType, {
+        total,
+        returned,
+        remaining,
+        willDisplay: remaining > 0
+      });
+    }
 
     if (remaining > 0) {
       // Get the most recent transaction date for this item type
@@ -497,13 +513,15 @@ export const calculateReturnableItems = (clientTransactions: CreditTransaction[]
     while ((bouteilleMatch = bouteillePattern.exec(description)) !== null) {
       const quantity = parseInt(bouteilleMatch[1]);
       const brand = bouteilleMatch[2]?.trim() || '';
-      console.log('[DEBUG] Bouteille quantified:', {
-        description,
-        quantity,
-        brand,
-        match: bouteilleMatch[0],
-        fullMatch: bouteilleMatch
-      });
+      if (DEBUG) {
+        console.log('[DEBUG] Bouteille quantified:', {
+          description,
+          quantity,
+          brand,
+          match: bouteilleMatch[0],
+          fullMatch: bouteilleMatch
+        });
+      }
 
       // Capitalize brand name properly
       const capitalizedBrand = brand ? brand.split(' ').map((word: string) =>
@@ -511,17 +529,19 @@ export const calculateReturnableItems = (clientTransactions: CreditTransaction[]
       ).join(' ') : '';
       const key = capitalizedBrand ? `Bouteille ${capitalizedBrand}` : 'Bouteille';
 
-      console.log('[DEBUG] Brand processing (quantified):', {
-        rawBrand: brand,
-        capitalizedBrand,
-        finalKey: key
-      });
+      if (DEBUG) {
+        console.log('[DEBUG] Brand processing (quantified):', {
+          rawBrand: brand,
+          capitalizedBrand,
+          finalKey: key
+        });
+      }
 
       if (!returnableItems[key]) {
         returnableItems[key] = 0;
       }
       returnableItems[key] += quantity;
-      console.log('[DEBUG] Added Bouteille:', key, '=', returnableItems[key]);
+      if (DEBUG) console.log('[DEBUG] Added Bouteille:', key, '=', returnableItems[key]);
     }
 
     // Count standalone 'bouteille' occurrences - for items without explicit numbers
@@ -547,13 +567,15 @@ export const calculateReturnableItems = (clientTransactions: CreditTransaction[]
         const brandMatch = description.substring(standaloneBouteilleMatch.index).match(/^bouteilles?\s+([^,()]*)/i);
         const brand = brandMatch?.[1]?.trim() || '';
 
-        console.log('[DEBUG] Bouteille standalone:', {
-          description,
-          match: standaloneBouteilleMatch[0],
-          brand,
-          brandMatch: brandMatch ? brandMatch[0] : null,
-          substringUsed: description.substring(standaloneBouteilleMatch.index)
-        });
+        if (DEBUG) {
+          console.log('[DEBUG] Bouteille standalone:', {
+            description,
+            match: standaloneBouteilleMatch[0],
+            brand,
+            brandMatch: brandMatch ? brandMatch[0] : null,
+            substringUsed: description.substring(standaloneBouteilleMatch.index)
+          });
+        }
 
         // Capitalize brand name properly
         const capitalizedBrand = brand ? brand.split(' ').map((word: string) =>
@@ -562,18 +584,20 @@ export const calculateReturnableItems = (clientTransactions: CreditTransaction[]
 
         const key = capitalizedBrand ? `Bouteille ${capitalizedBrand}` : 'Bouteille';
 
-        console.log('[DEBUG] Brand processing:', {
-          rawBrand: brand,
-          capitalizedBrand,
-          finalKey: key
-        });
+        if (DEBUG) {
+          console.log('[DEBUG] Brand processing:', {
+            rawBrand: brand,
+            capitalizedBrand,
+            finalKey: key
+          });
+        }
 
         if (!returnableItems[key]) {
           returnableItems[key] = 0;
         }
         returnableItems[key] += 1;
 
-        console.log('[DEBUG] Added standalone Bouteille:', key, '=', returnableItems[key]);
+        if (DEBUG) console.log('[DEBUG] Added standalone Bouteille:', key, '=', returnableItems[key]);
       }
     }
 
@@ -615,7 +639,7 @@ export const calculateReturnableItems = (clientTransactions: CreditTransaction[]
     }
   });
 
-  console.log('[DEBUG] All returnable items collected:', returnableItems);
+  if (DEBUG) console.log('[DEBUG] All returnable items collected:', returnableItems);
 
   // Calculate returned quantities with improved matching
   const returnedQuantities: {[key: string]: number} = {};
@@ -623,7 +647,7 @@ export const calculateReturnableItems = (clientTransactions: CreditTransaction[]
     .filter(transaction => transaction.type === 'debt' && (transaction.description.toLowerCase().includes('returned') || transaction.description.toLowerCase().includes('return') || transaction.description.toLowerCase().includes('caisse')))
     .forEach(transaction => {
       const description = transaction.description.toLowerCase();
-      console.log('[DEBUG] Processing return transaction:', description);
+      if (DEBUG) console.log('[DEBUG] Processing return transaction:', description);
       Object.keys(returnableItems).forEach(itemType => {
         // Use more precise matching to avoid substring conflicts
         if (itemType.includes('Chopine')) {
@@ -722,40 +746,44 @@ export const calculateReturnableItems = (clientTransactions: CreditTransaction[]
               const brandedPattern = new RegExp(`returned:\\s*(\\d+)\\s+bouteilles?\\s+${brandName.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')}(?=\\s|$|,|\\.)`, 'i');
               const match = description.match(brandedPattern);
 
-              console.log('[DEBUG RETURN] Checking return for:', itemType, {
-                description,
-                brandName,
-                pattern: brandedPattern.source,
-                matched: !!match,
-                matchedText: match ? match[0] : null,
-                quantity: match ? parseInt(match[1]) : 0
-              });
+              if (DEBUG) {
+                console.log('[DEBUG RETURN] Checking return for:', itemType, {
+                  description,
+                  brandName,
+                  pattern: brandedPattern.source,
+                  matched: !!match,
+                  matchedText: match ? match[0] : null,
+                  quantity: match ? parseInt(match[1]) : 0
+                });
+              }
 
               if (match) {
                 if (!returnedQuantities[itemType]) {
                   returnedQuantities[itemType] = 0;
                 }
                 returnedQuantities[itemType] += parseInt(match[1]);
-                console.log('[DEBUG RETURN] Added return for', itemType, '=', returnedQuantities[itemType]);
+                if (DEBUG) console.log('[DEBUG RETURN] Added return for', itemType, '=', returnedQuantities[itemType]);
               } else {
                 // Handle cases where items were added without explicit quantities (e.g., "bouteille vin")
                 // Try a more flexible pattern that matches the brand name anywhere in the return description
                 const flexiblePattern = new RegExp(`returned:\\s*(\\d+).*?${brandName.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')}(?=\\s|$|,|\\.)`, 'i');
                 const flexibleMatch = description.match(flexiblePattern);
 
-                console.log('[DEBUG RETURN FLEXIBLE] Trying flexible pattern:', {
-                  itemType,
-                  pattern: flexiblePattern.source,
-                  matched: !!flexibleMatch,
-                  matchedText: flexibleMatch ? flexibleMatch[0] : null
-                });
+                if (DEBUG) {
+                  console.log('[DEBUG RETURN FLEXIBLE] Trying flexible pattern:', {
+                    itemType,
+                    pattern: flexiblePattern.source,
+                    matched: !!flexibleMatch,
+                    matchedText: flexibleMatch ? flexibleMatch[0] : null
+                  });
+                }
 
                 if (flexibleMatch) {
                   if (!returnedQuantities[itemType]) {
                     returnedQuantities[itemType] = 0;
                   }
                   returnedQuantities[itemType] += parseInt(flexibleMatch[1]);
-                  console.log('[DEBUG RETURN FLEXIBLE] Added return for', itemType, '=', returnedQuantities[itemType]);
+                  if (DEBUG) console.log('[DEBUG RETURN FLEXIBLE] Added return for', itemType, '=', returnedQuantities[itemType]);
                 }
               }
             }

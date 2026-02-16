@@ -46,8 +46,8 @@ const ClientCard: React.FC<ClientCardProps> = ({ client, onLongPress, onQuickAdd
   // Get returnable items for scrolling display
   const getReturnableItemsText = React.useMemo((): {text: string, date: string, time: string}[] => {
     const clientTransactions = getClientTransactions(client.id);
-    return calculateReturnableItemsWithDates(clientTransactions);
-  }, [client.id, getClientTransactions, forceUpdate]);
+    return calculateReturnableItemsWithDates(clientTransactions, client.name);
+  }, [client.id, client.name, getClientTransactions, forceUpdate]);
   
   const returnableItemsText = getReturnableItemsText;
   const [startY, setStartY] = useState(0);
