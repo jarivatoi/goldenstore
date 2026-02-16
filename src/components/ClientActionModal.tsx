@@ -239,10 +239,14 @@ const ClientActionModal: React.FC<ClientActionModalProps> = ({ client, onClose, 
           // Properly format the item type for display in return success message
           if (itemType.includes('Bouteille')) {
             // For Bouteille items like "Bouteille Pepsi", format as "1 Bouteille Pepsi"
-            const brand = itemType.replace(/^(Bouteilles?)/i, '').trim();
+            let brand = itemType.replace(/^(Bouteilles?)/i, '').trim();
             if (brand) {
               // Always pluralize Bouteille when quantity > 1
               const needsPlural = quantity > 1;
+              // Singularize brand name when quantity is 1 (e.g., "Vins" → "Vin")
+              if (quantity === 1 && brand.endsWith('s')) {
+                brand = brand.slice(0, -1);
+              }
               return `${quantity} Bouteille${needsPlural ? 's' : ''} ${brand}`;
             } else {
               // For generic Bouteille, always pluralize when quantity > 1
@@ -324,15 +328,23 @@ const processItemReturn = async (itemType: string, returnQuantity: number) => {
     if (sizeMatch) {
       // This is "Bouteille 1.5L Sprite" format
       const size = sizeMatch[1];
-      const brand = bouteilleRemoved.replace(size, '').trim();
+      let brand = bouteilleRemoved.replace(size, '').trim();
       // Always pluralize Bouteille when quantity > 1, regardless of existing 's'
       const needsPlural = returnQuantity > 1;
+      // Singularize brand name when quantity is 1 (e.g., "Vins" → "Vin")
+      if (returnQuantity === 1 && brand.endsWith('s')) {
+        brand = brand.slice(0, -1);
+      }
       returnDescription += `Bouteille${needsPlural ? 's' : ''} ${size}${brand ? ` ${brand}` : ''}`;
     } else {
       // This is "Bouteille Sprite" format
-      const brand = bouteilleRemoved;
+      let brand = bouteilleRemoved;
       // Always pluralize Bouteille when quantity > 1, regardless of existing 's'
       const needsPlural = returnQuantity > 1;
+      // Singularize brand name when quantity is 1 (e.g., "Vins" → "Vin")
+      if (returnQuantity === 1 && brand.endsWith('s')) {
+        brand = brand.slice(0, -1);
+      }
       returnDescription += `Bouteille${needsPlural ? 's' : ''}${brand ? ` ${brand}` : ''}`;
     }
   } else {
@@ -939,8 +951,12 @@ const processItemReturn = async (itemType: string, returnQuantity: number) => {
                 let formattedItemDisplay = settleAction.itemType;
                 if (settleAction.itemType.includes('Bouteille')) {
                   // For Bouteille items like "Bouteille Pepsi", format as "1 Bouteille Pepsi"
-                  const brand = settleAction.itemType.replace(/^(Bouteilles?)/i, '').trim();
+                  let brand = settleAction.itemType.replace(/^(Bouteilles?)/i, '').trim();
                   if (brand) {
+                    // Singularize brand name when quantity is 1 (e.g., "Vins" → "Vin")
+                    if ((settleAction.quantity || 0) === 1 && brand.endsWith('s')) {
+                      brand = brand.slice(0, -1);
+                    }
                     formattedItemDisplay = `Bouteille${(settleAction.quantity || 0) > 1 ? 's' : ''} ${brand}`;
                   } else {
                     formattedItemDisplay = `Bouteille${(settleAction.quantity || 0) > 1 ? 's' : ''}`;

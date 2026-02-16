@@ -573,7 +573,11 @@ const ReturnableItemRow: React.FC<ReturnableItemRowProps> = ({ itemType, quantit
         // For Bouteille items: "Returned: 2 Bouteilles Green" (pluralize Bouteille, not brand)
         // Use the same logic as Chopine
         // Handle both singular and plural forms
-        const brand = itemType.replace(/^(Bouteilles?)/i, '').trim();
+        let brand = itemType.replace(/^(Bouteilles?)/i, '').trim();
+        // Singularize brand name when quantity is 1 (e.g., "Vins" → "Vin")
+        if (pendingQuantity === 1 && brand.endsWith('s')) {
+          brand = brand.slice(0, -1);
+        }
         returnDescription += `Bouteille${pendingQuantity > 1 ? 's' : ''}${brand ? ` ${brand}` : ''}`;
       } else {
         // For other items: add 's' only if quantity > 1
@@ -592,7 +596,11 @@ const ReturnableItemRow: React.FC<ReturnableItemRowProps> = ({ itemType, quantit
         newDisplayItemType = `Chopine${pendingQuantity > 1 ? 's' : ''}${brand ? ` ${brand}` : ''}`;
       } else if (itemType.includes('Bouteille')) {
         // Handle both singular and plural forms
-        const brand = itemType.replace(/^(Bouteilles?)/i, '').trim();
+        let brand = itemType.replace(/^(Bouteilles?)/i, '').trim();
+        // Singularize brand name when quantity is 1 (e.g., "Vins" → "Vin")
+        if (pendingQuantity === 1 && brand.endsWith('s')) {
+          brand = brand.slice(0, -1);
+        }
         newDisplayItemType = `Bouteille${pendingQuantity > 1 ? 's' : ''}${brand ? ` ${brand}` : ''}`;
       } else if (pendingQuantity > 1) {
         newDisplayItemType = `${itemType}s`;

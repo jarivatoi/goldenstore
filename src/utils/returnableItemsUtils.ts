@@ -359,10 +359,16 @@ export const calculateReturnableItemsWithDates = (clientTransactions: CreditTran
         } else {
           // For regular bottles: "3 Bouteilles Green" (with proper pluralization)
           const brand = itemType.replace(/^(Bouteilles?)/i, '').trim();
-          // Ensure brand is title case
-          const titleCaseBrand = brand ? brand.split(' ').map(word => 
+          // Ensure brand is title case and handle pluralization
+          let titleCaseBrand = brand ? brand.split(' ').map(word =>
             word.charAt(0).toUpperCase() + word.slice(1).toLowerCase()
           ).join(' ') : '';
+
+          // Singularize brand name when quantity is 1 (e.g., "Vins" → "Vin")
+          if (remaining === 1 && titleCaseBrand.endsWith('s')) {
+            titleCaseBrand = titleCaseBrand.slice(0, -1);
+          }
+
           if (titleCaseBrand) {
             displayText = `${remaining} Bouteille${remaining > 1 ? 's' : ''} ${titleCaseBrand}`;
           } else {
@@ -725,10 +731,16 @@ export const calculateReturnableItems = (clientTransactions: CreditTransaction[]
         } else {
           // For regular bottles: "3 Bouteilles Green" (with proper pluralization)
           const brand = itemType.replace(/^(Bouteilles?)/i, '').trim();
-          // Ensure brand is title case
-          const titleCaseBrand = brand ? brand.split(' ').map(word => 
+          // Ensure brand is title case and handle pluralization
+          let titleCaseBrand = brand ? brand.split(' ').map(word =>
             word.charAt(0).toUpperCase() + word.slice(1).toLowerCase()
           ).join(' ') : '';
+
+          // Singularize brand name when quantity is 1 (e.g., "Vins" → "Vin")
+          if (remaining === 1 && titleCaseBrand.endsWith('s')) {
+            titleCaseBrand = titleCaseBrand.slice(0, -1);
+          }
+
           if (titleCaseBrand) {
             displayText = `${remaining} Bouteille${remaining > 1 ? 's' : ''} ${titleCaseBrand}`;
           } else {
