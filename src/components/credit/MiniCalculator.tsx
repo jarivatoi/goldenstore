@@ -167,41 +167,34 @@ const MiniCalculator: React.FC<MiniCalculatorProps> = ({
         setIsNewNumber(true);
       }
     } else if (['+', '-', '*', '/'].includes(input)) {
-      // Handle operator input with standard calculator logic
+      // Handle operator input - calculate immediately when possible
       if (lastOperation && lastOperand !== null && !isNewNumber) {
         // Complete the previous operation first
         const currentNumber = parseFloat(calculatorValue);
         if (!isNaN(currentNumber)) {
           const result = performOperation(lastOperand, currentNumber, lastOperation);
+          // Set the result as the new calculator value
           setCalculatorValue(result.toString());
+          // Set the result as the new operand for the next operation
           setLastOperand(result);
+          // Store the new operator
+          setLastOperation(input);
+          // Set as new number so next digit input will replace the result
+          setIsNewNumber(true);
         }
       } else if (lastOperation && lastOperand !== null && isNewNumber) {
         // User pressed operator after operator or after equals, just change the operation
-        // Keep the last operand, just update the operation
-        // Check if calculatorValue ends with an operator
-        if (/[+\-*/]$/.test(calculatorValue)) {
-          // If it ends with an operator, replace it with the new one
-          setCalculatorValue(calculatorValue.slice(0, -1) + input);
-        } else {
-          // If it doesn't end with an operator, append the new operator
-          setCalculatorValue(calculatorValue + input);
-        }
+        setLastOperation(input);
       } else {
-        // First operation, store the current number
+        // First operation, just store the current number as the operand
         const currentNumber = parseFloat(calculatorValue);
         if (!isNaN(currentNumber)) {
           setLastOperand(currentNumber);
           setOriginalOperand(currentNumber);
+          setLastOperation(input);
+          setIsNewNumber(true);
         }
       }
-      
-      // If we haven't already updated the display, do it now
-      if (!(lastOperation && lastOperand !== null && isNewNumber)) {
-        setCalculatorValue(calculatorValue + input);
-      }
-      setLastOperation(input);
-      setIsNewNumber(true);
     } else if (input === '=') {
       if (lastOperation && lastOperand !== null) {
         // Extract the second operand correctly
