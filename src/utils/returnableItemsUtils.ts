@@ -47,13 +47,25 @@ export const calculateReturnableItemsWithDates = (clientTransactions: CreditTran
     while ((bouteilleMatch = bouteillePattern.exec(description)) !== null) {
       const quantity = parseInt(bouteilleMatch[1]);
       const brand = bouteilleMatch[2]?.trim() || '';
-      console.log('[DEBUG] Bouteille quantified:', { description, quantity, brand, match: bouteilleMatch[0] });
+      console.log('[DEBUG] Bouteille quantified:', {
+        description,
+        quantity,
+        brand,
+        match: bouteilleMatch[0],
+        fullMatch: bouteilleMatch
+      });
 
       // Capitalize brand name properly
       const capitalizedBrand = brand ? brand.split(' ').map((word: string) =>
         word.charAt(0).toUpperCase() + word.slice(1).toLowerCase()
       ).join(' ') : '';
       const key = capitalizedBrand ? `Bouteille ${capitalizedBrand}` : 'Bouteille';
+
+      console.log('[DEBUG] Brand processing (quantified):', {
+        rawBrand: brand,
+        capitalizedBrand,
+        finalKey: key
+      });
 
       if (!returnableItems[key]) {
         returnableItems[key] = 0;
@@ -89,7 +101,8 @@ export const calculateReturnableItemsWithDates = (clientTransactions: CreditTran
           description,
           match: standaloneBouteilleMatch[0],
           brand,
-          brandMatch: brandMatch ? brandMatch[0] : null
+          brandMatch: brandMatch ? brandMatch[0] : null,
+          substringUsed: description.substring(standaloneBouteilleMatch.index)
         });
 
         // Capitalize brand name properly
@@ -98,6 +111,12 @@ export const calculateReturnableItemsWithDates = (clientTransactions: CreditTran
         ).join(' ') : '';
 
         const key = capitalizedBrand ? `Bouteille ${capitalizedBrand}` : 'Bouteille';
+
+        console.log('[DEBUG] Brand processing:', {
+          rawBrand: brand,
+          capitalizedBrand,
+          finalKey: key
+        });
 
         if (!returnableItems[key]) {
           returnableItems[key] = 0;
@@ -146,12 +165,15 @@ export const calculateReturnableItemsWithDates = (clientTransactions: CreditTran
     }
   });
 
+  console.log('[DEBUG] All returnable items collected:', returnableItems);
+
   // Calculate returned quantities with improved matching
   const returnedQuantities: {[key: string]: number} = {};
   clientTransactions
     .filter(transaction => transaction.type === 'debt' && (transaction.description.toLowerCase().includes('returned') || transaction.description.toLowerCase().includes('return') || transaction.description.toLowerCase().includes('caisse')))
     .forEach(transaction => {
       const description = transaction.description.toLowerCase();
+      console.log('[DEBUG] Processing return transaction:', description);
       Object.keys(returnableItems).forEach(itemType => {
         // Use more precise matching to avoid substring conflicts
         if (itemType.includes('Chopine')) {
@@ -475,13 +497,25 @@ export const calculateReturnableItems = (clientTransactions: CreditTransaction[]
     while ((bouteilleMatch = bouteillePattern.exec(description)) !== null) {
       const quantity = parseInt(bouteilleMatch[1]);
       const brand = bouteilleMatch[2]?.trim() || '';
-      console.log('[DEBUG] Bouteille quantified:', { description, quantity, brand, match: bouteilleMatch[0] });
+      console.log('[DEBUG] Bouteille quantified:', {
+        description,
+        quantity,
+        brand,
+        match: bouteilleMatch[0],
+        fullMatch: bouteilleMatch
+      });
 
       // Capitalize brand name properly
       const capitalizedBrand = brand ? brand.split(' ').map((word: string) =>
         word.charAt(0).toUpperCase() + word.slice(1).toLowerCase()
       ).join(' ') : '';
       const key = capitalizedBrand ? `Bouteille ${capitalizedBrand}` : 'Bouteille';
+
+      console.log('[DEBUG] Brand processing (quantified):', {
+        rawBrand: brand,
+        capitalizedBrand,
+        finalKey: key
+      });
 
       if (!returnableItems[key]) {
         returnableItems[key] = 0;
@@ -517,7 +551,8 @@ export const calculateReturnableItems = (clientTransactions: CreditTransaction[]
           description,
           match: standaloneBouteilleMatch[0],
           brand,
-          brandMatch: brandMatch ? brandMatch[0] : null
+          brandMatch: brandMatch ? brandMatch[0] : null,
+          substringUsed: description.substring(standaloneBouteilleMatch.index)
         });
 
         // Capitalize brand name properly
@@ -526,6 +561,12 @@ export const calculateReturnableItems = (clientTransactions: CreditTransaction[]
         ).join(' ') : '';
 
         const key = capitalizedBrand ? `Bouteille ${capitalizedBrand}` : 'Bouteille';
+
+        console.log('[DEBUG] Brand processing:', {
+          rawBrand: brand,
+          capitalizedBrand,
+          finalKey: key
+        });
 
         if (!returnableItems[key]) {
           returnableItems[key] = 0;
@@ -574,12 +615,15 @@ export const calculateReturnableItems = (clientTransactions: CreditTransaction[]
     }
   });
 
+  console.log('[DEBUG] All returnable items collected:', returnableItems);
+
   // Calculate returned quantities with improved matching
   const returnedQuantities: {[key: string]: number} = {};
   clientTransactions
     .filter(transaction => transaction.type === 'debt' && (transaction.description.toLowerCase().includes('returned') || transaction.description.toLowerCase().includes('return') || transaction.description.toLowerCase().includes('caisse')))
     .forEach(transaction => {
       const description = transaction.description.toLowerCase();
+      console.log('[DEBUG] Processing return transaction:', description);
       Object.keys(returnableItems).forEach(itemType => {
         // Use more precise matching to avoid substring conflicts
         if (itemType.includes('Chopine')) {
