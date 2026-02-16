@@ -420,7 +420,8 @@ export const calculateReturnableItemsWithDates = (clientTransactions: CreditTran
         }
       } else if (itemType.includes('Bouteille')) {
         // For Bouteille items: check if it has a size and brand (like "Bouteille 1.5L Pepsi")
-        const sizeMatch = itemType.match(/(\d+(?:\.\d+)?[Ll])/i);
+        // Use word boundary to ensure L is not part of a longer word (e.g., "7les" should not match)
+        const sizeMatch = itemType.match(/(\d+(?:\.\d+)?[Ll])(?:\s|$)/i);
         if (sizeMatch) {
           // For sized bottles, ensure size is properly formatted with uppercase L
           const formattedSize = sizeMatch[1].replace(/l$/gi, 'L');
@@ -878,7 +879,8 @@ export const calculateReturnableItems = (clientTransactions: CreditTransaction[]
         }
       } else if (itemType.includes('Bouteille')) {
         // For Bouteille items: check if it has a size and brand (like "Bouteille 1.5L Pepsi")
-        const sizeMatch = itemType.match(/(\d+(?:\.\d+)?[Ll])/i);
+        // Use word boundary to ensure L is not part of a longer word (e.g., "7les" should not match)
+        const sizeMatch = itemType.match(/(\d+(?:\.\d+)?[Ll])(?:\s|$)/i);
         if (sizeMatch) {
           // For sized bottles, ensure size is properly formatted with uppercase L
           const formattedSize = sizeMatch[1].replace(/l$/gi, 'L');
