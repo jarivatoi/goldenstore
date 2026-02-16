@@ -573,7 +573,7 @@ const ScrollingTabs: React.FC<ScrollingTabsProps> = ({
               const currentReturnableItems = (() => {
                 // Use the shared utility function to calculate returnable items
                 const clientTransactions = getTransactions(client.id);
-                const fullReturnableItems = calculateReturnableItems(clientTransactions);
+                const fullReturnableItems = calculateReturnableItems(clientTransactions, client.name);
                 
                 // Truncate the returnable items for display in scrolling tabs
                 const truncatedItems: string[] = [];
@@ -660,9 +660,9 @@ const ScrollingTabs: React.FC<ScrollingTabsProps> = ({
                             
                             // Priority 2: Check if client has returnable items - gets shake animation
                             const clientTransactions = getTransactions(client.id);
-                            
+
                             // Use the shared utility function to check if there are any unreturned items
-                            const fullReturnableItems = calculateReturnableItems(clientTransactions);
+                            const fullReturnableItems = calculateReturnableItems(clientTransactions, client.name);
                             const hasUnreturnedItems = fullReturnableItems.length > 0;
                             
                             // Return shake animation for clients with returnables (only if debt < 1000)

@@ -268,7 +268,7 @@ const CreditManagement: React.FC = () => {
             }
             
             // If we find at least one returnable item, check if it has unreturned quantities
-            return hasUnreturnedItems(clientTransactions);
+            return hasUnreturnedItems(clientTransactions, client.name);
           }
           
           return false;
@@ -319,7 +319,7 @@ const CreditManagement: React.FC = () => {
             }
             
             // If we find at least one returnable item, check if it has unreturned quantities
-            if (hasUnreturnedItems(clientTransactions)) {
+            if (hasUnreturnedItems(clientTransactions, client.name)) {
               return true;
             }
           }
@@ -331,9 +331,9 @@ const CreditManagement: React.FC = () => {
   }, [clientFilter, getClientTransactions, getClientTotalDebt, searchClients]);
 
   // Helper function to check for unreturned items
-  const hasUnreturnedItems = React.useCallback((clientTransactions: any[]) => {
+  const hasUnreturnedItems = React.useCallback((clientTransactions: any[], clientName?: string) => {
     // Use the shared utility function to calculate returnable items
-    const returnableItemsStrings = calculateReturnableItems(clientTransactions);
+    const returnableItemsStrings = calculateReturnableItems(clientTransactions, clientName);
       
     // If there are any returnable items left after accounting for returns, return true
     return returnableItemsStrings.length > 0;
@@ -1285,7 +1285,7 @@ const CreditManagement: React.FC = () => {
                 
                 // Get returnable items for this client using the shared utility function
                 const clientTransactions = getClientTransactions(duplicateCard.id);
-                const returnableItems = calculateReturnableItems(clientTransactions);
+                const returnableItems = calculateReturnableItems(clientTransactions, duplicateCard.name);
                 const hasReturnables = returnableItems.length > 0;
                 
                // Check if the transaction description contains returnable items AND there are still items to return

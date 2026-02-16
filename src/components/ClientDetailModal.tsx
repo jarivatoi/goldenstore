@@ -47,7 +47,7 @@ const ClientDetailModal: React.FC<ClientDetailModalProps> = ({ client, onClose }
   // Get returnable items for client using the same logic as ClientCard
   const returnableItems = React.useMemo(() => {
     // Use the utility function to get returnable items as strings
-    const returnableItemsStrings = calculateReturnableItems(transactions);
+    const returnableItemsStrings = calculateReturnableItems(transactions, client.name);
     
     // Convert the string format back to the object format used by the modal
     const returnableItems: {[key: string]: number} = {};

@@ -164,7 +164,7 @@ const ClientActionModal: React.FC<ClientActionModalProps> = ({ client, onClose, 
   // Get returnable items using the same logic as ClientCard and ClientDetailModal
   const getReturnableItems = () => {
     // Use the utility function to get returnable items as strings (same as ClientDetailModal)
-    const returnableItemsStrings = calculateReturnableItems(clientTransactions);
+    const returnableItemsStrings = calculateReturnableItems(clientTransactions, client.name);
     
     // Convert the string format back to the object format used by the modal
     const returnableItems: {[key: string]: {total: number, transactions: Array<{id: string, description: string, amount: number, quantity: number, date: Date}>}} = {};

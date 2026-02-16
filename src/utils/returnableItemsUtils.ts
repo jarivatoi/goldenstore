@@ -469,10 +469,12 @@ export const calculateReturnableItemsWithDates = (clientTransactions: CreditTran
 /**
  * Calculates net returnable items count for a client (without dates)
  * @param clientTransactions - Array of client transactions
+ * @param clientName - Optional client name for debug logging (only logs if name is "viraj")
  * @returns Array of returnable item strings
  */
-export const calculateReturnableItems = (clientTransactions: CreditTransaction[]): string[] => {
+export const calculateReturnableItems = (clientTransactions: CreditTransaction[], clientName?: string): string[] => {
   const returnableItems: {[key: string]: number} = {};
+  const DEBUG = clientName?.toLowerCase() === 'viraj';
 
   clientTransactions.forEach(transaction => {
     // Only process debt transactions (not payments) AND exclude return transactions
