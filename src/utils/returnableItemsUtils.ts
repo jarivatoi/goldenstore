@@ -246,7 +246,8 @@ export const calculateReturnableItemsWithDates = (clientTransactions: CreditTran
             const brandName = itemType.replace(/^(Chopines?)/i, '').trim();
             if (brandName) {
               // Create pattern that matches both "Chopine Brand" and "Chopines Brand"
-              const brandedPattern = new RegExp(`returned:\\s*(\\d+)\\s+chopines?\\s+${brandName.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')}(?=\\s|$|,|\\.)`, 'i');
+              const escapedBrand = brandName.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+              const brandedPattern = new RegExp(`returned:\\s*(\\d+)\\s+chopines?\\s+${escapedBrand}(?:\\b|\\s|$|,|\\.)`, 'i');
               const match = description.match(brandedPattern);
               if (match) {
                 if (!returnedQuantities[itemType]) {
@@ -256,7 +257,7 @@ export const calculateReturnableItemsWithDates = (clientTransactions: CreditTran
               } else {
                 // Handle cases where items were added without explicit quantities (e.g., "chopine vin")
                 // Try a more flexible pattern that matches the brand name anywhere in the return description
-                const flexiblePattern = new RegExp(`returned:\\s*(\\d+).*?${brandName.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')}(?=\\s|$|,|\\.)`, 'i');
+                const flexiblePattern = new RegExp(`returned:\\s*(\\d+).*?${escapedBrand}(?:\\b|\\s|$|,|\\.)`, 'i');
                 const flexibleMatch = description.match(flexiblePattern);
                 if (flexibleMatch) {
                   if (!returnedQuantities[itemType]) {
@@ -304,7 +305,9 @@ export const calculateReturnableItemsWithDates = (clientTransactions: CreditTran
             const brandName = itemType.replace(/^(Bouteilles?)/i, '').trim();
             if (brandName) {
               // Create pattern that matches both "Bouteille Brand" and "Bouteilles Brand"
-              const brandedPattern = new RegExp(`returned:\\s*(\\d+)\\s+bouteilles?\\s+${brandName.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')}(?=\\s|$|,|\\.)`, 'i');
+              // Use word boundary \b after brand name to prevent partial matches
+              const escapedBrand = brandName.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+              const brandedPattern = new RegExp(`returned:\\s*(\\d+)\\s+bouteilles?\\s+${escapedBrand}(?:\\b|\\s|$|,|\\.)`, 'i');
               const match = description.match(brandedPattern);
 
               if (DEBUG) {
@@ -327,7 +330,7 @@ export const calculateReturnableItemsWithDates = (clientTransactions: CreditTran
               } else {
                 // Handle cases where items were added without explicit quantities (e.g., "bouteille vin")
                 // Try a more flexible pattern that matches the brand name anywhere in the return description
-                const flexiblePattern = new RegExp(`returned:\\s*(\\d+).*?${brandName.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')}(?=\\s|$|,|\\.)`, 'i');
+                const flexiblePattern = new RegExp(`returned:\\s*(\\d+).*?${escapedBrand}(?:\\b|\\s|$|,|\\.)`, 'i');
                 const flexibleMatch = description.match(flexiblePattern);
 
                 if (DEBUG) {
@@ -738,7 +741,8 @@ export const calculateReturnableItems = (clientTransactions: CreditTransaction[]
             const brandName = itemType.replace(/^(Chopines?)/i, '').trim();
             if (brandName) {
               // Create pattern that matches both "Chopine Brand" and "Chopines Brand"
-              const brandedPattern = new RegExp(`returned:\\s*(\\d+)\\s+chopines?\\s+${brandName.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')}(?=\\s|$|,|\\.)`, 'i');
+              const escapedBrand = brandName.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+              const brandedPattern = new RegExp(`returned:\\s*(\\d+)\\s+chopines?\\s+${escapedBrand}(?:\\b|\\s|$|,|\\.)`, 'i');
               const match = description.match(brandedPattern);
               if (match) {
                 if (!returnedQuantities[itemType]) {
@@ -748,7 +752,7 @@ export const calculateReturnableItems = (clientTransactions: CreditTransaction[]
               } else {
                 // Handle cases where items were added without explicit quantities (e.g., "chopine vin")
                 // Try a more flexible pattern that matches the brand name anywhere in the return description
-                const flexiblePattern = new RegExp(`returned:\\s*(\\d+).*?${brandName.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')}(?=\\s|$|,|\\.)`, 'i');
+                const flexiblePattern = new RegExp(`returned:\\s*(\\d+).*?${escapedBrand}(?:\\b|\\s|$|,|\\.)`, 'i');
                 const flexibleMatch = description.match(flexiblePattern);
                 if (flexibleMatch) {
                   if (!returnedQuantities[itemType]) {
@@ -796,7 +800,9 @@ export const calculateReturnableItems = (clientTransactions: CreditTransaction[]
             const brandName = itemType.replace(/^(Bouteilles?)/i, '').trim();
             if (brandName) {
               // Create pattern that matches both "Bouteille Brand" and "Bouteilles Brand"
-              const brandedPattern = new RegExp(`returned:\\s*(\\d+)\\s+bouteilles?\\s+${brandName.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')}(?=\\s|$|,|\\.)`, 'i');
+              // Use word boundary \b after brand name to prevent partial matches
+              const escapedBrand = brandName.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+              const brandedPattern = new RegExp(`returned:\\s*(\\d+)\\s+bouteilles?\\s+${escapedBrand}(?:\\b|\\s|$|,|\\.)`, 'i');
               const match = description.match(brandedPattern);
 
               if (DEBUG) {
@@ -819,7 +825,7 @@ export const calculateReturnableItems = (clientTransactions: CreditTransaction[]
               } else {
                 // Handle cases where items were added without explicit quantities (e.g., "bouteille vin")
                 // Try a more flexible pattern that matches the brand name anywhere in the return description
-                const flexiblePattern = new RegExp(`returned:\\s*(\\d+).*?${brandName.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')}(?=\\s|$|,|\\.)`, 'i');
+                const flexiblePattern = new RegExp(`returned:\\s*(\\d+).*?${escapedBrand}(?:\\b|\\s|$|,|\\.)`, 'i');
                 const flexibleMatch = description.match(flexiblePattern);
 
                 if (DEBUG) {
