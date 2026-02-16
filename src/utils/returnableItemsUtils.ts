@@ -76,26 +76,18 @@ export const calculateReturnableItemsWithDates = (clientTransactions: CreditTran
 
     const standaloneBouteillePattern = /\bbouteilles?\b/gi;
     let standaloneBouteilleMatch: RegExpExecArray | null;
-    console.log('DEBUG Standalone Bouteille - quantifiedMatches:', quantifiedBouteilleMatches.length);
     while ((standaloneBouteilleMatch = standaloneBouteillePattern.exec(description)) !== null) {
-      console.log('DEBUG Found standalone bouteille at index:', standaloneBouteilleMatch.index);
       // Skip if this match is part of a quantified match
       const isPartOfQuantified = quantifiedBouteilleMatches.some(match =>
         standaloneBouteilleMatch!.index >= match.index &&
         standaloneBouteilleMatch!.index < match.index + match[0].length
       );
 
-      console.log('DEBUG isPartOfQuantified:', isPartOfQuantified);
-
       if (!isPartOfQuantified) {
         // Look for brand after the bouteille word
         const substring = description.substring(standaloneBouteilleMatch.index);
-        console.log('DEBUG Substring:', substring);
         const brandMatch = substring.match(/^bouteilles?\s+([^,()]*)/i);
-        console.log('DEBUG brandMatch:', brandMatch);
         const brand = brandMatch?.[1]?.trim() || '';
-
-        console.log('DEBUG Extracted brand:', brand);
 
         // Capitalize brand name properly
         const capitalizedBrand = brand ? brand.split(' ').map((word: string) =>
@@ -103,8 +95,6 @@ export const calculateReturnableItemsWithDates = (clientTransactions: CreditTran
         ).join(' ') : '';
 
         const key = capitalizedBrand ? `Bouteille ${capitalizedBrand}` : 'Bouteille';
-
-        console.log('DEBUG Created key:', key);
 
         if (!returnableItems[key]) {
           returnableItems[key] = 0;
@@ -469,26 +459,18 @@ export const calculateReturnableItems = (clientTransactions: CreditTransaction[]
 
     const standaloneBouteillePattern = /\bbouteilles?\b/gi;
     let standaloneBouteilleMatch: RegExpExecArray | null;
-    console.log('DEBUG Standalone Bouteille - quantifiedMatches:', quantifiedBouteilleMatches.length);
     while ((standaloneBouteilleMatch = standaloneBouteillePattern.exec(description)) !== null) {
-      console.log('DEBUG Found standalone bouteille at index:', standaloneBouteilleMatch.index);
       // Skip if this match is part of a quantified match
       const isPartOfQuantified = quantifiedBouteilleMatches.some(match =>
         standaloneBouteilleMatch!.index >= match.index &&
         standaloneBouteilleMatch!.index < match.index + match[0].length
       );
 
-      console.log('DEBUG isPartOfQuantified:', isPartOfQuantified);
-
       if (!isPartOfQuantified) {
         // Look for brand after the bouteille word
         const substring = description.substring(standaloneBouteilleMatch.index);
-        console.log('DEBUG Substring:', substring);
         const brandMatch = substring.match(/^bouteilles?\s+([^,()]*)/i);
-        console.log('DEBUG brandMatch:', brandMatch);
         const brand = brandMatch?.[1]?.trim() || '';
-
-        console.log('DEBUG Extracted brand:', brand);
 
         // Capitalize brand name properly
         const capitalizedBrand = brand ? brand.split(' ').map((word: string) =>
@@ -496,8 +478,6 @@ export const calculateReturnableItems = (clientTransactions: CreditTransaction[]
         ).join(' ') : '';
 
         const key = capitalizedBrand ? `Bouteille ${capitalizedBrand}` : 'Bouteille';
-
-        console.log('DEBUG Created key:', key);
 
         if (!returnableItems[key]) {
           returnableItems[key] = 0;
