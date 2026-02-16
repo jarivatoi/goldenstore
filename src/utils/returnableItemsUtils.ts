@@ -249,21 +249,41 @@ export const calculateReturnableItemsWithDates = (clientTransactions: CreditTran
               // Create pattern that matches both "Bouteille Brand" and "Bouteilles Brand"
               const brandedPattern = new RegExp(`returned:\\s*(\\d+)\\s+bouteilles?\\s+${brandName.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')}(?=\\s|$|,|\\.)`, 'i');
               const match = description.match(brandedPattern);
+
+              console.log('[DEBUG RETURN] Checking return for:', itemType, {
+                description,
+                brandName,
+                pattern: brandedPattern.source,
+                matched: !!match,
+                matchedText: match ? match[0] : null,
+                quantity: match ? parseInt(match[1]) : 0
+              });
+
               if (match) {
                 if (!returnedQuantities[itemType]) {
                   returnedQuantities[itemType] = 0;
                 }
                 returnedQuantities[itemType] += parseInt(match[1]);
+                console.log('[DEBUG RETURN] Added return for', itemType, '=', returnedQuantities[itemType]);
               } else {
                 // Handle cases where items were added without explicit quantities (e.g., "bouteille vin")
                 // Try a more flexible pattern that matches the brand name anywhere in the return description
                 const flexiblePattern = new RegExp(`returned:\\s*(\\d+).*?${brandName.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')}(?=\\s|$|,|\\.)`, 'i');
                 const flexibleMatch = description.match(flexiblePattern);
+
+                console.log('[DEBUG RETURN FLEXIBLE] Trying flexible pattern:', {
+                  itemType,
+                  pattern: flexiblePattern.source,
+                  matched: !!flexibleMatch,
+                  matchedText: flexibleMatch ? flexibleMatch[0] : null
+                });
+
                 if (flexibleMatch) {
                   if (!returnedQuantities[itemType]) {
                     returnedQuantities[itemType] = 0;
                   }
                   returnedQuantities[itemType] += parseInt(flexibleMatch[1]);
+                  console.log('[DEBUG RETURN FLEXIBLE] Added return for', itemType, '=', returnedQuantities[itemType]);
                 }
               }
             }
@@ -288,6 +308,14 @@ export const calculateReturnableItemsWithDates = (clientTransactions: CreditTran
   Object.entries(returnableItems).forEach(([itemType, total]) => {
     const returned = returnedQuantities[itemType] || 0;
     const remaining = Math.max(0, total - returned);
+
+    console.log('[DEBUG FINAL]', itemType, {
+      total,
+      returned,
+      remaining,
+      willDisplay: remaining > 0
+    });
+
     if (remaining > 0) {
       // Get the most recent transaction date for this item type
       const recentTransaction = clientTransactions
@@ -649,21 +677,41 @@ export const calculateReturnableItems = (clientTransactions: CreditTransaction[]
               // Create pattern that matches both "Bouteille Brand" and "Bouteilles Brand"
               const brandedPattern = new RegExp(`returned:\\s*(\\d+)\\s+bouteilles?\\s+${brandName.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')}(?=\\s|$|,|\\.)`, 'i');
               const match = description.match(brandedPattern);
+
+              console.log('[DEBUG RETURN] Checking return for:', itemType, {
+                description,
+                brandName,
+                pattern: brandedPattern.source,
+                matched: !!match,
+                matchedText: match ? match[0] : null,
+                quantity: match ? parseInt(match[1]) : 0
+              });
+
               if (match) {
                 if (!returnedQuantities[itemType]) {
                   returnedQuantities[itemType] = 0;
                 }
                 returnedQuantities[itemType] += parseInt(match[1]);
+                console.log('[DEBUG RETURN] Added return for', itemType, '=', returnedQuantities[itemType]);
               } else {
                 // Handle cases where items were added without explicit quantities (e.g., "bouteille vin")
                 // Try a more flexible pattern that matches the brand name anywhere in the return description
                 const flexiblePattern = new RegExp(`returned:\\s*(\\d+).*?${brandName.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')}(?=\\s|$|,|\\.)`, 'i');
                 const flexibleMatch = description.match(flexiblePattern);
+
+                console.log('[DEBUG RETURN FLEXIBLE] Trying flexible pattern:', {
+                  itemType,
+                  pattern: flexiblePattern.source,
+                  matched: !!flexibleMatch,
+                  matchedText: flexibleMatch ? flexibleMatch[0] : null
+                });
+
                 if (flexibleMatch) {
                   if (!returnedQuantities[itemType]) {
                     returnedQuantities[itemType] = 0;
                   }
                   returnedQuantities[itemType] += parseInt(flexibleMatch[1]);
+                  console.log('[DEBUG RETURN FLEXIBLE] Added return for', itemType, '=', returnedQuantities[itemType]);
                 }
               }
             }
