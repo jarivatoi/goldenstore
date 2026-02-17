@@ -7,17 +7,20 @@ import { CreditTransaction } from '../types';
  */
 export const calculateReturnableItemsWithDates = (clientTransactions: CreditTransaction[]): {text: string, date: string, time: string}[] => {
   const returnableItems: {[key: string]: number} = {};
-  
+
   clientTransactions.forEach(transaction => {
     // Only process debt transactions (not payments) AND exclude return transactions
     if (transaction.type === 'payment' || transaction.description.toLowerCase().includes('returned') || transaction.description.toLowerCase().includes('return') || (transaction.description.toLowerCase().includes('caisse') && transaction.description.toLowerCase().includes('returned'))) {
       return;
     }
-    
+
     const description = transaction.description.toLowerCase();
-    
+
+    console.log('🔍 Processing transaction:', description);
+
     // Only process items that contain "chopine" or "bouteille"
     if (!description.includes('chopine') && !description.includes('bouteille')) {
+      console.log('  ❌ Skipped - no chopine or bouteille');
       return;
     }
     
@@ -49,12 +52,14 @@ export const calculateReturnableItemsWithDates = (clientTransactions: CreditTran
       const quantity = parseInt(bouteilleMatch1[1]);
       const size = bouteilleMatch1[2]?.trim().replace(/l$/gi, 'L') || '';
       const brand = bouteilleMatch1[3]?.trim() || '';
-      
+
+      console.log('  🔢 Pattern 1 matched! qty:', quantity, 'size:', size, 'brand:', brand);
+
       // Capitalize brand name properly (keep words starting with digits unchanged)
       const capitalizedBrand = brand ? brand.split(' ').map((word: string) =>
         /^\d/.test(word) ? word.toLowerCase() : word.charAt(0).toUpperCase() + word.slice(1).toLowerCase()
       ).join(' ') : '';
-      
+
       let key;
       if (size && capitalizedBrand) {
         // Format as "Bouteille 1.5L Pepsi" to maintain the proper structure
@@ -66,7 +71,9 @@ export const calculateReturnableItemsWithDates = (clientTransactions: CreditTran
       } else {
         key = 'Bouteille';
       }
-      
+
+      console.log('  ✅ Pattern 1 key:', key);
+
       if (!returnableItems[key]) {
         returnableItems[key] = 0;
       }
@@ -89,12 +96,17 @@ export const calculateReturnableItemsWithDates = (clientTransactions: CreditTran
         const standaloneBouteillePattern = /\bbouteilles?\b/gi;
         let standaloneMatch: RegExpExecArray | null;
         while ((standaloneMatch = standaloneBouteillePattern.exec(description)) !== null) {
+          console.log('    🎯 Found standalone bouteille at index:', standaloneMatch.index);
           // Look for size before the bouteille word
           const sizeMatch = description.substring(0, standaloneMatch.index).match(/(\d+(?:\.\d+)?[Ll])$/i);
           // Look for brand after the bouteille word
-          const brandMatch = description.substring(standaloneMatch.index).match(/^bouteilles?\s+(\d+(?:\.\d+)?[Ll])?\s*([^,()]*)/i);
+          const substringAfter = description.substring(standaloneMatch.index);
+          console.log('    Substring after:', substringAfter);
+          const brandMatch = substringAfter.match(/^bouteilles?\s+(\d+(?:\.\d+)?[Ll])?\s*([^,()]*)/i);
+          console.log('    Brand match:', brandMatch);
           let sizeFromBrand = brandMatch?.[1]?.trim() || '';
           let brand = brandMatch?.[2]?.trim() || '';
+          console.log('    Extracted - size:', sizeFromBrand, 'brand:', brand);
           
           // If no separate size was found before the word 'bouteille', check if size is in the brand part
           if (!sizeMatch && sizeFromBrand) {
@@ -120,7 +132,9 @@ export const calculateReturnableItemsWithDates = (clientTransactions: CreditTran
             // Handle simple "Bouteille" case from quick actions
             key = 'Bouteille';
           }
-          
+
+          console.log('    ✅ Created key:', key);
+
           if (!returnableItems[key]) {
             returnableItems[key] = 0;
           }
@@ -458,12 +472,14 @@ export const calculateReturnableItems = (clientTransactions: CreditTransaction[]
       const quantity = parseInt(bouteilleMatch1[1]);
       const size = bouteilleMatch1[2]?.trim().replace(/l$/gi, 'L') || '';
       const brand = bouteilleMatch1[3]?.trim() || '';
-      
+
+      console.log('  🔢 Pattern 1 matched! qty:', quantity, 'size:', size, 'brand:', brand);
+
       // Capitalize brand name properly (keep words starting with digits unchanged)
       const capitalizedBrand = brand ? brand.split(' ').map((word: string) =>
         /^\d/.test(word) ? word.toLowerCase() : word.charAt(0).toUpperCase() + word.slice(1).toLowerCase()
       ).join(' ') : '';
-      
+
       let key;
       if (size && capitalizedBrand) {
         // Format as "Bouteille 1.5L Pepsi" to maintain the proper structure
@@ -475,7 +491,9 @@ export const calculateReturnableItems = (clientTransactions: CreditTransaction[]
       } else {
         key = 'Bouteille';
       }
-      
+
+      console.log('  ✅ Pattern 1 key:', key);
+
       if (!returnableItems[key]) {
         returnableItems[key] = 0;
       }
@@ -498,12 +516,17 @@ export const calculateReturnableItems = (clientTransactions: CreditTransaction[]
         const standaloneBouteillePattern = /\bbouteilles?\b/gi;
         let standaloneMatch: RegExpExecArray | null;
         while ((standaloneMatch = standaloneBouteillePattern.exec(description)) !== null) {
+          console.log('    🎯 Found standalone bouteille at index:', standaloneMatch.index);
           // Look for size before the bouteille word
           const sizeMatch = description.substring(0, standaloneMatch.index).match(/(\d+(?:\.\d+)?[Ll])$/i);
           // Look for brand after the bouteille word
-          const brandMatch = description.substring(standaloneMatch.index).match(/^bouteilles?\s+(\d+(?:\.\d+)?[Ll])?\s*([^,()]*)/i);
+          const substringAfter = description.substring(standaloneMatch.index);
+          console.log('    Substring after:', substringAfter);
+          const brandMatch = substringAfter.match(/^bouteilles?\s+(\d+(?:\.\d+)?[Ll])?\s*([^,()]*)/i);
+          console.log('    Brand match:', brandMatch);
           let sizeFromBrand = brandMatch?.[1]?.trim() || '';
           let brand = brandMatch?.[2]?.trim() || '';
+          console.log('    Extracted - size:', sizeFromBrand, 'brand:', brand);
           
           // If no separate size was found before the word 'bouteille', check if size is in the brand part
           if (!sizeMatch && sizeFromBrand) {
@@ -529,7 +552,9 @@ export const calculateReturnableItems = (clientTransactions: CreditTransaction[]
             // Handle simple "Bouteille" case from quick actions
             key = 'Bouteille';
           }
-          
+
+          console.log('    ✅ Created key:', key);
+
           if (!returnableItems[key]) {
             returnableItems[key] = 0;
           }
