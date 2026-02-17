@@ -131,12 +131,12 @@ const ClientDetailModal: React.FC<ClientDetailModalProps> = ({ client, onClose }
       setProfilePicture(croppedImage);
       setImageForCropping(null);
 
-      // Save to database
+      // Save to database - preserve position so card doesn't move
       const updatedClient = {
         ...client,
         profilePictureUrl: croppedImage
       };
-      await updateClient(updatedClient);
+      await updateClient(updatedClient, true);
       showAlert({ type: 'success', message: 'Profile picture updated' });
     } catch (error) {
       showAlert({ type: 'error', message: 'Failed to update profile picture' });
@@ -150,7 +150,7 @@ const ClientDetailModal: React.FC<ClientDetailModalProps> = ({ client, onClose }
         ...client,
         profilePictureUrl: undefined
       };
-      await updateClient(updatedClient);
+      await updateClient(updatedClient, true);
       showAlert({ type: 'success', message: 'Profile picture removed' });
     } catch (error) {
       showAlert({ type: 'error', message: 'Failed to remove profile picture' });
@@ -178,8 +178,8 @@ const ClientDetailModal: React.FC<ClientDetailModalProps> = ({ client, onClose }
         ...client,
         name: capitalizeWords(editedName)
       };
-      
-      await updateClient(updatedClient);
+
+      await updateClient(updatedClient, true);
       setIsEditingName(false);
     } catch (error) {
       showAlert({ type: 'error', message: 'Failed to update client name' });

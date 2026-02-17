@@ -19,7 +19,7 @@ interface CreditContextType {
   getClientPayments: (clientId: string) => PaymentRecord[];
   
   // Client update operations
-  updateClient: (client: Client) => Promise<void>;
+  updateClient: (client: Client, preservePosition?: boolean) => Promise<void>;
   moveClientToFront: (clientId: string) => void;
   
   // Transaction operations
@@ -176,19 +176,24 @@ export const CreditProvider: React.FC<CreditProviderProps> = ({ children }) => {
   };
 
   // Update existing client
-  const updateClient = async (client: Client) => {
+  const updateClient = async (client: Client, preservePosition: boolean = false) => {
     try {
       const updatedClients = clients.map(c => c.id === client.id ? client : c);
-      
-      // Move the updated client to the front of the list (rightmost position)
-      const updatedClient = updatedClients.find(c => c.id === client.id);
-      const otherClients = updatedClients.filter(c => c.id !== client.id);
-      const reorderedClients = updatedClient ? [...otherClients, updatedClient] : updatedClients;
-      
-      setClients(reorderedClients);
-      
+
+      let finalClients = updatedClients;
+
+      // Only reorder if preservePosition is false
+      if (!preservePosition) {
+        // Move the updated client to the front of the list (rightmost position)
+        const updatedClient = updatedClients.find(c => c.id === client.id);
+        const otherClients = updatedClients.filter(c => c.id !== client.id);
+        finalClients = updatedClient ? [...otherClients, updatedClient] : updatedClients;
+      }
+
+      setClients(finalClients);
+
       // Save to localStorage
-      localStorage.setItem('creditClients', JSON.stringify(reorderedClients.map(c => ({
+      localStorage.setItem('creditClients', JSON.stringify(finalClients.map(c => ({
         ...c,
         createdAt: c.createdAt.toISOString(),
         lastTransactionAt: c.lastTransactionAt.toISOString()
