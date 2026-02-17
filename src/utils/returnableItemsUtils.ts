@@ -8,7 +8,7 @@ import { CreditTransaction } from '../types';
  */
 export const calculateReturnableItemsWithDates = (clientTransactions: CreditTransaction[], clientName?: string): {text: string, date: string, time: string}[] => {
   const returnableItems: {[key: string]: number} = {};
-  const DEBUG = clientName?.toLowerCase() === 'viraj';
+  const DEBUG = clientName?.toLowerCase() === 'viraj' || clientTransactions.some(t => t.description.toLowerCase().includes('7seas') || t.description.toLowerCase().includes('7les'));
 
   clientTransactions.forEach(transaction => {
     // Only process debt transactions (not payments) AND exclude return transactions
@@ -540,7 +540,7 @@ export const calculateReturnableItemsWithDates = (clientTransactions: CreditTran
  */
 export const calculateReturnableItems = (clientTransactions: CreditTransaction[], clientName?: string): string[] => {
   const returnableItems: {[key: string]: number} = {};
-  const DEBUG = clientName?.toLowerCase() === 'viraj';
+  const DEBUG = clientName?.toLowerCase() === 'viraj' || clientTransactions.some(t => t.description.toLowerCase().includes('7seas') || t.description.toLowerCase().includes('7les'));
 
   clientTransactions.forEach(transaction => {
     // Only process debt transactions (not payments) AND exclude return transactions
