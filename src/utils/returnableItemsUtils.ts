@@ -22,13 +22,13 @@ export const calculateReturnableItemsWithDates = (clientTransactions: CreditTran
     }
     
     // Look for Chopine items
-    const chopinePattern = /(\d+)\s+chopines?(?:\s+([^,\-\d]*))?/gi;
+    const chopinePattern = /(\d+)\s+chopines?(?:\s+([^,()]+))?(?=\s|$|,|\.)/gi;
     let chopineMatch;
 
     while ((chopineMatch = chopinePattern.exec(description)) !== null) {
       const quantity = parseInt(chopineMatch[1]);
       let brand = chopineMatch[2]?.trim() || '';
-      brand = brand.replace(/[,(\-].*/, '').trim();
+      brand = brand.replace(/\s*[-–]\s*.*/i, '').trim();
 
       // Capitalize brand name properly
       const capitalizedBrand = brand ? brand.split(' ').map((word: string) =>
@@ -133,7 +133,7 @@ export const calculateReturnableItemsWithDates = (clientTransactions: CreditTran
     
     // Count standalone 'chopine' occurrences - for items without explicit numbers
     // First find all quantified matches to avoid double-counting
-    const tempChopinePattern = /(\d+)\s+chopines?(?:\s+([^,\-\d]*))?/gi;
+    const tempChopinePattern = /(\d+)\s+chopines?(?:\s+([^,()]+))?(?=\s|$|,|\.)/gi;
     let tempChopineMatch;
     const quantifiedMatches: RegExpExecArray[] = [];
     while ((tempChopineMatch = tempChopinePattern.exec(description)) !== null) {
@@ -153,7 +153,7 @@ export const calculateReturnableItemsWithDates = (clientTransactions: CreditTran
         // Look for brand after the chopine word
         const brandMatch = description.substring(standaloneMatch.index).match(/^chopines?\s+([^,()]*)/i);
         let brand = brandMatch?.[1]?.trim() || '';
-        brand = brand.replace(/[,(\-].*/, '').trim();
+        brand = brand.replace(/\s*[-–]\s*.*/i, '').trim();
         
         // Capitalize brand name properly
         const capitalizedBrand = brand ? brand.split(' ').map((word: string) => 
@@ -434,13 +434,13 @@ export const calculateReturnableItems = (clientTransactions: CreditTransaction[]
     }
     
     // Look for Chopine items
-    const chopinePattern = /(\d+)\s+chopines?(?:\s+([^,\-\d]*))?/gi;
+    const chopinePattern = /(\d+)\s+chopines?(?:\s+([^,()]+))?(?=\s|$|,|\.)/gi;
     let chopineMatch;
 
     while ((chopineMatch = chopinePattern.exec(description)) !== null) {
       const quantity = parseInt(chopineMatch[1]);
       let brand = chopineMatch[2]?.trim() || '';
-      brand = brand.replace(/[,(\-].*/, '').trim();
+      brand = brand.replace(/\s*[-–]\s*.*/i, '').trim();
 
       // Capitalize brand name properly
       const capitalizedBrand = brand ? brand.split(' ').map((word: string) =>
@@ -545,7 +545,7 @@ export const calculateReturnableItems = (clientTransactions: CreditTransaction[]
     
     // Count standalone 'chopine' occurrences - for items without explicit numbers
     // First find all quantified matches to avoid double-counting
-    const tempChopinePattern = /(\d+)\s+chopines?(?:\s+([^,\-\d]*))?/gi;
+    const tempChopinePattern = /(\d+)\s+chopines?(?:\s+([^,()]+))?(?=\s|$|,|\.)/gi;
     let tempChopineMatch;
     const quantifiedMatches: RegExpExecArray[] = [];
     while ((tempChopineMatch = tempChopinePattern.exec(description)) !== null) {
@@ -565,7 +565,7 @@ export const calculateReturnableItems = (clientTransactions: CreditTransaction[]
         // Look for brand after the chopine word
         const brandMatch = description.substring(standaloneMatch.index).match(/^chopines?\s+([^,()]*)/i);
         let brand = brandMatch?.[1]?.trim() || '';
-        brand = brand.replace(/[,(\-].*/, '').trim();
+        brand = brand.replace(/\s*[-–]\s*.*/i, '').trim();
         
         // Capitalize brand name properly
         const capitalizedBrand = brand ? brand.split(' ').map((word: string) => 
