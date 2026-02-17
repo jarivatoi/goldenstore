@@ -588,10 +588,11 @@ const ScrollingTabs: React.FC<ScrollingTabsProps> = ({
                     } else {
                       truncated = itemText.substring(0, 10); // Fallback
                     }
-                  } else if (itemText.match(/(\d+(?:\.\d+)?L)/i)) {
+                  } else if (itemText.match(/(\d+(?:\.\d+)?L)\b/i)) {
                     // For sized bottles like "3 1.5L Bouteilles Green" -> "3 (1.5L)"
+                    // \b ensures L is at a word boundary (not part of a longer word like "2les")
                     const quantityMatch = itemText.match(/^(\d+)/);
-                    const sizeMatch = itemText.match(/(\d+(?:\.\d+)?L)/i);
+                    const sizeMatch = itemText.match(/(\d+(?:\.\d+)?L)\b/i);
                     if (quantityMatch && sizeMatch) {
                       truncated = `${quantityMatch[1]} (${sizeMatch[1]})`;
                     } else {
