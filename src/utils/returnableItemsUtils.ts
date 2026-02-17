@@ -50,15 +50,12 @@ export const calculateReturnableItemsWithDates = (clientTransactions: CreditTran
     }
     
     // Look for Bouteille items - just extract brand, ignore sizes
-    const bouteillePattern = /(\d+)\s+bouteilles?(?:\s+([^,()]+))?(?=\s|$|,|\.)/gi;
+    const bouteillePattern = /(\d+)\s+bouteilles?(?:\s+([^,]*))?/gi;
     let bouteilleMatch;
 
     while ((bouteilleMatch = bouteillePattern.exec(description)) !== null) {
       const quantity = parseInt(bouteilleMatch[1]);
-      let brand = bouteilleMatch[2]?.trim() || '';
-
-      // Remove only size patterns (e.g., "1L", "1.5L") but not brands starting with numbers (e.g., "7seas")
-      brand = brand.replace(/^\d+(?:\.\d+)?[Ll](?:\s|$)/, '').trim();
+      const brand = bouteilleMatch[2]?.trim() || '';
 
       // Capitalize brand name properly
       const capitalizedBrand = brand ? brand.split(' ').map((word: string) =>
@@ -73,42 +70,6 @@ export const calculateReturnableItemsWithDates = (clientTransactions: CreditTran
       returnableItems[key] += quantity;
     }
 
-    // Handle standalone bouteille (not part of quantified pattern)
-    const tempBouteillePattern = /(\d+)\s+bouteilles?(?:\s+([^,()]+))?(?=\s|$|,|\.)/gi;
-    let tempBouteilleMatch;
-    const quantifiedBouteilleMatches: RegExpExecArray[] = [];
-    while ((tempBouteilleMatch = tempBouteillePattern.exec(description)) !== null) {
-      quantifiedBouteilleMatches.push(tempBouteilleMatch);
-    }
-
-    const standaloneBouteillePattern = /\bbouteilles?\b/gi;
-    let standaloneBouteilleMatch: RegExpExecArray | null;
-    while ((standaloneBouteilleMatch = standaloneBouteillePattern.exec(description)) !== null) {
-      const isBouteillePartOfQuantified = quantifiedBouteilleMatches.some(match =>
-        standaloneBouteilleMatch!.index >= match.index &&
-        standaloneBouteilleMatch!.index < match.index + match[0].length
-      );
-
-      if (!isBouteillePartOfQuantified) {
-        const afterBouteilleMatch = description.substring(standaloneBouteilleMatch.index).match(/^bouteilles?\s*(.*)$/i);
-        let brand = afterBouteilleMatch?.[1]?.trim() || '';
-
-        // Remove any size patterns
-        brand = brand.replace(/^\d+(?:\.\d+)?[Ll](?:\s|$)/, '').trim();
-        brand = brand.replace(/[,()].*/, '').trim();
-
-        const capitalizedBrand = brand ? brand.split(' ').map((word: string) =>
-          properCapitalize(word)
-        ).join(' ') : '';
-
-        const key = capitalizedBrand ? `Bouteille ${capitalizedBrand}` : 'Bouteille';
-
-        if (!returnableItems[key]) {
-          returnableItems[key] = 0;
-        }
-        returnableItems[key] += 1;
-      }
-    }
 
     const tempChopinePattern = /(\d+)\s+chopines?(?:\s+([^,]*))?/gi;
     let tempChopineMatch;
@@ -399,15 +360,12 @@ export const calculateReturnableItems = (clientTransactions: CreditTransaction[]
     }
     
     // Look for Bouteille items - just extract brand, ignore sizes
-    const bouteillePattern = /(\d+)\s+bouteilles?(?:\s+([^,()]+))?(?=\s|$|,|\.)/gi;
+    const bouteillePattern = /(\d+)\s+bouteilles?(?:\s+([^,]*))?/gi;
     let bouteilleMatch;
 
     while ((bouteilleMatch = bouteillePattern.exec(description)) !== null) {
       const quantity = parseInt(bouteilleMatch[1]);
-      let brand = bouteilleMatch[2]?.trim() || '';
-
-      // Remove only size patterns (e.g., "1L", "1.5L") but not brands starting with numbers (e.g., "7seas")
-      brand = brand.replace(/^\d+(?:\.\d+)?[Ll](?:\s|$)/, '').trim();
+      const brand = bouteilleMatch[2]?.trim() || '';
 
       // Capitalize brand name properly
       const capitalizedBrand = brand ? brand.split(' ').map((word: string) =>
@@ -422,42 +380,6 @@ export const calculateReturnableItems = (clientTransactions: CreditTransaction[]
       returnableItems[key] += quantity;
     }
 
-    // Handle standalone bouteille (not part of quantified pattern)
-    const tempBouteillePattern = /(\d+)\s+bouteilles?(?:\s+([^,()]+))?(?=\s|$|,|\.)/gi;
-    let tempBouteilleMatch;
-    const quantifiedBouteilleMatches: RegExpExecArray[] = [];
-    while ((tempBouteilleMatch = tempBouteillePattern.exec(description)) !== null) {
-      quantifiedBouteilleMatches.push(tempBouteilleMatch);
-    }
-
-    const standaloneBouteillePattern = /\bbouteilles?\b/gi;
-    let standaloneBouteilleMatch: RegExpExecArray | null;
-    while ((standaloneBouteilleMatch = standaloneBouteillePattern.exec(description)) !== null) {
-      const isBouteillePartOfQuantified = quantifiedBouteilleMatches.some(match =>
-        standaloneBouteilleMatch!.index >= match.index &&
-        standaloneBouteilleMatch!.index < match.index + match[0].length
-      );
-
-      if (!isBouteillePartOfQuantified) {
-        const afterBouteilleMatch = description.substring(standaloneBouteilleMatch.index).match(/^bouteilles?\s*(.*)$/i);
-        let brand = afterBouteilleMatch?.[1]?.trim() || '';
-
-        // Remove any size patterns
-        brand = brand.replace(/^\d+(?:\.\d+)?[Ll](?:\s|$)/, '').trim();
-        brand = brand.replace(/[,()].*/, '').trim();
-
-        const capitalizedBrand = brand ? brand.split(' ').map((word: string) =>
-          properCapitalize(word)
-        ).join(' ') : '';
-
-        const key = capitalizedBrand ? `Bouteille ${capitalizedBrand}` : 'Bouteille';
-
-        if (!returnableItems[key]) {
-          returnableItems[key] = 0;
-        }
-        returnableItems[key] += 1;
-      }
-    }
 
     const tempChopinePattern = /(\d+)\s+chopines?(?:\s+([^,]*))?/gi;
     let tempChopineMatch;
