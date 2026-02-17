@@ -13,14 +13,16 @@ export const calculateReturnableItemsWithDates = (clientTransactions: CreditTran
     if (transaction.type === 'payment' || transaction.description.toLowerCase().includes('returned') || transaction.description.toLowerCase().includes('return') || (transaction.description.toLowerCase().includes('caisse') && transaction.description.toLowerCase().includes('returned'))) {
       return;
     }
-    
+
     const description = transaction.description.toLowerCase();
-    
+    console.log('🔍 Processing transaction:', transaction.description, '→', description);
+
     // Only process items that contain "chopine" or "bouteille"
     if (!description.includes('chopine') && !description.includes('bouteille')) {
+      console.log('⏭️ Skipping - no chopine/bouteille:', description);
       return;
     }
-    
+
     // Look for Chopine items
     const chopinePattern = /(\d+)\s+chopines?(?:\s+([^,]*))?/gi;
     let chopineMatch;
@@ -28,6 +30,7 @@ export const calculateReturnableItemsWithDates = (clientTransactions: CreditTran
     while ((chopineMatch = chopinePattern.exec(description)) !== null) {
       const quantity = parseInt(chopineMatch[1]);
       const brand = chopineMatch[2]?.trim() || '';
+      console.log('🍺 Chopine match:', { quantity, brand, fullMatch: chopineMatch[0] });
       // Capitalize brand name properly - handle alphanumeric strings like "7seas"
       const capitalizedBrand = brand ? brand.split(' ').map((word: string) => {
         const firstLetterIndex = word.search(/[a-zA-Z]/);
@@ -41,6 +44,7 @@ export const calculateReturnableItemsWithDates = (clientTransactions: CreditTran
         }
       }).join(' ') : '';
       const key = capitalizedBrand ? `Chopine ${capitalizedBrand}` : 'Chopine';
+      console.log('🔑 Chopine key:', key);
 
       if (!returnableItems[key]) {
         returnableItems[key] = 0;
@@ -55,6 +59,7 @@ export const calculateReturnableItemsWithDates = (clientTransactions: CreditTran
     while ((bouteilleMatch = bouteillePattern.exec(description)) !== null) {
       const quantity = parseInt(bouteilleMatch[1]);
       const brand = bouteilleMatch[2]?.trim() || '';
+      console.log('🍾 Bouteille match:', { quantity, brand, fullMatch: bouteilleMatch[0] });
       // Capitalize brand name properly - handle alphanumeric strings like "7seas"
       const capitalizedBrand = brand ? brand.split(' ').map((word: string) => {
         const firstLetterIndex = word.search(/[a-zA-Z]/);
@@ -68,6 +73,7 @@ export const calculateReturnableItemsWithDates = (clientTransactions: CreditTran
         }
       }).join(' ') : '';
       const key = capitalizedBrand ? `Bouteille ${capitalizedBrand}` : 'Bouteille';
+      console.log('🔑 Bouteille key:', key);
 
       if (!returnableItems[key]) {
         returnableItems[key] = 0;
@@ -390,14 +396,16 @@ export const calculateReturnableItems = (clientTransactions: CreditTransaction[]
     if (transaction.type === 'payment' || transaction.description.toLowerCase().includes('returned') || transaction.description.toLowerCase().includes('return') || (transaction.description.toLowerCase().includes('caisse') && transaction.description.toLowerCase().includes('returned'))) {
       return;
     }
-    
+
     const description = transaction.description.toLowerCase();
-    
+    console.log('🔍 Processing transaction:', transaction.description, '→', description);
+
     // Only process items that contain "chopine" or "bouteille"
     if (!description.includes('chopine') && !description.includes('bouteille')) {
+      console.log('⏭️ Skipping - no chopine/bouteille:', description);
       return;
     }
-    
+
     // Look for Chopine items
     const chopinePattern = /(\d+)\s+chopines?(?:\s+([^,]*))?/gi;
     let chopineMatch;
@@ -405,6 +413,7 @@ export const calculateReturnableItems = (clientTransactions: CreditTransaction[]
     while ((chopineMatch = chopinePattern.exec(description)) !== null) {
       const quantity = parseInt(chopineMatch[1]);
       const brand = chopineMatch[2]?.trim() || '';
+      console.log('🍺 Chopine match:', { quantity, brand, fullMatch: chopineMatch[0] });
       // Capitalize brand name properly - handle alphanumeric strings like "7seas"
       const capitalizedBrand = brand ? brand.split(' ').map((word: string) => {
         const firstLetterIndex = word.search(/[a-zA-Z]/);
@@ -418,6 +427,7 @@ export const calculateReturnableItems = (clientTransactions: CreditTransaction[]
         }
       }).join(' ') : '';
       const key = capitalizedBrand ? `Chopine ${capitalizedBrand}` : 'Chopine';
+      console.log('🔑 Chopine key:', key);
 
       if (!returnableItems[key]) {
         returnableItems[key] = 0;
@@ -432,6 +442,7 @@ export const calculateReturnableItems = (clientTransactions: CreditTransaction[]
     while ((bouteilleMatch = bouteillePattern.exec(description)) !== null) {
       const quantity = parseInt(bouteilleMatch[1]);
       const brand = bouteilleMatch[2]?.trim() || '';
+      console.log('🍾 Bouteille match:', { quantity, brand, fullMatch: bouteilleMatch[0] });
       // Capitalize brand name properly - handle alphanumeric strings like "7seas"
       const capitalizedBrand = brand ? brand.split(' ').map((word: string) => {
         const firstLetterIndex = word.search(/[a-zA-Z]/);
@@ -445,6 +456,7 @@ export const calculateReturnableItems = (clientTransactions: CreditTransaction[]
         }
       }).join(' ') : '';
       const key = capitalizedBrand ? `Bouteille ${capitalizedBrand}` : 'Bouteille';
+      console.log('🔑 Bouteille key:', key);
 
       if (!returnableItems[key]) {
         returnableItems[key] = 0;
