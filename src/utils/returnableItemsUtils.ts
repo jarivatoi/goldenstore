@@ -22,7 +22,7 @@ export const calculateReturnableItemsWithDates = (clientTransactions: CreditTran
     }
     
     // Look for Chopine items
-    const chopinePattern = /(\d+)\s+chopines?(?:\s+([^,()]*?))?(?=\s|$|,|\.)/gi;
+    const chopinePattern = /(\d+)\s+chopines?(?:\s+([^\-,]*?))?(?=\s*(?:\-|$|,|\.))/gi;
     let chopineMatch;
 
     while ((chopineMatch = chopinePattern.exec(description)) !== null) {
@@ -35,7 +35,7 @@ export const calculateReturnableItemsWithDates = (clientTransactions: CreditTran
         word.charAt(0).toUpperCase() + word.slice(1).toLowerCase()
       ).join(' ') : '';
       const key = capitalizedBrand ? `Chopine ${capitalizedBrand}` : 'Chopine';
-      
+
       if (!returnableItems[key]) {
         returnableItems[key] = 0;
       }
@@ -44,7 +44,7 @@ export const calculateReturnableItemsWithDates = (clientTransactions: CreditTran
     
     // Look for Bouteille items - handle multiple patterns: "quantity bouteille brand" and "quantity size bouteille brand"
     // Pattern 1: "1 Bouteille 1.5L Pepsi" or "1 Bouteille Pepsi" (updated to match anywhere in string)
-    const bouteillePattern1 = /(\d+)\s+bouteilles?(?:\s+(\d+(?:\.\d+)?[Ll]))?(?:\s+([^,()]*?))?(?=\s|$|,|\.)/gi;
+    const bouteillePattern1 = /(\d+)\s+bouteilles?(?:\s+(\d+(?:\.\d+)?[Ll]))?(?:\s+([^\-,]*?))?(?=\s*(?:\-|$|,|\.)?)/gi;
     let bouteilleMatch1;
     
     while ((bouteilleMatch1 = bouteillePattern1.exec(description)) !== null) {
@@ -104,7 +104,7 @@ export const calculateReturnableItemsWithDates = (clientTransactions: CreditTran
           // Look for size before the bouteille word
           const sizeMatch = description.substring(0, standaloneMatch.index).match(/(\d+(?:\.\d+)?[Ll])$/i);
           // Look for brand after the bouteille word
-          const brandMatch = description.substring(standaloneMatch.index).match(/^bouteilles?\s+(\d+(?:\.\d+)?[Ll])?\s*([^,()]*)/i);
+          const brandMatch = description.substring(standaloneMatch.index).match(/^bouteilles?\s+(\d+(?:\.\d+)?[Ll])?\s*([^\-,]*)/i);
           let sizeFromBrand = brandMatch?.[1]?.trim() || '';
           let brand = brandMatch?.[2]?.trim() || '';
 
@@ -162,7 +162,7 @@ export const calculateReturnableItemsWithDates = (clientTransactions: CreditTran
 
         if (!isPartOfQuantified) {
           // Look for brand after the chopine word
-          const brandMatch = description.substring(standaloneMatch.index).match(/^chopines?\s+([^,()]*)/i);
+          const brandMatch = description.substring(standaloneMatch.index).match(/^chopines?\s+([^\-,]*)/i);
           let brand = brandMatch?.[1]?.trim() || '';
           brand = brand.replace(/\s*[-–]\s*.*/i, '').trim();
 
@@ -446,7 +446,7 @@ export const calculateReturnableItems = (clientTransactions: CreditTransaction[]
     }
     
     // Look for Chopine items
-    const chopinePattern = /(\d+)\s+chopines?(?:\s+([^,()]*?))?(?=\s|$|,|\.)/gi;
+    const chopinePattern = /(\d+)\s+chopines?(?:\s+([^\-,]*?))?(?=\s*(?:\-|$|,|\.))/gi;
     let chopineMatch;
 
     while ((chopineMatch = chopinePattern.exec(description)) !== null) {
@@ -459,7 +459,7 @@ export const calculateReturnableItems = (clientTransactions: CreditTransaction[]
         word.charAt(0).toUpperCase() + word.slice(1).toLowerCase()
       ).join(' ') : '';
       const key = capitalizedBrand ? `Chopine ${capitalizedBrand}` : 'Chopine';
-      
+
       if (!returnableItems[key]) {
         returnableItems[key] = 0;
       }
@@ -468,7 +468,7 @@ export const calculateReturnableItems = (clientTransactions: CreditTransaction[]
     
     // Look for Bouteille items - handle multiple patterns: "quantity bouteille brand" and "quantity size bouteille brand"
     // Pattern 1: "1 Bouteille 1.5L Pepsi" or "1 Bouteille Pepsi" (updated to match anywhere in string)
-    const bouteillePattern1 = /(\d+)\s+bouteilles?(?:\s+(\d+(?:\.\d+)?[Ll]))?(?:\s+([^,()]*?))?(?=\s|$|,|\.)/gi;
+    const bouteillePattern1 = /(\d+)\s+bouteilles?(?:\s+(\d+(?:\.\d+)?[Ll]))?(?:\s+([^\-,]*?))?(?=\s*(?:\-|$|,|\.)?)/gi;
     let bouteilleMatch1;
     
     while ((bouteilleMatch1 = bouteillePattern1.exec(description)) !== null) {
@@ -528,7 +528,7 @@ export const calculateReturnableItems = (clientTransactions: CreditTransaction[]
           // Look for size before the bouteille word
           const sizeMatch = description.substring(0, standaloneMatch.index).match(/(\d+(?:\.\d+)?[Ll])$/i);
           // Look for brand after the bouteille word
-          const brandMatch = description.substring(standaloneMatch.index).match(/^bouteilles?\s+(\d+(?:\.\d+)?[Ll])?\s*([^,()]*)/i);
+          const brandMatch = description.substring(standaloneMatch.index).match(/^bouteilles?\s+(\d+(?:\.\d+)?[Ll])?\s*([^\-,]*)/i);
           let sizeFromBrand = brandMatch?.[1]?.trim() || '';
           let brand = brandMatch?.[2]?.trim() || '';
 
@@ -586,7 +586,7 @@ export const calculateReturnableItems = (clientTransactions: CreditTransaction[]
 
         if (!isPartOfQuantified) {
           // Look for brand after the chopine word
-          const brandMatch = description.substring(standaloneMatch.index).match(/^chopines?\s+([^,()]*)/i);
+          const brandMatch = description.substring(standaloneMatch.index).match(/^chopines?\s+([^\-,]*)/i);
           let brand = brandMatch?.[1]?.trim() || '';
           brand = brand.replace(/\s*[-–]\s*.*/i, '').trim();
 
