@@ -356,13 +356,25 @@ const ClientCard: React.FC<ClientCardProps> = ({ client, onLongPress, onQuickAdd
           className="fixed inset-0 flex items-center justify-center z-[10000]"
           onClick={() => setShowZoomedImage(false)}
           onTouchEnd={() => setShowZoomedImage(false)}
-          style={{ backgroundColor: 'transparent' }}
+          onContextMenu={(e) => e.preventDefault()}
+          style={{
+            backgroundColor: 'transparent',
+            userSelect: 'none',
+            WebkitUserSelect: 'none',
+            WebkitTouchCallout: 'none'
+          }}
         >
           <img
             src={client.profilePictureUrl}
             alt={client.name}
             className="max-w-full max-h-screen object-contain"
-            style={{ pointerEvents: 'none' }}
+            style={{
+              pointerEvents: 'none',
+              userSelect: 'none',
+              WebkitUserSelect: 'none',
+              WebkitTouchCallout: 'none'
+            }}
+            onContextMenu={(e) => e.preventDefault()}
           />
         </div>,
         document.body
