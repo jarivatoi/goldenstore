@@ -58,6 +58,8 @@ const ClientCard: React.FC<ClientCardProps> = ({ client, onLongPress, onQuickAdd
   const cardRef = useRef<HTMLDivElement>(null);
   const lastTapRef = useRef<number>(0);
   const tapCountRef = useRef<number>(0);
+  const [showZoomedImage, setShowZoomedImage] = useState(false);
+  const zoomPressTimer = useRef<NodeJS.Timeout | null>(null);
 
   const totalDebt = getClientTotalDebt(client.id);
   const bottlesOwed = getClientBottlesOwed(client.id);
@@ -128,6 +130,30 @@ const ClientCard: React.FC<ClientCardProps> = ({ client, onLongPress, onQuickAdd
     setShowActions(true);
   };
 
+  // Zoom handlers for profile picture
+  const handleImagePressStart = (e: React.MouseEvent | React.TouchEvent) => {
+    e.stopPropagation();
+    if (!client.profilePictureUrl) return;
+
+    // Clear card long press timer
+    if (longPressTimer.current) {
+      clearTimeout(longPressTimer.current);
+      longPressTimer.current = null;
+    }
+
+    zoomPressTimer.current = setTimeout(() => {
+      setShowZoomedImage(true);
+    }, 500);
+  };
+
+  const handleImagePressEnd = (e: React.MouseEvent | React.TouchEvent) => {
+    e.stopPropagation();
+    if (zoomPressTimer.current) {
+      clearTimeout(zoomPressTimer.current);
+      zoomPressTimer.current = null;
+    }
+  };
+
   return (
     <>
       <div
@@ -157,15 +183,21 @@ const ClientCard: React.FC<ClientCardProps> = ({ client, onLongPress, onQuickAdd
           <div className="flex justify-center mb-2">
             {client.profilePictureUrl ? (
               <div
-                className="w-24 h-24 rounded-full overflow-hidden border-4 border-white shadow-lg relative flex-shrink-0"
+                className="w-24 h-24 rounded-full overflow-hidden border-4 border-white shadow-lg relative flex-shrink-0 cursor-zoom-in"
                 style={{
                   background: `url(${client.profilePictureUrl})`,
                   backgroundSize: 'cover',
                   backgroundPosition: 'center'
                 }}
+                onMouseDown={handleImagePressStart}
+                onMouseUp={handleImagePressEnd}
+                onMouseLeave={handleImagePressEnd}
+                onTouchStart={handleImagePressStart}
+                onTouchEnd={handleImagePressEnd}
+                onTouchCancel={handleImagePressEnd}
               >
                 {/* Vignette overlay */}
-                <div className="absolute inset-0 rounded-full" style={{
+                <div className="absolute inset-0 rounded-full pointer-events-none" style={{
                   boxShadow: 'inset 0 0 15px rgba(0,0,0,0.3)'
                 }}></div>
               </div>
@@ -315,6 +347,26 @@ const ClientCard: React.FC<ClientCardProps> = ({ client, onLongPress, onQuickAdd
           onResetCalculator={onResetCalculator}
           onViewDetails={() => setShowDetails(true)}
         />
+      )}
+
+      {/* Zoomed Image Modal */}
+      {showZoomedImage && client.profilePictureUrl && (
+        <div
+          className="fixed inset-0 bg-black bg-opacity-90 flex items-center justify-center z-[10000] p-4"
+          onClick={() => setShowZoomedImage(false)}
+          onTouchEnd={() => setShowZoomedImage(false)}
+        >
+          <div className="relative max-w-full max-h-full">
+            <img
+              src={client.profilePictureUrl}
+              alt={`${client.name} profile`}
+              className="max-w-full max-h-[90vh] object-contain rounded-lg"
+            />
+            <div className="absolute top-4 right-4 text-white text-sm bg-black bg-opacity-50 px-3 py-1 rounded">
+              Tap to close
+            </div>
+          </div>
+        </div>
       )}
     </>
   );
