@@ -93,12 +93,20 @@ export const calculateReturnableItemsWithDates = (clientTransactions: CreditTran
 
       if (!isBouteillePartOfQuantified) {
         const sizeMatch = description.substring(0, standaloneBouteilleMatch.index).match(/(\d+(?:\.\d+)?[Ll])$/i);
-        const brandMatch = description.substring(standaloneBouteilleMatch.index).match(/^bouteilles?\s*(\d+(?:\.\d+)?[Ll])?\s*([^,()]*)/i);
-        let sizeFromBrand = brandMatch?.[1]?.trim() || '';
-        let brand = brandMatch?.[2]?.trim() || '';
+        const afterBouteilleMatch = description.substring(standaloneBouteilleMatch.index).match(/^bouteilles?\s*(.*)$/i);
+        let remainder = afterBouteilleMatch?.[1]?.trim() || '';
 
-        if (!sizeMatch && sizeFromBrand) {
-          sizeFromBrand = sizeFromBrand.replace(/l$/gi, 'L');
+        let sizeFromBrand = '';
+        let brand = '';
+
+        if (remainder) {
+          const sizePattern = remainder.match(/^(\d+(?:\.\d+)?[Ll])\s*(.*)$/i);
+          if (sizePattern && sizePattern[1]) {
+            sizeFromBrand = sizePattern[1].replace(/l$/gi, 'L');
+            brand = sizePattern[2]?.trim() || '';
+          } else {
+            brand = remainder.replace(/[,()].*/, '').trim();
+          }
         }
 
         const finalSize = sizeMatch ? sizeMatch[1].replace(/l$/gi, 'L') : sizeFromBrand;
@@ -493,12 +501,20 @@ export const calculateReturnableItems = (clientTransactions: CreditTransaction[]
 
       if (!isBouteillePartOfQuantified) {
         const sizeMatch = description.substring(0, standaloneBouteilleMatch.index).match(/(\d+(?:\.\d+)?[Ll])$/i);
-        const brandMatch = description.substring(standaloneBouteilleMatch.index).match(/^bouteilles?\s*(\d+(?:\.\d+)?[Ll])?\s*([^,()]*)/i);
-        let sizeFromBrand = brandMatch?.[1]?.trim() || '';
-        let brand = brandMatch?.[2]?.trim() || '';
+        const afterBouteilleMatch = description.substring(standaloneBouteilleMatch.index).match(/^bouteilles?\s*(.*)$/i);
+        let remainder = afterBouteilleMatch?.[1]?.trim() || '';
 
-        if (!sizeMatch && sizeFromBrand) {
-          sizeFromBrand = sizeFromBrand.replace(/l$/gi, 'L');
+        let sizeFromBrand = '';
+        let brand = '';
+
+        if (remainder) {
+          const sizePattern = remainder.match(/^(\d+(?:\.\d+)?[Ll])\s*(.*)$/i);
+          if (sizePattern && sizePattern[1]) {
+            sizeFromBrand = sizePattern[1].replace(/l$/gi, 'L');
+            brand = sizePattern[2]?.trim() || '';
+          } else {
+            brand = remainder.replace(/[,()].*/, '').trim();
+          }
         }
 
         const finalSize = sizeMatch ? sizeMatch[1].replace(/l$/gi, 'L') : sizeFromBrand;
