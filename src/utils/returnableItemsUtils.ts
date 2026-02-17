@@ -135,10 +135,15 @@ export const calculateReturnableItemsWithDates = (clientTransactions: CreditTran
           brand = brandCleanMatch[1].trim();
         }
 
-        // Capitalize brand name properly
-        const capitalizedBrand = brand ? brand.split(' ').map((word: string) =>
-          word.charAt(0).toUpperCase() + word.slice(1).toLowerCase()
-        ).join(' ') : '';
+        // Capitalize brand name properly (handle brands starting with numbers)
+        const capitalizedBrand = brand ? brand.split(' ').map((word: string) => {
+          if (!word) return word;
+          // If word starts with a digit, keep it lowercase
+          if (/^\d/.test(word)) {
+            return word.toLowerCase();
+          }
+          return word.charAt(0).toUpperCase() + word.slice(1).toLowerCase();
+        }).join(' ') : '';
 
         const key = capitalizedBrand ? `Bouteille ${capitalizedBrand}` : 'Bouteille';
 
@@ -182,6 +187,16 @@ export const calculateReturnableItemsWithDates = (clientTransactions: CreditTran
         const brandMatch = description.substring(standaloneMatch.index).match(/^chopines?\s+([^,()]*)/i);
         let brand = brandMatch?.[1]?.trim() || '';
 
+        if (DEBUG) {
+          console.log('[DEBUG] Chopine standalone:', {
+            description,
+            match: standaloneMatch[0],
+            brand,
+            brandMatch: brandMatch ? brandMatch[0] : null,
+            substringUsed: description.substring(standaloneMatch.index)
+          });
+        }
+
         // Extract only the brand name, stop at common delimiters (dash, parentheses, dates, "returned")
         // Use greedy quantifier to properly capture full brand names like "7seas" or "7les"
         const brandCleanMatch = brand.match(/^([a-zA-Z0-9\s]+)(?:\s*[-–—(]|\s+returned|\s+\d{1,2}\/|$)/i);
@@ -189,10 +204,23 @@ export const calculateReturnableItemsWithDates = (clientTransactions: CreditTran
           brand = brandCleanMatch[1].trim();
         }
 
-        // Capitalize brand name properly
-        const capitalizedBrand = brand ? brand.split(' ').map((word: string) =>
-          word.charAt(0).toUpperCase() + word.slice(1).toLowerCase()
-        ).join(' ') : '';
+        // Capitalize brand name properly (handle brands starting with numbers)
+        const capitalizedBrand = brand ? brand.split(' ').map((word: string) => {
+          if (!word) return word;
+          // If word starts with a digit, keep it lowercase
+          if (/^\d/.test(word)) {
+            return word.toLowerCase();
+          }
+          return word.charAt(0).toUpperCase() + word.slice(1).toLowerCase();
+        }).join(' ') : '';
+
+        if (DEBUG) {
+          console.log('[DEBUG] Chopine brand processing:', {
+            rawBrand: brand,
+            capitalizedBrand,
+            brandCleanMatch: brandCleanMatch ? brandCleanMatch[0] : null
+          });
+        }
 
         const key = capitalizedBrand ? `Chopine ${capitalizedBrand}` : 'Chopine';
 
@@ -634,10 +662,15 @@ export const calculateReturnableItems = (clientTransactions: CreditTransaction[]
           brand = brandCleanMatch[1].trim();
         }
 
-        // Capitalize brand name properly
-        const capitalizedBrand = brand ? brand.split(' ').map((word: string) =>
-          word.charAt(0).toUpperCase() + word.slice(1).toLowerCase()
-        ).join(' ') : '';
+        // Capitalize brand name properly (handle brands starting with numbers)
+        const capitalizedBrand = brand ? brand.split(' ').map((word: string) => {
+          if (!word) return word;
+          // If word starts with a digit, keep it lowercase
+          if (/^\d/.test(word)) {
+            return word.toLowerCase();
+          }
+          return word.charAt(0).toUpperCase() + word.slice(1).toLowerCase();
+        }).join(' ') : '';
 
         const key = capitalizedBrand ? `Bouteille ${capitalizedBrand}` : 'Bouteille';
 
@@ -681,6 +714,16 @@ export const calculateReturnableItems = (clientTransactions: CreditTransaction[]
         const brandMatch = description.substring(standaloneMatch.index).match(/^chopines?\s+([^,()]*)/i);
         let brand = brandMatch?.[1]?.trim() || '';
 
+        if (DEBUG) {
+          console.log('[DEBUG] Chopine standalone:', {
+            description,
+            match: standaloneMatch[0],
+            brand,
+            brandMatch: brandMatch ? brandMatch[0] : null,
+            substringUsed: description.substring(standaloneMatch.index)
+          });
+        }
+
         // Extract only the brand name, stop at common delimiters (dash, parentheses, dates, "returned")
         // Use greedy quantifier to properly capture full brand names like "7seas" or "7les"
         const brandCleanMatch = brand.match(/^([a-zA-Z0-9\s]+)(?:\s*[-–—(]|\s+returned|\s+\d{1,2}\/|$)/i);
@@ -688,10 +731,23 @@ export const calculateReturnableItems = (clientTransactions: CreditTransaction[]
           brand = brandCleanMatch[1].trim();
         }
 
-        // Capitalize brand name properly
-        const capitalizedBrand = brand ? brand.split(' ').map((word: string) =>
-          word.charAt(0).toUpperCase() + word.slice(1).toLowerCase()
-        ).join(' ') : '';
+        // Capitalize brand name properly (handle brands starting with numbers)
+        const capitalizedBrand = brand ? brand.split(' ').map((word: string) => {
+          if (!word) return word;
+          // If word starts with a digit, keep it lowercase
+          if (/^\d/.test(word)) {
+            return word.toLowerCase();
+          }
+          return word.charAt(0).toUpperCase() + word.slice(1).toLowerCase();
+        }).join(' ') : '';
+
+        if (DEBUG) {
+          console.log('[DEBUG] Chopine brand processing:', {
+            rawBrand: brand,
+            capitalizedBrand,
+            brandCleanMatch: brandCleanMatch ? brandCleanMatch[0] : null
+          });
+        }
 
         const key = capitalizedBrand ? `Chopine ${capitalizedBrand}` : 'Chopine';
 
