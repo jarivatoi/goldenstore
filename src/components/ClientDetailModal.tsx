@@ -29,7 +29,9 @@ const ClientDetailModal: React.FC<ClientDetailModalProps> = ({ client, onClose }
   const [forceUpdate, setForceUpdate] = useState(0);
   const [profilePicture, setProfilePicture] = useState<string | undefined>(client.profilePictureUrl);
   const [imageForCropping, setImageForCropping] = useState<string | null>(null);
+  const [showZoomedImage, setShowZoomedImage] = useState(false);
   const fileInputRef = useRef<HTMLInputElement>(null);
+  const longPressTimerRef = useRef<NodeJS.Timeout | null>(null);
   
   // Listen for credit data changes to force re-render
   React.useEffect(() => {
@@ -144,16 +146,39 @@ const ClientDetailModal: React.FC<ClientDetailModalProps> = ({ client, onClose }
   };
 
   const handleRemoveProfilePicture = async () => {
-    try {
-      setProfilePicture(undefined);
-      const updatedClient = {
-        ...client,
-        profilePictureUrl: undefined
-      };
-      await updateClient(updatedClient, true);
-      showAlert({ type: 'success', message: 'Profile picture removed' });
-    } catch (error) {
-      showAlert({ type: 'error', message: 'Failed to remove profile picture' });
+    setModal({
+      type: 'confirm',
+      title: 'Remove Profile Picture',
+      message: `Remove profile picture for ${client.name}?`,
+      onConfirm: async () => {
+        try {
+          setModal({ type: null, title: '', message: '' });
+          setProfilePicture(undefined);
+          const updatedClient = {
+            ...client,
+            profilePictureUrl: undefined
+          };
+          await updateClient(updatedClient, true);
+          showAlert({ type: 'success', message: 'Profile picture removed' });
+        } catch (error) {
+          showAlert({ type: 'error', message: 'Failed to remove profile picture' });
+        }
+      },
+      onCancel: () => setModal({ type: null, title: '', message: '' })
+    });
+  };
+
+  const handlePressStart = () => {
+    if (!profilePicture) return;
+    longPressTimerRef.current = setTimeout(() => {
+      setShowZoomedImage(true);
+    }, 500);
+  };
+
+  const handlePressEnd = () => {
+    if (longPressTimerRef.current) {
+      clearTimeout(longPressTimerRef.current);
+      longPressTimerRef.current = null;
     }
   };
 
@@ -258,7 +283,7 @@ const ClientDetailModal: React.FC<ClientDetailModalProps> = ({ client, onClose }
             {/* Profile Picture */}
             <div className="relative group">
               <div
-                className="w-28 h-28 rounded-full overflow-hidden border-4 border-gray-200 shadow-lg relative"
+                className="w-28 h-28 rounded-full overflow-hidden border-4 border-gray-200 shadow-lg relative cursor-pointer"
                 style={{
                   background: profilePicture
                     ? `url(${profilePicture})`
@@ -266,6 +291,12 @@ const ClientDetailModal: React.FC<ClientDetailModalProps> = ({ client, onClose }
                   backgroundSize: 'cover',
                   backgroundPosition: 'center'
                 }}
+                onMouseDown={handlePressStart}
+                onMouseUp={handlePressEnd}
+                onMouseLeave={handlePressEnd}
+                onTouchStart={handlePressStart}
+                onTouchEnd={handlePressEnd}
+                onTouchCancel={handlePressEnd}
               >
                 {!profilePicture && (
                   <div className="absolute inset-0 flex items-center justify-center">
@@ -663,6 +694,28 @@ const ClientDetailModal: React.FC<ClientDetailModalProps> = ({ client, onClose }
           onComplete={handleCroppedImage}
           onCancel={() => setImageForCropping(null)}
         />
+      )}
+      {showZoomedImage && profilePicture && createPortal(
+        <div
+          className="fixed inset-0 bg-black bg-opacity-90 flex items-center justify-center z-[10000]"
+          onClick={() => setShowZoomedImage(false)}
+          onTouchEnd={() => setShowZoomedImage(false)}
+        >
+          <div className="relative max-w-[90vw] max-h-[90vh] flex items-center justify-center">
+            <img
+              src={profilePicture}
+              alt={client.name}
+              className="max-w-full max-h-[90vh] object-contain rounded-lg shadow-2xl"
+            />
+            <button
+              onClick={() => setShowZoomedImage(false)}
+              className="absolute top-4 right-4 p-2 bg-white bg-opacity-20 hover:bg-opacity-30 rounded-full transition-colors"
+            >
+              <X size={24} className="text-white" />
+            </button>
+          </div>
+        </div>,
+        document.body
       )}
     </>
   );
