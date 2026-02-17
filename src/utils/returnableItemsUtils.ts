@@ -1,5 +1,14 @@
 import { CreditTransaction } from '../types';
 
+const properCapitalize = (word: string): string => {
+  if (!word) return word;
+  const firstChar = word.charAt(0);
+  if (/[a-zA-Z]/.test(firstChar)) {
+    return firstChar.toUpperCase() + word.slice(1).toLowerCase();
+  }
+  return word.toLowerCase();
+};
+
 /**
  * Calculates returnable items for a client
  * @param clientTransactions - Array of client transactions
@@ -30,7 +39,7 @@ export const calculateReturnableItemsWithDates = (clientTransactions: CreditTran
       const brand = chopineMatch[2]?.trim() || '';
       // Capitalize brand name properly
       const capitalizedBrand = brand ? brand.split(' ').map((word: string) => 
-        word.charAt(0).toUpperCase() + word.slice(1).toLowerCase()
+        properCapitalize(word)
       ).join(' ') : '';
       const key = capitalizedBrand ? `Chopine ${capitalizedBrand}` : 'Chopine';
       
@@ -53,7 +62,7 @@ export const calculateReturnableItemsWithDates = (clientTransactions: CreditTran
 
       // Capitalize brand name properly
       const capitalizedBrand = brand ? brand.split(' ').map((word: string) =>
-        word.charAt(0).toUpperCase() + word.slice(1).toLowerCase()
+        properCapitalize(word)
       ).join(' ') : '';
 
       const key = capitalizedBrand ? `Bouteille ${capitalizedBrand}` : 'Bouteille';
@@ -89,7 +98,7 @@ export const calculateReturnableItemsWithDates = (clientTransactions: CreditTran
         brand = brand.replace(/[,()].*/, '').trim();
 
         const capitalizedBrand = brand ? brand.split(' ').map((word: string) =>
-          word.charAt(0).toUpperCase() + word.slice(1).toLowerCase()
+          properCapitalize(word)
         ).join(' ') : '';
 
         const key = capitalizedBrand ? `Bouteille ${capitalizedBrand}` : 'Bouteille';
@@ -123,7 +132,7 @@ export const calculateReturnableItemsWithDates = (clientTransactions: CreditTran
         brand = brand.replace(/[,()].*/, '').trim();
 
         const capitalizedBrand = brand ? brand.split(' ').map((word: string) =>
-          word.charAt(0).toUpperCase() + word.slice(1).toLowerCase()
+          properCapitalize(word)
         ).join(' ') : '';
 
         const key = capitalizedBrand ? `Chopine ${capitalizedBrand}` : 'Chopine';
@@ -310,7 +319,7 @@ export const calculateReturnableItemsWithDates = (clientTransactions: CreditTran
         const brand = itemType.replace(/^(Chopines?)/i, '').trim();
         // Ensure brand is title case
         const titleCaseBrand = brand ? brand.split(' ').map(word => 
-          word.charAt(0).toUpperCase() + word.slice(1).toLowerCase()
+          properCapitalize(word)
         ).join(' ') : '';
         if (titleCaseBrand) {
           displayText = `${remaining} Chopine${remaining > 1 ? 's' : ''} ${titleCaseBrand}`;
@@ -322,7 +331,7 @@ export const calculateReturnableItemsWithDates = (clientTransactions: CreditTran
         const brand = itemType.replace(/^(Bouteilles?)/i, '').trim();
         // Ensure brand is title case
         const titleCaseBrand = brand ? brand.split(' ').map(word =>
-          word.charAt(0).toUpperCase() + word.slice(1).toLowerCase()
+          properCapitalize(word)
         ).join(' ') : '';
         if (titleCaseBrand) {
           displayText = `${remaining} Bouteille${remaining > 1 ? 's' : ''} ${titleCaseBrand}`;
@@ -332,7 +341,7 @@ export const calculateReturnableItemsWithDates = (clientTransactions: CreditTran
       } else {
         // For other items: use parentheses format with title case
         const titleCaseItemType = itemType.split(' ').map(word => 
-          word.charAt(0).toUpperCase() + word.slice(1).toLowerCase()
+          properCapitalize(word)
         ).join(' ');
         displayText = `${remaining} (${titleCaseItemType})`;
       }
@@ -379,7 +388,7 @@ export const calculateReturnableItems = (clientTransactions: CreditTransaction[]
       const brand = chopineMatch[2]?.trim() || '';
       // Capitalize brand name properly
       const capitalizedBrand = brand ? brand.split(' ').map((word: string) => 
-        word.charAt(0).toUpperCase() + word.slice(1).toLowerCase()
+        properCapitalize(word)
       ).join(' ') : '';
       const key = capitalizedBrand ? `Chopine ${capitalizedBrand}` : 'Chopine';
       
@@ -402,7 +411,7 @@ export const calculateReturnableItems = (clientTransactions: CreditTransaction[]
 
       // Capitalize brand name properly
       const capitalizedBrand = brand ? brand.split(' ').map((word: string) =>
-        word.charAt(0).toUpperCase() + word.slice(1).toLowerCase()
+        properCapitalize(word)
       ).join(' ') : '';
 
       const key = capitalizedBrand ? `Bouteille ${capitalizedBrand}` : 'Bouteille';
@@ -438,7 +447,7 @@ export const calculateReturnableItems = (clientTransactions: CreditTransaction[]
         brand = brand.replace(/[,()].*/, '').trim();
 
         const capitalizedBrand = brand ? brand.split(' ').map((word: string) =>
-          word.charAt(0).toUpperCase() + word.slice(1).toLowerCase()
+          properCapitalize(word)
         ).join(' ') : '';
 
         const key = capitalizedBrand ? `Bouteille ${capitalizedBrand}` : 'Bouteille';
@@ -472,7 +481,7 @@ export const calculateReturnableItems = (clientTransactions: CreditTransaction[]
         brand = brand.replace(/[,()].*/, '').trim();
 
         const capitalizedBrand = brand ? brand.split(' ').map((word: string) =>
-          word.charAt(0).toUpperCase() + word.slice(1).toLowerCase()
+          properCapitalize(word)
         ).join(' ') : '';
 
         const key = capitalizedBrand ? `Chopine ${capitalizedBrand}` : 'Chopine';
@@ -636,7 +645,7 @@ export const calculateReturnableItems = (clientTransactions: CreditTransaction[]
         const brand = itemType.replace(/^(Chopines?)/i, '').trim();
         // Ensure brand is title case
         const titleCaseBrand = brand ? brand.split(' ').map(word => 
-          word.charAt(0).toUpperCase() + word.slice(1).toLowerCase()
+          properCapitalize(word)
         ).join(' ') : '';
         if (titleCaseBrand) {
           displayText = `${remaining} Chopine${remaining > 1 ? 's' : ''} ${titleCaseBrand}`;
@@ -648,7 +657,7 @@ export const calculateReturnableItems = (clientTransactions: CreditTransaction[]
         const brand = itemType.replace(/^(Bouteilles?)/i, '').trim();
         // Ensure brand is title case
         const titleCaseBrand = brand ? brand.split(' ').map(word =>
-          word.charAt(0).toUpperCase() + word.slice(1).toLowerCase()
+          properCapitalize(word)
         ).join(' ') : '';
         if (titleCaseBrand) {
           displayText = `${remaining} Bouteille${remaining > 1 ? 's' : ''} ${titleCaseBrand}`;
@@ -658,7 +667,7 @@ export const calculateReturnableItems = (clientTransactions: CreditTransaction[]
       } else {
         // For other items: use parentheses format with title case
         const titleCaseItemType = itemType.split(' ').map(word => 
-          word.charAt(0).toUpperCase() + word.slice(1).toLowerCase()
+          properCapitalize(word)
         ).join(' ');
         displayText = `${remaining} (${titleCaseItemType})`;
       }
