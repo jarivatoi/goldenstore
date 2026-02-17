@@ -168,18 +168,26 @@ const ClientDetailModal: React.FC<ClientDetailModalProps> = ({ client, onClose }
     });
   };
 
-  const handlePressStart = () => {
+  const handlePressStart = (e: React.MouseEvent | React.TouchEvent) => {
+    e.preventDefault();
     if (!profilePicture) return;
     longPressTimerRef.current = setTimeout(() => {
       setShowZoomedImage(true);
+      document.body.style.overflow = 'hidden';
     }, 500);
   };
 
-  const handlePressEnd = () => {
+  const handlePressEnd = (e: React.MouseEvent | React.TouchEvent) => {
+    e.preventDefault();
     if (longPressTimerRef.current) {
       clearTimeout(longPressTimerRef.current);
       longPressTimerRef.current = null;
     }
+  };
+
+  const handleCloseZoom = () => {
+    setShowZoomedImage(false);
+    document.body.style.overflow = '';
   };
 
   const handleSaveName = async () => {
@@ -289,7 +297,10 @@ const ClientDetailModal: React.FC<ClientDetailModalProps> = ({ client, onClose }
                     ? `url(${profilePicture})`
                     : 'linear-gradient(135deg, #667eea 0%, #764ba2 100%)',
                   backgroundSize: 'cover',
-                  backgroundPosition: 'center'
+                  backgroundPosition: 'center',
+                  userSelect: 'none',
+                  WebkitUserSelect: 'none',
+                  WebkitTouchCallout: 'none'
                 }}
                 onMouseDown={handlePressStart}
                 onMouseUp={handlePressEnd}
@@ -297,6 +308,7 @@ const ClientDetailModal: React.FC<ClientDetailModalProps> = ({ client, onClose }
                 onTouchStart={handlePressStart}
                 onTouchEnd={handlePressEnd}
                 onTouchCancel={handlePressEnd}
+                onContextMenu={(e) => e.preventDefault()}
               >
                 {!profilePicture && (
                   <div className="absolute inset-0 flex items-center justify-center pointer-events-none">
@@ -709,23 +721,59 @@ const ClientDetailModal: React.FC<ClientDetailModalProps> = ({ client, onClose }
       )}
       {showZoomedImage && profilePicture && createPortal(
         <div
-          className="fixed inset-0 bg-black bg-opacity-90 flex items-center justify-center z-[10000]"
-          onClick={() => setShowZoomedImage(false)}
-          onTouchEnd={() => setShowZoomedImage(false)}
+          className="fixed inset-0 flex items-center justify-center z-[10000] overflow-hidden"
+          onClick={(e) => {
+            e.preventDefault();
+            handleCloseZoom();
+          }}
+          onTouchEnd={(e) => {
+            e.preventDefault();
+            handleCloseZoom();
+          }}
+          onTouchStart={(e) => {
+            e.preventDefault();
+          }}
+          onTouchMove={(e) => {
+            e.preventDefault();
+          }}
+          onContextMenu={(e) => {
+            e.preventDefault();
+            e.stopPropagation();
+            return false;
+          }}
+          style={{
+            backgroundColor: 'rgba(0, 0, 0, 0.4)',
+            backdropFilter: 'blur(10px)',
+            WebkitBackdropFilter: 'blur(10px)',
+            userSelect: 'none',
+            WebkitUserSelect: 'none',
+            WebkitTouchCallout: 'none',
+            MozUserSelect: 'none',
+            msUserSelect: 'none',
+            touchAction: 'none'
+          }}
         >
-          <div className="relative max-w-[90vw] max-h-[90vh] flex items-center justify-center">
-            <img
-              src={profilePicture}
-              alt={client.name}
-              className="max-w-full max-h-[90vh] object-contain rounded-lg shadow-2xl"
-            />
-            <button
-              onClick={() => setShowZoomedImage(false)}
-              className="absolute top-4 right-4 p-2 bg-white bg-opacity-20 hover:bg-opacity-30 rounded-full transition-colors"
-            >
-              <X size={24} className="text-white" />
-            </button>
-          </div>
+          <img
+            src={profilePicture}
+            alt={client.name}
+            className="max-w-full max-h-screen object-contain"
+            style={{
+              pointerEvents: 'none',
+              userSelect: 'none',
+              WebkitUserSelect: 'none',
+              WebkitTouchCallout: 'none',
+              MozUserSelect: 'none',
+              msUserSelect: 'none'
+            }}
+            draggable={false}
+            onContextMenu={(e) => {
+              e.preventDefault();
+              e.stopPropagation();
+              return false;
+            }}
+            onTouchStart={(e) => e.preventDefault()}
+            onTouchEnd={(e) => e.preventDefault()}
+          />
         </div>,
         document.body
       )}
