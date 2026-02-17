@@ -152,30 +152,32 @@ const ClientCard: React.FC<ClientCardProps> = ({ client, onLongPress, onQuickAdd
         }}
       >
         {/* Client Header with Profile Picture */}
-        <div className="flex items-center justify-center gap-3 mb-2 sm:mb-3">
-          {/* Profile Picture or Icon */}
-          {client.profilePictureUrl ? (
-            <div
-              className="w-16 h-16 rounded-full overflow-hidden border-3 border-white shadow-lg relative flex-shrink-0"
-              style={{
-                background: `url(${client.profilePictureUrl})`,
-                backgroundSize: 'cover',
-                backgroundPosition: 'center'
-              }}
-            >
-              {/* Vignette overlay */}
-              <div className="absolute inset-0 rounded-full" style={{
-                boxShadow: 'inset 0 0 15px rgba(0,0,0,0.3)'
-              }}></div>
-            </div>
-          ) : (
-            <div className="bg-blue-100 p-2 rounded-full flex-shrink-0">
-              <User size={18} className="text-blue-600 sm:w-5 sm:h-5" />
-            </div>
-          )}
+        <div className="mb-2 sm:mb-3">
+          {/* Profile Picture or Icon - Centered */}
+          <div className="flex justify-center mb-2">
+            {client.profilePictureUrl ? (
+              <div
+                className="w-16 h-16 rounded-full overflow-hidden border-3 border-white shadow-lg relative flex-shrink-0"
+                style={{
+                  background: `url(${client.profilePictureUrl})`,
+                  backgroundSize: 'cover',
+                  backgroundPosition: 'center'
+                }}
+              >
+                {/* Vignette overlay */}
+                <div className="absolute inset-0 rounded-full" style={{
+                  boxShadow: 'inset 0 0 15px rgba(0,0,0,0.3)'
+                }}></div>
+              </div>
+            ) : (
+              <div className="bg-blue-100 p-2 rounded-full flex-shrink-0">
+                <User size={18} className="text-blue-600 sm:w-5 sm:h-5" />
+              </div>
+            )}
+          </div>
 
-          {/* Name and ID */}
-          <div className="flex-1 min-w-0">
+          {/* Name and ID - Centered */}
+          <div className="w-full">
             <h3 className="font-semibold text-gray-800 text-sm sm:text-base">
               <ScrollingText
                 className="font-semibold text-gray-800 text-sm sm:text-base text-center"
