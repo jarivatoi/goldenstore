@@ -93,7 +93,7 @@ export const calculateReturnableItemsWithDates = (clientTransactions: CreditTran
 
       if (!isBouteillePartOfQuantified) {
         const sizeMatch = description.substring(0, standaloneBouteilleMatch.index).match(/(\d+(?:\.\d+)?[Ll])$/i);
-        const brandMatch = description.substring(standaloneBouteilleMatch.index).match(/^bouteilles?\s+(\d+(?:\.\d+)?[Ll])?\s*([^,()]*)/i);
+        const brandMatch = description.substring(standaloneBouteilleMatch.index).match(/^bouteilles?\s*(\d+(?:\.\d+)?[Ll])?\s*([^,()]*)/i);
         let sizeFromBrand = brandMatch?.[1]?.trim() || '';
         let brand = brandMatch?.[2]?.trim() || '';
 
@@ -141,7 +141,7 @@ export const calculateReturnableItemsWithDates = (clientTransactions: CreditTran
       );
 
       if (!isChopinePartOfQuantified) {
-        const brandMatch = description.substring(standaloneChopineMatch.index).match(/^chopines?\s+([^,()]*)/i);
+        const brandMatch = description.substring(standaloneChopineMatch.index).match(/^chopines?\s*([^,()]*)/i);
         const brand = brandMatch?.[1]?.trim() || '';
 
         const capitalizedBrand = brand ? brand.split(' ').map((word: string) =>
@@ -493,7 +493,7 @@ export const calculateReturnableItems = (clientTransactions: CreditTransaction[]
 
       if (!isBouteillePartOfQuantified) {
         const sizeMatch = description.substring(0, standaloneBouteilleMatch.index).match(/(\d+(?:\.\d+)?[Ll])$/i);
-        const brandMatch = description.substring(standaloneBouteilleMatch.index).match(/^bouteilles?\s+(\d+(?:\.\d+)?[Ll])?\s*([^,()]*)/i);
+        const brandMatch = description.substring(standaloneBouteilleMatch.index).match(/^bouteilles?\s*(\d+(?:\.\d+)?[Ll])?\s*([^,()]*)/i);
         let sizeFromBrand = brandMatch?.[1]?.trim() || '';
         let brand = brandMatch?.[2]?.trim() || '';
 
@@ -541,7 +541,7 @@ export const calculateReturnableItems = (clientTransactions: CreditTransaction[]
       );
 
       if (!isChopinePartOfQuantified) {
-        const brandMatch = description.substring(standaloneChopineMatch.index).match(/^chopines?\s+([^,()]*)/i);
+        const brandMatch = description.substring(standaloneChopineMatch.index).match(/^chopines?\s*([^,()]*)/i);
         const brand = brandMatch?.[1]?.trim() || '';
 
         const capitalizedBrand = brand ? brand.split(' ').map((word: string) =>
