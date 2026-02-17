@@ -1,6 +1,6 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import { createPortal } from 'react-dom';
-import { X, Edit2, Minus, Plus, CheckCircle, AlertTriangle, Receipt, Calendar, CreditCard, Filter as FilterIcon } from 'lucide-react';
+import { X, Edit2, Minus, Plus, CheckCircle, AlertTriangle, Receipt, Calendar, CreditCard, Filter as FilterIcon, Camera, Upload } from 'lucide-react';
 import { useCredit } from '../context/CreditContext';
 import { Client } from '../types';
 import { useNotification } from '../context/NotificationContext';
@@ -26,6 +26,8 @@ const ClientDetailModal: React.FC<ClientDetailModalProps> = ({ client, onClose }
     onCancel?: () => void;
   }>({ type: null, title: '', message: '' });
   const [forceUpdate, setForceUpdate] = useState(0);
+  const [profilePicture, setProfilePicture] = useState<string | undefined>(client.profilePictureUrl);
+  const fileInputRef = useRef<HTMLInputElement>(null);
   
   // Listen for credit data changes to force re-render
   React.useEffect(() => {
@@ -89,6 +91,57 @@ const ClientDetailModal: React.FC<ClientDetailModalProps> = ({ client, onClose }
     
     return returnableItems;
   }, [transactions, forceUpdate]);
+
+  const handleProfilePictureChange = async (event: React.ChangeEvent<HTMLInputElement>) => {
+    const file = event.target.files?.[0];
+    if (!file) return;
+
+    // Validate file type
+    if (!file.type.startsWith('image/')) {
+      showAlert('Please select an image file', 'error');
+      return;
+    }
+
+    // Validate file size (max 2MB)
+    if (file.size > 2 * 1024 * 1024) {
+      showAlert('Image size should be less than 2MB', 'error');
+      return;
+    }
+
+    try {
+      // Convert image to base64
+      const reader = new FileReader();
+      reader.onloadend = async () => {
+        const base64String = reader.result as string;
+        setProfilePicture(base64String);
+
+        // Save to database
+        const updatedClient = {
+          ...client,
+          profilePictureUrl: base64String
+        };
+        await updateClient(updatedClient);
+        showAlert('Profile picture updated', 'success');
+      };
+      reader.readAsDataURL(file);
+    } catch (error) {
+      showAlert('Failed to update profile picture', 'error');
+    }
+  };
+
+  const handleRemoveProfilePicture = async () => {
+    try {
+      setProfilePicture(undefined);
+      const updatedClient = {
+        ...client,
+        profilePictureUrl: undefined
+      };
+      await updateClient(updatedClient);
+      showAlert('Profile picture removed', 'success');
+    } catch (error) {
+      showAlert('Failed to remove profile picture', 'error');
+    }
+  };
 
   const handleSaveName = async () => {
     if (!editedName.trim() || editedName.trim() === client.name) {
@@ -186,8 +239,66 @@ const ClientDetailModal: React.FC<ClientDetailModalProps> = ({ client, onClose }
       <div className="bg-white rounded-xl shadow-lg w-full max-w-2xl max-h-[90vh] overflow-hidden select-none">
         
         {/* Header */}
-        <div className="flex justify-between items-center p-6 border-b border-gray-200 select-none">
-          <div>
+        <div className="flex justify-between items-start p-6 border-b border-gray-200 select-none">
+          <div className="flex gap-4 items-start">
+            {/* Profile Picture */}
+            <div className="relative group">
+              <div
+                className="w-24 h-24 rounded-full overflow-hidden border-4 border-gray-200 shadow-lg relative"
+                style={{
+                  background: profilePicture
+                    ? `url(${profilePicture})`
+                    : 'linear-gradient(135deg, #667eea 0%, #764ba2 100%)',
+                  backgroundSize: 'cover',
+                  backgroundPosition: 'center'
+                }}
+              >
+                {!profilePicture && (
+                  <div className="absolute inset-0 flex items-center justify-center">
+                    <span className="text-3xl font-bold text-white">
+                      {client.name.charAt(0).toUpperCase()}
+                    </span>
+                  </div>
+                )}
+                {/* Vignette overlay */}
+                <div className="absolute inset-0 rounded-full" style={{
+                  boxShadow: 'inset 0 0 20px rgba(0,0,0,0.3)'
+                }}></div>
+              </div>
+
+              {/* Upload/Remove buttons overlay */}
+              <div className="absolute inset-0 rounded-full bg-black bg-opacity-0 group-hover:bg-opacity-60 transition-all duration-200 flex items-center justify-center">
+                <div className="opacity-0 group-hover:opacity-100 transition-opacity duration-200 flex gap-2">
+                  <button
+                    onClick={() => fileInputRef.current?.click()}
+                    className="p-2 bg-blue-500 rounded-full hover:bg-blue-600 transition-colors shadow-lg"
+                    title="Upload photo"
+                  >
+                    <Camera size={16} className="text-white" />
+                  </button>
+                  {profilePicture && (
+                    <button
+                      onClick={handleRemoveProfilePicture}
+                      className="p-2 bg-red-500 rounded-full hover:bg-red-600 transition-colors shadow-lg"
+                      title="Remove photo"
+                    >
+                      <X size={16} className="text-white" />
+                    </button>
+                  )}
+                </div>
+              </div>
+
+              <input
+                ref={fileInputRef}
+                type="file"
+                accept="image/*"
+                onChange={handleProfilePictureChange}
+                className="hidden"
+              />
+            </div>
+
+            {/* Name and ID */}
+            <div>
             {!isEditingName ? (
               <div className="flex items-center gap-2 select-none">
                 <h2 className="text-2xl font-semibold text-gray-900 select-none">{client.name}</h2>
@@ -236,10 +347,11 @@ const ClientDetailModal: React.FC<ClientDetailModalProps> = ({ client, onClose }
               </div>
             )}
             <p className="text-gray-600 select-none">Client ID: {client.id}</p>
+            </div>
           </div>
           <div className="flex items-center gap-2">
             {/* Close Button */}
-            <button 
+            <button
               onClick={onClose}
               className="text-gray-500 hover:text-gray-700 transition-colors select-none"
             >

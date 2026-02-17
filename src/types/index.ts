@@ -101,6 +101,7 @@ export interface Client {
   }; // Bottles and chopines owed by client
   createdAt: Date; // When client was first added
   lastTransactionAt: Date; // Last transaction date
+  profilePictureUrl?: string; // Optional profile picture URL (base64 data URL)
 }
 
 /**

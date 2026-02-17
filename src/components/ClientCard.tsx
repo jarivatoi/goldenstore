@@ -151,14 +151,37 @@ const ClientCard: React.FC<ClientCardProps> = ({ client, onLongPress, onQuickAdd
           zIndex: 1
         }}
       >
+        {/* Profile Picture */}
+        <div className="flex justify-center mb-3">
+          <div
+            className="w-20 h-20 rounded-full overflow-hidden border-3 border-white shadow-lg relative"
+            style={{
+              background: client.profilePictureUrl
+                ? `url(${client.profilePictureUrl})`
+                : 'linear-gradient(135deg, #667eea 0%, #764ba2 100%)',
+              backgroundSize: 'cover',
+              backgroundPosition: 'center'
+            }}
+          >
+            {!client.profilePictureUrl && (
+              <div className="absolute inset-0 flex items-center justify-center">
+                <span className="text-2xl font-bold text-white">
+                  {client.name.charAt(0).toUpperCase()}
+                </span>
+              </div>
+            )}
+            {/* Vignette overlay */}
+            <div className="absolute inset-0 rounded-full" style={{
+              boxShadow: 'inset 0 0 15px rgba(0,0,0,0.3)'
+            }}></div>
+          </div>
+        </div>
+
         {/* Client Header */}
         <div className="flex items-center gap-2 sm:gap-3 mb-2 sm:mb-3">
-          <div className="bg-blue-100 p-2 rounded-full flex-shrink-0">
-            <User size={18} className="text-blue-600 sm:w-5 sm:h-5" />
-          </div>
           <div className="flex-1 min-w-0">
             <h3 className="font-semibold text-gray-800 text-sm sm:text-base">
-              <ScrollingText 
+              <ScrollingText
                 className="font-semibold text-gray-800 text-sm sm:text-base text-center"
                 pauseDuration={1}
                 scrollDuration={3}
@@ -169,7 +192,6 @@ const ClientCard: React.FC<ClientCardProps> = ({ client, onLongPress, onQuickAdd
             </h3>
             <p className="text-xs sm:text-sm text-gray-500 text-center">ID: {client.id}</p>
           </div>
-          <div className="w-10 flex-shrink-0"></div>
         </div>
 
         {/* Debt Amount */}
