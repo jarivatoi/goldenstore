@@ -195,16 +195,24 @@ const ClientSearchModal: React.FC<ClientSearchModalProps> = ({
   const handleQuickAction = (action: string) => {
     // Save current description to history for undo
     setDescriptionHistory(prev => [...prev, localDescription]);
-    
+
     // Automatically insert pending number if it exists
-    const newItem = pendingNumber ? `${pendingNumber} ${action}` : action;
-    
+    // For Chopine and Bouteille without a pending number, default to "1"
+    let newItem: string;
+    if (pendingNumber) {
+      newItem = `${pendingNumber} ${action}`;
+    } else if (action === 'Chopine' || action === 'Bouteille') {
+      newItem = `1 ${action}`;
+    } else {
+      newItem = action;
+    }
+
     if (localDescription.trim() === '') {
       updateDescription(newItem + ' ');
     } else {
       updateDescription(prev => prev + ', ' + newItem + ' ');
     }
-    
+
     // Clear pending number after use
     setPendingNumber('');
   };

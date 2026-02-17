@@ -1,350 +1,242 @@
 import { CreditTransaction } from '../types';
 
 /**
- * Calculates returnable items for a client
+ * SIMPLIFIED RETURNABLE ITEMS PROCESSING
+ * =====================================
+ *
+ * Rules:
+ * 1. Split description by comma
+ * 2. For each segment, look for "Chopine" or "Bouteille"
+ * 3. Everything BEFORE = quantity (default 1 if no number)
+ * 4. Everything AFTER = brand
+ * 5. Format: [quantity] Chopine/Bouteille [brand]
+ */
+
+interface ReturnableItem {
+  quantity: number;
+  type: 'Chopine' | 'Bouteille';
+  brand: string;
+}
+
+/**
+ * Parses a description segment and extracts returnable items
+ */
+function parseReturnableSegment(segment: string): ReturnableItem | null {
+  const cleaned = segment.trim();
+
+  // Check if contains Chopine or Bouteille
+  const hasChopine = /chopine/i.test(cleaned);
+  const hasBouteille = /bouteille/i.test(cleaned);
+
+  if (!hasChopine && !hasBouteille) {
+    return null;
+  }
+
+  const type = hasChopine ? 'Chopine' : 'Bouteille';
+  const keyword = hasChopine ? 'chopine' : 'bouteille';
+
+  // Split by the keyword (case insensitive)
+  const regex = new RegExp(keyword, 'i');
+  const parts = cleaned.split(regex);
+
+  if (parts.length < 2) {
+    return null;
+  }
+
+  // Everything before keyword = quantity
+  const beforeKeyword = parts[0].trim();
+  let quantity = 1;
+
+  // Extract number from before part
+  const numberMatch = beforeKeyword.match(/(\d+)/);
+  if (numberMatch) {
+    quantity = parseInt(numberMatch[1]);
+  }
+
+  // Everything after keyword = brand (already capitalized in description)
+  const brand = parts[1].trim();
+
+  return {
+    quantity,
+    type,
+    brand
+  };
+}
+
+/**
+ * Process description and extract all returnable items
+ */
+function extractReturnableItems(description: string): { [key: string]: number } {
+  const items: { [key: string]: number } = {};
+
+  // Split by comma
+  const segments = description.split(',');
+
+  for (const segment of segments) {
+    const item = parseReturnableSegment(segment);
+
+    if (item) {
+      // Create key: "Chopine Brand" or "Bouteille Brand"
+      const key = item.brand ? `${item.type} ${item.brand}` : item.type;
+
+      if (!items[key]) {
+        items[key] = 0;
+      }
+      items[key] += item.quantity;
+    }
+  }
+
+  return items;
+}
+
+/**
+ * Process "Returned:" transactions to extract returned quantities
+ */
+function extractReturnedItems(description: string, returnableKeys: string[]): { [key: string]: number } {
+  const returned: { [key: string]: number } = {};
+  const lowerDesc = description.toLowerCase();
+
+  // Must contain "returned:"
+  if (!lowerDesc.includes('returned:')) {
+    return returned;
+  }
+
+  // Extract the part after "returned:"
+  const returnedPart = lowerDesc.split('returned:')[1];
+  if (!returnedPart) {
+    return returned;
+  }
+
+  // For each returnable key, check if it was returned
+  for (const key of returnableKeys) {
+    const lowerKey = key.toLowerCase();
+    const [type, ...brandParts] = lowerKey.split(' ');
+    const brand = brandParts.join(' ');
+
+    // Build pattern: look for quantity + type (+ optional brand)
+    let pattern: RegExp;
+
+    if (brand) {
+      // Pattern: [number] chopine/bouteille brand
+      const escapedBrand = brand.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+      pattern = new RegExp(`(\\d+)\\s+${type}s?\\s+${escapedBrand}`, 'i');
+    } else {
+      // Pattern: [number] chopine/bouteille (but not followed by a brand)
+      pattern = new RegExp(`(\\d+)\\s+${type}s?(?=\\s*(?:-|$))`, 'i');
+    }
+
+    const match = returnedPart.match(pattern);
+    if (match) {
+      returned[key] = parseInt(match[1]);
+    }
+  }
+
+  return returned;
+}
+
+/**
+ * Calculates returnable items for a client with dates
  * @param clientTransactions - Array of client transactions
  * @returns Array of returnable items with text, date, and time
  */
 export const calculateReturnableItemsWithDates = (clientTransactions: CreditTransaction[]): {text: string, date: string, time: string}[] => {
   const returnableItems: {[key: string]: number} = {};
-  
+
+  // Step 1: Extract all returnable items from debt transactions
   clientTransactions.forEach(transaction => {
-    // Only process debt transactions (not payments) AND exclude return transactions
-    if (transaction.type === 'payment' || transaction.description.toLowerCase().includes('returned') || transaction.description.toLowerCase().includes('return') || (transaction.description.toLowerCase().includes('caisse') && transaction.description.toLowerCase().includes('returned'))) {
+    // Skip payments and return transactions
+    if (transaction.type === 'payment' ||
+        transaction.description.toLowerCase().includes('returned')) {
       return;
     }
-    
-    const description = transaction.description.toLowerCase();
-    
-    // Only process items that contain "chopine" or "bouteille"
-    if (!description.includes('chopine') && !description.includes('bouteille')) {
+
+    const description = transaction.description;
+
+    // Only process if contains Chopine or Bouteille
+    if (!description.toLowerCase().includes('chopine') &&
+        !description.toLowerCase().includes('bouteille')) {
       return;
     }
-    
-    // Look for Chopine items
-    const chopinePattern = /(\d+)\s+chopines?(?:\s+([^,]*))?/gi;
-    let chopineMatch;
-    
-    while ((chopineMatch = chopinePattern.exec(description)) !== null) {
-      const quantity = parseInt(chopineMatch[1]);
-      const brand = chopineMatch[2]?.trim() || '';
-      // Capitalize brand name properly
-      const capitalizedBrand = brand ? brand.split(' ').map((word: string) => 
-        word.charAt(0).toUpperCase() + word.slice(1).toLowerCase()
-      ).join(' ') : '';
-      const key = capitalizedBrand ? `Chopine ${capitalizedBrand}` : 'Chopine';
-      
+
+    const items = extractReturnableItems(description);
+
+    // Add to total
+    for (const [key, quantity] of Object.entries(items)) {
       if (!returnableItems[key]) {
         returnableItems[key] = 0;
       }
       returnableItems[key] += quantity;
-    }
-    
-    // Look for Bouteille items
-    const bouteillePattern = /(\d+)\s+bouteilles?(?:\s+([^,]*))?/gi;
-    let bouteilleMatch;
-
-    while ((bouteilleMatch = bouteillePattern.exec(description)) !== null) {
-      const quantity = parseInt(bouteilleMatch[1]);
-      const brand = bouteilleMatch[2]?.trim() || '';
-      // Capitalize brand name properly
-      const capitalizedBrand = brand ? brand.split(' ').map((word: string) =>
-        word.charAt(0).toUpperCase() + word.slice(1).toLowerCase()
-      ).join(' ') : '';
-      const key = capitalizedBrand ? `Bouteille ${capitalizedBrand}` : 'Bouteille';
-
-      if (!returnableItems[key]) {
-        returnableItems[key] = 0;
-      }
-      returnableItems[key] += quantity;
-    }
-
-    // Count standalone 'bouteille' occurrences - for items without explicit numbers
-    // First find all quantified matches to avoid double-counting
-    const tempBouteillePattern = /(\d+)\s+bouteilles?(?:\s+([^,]*))?/gi;
-    let tempBouteilleMatch;
-    const quantifiedBouteilleMatches: RegExpExecArray[] = [];
-    while ((tempBouteilleMatch = tempBouteillePattern.exec(description)) !== null) {
-      quantifiedBouteilleMatches.push(tempBouteilleMatch);
-    }
-
-    const standaloneBouteillePattern = /\bbouteilles?\b/gi;
-    let standaloneBouteilleMatch: RegExpExecArray | null;
-    while ((standaloneBouteilleMatch = standaloneBouteillePattern.exec(description)) !== null) {
-      // Skip if this match is part of a quantified match
-      const isPartOfQuantified = quantifiedBouteilleMatches.some(match =>
-        standaloneBouteilleMatch!.index >= match.index &&
-        standaloneBouteilleMatch!.index < match.index + match[0].length
-      );
-
-      if (!isPartOfQuantified) {
-        // Look for brand after the bouteille word
-        const brandMatch = description.substring(standaloneBouteilleMatch.index).match(/^bouteilles?\s+([^,()]*)/i);
-        const brand = brandMatch?.[1]?.trim() || '';
-
-        // Capitalize brand name properly
-        const capitalizedBrand = brand ? brand.split(' ').map((word: string) =>
-          word.charAt(0).toUpperCase() + word.slice(1).toLowerCase()
-        ).join(' ') : '';
-
-        const key = capitalizedBrand ? `Bouteille ${capitalizedBrand}` : 'Bouteille';
-
-        if (!returnableItems[key]) {
-          returnableItems[key] = 0;
-        }
-        returnableItems[key] += 1;
-      }
-    }
-    
-    // Count standalone 'chopine' occurrences - for items without explicit numbers
-    // First find all quantified matches to avoid double-counting
-    const tempChopinePattern = /(\d+)\s+chopines?(?:\s+([^,]*))?/gi;
-    let tempChopineMatch;
-    const quantifiedMatches: RegExpExecArray[] = [];
-    while ((tempChopineMatch = tempChopinePattern.exec(description)) !== null) {
-      quantifiedMatches.push(tempChopineMatch);
-    }
-    
-    const standaloneChopinePattern = /\bchopines?\b/gi;
-    let standaloneMatch: RegExpExecArray | null;
-    while ((standaloneMatch = standaloneChopinePattern.exec(description)) !== null) {
-      // Skip if this match is part of a quantified match
-      const isPartOfQuantified = quantifiedMatches.some(match => 
-        standaloneMatch!.index >= match.index && 
-        standaloneMatch!.index < match.index + match[0].length
-      );
-      
-      if (!isPartOfQuantified) {
-        // Look for brand after the chopine word
-        const brandMatch = description.substring(standaloneMatch.index).match(/^chopines?\s+([^,()]*)/i);
-        const brand = brandMatch?.[1]?.trim() || '';
-        
-        // Capitalize brand name properly
-        const capitalizedBrand = brand ? brand.split(' ').map((word: string) => 
-          word.charAt(0).toUpperCase() + word.slice(1).toLowerCase()
-        ).join(' ') : '';
-        
-        const key = capitalizedBrand ? `Chopine ${capitalizedBrand}` : 'Chopine';
-        
-        if (!returnableItems[key]) {
-          returnableItems[key] = 0;
-        }
-        returnableItems[key] += 1;
-      }
     }
   });
-  
-  // Calculate returned quantities with improved matching
+
+  // Step 2: Extract returned quantities
   const returnedQuantities: {[key: string]: number} = {};
+  const returnableKeys = Object.keys(returnableItems);
+
   clientTransactions
-    .filter(transaction => transaction.type === 'debt' && (transaction.description.toLowerCase().includes('returned') || transaction.description.toLowerCase().includes('return') || transaction.description.toLowerCase().includes('caisse')))
+    .filter(transaction => transaction.description.toLowerCase().includes('returned'))
     .forEach(transaction => {
-      const description = transaction.description.toLowerCase();
-      Object.keys(returnableItems).forEach(itemType => {
-        // Use more precise matching to avoid substring conflicts
-        if (itemType.includes('Chopine')) {
-          if (itemType === 'Chopine') {
-            // For generic Chopine, first check if any branded Chopine would match this description
-            let isBrandedMatch = false;
-            for (const checkItemType of Object.keys(returnableItems)) {
-              if (checkItemType.includes('Chopine') && checkItemType !== 'Chopine') {
-                const brandName = checkItemType.replace('Chopine', '').trim();
-                if (brandName) {
-                  // Create pattern that matches both "Chopine Brand" and "Chopines Brand"
-                  const brandedPattern = new RegExp(`returned:\\s*(\\d+)\\s+chopines?\\s+${brandName.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')}(?=\\s*(?:-|$|\\s))`, 'i');
-                  if (description.match(brandedPattern)) {
-                    isBrandedMatch = true;
-                    break;
-                  }
-                }
-              }
-            }
-            
-            // Only match generic if it's not a branded match
-            if (!isBrandedMatch) {
-              // For generic Chopine, match "Returned: X Chopine" but not "Chopine Brand"
-              const genericChopinePattern = /returned:\s*(\d+)\s+chopines?(?=\s*(?:-|$))/i;
-              const match = description.match(genericChopinePattern);
-              if (match) {
-                if (!returnedQuantities[itemType]) {
-                  returnedQuantities[itemType] = 0;
-                }
-                returnedQuantities[itemType] += parseInt(match[1]);
-              }
-            }
-          } else {
-            // For branded Chopine like "Chopine Vin", match the exact brand
-            const brandName = itemType.replace(/^(Chopines?)/i, '').trim();
-            if (brandName) {
-              // Create pattern that matches both "Chopine Brand" and "Chopines Brand"
-              const brandedPattern = new RegExp(`returned:\\s*(\\d+)\\s+chopines?\\s+${brandName.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')}(?=\\s|$|,|\\.)`, 'i');
-              const match = description.match(brandedPattern);
-              if (match) {
-                if (!returnedQuantities[itemType]) {
-                  returnedQuantities[itemType] = 0;
-                }
-                returnedQuantities[itemType] += parseInt(match[1]);
-              } else {
-                // Handle cases where items were added without explicit quantities (e.g., "chopine vin")
-                // Try a more flexible pattern that matches the brand name anywhere in the return description
-                const flexiblePattern = new RegExp(`returned:\\s*(\\d+).*?${brandName.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')}(?=\\s|$|,|\\.)`, 'i');
-                const flexibleMatch = description.match(flexiblePattern);
-                if (flexibleMatch) {
-                  if (!returnedQuantities[itemType]) {
-                    returnedQuantities[itemType] = 0;
-                  }
-                  returnedQuantities[itemType] += parseInt(flexibleMatch[1]);
-                }
-              }
-            }
-          }
-        } else if (itemType.includes('Bouteille')) {
-          if (itemType === 'Bouteille') {
-            // For generic Bouteille, match "Returned: X Bouteille" but not "Bouteille Brand"
-            // First check if any branded Bouteille would match this description
-            let isBrandedMatch = false;
-            for (const checkItemType of Object.keys(returnableItems)) {
-              if (checkItemType.includes('Bouteille') && checkItemType !== 'Bouteille') {
-                const brandName = checkItemType.replace('Bouteille', '').trim();
-                if (brandName) {
-                  // Create pattern that matches both "Bouteille Brand" and "Bouteilles Brand"
-                  const brandedPattern = new RegExp(`returned:\\s*(\\d+)\\s+bouteilles?\\s+${brandName.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')}(?=\\s*(?:-|$|\\s))`, 'i');
-                  if (description.match(brandedPattern)) {
-                    isBrandedMatch = true;
-                    break;
-                  }
-                }
-              }
-            }
-            
-            // Only match generic if it's not a branded match
-            if (!isBrandedMatch) {
-              // More precise pattern: match "Bouteille" or "Bouteilles" only when NOT followed by a space and additional word
-              // This prevents matching "bouteille" in "bouteille vin"
-              const genericBouteillePattern = /returned:\s*(\d+)\s+(bouteille|bouteilles)(?=\s*(?:-|$))/i;
-              const match = description.match(genericBouteillePattern);
-              if (match) {
-                if (!returnedQuantities[itemType]) {
-                  returnedQuantities[itemType] = 0;
-                }
-                returnedQuantities[itemType] += parseInt(match[1]);
-              }
-            }
-          } else {
-            // For branded Bouteille like "Bouteille Vin", match the exact brand
-            const brandName = itemType.replace(/^(Bouteilles?)/i, '').trim();
-            if (brandName) {
-              // Create pattern that matches both "Bouteille Brand" and "Bouteilles Brand"
-              const brandedPattern = new RegExp(`returned:\\s*(\\d+)\\s+bouteilles?\\s+${brandName.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')}(?=\\s|$|,|\\.)`, 'i');
-              const match = description.match(brandedPattern);
-              if (match) {
-                if (!returnedQuantities[itemType]) {
-                  returnedQuantities[itemType] = 0;
-                }
-                returnedQuantities[itemType] += parseInt(match[1]);
-              } else {
-                // Handle cases where items were added without explicit quantities (e.g., "bouteille vin")
-                // Try a more flexible pattern that matches the brand name anywhere in the return description
-                const flexiblePattern = new RegExp(`returned:\\s*(\\d+).*?${brandName.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')}(?=\\s|$|,|\\.)`, 'i');
-                const flexibleMatch = description.match(flexiblePattern);
-                if (flexibleMatch) {
-                  if (!returnedQuantities[itemType]) {
-                    returnedQuantities[itemType] = 0;
-                  }
-                  returnedQuantities[itemType] += parseInt(flexibleMatch[1]);
-                }
-              }
-            }
-          }
-        } else {
-          // For other items, use word boundary matching
-          const escapedItemType = itemType.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
-          const pattern = new RegExp(`returned:\\s*(\\d+)\\s+${escapedItemType}`, 'i');
-          const match = description.match(pattern);
-          if (match) {
-            if (!returnedQuantities[itemType]) {
-              returnedQuantities[itemType] = 0;
-            }
-            returnedQuantities[itemType] += parseInt(match[1]);
-          }
+      const returned = extractReturnedItems(transaction.description, returnableKeys);
+
+      for (const [key, quantity] of Object.entries(returned)) {
+        if (!returnedQuantities[key]) {
+          returnedQuantities[key] = 0;
         }
-      });
+        returnedQuantities[key] += quantity;
+      }
     });
-  
-  // Calculate net returnable quantities
-  const netReturnableItems: {text: string, date: string, time: string}[] = [];
-  Object.entries(returnableItems).forEach(([itemType, total]) => {
+
+  // Step 3: Calculate net quantities and format output
+  const result: {text: string, date: string, time: string}[] = [];
+
+  for (const [itemType, total] of Object.entries(returnableItems)) {
     const returned = returnedQuantities[itemType] || 0;
     const remaining = Math.max(0, total - returned);
+
     if (remaining > 0) {
-      // Get the most recent transaction date for this item type
+      // Get most recent transaction date for this item
       const recentTransaction = clientTransactions
-        .filter(transaction => 
-          transaction.type === 'debt' && 
+        .filter(transaction =>
+          transaction.type === 'debt' &&
           !transaction.description.toLowerCase().includes('returned') &&
           transaction.description.toLowerCase().includes(itemType.toLowerCase().split(' ')[0])
         )
         .sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime())[0];
-      
+
       const transactionDate = recentTransaction ? new Date(recentTransaction.date) : new Date();
-      
-      // Format the display text properly
-      let displayText = '';
-      
-      // Format date and time for flip card
+
+      // Format date and time
       const formattedDate = transactionDate.toLocaleDateString('en-GB', {
         day: '2-digit',
         month: '2-digit'
       });
-      
+
       const formattedTime = transactionDate.toLocaleTimeString('en-GB', {
         hour: '2-digit',
         minute: '2-digit',
         hour12: false
       });
-      
-      if (itemType.includes('Chopine')) {
-        // For Chopine items: "8 Chopines Beer" (with proper pluralization and capitalization)
-        const brand = itemType.replace(/^(Chopines?)/i, '').trim();
-        // Ensure brand is title case
-        const titleCaseBrand = brand ? brand.split(' ').map(word => 
-          word.charAt(0).toUpperCase() + word.slice(1).toLowerCase()
-        ).join(' ') : '';
-        if (titleCaseBrand) {
-          displayText = `${remaining} Chopine${remaining > 1 ? 's' : ''} ${titleCaseBrand}`;
-        } else {
-          displayText = `${remaining} Chopine${remaining > 1 ? 's' : ''}`;
-        }
-      } else if (itemType.includes('Bouteille')) {
-        // For Bouteille items: "8 Bouteilles Beer" (with proper pluralization and capitalization)
-        const brand = itemType.replace(/^(Bouteilles?)/i, '').trim();
-        // Ensure brand is title case
-        const titleCaseBrand = brand ? brand.split(' ').map(word =>
-          word.charAt(0).toUpperCase() + word.slice(1).toLowerCase()
-        ).join(' ') : '';
-        if (titleCaseBrand) {
-          displayText = `${remaining} Bouteille${remaining > 1 ? 's' : ''} ${titleCaseBrand}`;
-        } else {
-          displayText = `${remaining} Bouteille${remaining > 1 ? 's' : ''}`;
-        }
+
+      // Format display text with pluralization
+      const [type, ...brandParts] = itemType.split(' ');
+      const brand = brandParts.join(' ');
+
+      let displayText: string;
+      if (brand) {
+        displayText = `${remaining} ${type}${remaining > 1 ? 's' : ''} ${brand}`;
       } else {
-        // For other items: use parentheses format with title case
-        const titleCaseItemType = itemType.split(' ').map(word => 
-          word.charAt(0).toUpperCase() + word.slice(1).toLowerCase()
-        ).join(' ');
-        displayText = `${remaining} (${titleCaseItemType})`;
+        displayText = `${remaining} ${type}${remaining > 1 ? 's' : ''}`;
       }
-      
-      // Create the returnable item with flip card for date
-      netReturnableItems.push({
+
+      result.push({
         text: displayText,
         date: formattedDate,
         time: formattedTime
       });
     }
-  });
-  
-  return netReturnableItems;
+  }
+
+  return result;
 };
 
 /**
@@ -353,315 +245,6 @@ export const calculateReturnableItemsWithDates = (clientTransactions: CreditTran
  * @returns Array of returnable item strings
  */
 export const calculateReturnableItems = (clientTransactions: CreditTransaction[]): string[] => {
-  const returnableItems: {[key: string]: number} = {};
-  
-  clientTransactions.forEach(transaction => {
-    // Only process debt transactions (not payments) AND exclude return transactions
-    if (transaction.type === 'payment' || transaction.description.toLowerCase().includes('returned') || transaction.description.toLowerCase().includes('return') || (transaction.description.toLowerCase().includes('caisse') && transaction.description.toLowerCase().includes('returned'))) {
-      return;
-    }
-    
-    const description = transaction.description.toLowerCase();
-    
-    // Only process items that contain "chopine" or "bouteille"
-    if (!description.includes('chopine') && !description.includes('bouteille')) {
-      return;
-    }
-    
-    // Look for Chopine items
-    const chopinePattern = /(\d+)\s+chopines?(?:\s+([^,]*))?/gi;
-    let chopineMatch;
-    
-    while ((chopineMatch = chopinePattern.exec(description)) !== null) {
-      const quantity = parseInt(chopineMatch[1]);
-      const brand = chopineMatch[2]?.trim() || '';
-      // Capitalize brand name properly
-      const capitalizedBrand = brand ? brand.split(' ').map((word: string) => 
-        word.charAt(0).toUpperCase() + word.slice(1).toLowerCase()
-      ).join(' ') : '';
-      const key = capitalizedBrand ? `Chopine ${capitalizedBrand}` : 'Chopine';
-      
-      if (!returnableItems[key]) {
-        returnableItems[key] = 0;
-      }
-      returnableItems[key] += quantity;
-    }
-    
-    // Look for Bouteille items
-    const bouteillePattern = /(\d+)\s+bouteilles?(?:\s+([^,]*))?/gi;
-    let bouteilleMatch;
-
-    while ((bouteilleMatch = bouteillePattern.exec(description)) !== null) {
-      const quantity = parseInt(bouteilleMatch[1]);
-      const brand = bouteilleMatch[2]?.trim() || '';
-      // Capitalize brand name properly
-      const capitalizedBrand = brand ? brand.split(' ').map((word: string) =>
-        word.charAt(0).toUpperCase() + word.slice(1).toLowerCase()
-      ).join(' ') : '';
-      const key = capitalizedBrand ? `Bouteille ${capitalizedBrand}` : 'Bouteille';
-
-      if (!returnableItems[key]) {
-        returnableItems[key] = 0;
-      }
-      returnableItems[key] += quantity;
-    }
-
-    // Count standalone 'bouteille' occurrences - for items without explicit numbers
-    // First find all quantified matches to avoid double-counting
-    const tempBouteillePattern = /(\d+)\s+bouteilles?(?:\s+([^,]*))?/gi;
-    let tempBouteilleMatch;
-    const quantifiedBouteilleMatches: RegExpExecArray[] = [];
-    while ((tempBouteilleMatch = tempBouteillePattern.exec(description)) !== null) {
-      quantifiedBouteilleMatches.push(tempBouteilleMatch);
-    }
-
-    const standaloneBouteillePattern = /\bbouteilles?\b/gi;
-    let standaloneBouteilleMatch: RegExpExecArray | null;
-    while ((standaloneBouteilleMatch = standaloneBouteillePattern.exec(description)) !== null) {
-      // Skip if this match is part of a quantified match
-      const isPartOfQuantified = quantifiedBouteilleMatches.some(match =>
-        standaloneBouteilleMatch!.index >= match.index &&
-        standaloneBouteilleMatch!.index < match.index + match[0].length
-      );
-
-      if (!isPartOfQuantified) {
-        // Look for brand after the bouteille word
-        const brandMatch = description.substring(standaloneBouteilleMatch.index).match(/^bouteilles?\s+([^,()]*)/i);
-        const brand = brandMatch?.[1]?.trim() || '';
-
-        // Capitalize brand name properly
-        const capitalizedBrand = brand ? brand.split(' ').map((word: string) =>
-          word.charAt(0).toUpperCase() + word.slice(1).toLowerCase()
-        ).join(' ') : '';
-
-        const key = capitalizedBrand ? `Bouteille ${capitalizedBrand}` : 'Bouteille';
-
-        if (!returnableItems[key]) {
-          returnableItems[key] = 0;
-        }
-        returnableItems[key] += 1;
-      }
-    }
-    
-    // Count standalone 'chopine' occurrences - for items without explicit numbers
-    // First find all quantified matches to avoid double-counting
-    const tempChopinePattern = /(\d+)\s+chopines?(?:\s+([^,]*))?/gi;
-    let tempChopineMatch;
-    const quantifiedMatches: RegExpExecArray[] = [];
-    while ((tempChopineMatch = tempChopinePattern.exec(description)) !== null) {
-      quantifiedMatches.push(tempChopineMatch);
-    }
-    
-    const standaloneChopinePattern = /\bchopines?\b/gi;
-    let standaloneMatch: RegExpExecArray | null;
-    while ((standaloneMatch = standaloneChopinePattern.exec(description)) !== null) {
-      // Skip if this match is part of a quantified match
-      const isPartOfQuantified = quantifiedMatches.some(match => 
-        standaloneMatch!.index >= match.index && 
-        standaloneMatch!.index < match.index + match[0].length
-      );
-      
-      if (!isPartOfQuantified) {
-        // Look for brand after the chopine word
-        const brandMatch = description.substring(standaloneMatch.index).match(/^chopines?\s+([^,()]*)/i);
-        const brand = brandMatch?.[1]?.trim() || '';
-        
-        // Capitalize brand name properly
-        const capitalizedBrand = brand ? brand.split(' ').map((word: string) => 
-          word.charAt(0).toUpperCase() + word.slice(1).toLowerCase()
-        ).join(' ') : '';
-        
-        const key = capitalizedBrand ? `Chopine ${capitalizedBrand}` : 'Chopine';
-        
-        if (!returnableItems[key]) {
-          returnableItems[key] = 0;
-        }
-        returnableItems[key] += 1;
-      }
-    }
-  });
-  
-  // Calculate returned quantities with improved matching
-  const returnedQuantities: {[key: string]: number} = {};
-  clientTransactions
-    .filter(transaction => transaction.type === 'debt' && (transaction.description.toLowerCase().includes('returned') || transaction.description.toLowerCase().includes('return') || transaction.description.toLowerCase().includes('caisse')))
-    .forEach(transaction => {
-      const description = transaction.description.toLowerCase();
-      Object.keys(returnableItems).forEach(itemType => {
-        // Use more precise matching to avoid substring conflicts
-        if (itemType.includes('Chopine')) {
-          if (itemType === 'Chopine') {
-            // For generic Chopine, first check if any branded Chopine would match this description
-            let isBrandedMatch = false;
-            for (const checkItemType of Object.keys(returnableItems)) {
-              if (checkItemType.includes('Chopine') && checkItemType !== 'Chopine') {
-                const brandName = checkItemType.replace('Chopine', '').trim();
-                if (brandName) {
-                  // Create pattern that matches both "Chopine Brand" and "Chopines Brand"
-                  const brandedPattern = new RegExp(`returned:\\s*(\\d+)\\s+chopines?\\s+${brandName.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')}(?=\\s*(?:-|$|\\s))`, 'i');
-                  if (description.match(brandedPattern)) {
-                    isBrandedMatch = true;
-                    break;
-                  }
-                }
-              }
-            }
-            
-            // Only match generic if it's not a branded match
-            if (!isBrandedMatch) {
-              // For generic Chopine, match "Returned: X Chopine" but not "Chopine Brand"
-              const genericChopinePattern = /returned:\s*(\d+)\s+chopines?(?=\s*(?:-|$))/i;
-              const match = description.match(genericChopinePattern);
-              if (match) {
-                if (!returnedQuantities[itemType]) {
-                  returnedQuantities[itemType] = 0;
-                }
-                returnedQuantities[itemType] += parseInt(match[1]);
-              }
-            }
-          } else {
-            // For branded Chopine like "Chopine Vin", match the exact brand
-            const brandName = itemType.replace(/^(Chopines?)/i, '').trim();
-            if (brandName) {
-              // Create pattern that matches both "Chopine Brand" and "Chopines Brand"
-              const brandedPattern = new RegExp(`returned:\\s*(\\d+)\\s+chopines?\\s+${brandName.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')}(?=\\s|$|,|\\.)`, 'i');
-              const match = description.match(brandedPattern);
-              if (match) {
-                if (!returnedQuantities[itemType]) {
-                  returnedQuantities[itemType] = 0;
-                }
-                returnedQuantities[itemType] += parseInt(match[1]);
-              } else {
-                // Handle cases where items were added without explicit quantities (e.g., "chopine vin")
-                // Try a more flexible pattern that matches the brand name anywhere in the return description
-                const flexiblePattern = new RegExp(`returned:\\s*(\\d+).*?${brandName.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')}(?=\\s|$|,|\\.)`, 'i');
-                const flexibleMatch = description.match(flexiblePattern);
-                if (flexibleMatch) {
-                  if (!returnedQuantities[itemType]) {
-                    returnedQuantities[itemType] = 0;
-                  }
-                  returnedQuantities[itemType] += parseInt(flexibleMatch[1]);
-                }
-              }
-            }
-          }
-        } else if (itemType.includes('Bouteille')) {
-          if (itemType === 'Bouteille') {
-            // For generic Bouteille, match "Returned: X Bouteille" but not "Bouteille Brand"
-            // First check if any branded Bouteille would match this description
-            let isBrandedMatch = false;
-            for (const checkItemType of Object.keys(returnableItems)) {
-              if (checkItemType.includes('Bouteille') && checkItemType !== 'Bouteille') {
-                const brandName = checkItemType.replace('Bouteille', '').trim();
-                if (brandName) {
-                  // Create pattern that matches both "Bouteille Brand" and "Bouteilles Brand"
-                  const brandedPattern = new RegExp(`returned:\\s*(\\d+)\\s+bouteilles?\\s+${brandName.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')}(?=\\s*(?:-|$|\\s))`, 'i');
-                  if (description.match(brandedPattern)) {
-                    isBrandedMatch = true;
-                    break;
-                  }
-                }
-              }
-            }
-            
-            // Only match generic if it's not a branded match
-            if (!isBrandedMatch) {
-              // More precise pattern: match "Bouteille" or "Bouteilles" only when NOT followed by a space and additional word
-              // This prevents matching "bouteille" in "bouteille vin"
-              const genericBouteillePattern = /returned:\s*(\d+)\s+(bouteille|bouteilles)(?=\s*(?:-|$))/i;
-              const match = description.match(genericBouteillePattern);
-              if (match) {
-                if (!returnedQuantities[itemType]) {
-                  returnedQuantities[itemType] = 0;
-                }
-                returnedQuantities[itemType] += parseInt(match[1]);
-              }
-            }
-          } else {
-            // For branded Bouteille like "Bouteille Vin", match the exact brand
-            const brandName = itemType.replace(/^(Bouteilles?)/i, '').trim();
-            if (brandName) {
-              // Create pattern that matches both "Bouteille Brand" and "Bouteilles Brand"
-              const brandedPattern = new RegExp(`returned:\\s*(\\d+)\\s+bouteilles?\\s+${brandName.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')}(?=\\s|$|,|\\.)`, 'i');
-              const match = description.match(brandedPattern);
-              if (match) {
-                if (!returnedQuantities[itemType]) {
-                  returnedQuantities[itemType] = 0;
-                }
-                returnedQuantities[itemType] += parseInt(match[1]);
-              } else {
-                // Handle cases where items were added without explicit quantities (e.g., "bouteille vin")
-                // Try a more flexible pattern that matches the brand name anywhere in the return description
-                const flexiblePattern = new RegExp(`returned:\\s*(\\d+).*?${brandName.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')}(?=\\s|$|,|\\.)`, 'i');
-                const flexibleMatch = description.match(flexiblePattern);
-                if (flexibleMatch) {
-                  if (!returnedQuantities[itemType]) {
-                    returnedQuantities[itemType] = 0;
-                  }
-                  returnedQuantities[itemType] += parseInt(flexibleMatch[1]);
-                }
-              }
-            }
-          }
-        } else {
-          // For other items, use word boundary matching
-          const escapedItemType = itemType.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
-          const pattern = new RegExp(`returned:\\s*(\\d+)\\s+${escapedItemType}`, 'i');
-          const match = description.match(pattern);
-          if (match) {
-            if (!returnedQuantities[itemType]) {
-              returnedQuantities[itemType] = 0;
-            }
-            returnedQuantities[itemType] += parseInt(match[1]);
-          }
-        }
-      });
-    });
-  
-  // Calculate net returnable quantities - format to match client card display exactly
-  const netReturnableItems: string[] = [];
-  Object.entries(returnableItems).forEach(([itemType, total]) => {
-    const returned = returnedQuantities[itemType] || 0;
-    const remaining = Math.max(0, total - returned);
-    if (remaining > 0) {
-      // Format the display text properly to match ClientCard exactly
-      let displayText = '';
-      
-      if (itemType.includes('Chopine')) {
-        // For Chopine items: "8 Chopines Beer" (with proper pluralization and capitalization)
-        const brand = itemType.replace(/^(Chopines?)/i, '').trim();
-        // Ensure brand is title case
-        const titleCaseBrand = brand ? brand.split(' ').map(word => 
-          word.charAt(0).toUpperCase() + word.slice(1).toLowerCase()
-        ).join(' ') : '';
-        if (titleCaseBrand) {
-          displayText = `${remaining} Chopine${remaining > 1 ? 's' : ''} ${titleCaseBrand}`;
-        } else {
-          displayText = `${remaining} Chopine${remaining > 1 ? 's' : ''}`;
-        }
-      } else if (itemType.includes('Bouteille')) {
-        // For Bouteille items: "8 Bouteilles Beer" (with proper pluralization and capitalization)
-        const brand = itemType.replace(/^(Bouteilles?)/i, '').trim();
-        // Ensure brand is title case
-        const titleCaseBrand = brand ? brand.split(' ').map(word =>
-          word.charAt(0).toUpperCase() + word.slice(1).toLowerCase()
-        ).join(' ') : '';
-        if (titleCaseBrand) {
-          displayText = `${remaining} Bouteille${remaining > 1 ? 's' : ''} ${titleCaseBrand}`;
-        } else {
-          displayText = `${remaining} Bouteille${remaining > 1 ? 's' : ''}`;
-        }
-      } else {
-        // For other items: use parentheses format with title case
-        const titleCaseItemType = itemType.split(' ').map(word => 
-          word.charAt(0).toUpperCase() + word.slice(1).toLowerCase()
-        ).join(' ');
-        displayText = `${remaining} (${titleCaseItemType})`;
-      }
-      
-      netReturnableItems.push(displayText);
-    }
-  });
-  
-  return netReturnableItems;
+  const withDates = calculateReturnableItemsWithDates(clientTransactions);
+  return withDates.map(item => item.text);
 };
