@@ -22,14 +22,16 @@ export const calculateReturnableItemsWithDates = (clientTransactions: CreditTran
     }
     
     // Look for Chopine items
-    const chopinePattern = /(\d+)\s+chopines?(?:\s+([^,]*))?/gi;
+    const chopinePattern = /(\d+)\s+chopines?(?:\s+([^,\-\d]*))?/gi;
     let chopineMatch;
-    
+
     while ((chopineMatch = chopinePattern.exec(description)) !== null) {
       const quantity = parseInt(chopineMatch[1]);
-      const brand = chopineMatch[2]?.trim() || '';
+      let brand = chopineMatch[2]?.trim() || '';
+      brand = brand.replace(/[,(\-].*/, '').trim();
+
       // Capitalize brand name properly
-      const capitalizedBrand = brand ? brand.split(' ').map((word: string) => 
+      const capitalizedBrand = brand ? brand.split(' ').map((word: string) =>
         word.charAt(0).toUpperCase() + word.slice(1).toLowerCase()
       ).join(' ') : '';
       const key = capitalizedBrand ? `Chopine ${capitalizedBrand}` : 'Chopine';
@@ -131,7 +133,7 @@ export const calculateReturnableItemsWithDates = (clientTransactions: CreditTran
     
     // Count standalone 'chopine' occurrences - for items without explicit numbers
     // First find all quantified matches to avoid double-counting
-    const tempChopinePattern = /(\d+)\s+chopines?(?:\s+([^,]*))?/gi;
+    const tempChopinePattern = /(\d+)\s+chopines?(?:\s+([^,\-\d]*))?/gi;
     let tempChopineMatch;
     const quantifiedMatches: RegExpExecArray[] = [];
     while ((tempChopineMatch = tempChopinePattern.exec(description)) !== null) {
@@ -150,7 +152,8 @@ export const calculateReturnableItemsWithDates = (clientTransactions: CreditTran
       if (!isPartOfQuantified) {
         // Look for brand after the chopine word
         const brandMatch = description.substring(standaloneMatch.index).match(/^chopines?\s+([^,()]*)/i);
-        const brand = brandMatch?.[1]?.trim() || '';
+        let brand = brandMatch?.[1]?.trim() || '';
+        brand = brand.replace(/[,(\-].*/, '').trim();
         
         // Capitalize brand name properly
         const capitalizedBrand = brand ? brand.split(' ').map((word: string) => 
@@ -431,14 +434,16 @@ export const calculateReturnableItems = (clientTransactions: CreditTransaction[]
     }
     
     // Look for Chopine items
-    const chopinePattern = /(\d+)\s+chopines?(?:\s+([^,]*))?/gi;
+    const chopinePattern = /(\d+)\s+chopines?(?:\s+([^,\-\d]*))?/gi;
     let chopineMatch;
-    
+
     while ((chopineMatch = chopinePattern.exec(description)) !== null) {
       const quantity = parseInt(chopineMatch[1]);
-      const brand = chopineMatch[2]?.trim() || '';
+      let brand = chopineMatch[2]?.trim() || '';
+      brand = brand.replace(/[,(\-].*/, '').trim();
+
       // Capitalize brand name properly
-      const capitalizedBrand = brand ? brand.split(' ').map((word: string) => 
+      const capitalizedBrand = brand ? brand.split(' ').map((word: string) =>
         word.charAt(0).toUpperCase() + word.slice(1).toLowerCase()
       ).join(' ') : '';
       const key = capitalizedBrand ? `Chopine ${capitalizedBrand}` : 'Chopine';
@@ -540,7 +545,7 @@ export const calculateReturnableItems = (clientTransactions: CreditTransaction[]
     
     // Count standalone 'chopine' occurrences - for items without explicit numbers
     // First find all quantified matches to avoid double-counting
-    const tempChopinePattern = /(\d+)\s+chopines?(?:\s+([^,]*))?/gi;
+    const tempChopinePattern = /(\d+)\s+chopines?(?:\s+([^,\-\d]*))?/gi;
     let tempChopineMatch;
     const quantifiedMatches: RegExpExecArray[] = [];
     while ((tempChopineMatch = tempChopinePattern.exec(description)) !== null) {
@@ -559,7 +564,8 @@ export const calculateReturnableItems = (clientTransactions: CreditTransaction[]
       if (!isPartOfQuantified) {
         // Look for brand after the chopine word
         const brandMatch = description.substring(standaloneMatch.index).match(/^chopines?\s+([^,()]*)/i);
-        const brand = brandMatch?.[1]?.trim() || '';
+        let brand = brandMatch?.[1]?.trim() || '';
+        brand = brand.replace(/[,(\-].*/, '').trim();
         
         // Capitalize brand name properly
         const capitalizedBrand = brand ? brand.split(' ').map((word: string) => 
