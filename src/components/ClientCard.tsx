@@ -144,6 +144,8 @@ const ClientCard: React.FC<ClientCardProps> = ({ client, onLongPress, onQuickAdd
 
     zoomPressTimer.current = setTimeout(() => {
       setShowZoomedImage(true);
+      // Prevent scrolling when zoomed image is shown
+      document.body.style.overflow = 'hidden';
     }, 500);
   };
 
@@ -153,6 +155,12 @@ const ClientCard: React.FC<ClientCardProps> = ({ client, onLongPress, onQuickAdd
       clearTimeout(zoomPressTimer.current);
       zoomPressTimer.current = null;
     }
+  };
+
+  const handleCloseZoom = () => {
+    setShowZoomedImage(false);
+    // Re-enable scrolling
+    document.body.style.overflow = '';
   };
 
   return (
@@ -357,16 +365,19 @@ const ClientCard: React.FC<ClientCardProps> = ({ client, onLongPress, onQuickAdd
       {/* Zoomed Image Modal */}
       {showZoomedImage && client.profilePictureUrl && createPortal(
         <div
-          className="fixed inset-0 flex items-center justify-center z-[10000]"
+          className="fixed inset-0 flex items-center justify-center z-[10000] overflow-hidden"
           onClick={(e) => {
             e.preventDefault();
-            setShowZoomedImage(false);
+            handleCloseZoom();
           }}
           onTouchEnd={(e) => {
             e.preventDefault();
-            setShowZoomedImage(false);
+            handleCloseZoom();
           }}
           onTouchStart={(e) => {
+            e.preventDefault();
+          }}
+          onTouchMove={(e) => {
             e.preventDefault();
           }}
           onContextMenu={(e) => {
@@ -380,7 +391,8 @@ const ClientCard: React.FC<ClientCardProps> = ({ client, onLongPress, onQuickAdd
             WebkitUserSelect: 'none',
             WebkitTouchCallout: 'none',
             MozUserSelect: 'none',
-            msUserSelect: 'none'
+            msUserSelect: 'none',
+            touchAction: 'none'
           }}
         >
           <img
