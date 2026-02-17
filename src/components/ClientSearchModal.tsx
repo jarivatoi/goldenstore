@@ -197,11 +197,11 @@ const ClientSearchModal: React.FC<ClientSearchModalProps> = ({
     setDescriptionHistory(prev => [...prev, localDescription]);
 
     // Automatically insert pending number if it exists
-    // For Chopine and Bouteille without a pending number, default to "1"
+    // For Chopine and Bouteille (including sized bottles) without a pending number, default to "1"
     let newItem: string;
     if (pendingNumber) {
       newItem = `${pendingNumber} ${action}`;
-    } else if (action === 'Chopine' || action === 'Bouteille') {
+    } else if (action === 'Chopine' || action === 'Bouteille' || action.startsWith('Bouteille ')) {
       newItem = `1 ${action}`;
     } else {
       newItem = action;
@@ -433,7 +433,7 @@ const ClientSearchModal: React.FC<ClientSearchModalProps> = ({
               Quick Actions
             </label>
             <div className="grid grid-cols-3 gap-2 mb-3 select-none">
-              {['Foodstuffs', 'Cig', 'Rum', 'Can', 'Soft Drinks', 'Cakes', 'Chopine', 'Bouteille', 'Juice'].map((action) => (
+              {['Foodstuffs', 'Cig', 'Rum', 'Can', 'Soft Drinks', 'Cakes', 'Chopine', 'Bouteille', 'Bouteille 1L', 'Bouteille 1.5L', 'Bouteille 2L', 'Juice Payment'].map((action) => (
                 <button
                   key={action}
                   type="button"
