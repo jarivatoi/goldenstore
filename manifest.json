@@ -1,8 +1,8 @@
 {
   "name": "Golden Store",
   "short_name": "Golden Store",
-  "description": "Golden Store - Complete store management solution",
-  "start_url": "./index.html",
+  "description": "A beautiful store management app",
+  "start_url": "./",
   "scope": "./",
   "display": "standalone",
   "background_color": "#ffffff",
