@@ -38,10 +38,15 @@ export const calculateReturnableItemsWithDates = (clientTransactions: CreditTran
         brand = brandCleanMatch[1].trim();
       }
 
-      // Capitalize brand name properly
-      const capitalizedBrand = brand ? brand.split(' ').map((word: string) =>
-        word.charAt(0).toUpperCase() + word.slice(1).toLowerCase()
-      ).join(' ') : '';
+      // Capitalize brand name properly (handle brands starting with numbers)
+      const capitalizedBrand = brand ? brand.split(' ').map((word: string) => {
+        if (!word) return word;
+        // If word starts with a digit, keep it lowercase
+        if (/^\d/.test(word)) {
+          return word.toLowerCase();
+        }
+        return word.charAt(0).toUpperCase() + word.slice(1).toLowerCase();
+      }).join(' ') : '';
       const key = capitalizedBrand ? `Chopine ${capitalizedBrand}` : 'Chopine';
 
       if (!returnableItems[key]) {
@@ -565,10 +570,15 @@ export const calculateReturnableItems = (clientTransactions: CreditTransaction[]
         brand = brandCleanMatch[1].trim();
       }
 
-      // Capitalize brand name properly
-      const capitalizedBrand = brand ? brand.split(' ').map((word: string) =>
-        word.charAt(0).toUpperCase() + word.slice(1).toLowerCase()
-      ).join(' ') : '';
+      // Capitalize brand name properly (handle brands starting with numbers)
+      const capitalizedBrand = brand ? brand.split(' ').map((word: string) => {
+        if (!word) return word;
+        // If word starts with a digit, keep it lowercase
+        if (/^\d/.test(word)) {
+          return word.toLowerCase();
+        }
+        return word.charAt(0).toUpperCase() + word.slice(1).toLowerCase();
+      }).join(' ') : '';
       const key = capitalizedBrand ? `Chopine ${capitalizedBrand}` : 'Chopine';
 
       if (!returnableItems[key]) {
