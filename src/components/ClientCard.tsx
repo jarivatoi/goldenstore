@@ -188,7 +188,10 @@ const ClientCard: React.FC<ClientCardProps> = ({ client, onLongPress, onQuickAdd
                 style={{
                   background: `url(${client.profilePictureUrl})`,
                   backgroundSize: 'cover',
-                  backgroundPosition: 'center'
+                  backgroundPosition: 'center',
+                  userSelect: 'none',
+                  WebkitUserSelect: 'none',
+                  WebkitTouchCallout: 'none'
                 }}
                 onMouseDown={handleImagePressStart}
                 onMouseUp={handleImagePressEnd}
@@ -196,6 +199,7 @@ const ClientCard: React.FC<ClientCardProps> = ({ client, onLongPress, onQuickAdd
                 onTouchStart={handleImagePressStart}
                 onTouchEnd={handleImagePressEnd}
                 onTouchCancel={handleImagePressEnd}
+                onContextMenu={(e) => e.preventDefault()}
               >
                 {/* Vignette overlay */}
                 <div className="absolute inset-0 rounded-full pointer-events-none" style={{
@@ -354,14 +358,29 @@ const ClientCard: React.FC<ClientCardProps> = ({ client, onLongPress, onQuickAdd
       {showZoomedImage && client.profilePictureUrl && createPortal(
         <div
           className="fixed inset-0 flex items-center justify-center z-[10000]"
-          onClick={() => setShowZoomedImage(false)}
-          onTouchEnd={() => setShowZoomedImage(false)}
-          onContextMenu={(e) => e.preventDefault()}
+          onClick={(e) => {
+            e.preventDefault();
+            setShowZoomedImage(false);
+          }}
+          onTouchEnd={(e) => {
+            e.preventDefault();
+            setShowZoomedImage(false);
+          }}
+          onTouchStart={(e) => {
+            e.preventDefault();
+          }}
+          onContextMenu={(e) => {
+            e.preventDefault();
+            e.stopPropagation();
+            return false;
+          }}
           style={{
             backgroundColor: 'transparent',
             userSelect: 'none',
             WebkitUserSelect: 'none',
-            WebkitTouchCallout: 'none'
+            WebkitTouchCallout: 'none',
+            MozUserSelect: 'none',
+            msUserSelect: 'none'
           }}
         >
           <img
@@ -372,9 +391,18 @@ const ClientCard: React.FC<ClientCardProps> = ({ client, onLongPress, onQuickAdd
               pointerEvents: 'none',
               userSelect: 'none',
               WebkitUserSelect: 'none',
-              WebkitTouchCallout: 'none'
+              WebkitTouchCallout: 'none',
+              MozUserSelect: 'none',
+              msUserSelect: 'none'
             }}
-            onContextMenu={(e) => e.preventDefault()}
+            draggable={false}
+            onContextMenu={(e) => {
+              e.preventDefault();
+              e.stopPropagation();
+              return false;
+            }}
+            onTouchStart={(e) => e.preventDefault()}
+            onTouchEnd={(e) => e.preventDefault()}
           />
         </div>,
         document.body
