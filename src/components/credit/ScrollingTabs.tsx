@@ -156,8 +156,9 @@ const ScrollingTabs: React.FC<ScrollingTabsProps> = ({
         return;
       }
       
-      // Check if this is a transaction interaction (from handleAddToClient) - if so, ignore it to prevent timeline restart
-      const isTransactionInteraction = event && event.detail && event.detail.source === 'transaction';
+      // Check if this is a transaction interaction - ignore BOTH 'transaction' and 'addTransaction' sources
+      const isTransactionInteraction = event && event.detail &&
+        (event.detail.source === 'transaction' || event.detail.source === 'addTransaction');
       if (isTransactionInteraction) {
         console.log('🔍 ScrollingTabs: Ignoring transaction interaction');
         return;

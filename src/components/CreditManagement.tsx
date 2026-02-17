@@ -661,17 +661,10 @@ const CreditManagement: React.FC = () => {
       }
     
       await addTransaction(client, description, amount);
-      
-      // Dispatch creditDataChanged event with client ID for scrolling tabs update
-      const event = new CustomEvent('creditDataChanged', {
-        detail: {
-          clientId: client.id,
-          source: 'transaction'
-        }
-      });
-      window.dispatchEvent(event);
-      console.log('📤 Dispatched creditDataChanged event for client:', client.id);
-      
+
+      // Note: creditDataChanged event is automatically dispatched by CreditContext.addTransaction()
+      // with source 'addTransaction', so we don't need to dispatch it again here
+
       // Force a re-render of the scrolling tabs to update text and reset timeline
       setTimeout(() => {
         setShowCenteredWobble(false);
