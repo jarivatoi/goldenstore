@@ -352,20 +352,20 @@ const ClientCard: React.FC<ClientCardProps> = ({ client, onLongPress, onQuickAdd
       {/* Zoomed Image Modal */}
       {showZoomedImage && client.profilePictureUrl && (
         <div
-          className="fixed inset-0 flex flex-col items-center justify-center z-[10000] p-4 gap-4"
+          className="fixed inset-0 flex items-center justify-center z-[10000] p-4"
           onClick={() => setShowZoomedImage(false)}
           onTouchEnd={() => setShowZoomedImage(false)}
           style={{ backgroundColor: 'transparent' }}
         >
+          <div className="absolute top-4 right-4 text-white text-sm bg-black bg-opacity-70 px-4 py-2 rounded-full shadow-lg">
+            Tap to close
+          </div>
           <img
             src={client.profilePictureUrl}
             alt={`${client.name} profile`}
-            className="max-w-full max-h-[85vh] object-contain rounded-lg shadow-2xl"
+            className="max-w-full max-h-[90vh] object-contain rounded-lg shadow-2xl"
             style={{ pointerEvents: 'none' }}
           />
-          <div className="text-white text-sm bg-black bg-opacity-70 px-4 py-2 rounded-full shadow-lg">
-            Tap to close
-          </div>
         </div>
       )}
     </>
