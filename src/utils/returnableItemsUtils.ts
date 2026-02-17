@@ -33,7 +33,7 @@ export const calculateReturnableItemsWithDates = (clientTransactions: CreditTran
 
       // Extract only the brand name, stop at common delimiters (dash, parentheses, dates, "returned")
       // Use non-greedy quantifier with proper end-of-string handling for brands like "7seas" or "7les"
-      const brandCleanMatch = brand.match(/^([a-zA-Z0-9\s]+?)(?:\s*[-–—(]|\s+returned|\s+\d{1,2}\/|$)/i);
+      const brandCleanMatch = brand.match(/^([a-zA-Z0-9\s]+)(?:\s*[-–—(]|\s+returned|\s+\d{1,2}\/|$)/i);
       if (brandCleanMatch) {
         brand = brandCleanMatch[1].trim();
       }
@@ -69,7 +69,7 @@ export const calculateReturnableItemsWithDates = (clientTransactions: CreditTran
 
       // Extract only the brand name, stop at common delimiters (dash, parentheses, dates, "returned")
       // Use non-greedy quantifier with proper end-of-string handling for brands like "7seas" or "7les"
-      const brandCleanMatch = brand.match(/^([a-zA-Z0-9\s]+?)(?:\s*[-–—(]|\s+returned|\s+\d{1,2}\/|$)/i);
+      const brandCleanMatch = brand.match(/^([a-zA-Z0-9\s]+)(?:\s*[-–—(]|\s+returned|\s+\d{1,2}\/|$)/i);
       if (brandCleanMatch) {
         brand = brandCleanMatch[1].trim();
       }
@@ -129,8 +129,8 @@ export const calculateReturnableItemsWithDates = (clientTransactions: CreditTran
         }
 
         // Extract only the brand name, stop at common delimiters (dash, parentheses, dates, "returned")
-        // Use greedy quantifier to properly capture brands ending with 's' like "7seas" or "7les"
-        const brandCleanMatch = brand.match(/^([a-zA-Z0-9\s]+?)(?:\s*[-–—(]|\s+returned|\s+\d{1,2}\/|$)/i);
+        // Use greedy quantifier to properly capture full brand names like "7seas" or "7les"
+        const brandCleanMatch = brand.match(/^([a-zA-Z0-9\s]+)(?:\s*[-–—(]|\s+returned|\s+\d{1,2}\/|$)/i);
         if (brandCleanMatch) {
           brand = brandCleanMatch[1].trim();
         }
@@ -183,8 +183,8 @@ export const calculateReturnableItemsWithDates = (clientTransactions: CreditTran
         let brand = brandMatch?.[1]?.trim() || '';
 
         // Extract only the brand name, stop at common delimiters (dash, parentheses, dates, "returned")
-        // Use greedy quantifier to properly capture brands ending with 's' like "7seas" or "7les"
-        const brandCleanMatch = brand.match(/^([a-zA-Z0-9\s]+?)(?:\s*[-–—(]|\s+returned|\s+\d{1,2}\/|$)/i);
+        // Use greedy quantifier to properly capture full brand names like "7seas" or "7les"
+        const brandCleanMatch = brand.match(/^([a-zA-Z0-9\s]+)(?:\s*[-–—(]|\s+returned|\s+\d{1,2}\/|$)/i);
         if (brandCleanMatch) {
           brand = brandCleanMatch[1].trim();
         }
@@ -532,7 +532,7 @@ export const calculateReturnableItems = (clientTransactions: CreditTransaction[]
 
       // Extract only the brand name, stop at common delimiters (dash, parentheses, dates, "returned")
       // Use non-greedy quantifier with proper end-of-string handling for brands like "7seas" or "7les"
-      const brandCleanMatch = brand.match(/^([a-zA-Z0-9\s]+?)(?:\s*[-–—(]|\s+returned|\s+\d{1,2}\/|$)/i);
+      const brandCleanMatch = brand.match(/^([a-zA-Z0-9\s]+)(?:\s*[-–—(]|\s+returned|\s+\d{1,2}\/|$)/i);
       if (brandCleanMatch) {
         brand = brandCleanMatch[1].trim();
       }
@@ -568,7 +568,7 @@ export const calculateReturnableItems = (clientTransactions: CreditTransaction[]
 
       // Extract only the brand name, stop at common delimiters (dash, parentheses, dates, "returned")
       // Use non-greedy quantifier with proper end-of-string handling for brands like "7seas" or "7les"
-      const brandCleanMatch = brand.match(/^([a-zA-Z0-9\s]+?)(?:\s*[-–—(]|\s+returned|\s+\d{1,2}\/|$)/i);
+      const brandCleanMatch = brand.match(/^([a-zA-Z0-9\s]+)(?:\s*[-–—(]|\s+returned|\s+\d{1,2}\/|$)/i);
       if (brandCleanMatch) {
         brand = brandCleanMatch[1].trim();
       }
@@ -628,8 +628,8 @@ export const calculateReturnableItems = (clientTransactions: CreditTransaction[]
         }
 
         // Extract only the brand name, stop at common delimiters (dash, parentheses, dates, "returned")
-        // Use greedy quantifier to properly capture brands ending with 's' like "7seas" or "7les"
-        const brandCleanMatch = brand.match(/^([a-zA-Z0-9\s]+?)(?:\s*[-–—(]|\s+returned|\s+\d{1,2}\/|$)/i);
+        // Use greedy quantifier to properly capture full brand names like "7seas" or "7les"
+        const brandCleanMatch = brand.match(/^([a-zA-Z0-9\s]+)(?:\s*[-–—(]|\s+returned|\s+\d{1,2}\/|$)/i);
         if (brandCleanMatch) {
           brand = brandCleanMatch[1].trim();
         }
@@ -682,8 +682,8 @@ export const calculateReturnableItems = (clientTransactions: CreditTransaction[]
         let brand = brandMatch?.[1]?.trim() || '';
 
         // Extract only the brand name, stop at common delimiters (dash, parentheses, dates, "returned")
-        // Use greedy quantifier to properly capture brands ending with 's' like "7seas" or "7les"
-        const brandCleanMatch = brand.match(/^([a-zA-Z0-9\s]+?)(?:\s*[-–—(]|\s+returned|\s+\d{1,2}\/|$)/i);
+        // Use greedy quantifier to properly capture full brand names like "7seas" or "7les"
+        const brandCleanMatch = brand.match(/^([a-zA-Z0-9\s]+)(?:\s*[-–—(]|\s+returned|\s+\d{1,2}\/|$)/i);
         if (brandCleanMatch) {
           brand = brandCleanMatch[1].trim();
         }
