@@ -125,6 +125,13 @@ export const calculateReturnableItemsWithDates = (clientTransactions: CreditTran
             returnableItems[key] = 0;
           }
           returnableItems[key] += 1;
+        } else {
+          const key = 'Bouteille';
+
+          if (!returnableItems[key]) {
+            returnableItems[key] = 0;
+          }
+          returnableItems[key] += 1;
         }
       }
     }
