@@ -132,40 +132,32 @@ export const calculateReturnableItemsWithDates = (clientTransactions: CreditTran
     }
     
     // Count standalone 'chopine' occurrences - for items without explicit numbers
-    // First find all quantified matches to avoid double-counting
-    const tempChopinePattern = /(\d+)\s+chopines?(?:\s+([^,()]*?))?(?=\s|$|,|\.)/gi;
-    let tempChopineMatch;
-    const quantifiedMatches: RegExpExecArray[] = [];
-    while ((tempChopineMatch = tempChopinePattern.exec(description)) !== null) {
-      quantifiedMatches.push(tempChopineMatch);
-    }
-    
-    const standaloneChopinePattern = /\bchopines?\b/gi;
-    let standaloneMatch: RegExpExecArray | null;
-    while ((standaloneMatch = standaloneChopinePattern.exec(description)) !== null) {
-      // Skip if this match is part of a quantified match
-      const isPartOfQuantified = quantifiedMatches.some(match => 
-        standaloneMatch!.index >= match.index && 
-        standaloneMatch!.index < match.index + match[0].length
-      );
-      
-      if (!isPartOfQuantified) {
-        // Look for brand after the chopine word
-        const brandMatch = description.substring(standaloneMatch.index).match(/^chopines?\s+([^,()]*)/i);
-        let brand = brandMatch?.[1]?.trim() || '';
-        brand = brand.replace(/\s*[-–]\s*.*/i, '').trim();
-        
-        // Capitalize brand name properly
-        const capitalizedBrand = brand ? brand.split(' ').map((word: string) => 
-          word.charAt(0).toUpperCase() + word.slice(1).toLowerCase()
-        ).join(' ') : '';
-        
-        const key = capitalizedBrand ? `Chopine ${capitalizedBrand}` : 'Chopine';
-        
-        if (!returnableItems[key]) {
-          returnableItems[key] = 0;
+    // First check if Pattern 1 already matched this description
+    if (description.includes('chopine')) {
+      const pattern1Matched = /(\d+)\s+chopines?(?:\s+([^,()]*?))?(?=\s|$|,|\.)/gi.test(description);
+
+      // Only process standalone if Pattern 1 didn't match
+      if (!pattern1Matched) {
+        const standaloneChopinePattern = /\bchopines?\b/gi;
+        let standaloneMatch: RegExpExecArray | null;
+        while ((standaloneMatch = standaloneChopinePattern.exec(description)) !== null) {
+          // Look for brand after the chopine word
+          const brandMatch = description.substring(standaloneMatch.index).match(/^chopines?\s+([^,()]*)/i);
+          let brand = brandMatch?.[1]?.trim() || '';
+          brand = brand.replace(/\s*[-–]\s*.*/i, '').trim();
+
+          // Capitalize brand name properly
+          const capitalizedBrand = brand ? brand.split(' ').map((word: string) =>
+            word.charAt(0).toUpperCase() + word.slice(1).toLowerCase()
+          ).join(' ') : '';
+
+          const key = capitalizedBrand ? `Chopine ${capitalizedBrand}` : 'Chopine';
+
+          if (!returnableItems[key]) {
+            returnableItems[key] = 0;
+          }
+          returnableItems[key] += 1;
         }
-        returnableItems[key] += 1;
       }
     }
   });
@@ -544,40 +536,32 @@ export const calculateReturnableItems = (clientTransactions: CreditTransaction[]
     }
     
     // Count standalone 'chopine' occurrences - for items without explicit numbers
-    // First find all quantified matches to avoid double-counting
-    const tempChopinePattern = /(\d+)\s+chopines?(?:\s+([^,()]*?))?(?=\s|$|,|\.)/gi;
-    let tempChopineMatch;
-    const quantifiedMatches: RegExpExecArray[] = [];
-    while ((tempChopineMatch = tempChopinePattern.exec(description)) !== null) {
-      quantifiedMatches.push(tempChopineMatch);
-    }
-    
-    const standaloneChopinePattern = /\bchopines?\b/gi;
-    let standaloneMatch: RegExpExecArray | null;
-    while ((standaloneMatch = standaloneChopinePattern.exec(description)) !== null) {
-      // Skip if this match is part of a quantified match
-      const isPartOfQuantified = quantifiedMatches.some(match => 
-        standaloneMatch!.index >= match.index && 
-        standaloneMatch!.index < match.index + match[0].length
-      );
-      
-      if (!isPartOfQuantified) {
-        // Look for brand after the chopine word
-        const brandMatch = description.substring(standaloneMatch.index).match(/^chopines?\s+([^,()]*)/i);
-        let brand = brandMatch?.[1]?.trim() || '';
-        brand = brand.replace(/\s*[-–]\s*.*/i, '').trim();
-        
-        // Capitalize brand name properly
-        const capitalizedBrand = brand ? brand.split(' ').map((word: string) => 
-          word.charAt(0).toUpperCase() + word.slice(1).toLowerCase()
-        ).join(' ') : '';
-        
-        const key = capitalizedBrand ? `Chopine ${capitalizedBrand}` : 'Chopine';
-        
-        if (!returnableItems[key]) {
-          returnableItems[key] = 0;
+    // First check if Pattern 1 already matched this description
+    if (description.includes('chopine')) {
+      const pattern1Matched = /(\d+)\s+chopines?(?:\s+([^,()]*?))?(?=\s|$|,|\.)/gi.test(description);
+
+      // Only process standalone if Pattern 1 didn't match
+      if (!pattern1Matched) {
+        const standaloneChopinePattern = /\bchopines?\b/gi;
+        let standaloneMatch: RegExpExecArray | null;
+        while ((standaloneMatch = standaloneChopinePattern.exec(description)) !== null) {
+          // Look for brand after the chopine word
+          const brandMatch = description.substring(standaloneMatch.index).match(/^chopines?\s+([^,()]*)/i);
+          let brand = brandMatch?.[1]?.trim() || '';
+          brand = brand.replace(/\s*[-–]\s*.*/i, '').trim();
+
+          // Capitalize brand name properly
+          const capitalizedBrand = brand ? brand.split(' ').map((word: string) =>
+            word.charAt(0).toUpperCase() + word.slice(1).toLowerCase()
+          ).join(' ') : '';
+
+          const key = capitalizedBrand ? `Chopine ${capitalizedBrand}` : 'Chopine';
+
+          if (!returnableItems[key]) {
+            returnableItems[key] = 0;
+          }
+          returnableItems[key] += 1;
         }
-        returnableItems[key] += 1;
       }
     }
   });
