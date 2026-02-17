@@ -57,8 +57,8 @@ export const calculateReturnableItemsWithDates = (clientTransactions: CreditTran
       const quantity = parseInt(bouteilleMatch[1]);
       let brand = bouteilleMatch[2]?.trim() || '';
 
-      // Remove any size patterns from the brand
-      brand = brand.replace(/^\d+(?:\.\d+)?[Ll]\s*/, '').trim();
+      // Remove only size patterns (e.g., "1L", "1.5L") but not brands starting with numbers (e.g., "7seas")
+      brand = brand.replace(/^\d+(?:\.\d+)?[Ll](?:\s|$)/, '').trim();
 
       // Capitalize brand name properly
       const capitalizedBrand = brand ? brand.split(' ').map((word: string) =>
@@ -94,7 +94,7 @@ export const calculateReturnableItemsWithDates = (clientTransactions: CreditTran
         let brand = afterBouteilleMatch?.[1]?.trim() || '';
 
         // Remove any size patterns
-        brand = brand.replace(/^\d+(?:\.\d+)?[Ll]\s*/, '').trim();
+        brand = brand.replace(/^\d+(?:\.\d+)?[Ll](?:\s|$)/, '').trim();
         brand = brand.replace(/[,()].*/, '').trim();
 
         const capitalizedBrand = brand ? brand.split(' ').map((word: string) =>
@@ -406,8 +406,8 @@ export const calculateReturnableItems = (clientTransactions: CreditTransaction[]
       const quantity = parseInt(bouteilleMatch[1]);
       let brand = bouteilleMatch[2]?.trim() || '';
 
-      // Remove any size patterns from the brand
-      brand = brand.replace(/^\d+(?:\.\d+)?[Ll]\s*/, '').trim();
+      // Remove only size patterns (e.g., "1L", "1.5L") but not brands starting with numbers (e.g., "7seas")
+      brand = brand.replace(/^\d+(?:\.\d+)?[Ll](?:\s|$)/, '').trim();
 
       // Capitalize brand name properly
       const capitalizedBrand = brand ? brand.split(' ').map((word: string) =>
@@ -443,7 +443,7 @@ export const calculateReturnableItems = (clientTransactions: CreditTransaction[]
         let brand = afterBouteilleMatch?.[1]?.trim() || '';
 
         // Remove any size patterns
-        brand = brand.replace(/^\d+(?:\.\d+)?[Ll]\s*/, '').trim();
+        brand = brand.replace(/^\d+(?:\.\d+)?[Ll](?:\s|$)/, '').trim();
         brand = brand.replace(/[,()].*/, '').trim();
 
         const capitalizedBrand = brand ? brand.split(' ').map((word: string) =>
