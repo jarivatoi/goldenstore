@@ -16,8 +16,11 @@ export const calculateReturnableItemsWithDates = (clientTransactions: CreditTran
 
     const description = transaction.description.toLowerCase();
 
+    console.log('🔍 Processing transaction:', description);
+
     // Only process items that contain "chopine" or "bouteille"
     if (!description.includes('chopine') && !description.includes('bouteille')) {
+      console.log('  ❌ Skipped - no chopine or bouteille');
       return;
     }
     
@@ -71,19 +74,26 @@ export const calculateReturnableItemsWithDates = (clientTransactions: CreditTran
       quantifiedBouteilleMatches.push(tempBouteilleMatch);
     }
 
+    console.log('  Quantified bouteille matches:', quantifiedBouteilleMatches.length);
+
     const standaloneBouteillePattern = /\bbouteilles?\b/gi;
     let standaloneBouteilleMatch: RegExpExecArray | null;
     while ((standaloneBouteilleMatch = standaloneBouteillePattern.exec(description)) !== null) {
+      console.log('  🎯 Found standalone bouteille at index:', standaloneBouteilleMatch.index);
       // Skip if this match is part of a quantified match
       const isPartOfQuantified = quantifiedBouteilleMatches.some(match =>
         standaloneBouteilleMatch!.index >= match.index &&
         standaloneBouteilleMatch!.index < match.index + match[0].length
       );
 
+      console.log('  isPartOfQuantified:', isPartOfQuantified);
+
       if (!isPartOfQuantified) {
         // Look for brand after the bouteille word (NO size extraction)
         const brandMatch = description.substring(standaloneBouteilleMatch.index).match(/^bouteilles?\s+([^,()]*)/i);
         const brand = brandMatch?.[1]?.trim() || '';
+
+        console.log('  Brand found:', brand);
 
         // Capitalize brand name properly
         const capitalizedBrand = brand ? brand.split(' ').map((word: string) =>
@@ -91,6 +101,8 @@ export const calculateReturnableItemsWithDates = (clientTransactions: CreditTran
         ).join(' ') : '';
 
         const key = capitalizedBrand ? `Bouteille ${capitalizedBrand}` : 'Bouteille';
+
+        console.log('  ✅ Adding key:', key);
 
         if (!returnableItems[key]) {
           returnableItems[key] = 0;
@@ -107,28 +119,37 @@ export const calculateReturnableItemsWithDates = (clientTransactions: CreditTran
     while ((tempChopineMatch = tempChopinePattern.exec(description)) !== null) {
       quantifiedMatches.push(tempChopineMatch);
     }
-    
+
+    console.log('  Quantified chopine matches:', quantifiedMatches.length);
+
     const standaloneChopinePattern = /\bchopines?\b/gi;
     let standaloneMatch: RegExpExecArray | null;
     while ((standaloneMatch = standaloneChopinePattern.exec(description)) !== null) {
+      console.log('  🎯 Found standalone chopine at index:', standaloneMatch.index);
       // Skip if this match is part of a quantified match
-      const isPartOfQuantified = quantifiedMatches.some(match => 
-        standaloneMatch!.index >= match.index && 
+      const isPartOfQuantified = quantifiedMatches.some(match =>
+        standaloneMatch!.index >= match.index &&
         standaloneMatch!.index < match.index + match[0].length
       );
-      
+
+      console.log('  isPartOfQuantified:', isPartOfQuantified);
+
       if (!isPartOfQuantified) {
         // Look for brand after the chopine word
         const brandMatch = description.substring(standaloneMatch.index).match(/^chopines?\s+([^,()]*)/i);
         const brand = brandMatch?.[1]?.trim() || '';
-        
+
+        console.log('  Brand found:', brand);
+
         // Capitalize brand name properly
-        const capitalizedBrand = brand ? brand.split(' ').map((word: string) => 
+        const capitalizedBrand = brand ? brand.split(' ').map((word: string) =>
           word.charAt(0).toUpperCase() + word.slice(1).toLowerCase()
         ).join(' ') : '';
-        
+
         const key = capitalizedBrand ? `Chopine ${capitalizedBrand}` : 'Chopine';
-        
+
+        console.log('  ✅ Adding key:', key);
+
         if (!returnableItems[key]) {
           returnableItems[key] = 0;
         }
@@ -136,7 +157,9 @@ export const calculateReturnableItemsWithDates = (clientTransactions: CreditTran
       }
     }
   });
-  
+
+  console.log('📦 Final returnableItems:', returnableItems);
+
   // Calculate returned quantities with improved matching
   const returnedQuantities: {[key: string]: number} = {};
   clientTransactions
@@ -450,19 +473,26 @@ export const calculateReturnableItems = (clientTransactions: CreditTransaction[]
       quantifiedBouteilleMatches.push(tempBouteilleMatch);
     }
 
+    console.log('  Quantified bouteille matches:', quantifiedBouteilleMatches.length);
+
     const standaloneBouteillePattern = /\bbouteilles?\b/gi;
     let standaloneBouteilleMatch: RegExpExecArray | null;
     while ((standaloneBouteilleMatch = standaloneBouteillePattern.exec(description)) !== null) {
+      console.log('  🎯 Found standalone bouteille at index:', standaloneBouteilleMatch.index);
       // Skip if this match is part of a quantified match
       const isPartOfQuantified = quantifiedBouteilleMatches.some(match =>
         standaloneBouteilleMatch!.index >= match.index &&
         standaloneBouteilleMatch!.index < match.index + match[0].length
       );
 
+      console.log('  isPartOfQuantified:', isPartOfQuantified);
+
       if (!isPartOfQuantified) {
         // Look for brand after the bouteille word (NO size extraction)
         const brandMatch = description.substring(standaloneBouteilleMatch.index).match(/^bouteilles?\s+([^,()]*)/i);
         const brand = brandMatch?.[1]?.trim() || '';
+
+        console.log('  Brand found:', brand);
 
         // Capitalize brand name properly
         const capitalizedBrand = brand ? brand.split(' ').map((word: string) =>
@@ -470,6 +500,8 @@ export const calculateReturnableItems = (clientTransactions: CreditTransaction[]
         ).join(' ') : '';
 
         const key = capitalizedBrand ? `Bouteille ${capitalizedBrand}` : 'Bouteille';
+
+        console.log('  ✅ Adding key:', key);
 
         if (!returnableItems[key]) {
           returnableItems[key] = 0;
@@ -486,28 +518,37 @@ export const calculateReturnableItems = (clientTransactions: CreditTransaction[]
     while ((tempChopineMatch = tempChopinePattern.exec(description)) !== null) {
       quantifiedMatches.push(tempChopineMatch);
     }
-    
+
+    console.log('  Quantified chopine matches:', quantifiedMatches.length);
+
     const standaloneChopinePattern = /\bchopines?\b/gi;
     let standaloneMatch: RegExpExecArray | null;
     while ((standaloneMatch = standaloneChopinePattern.exec(description)) !== null) {
+      console.log('  🎯 Found standalone chopine at index:', standaloneMatch.index);
       // Skip if this match is part of a quantified match
-      const isPartOfQuantified = quantifiedMatches.some(match => 
-        standaloneMatch!.index >= match.index && 
+      const isPartOfQuantified = quantifiedMatches.some(match =>
+        standaloneMatch!.index >= match.index &&
         standaloneMatch!.index < match.index + match[0].length
       );
-      
+
+      console.log('  isPartOfQuantified:', isPartOfQuantified);
+
       if (!isPartOfQuantified) {
         // Look for brand after the chopine word
         const brandMatch = description.substring(standaloneMatch.index).match(/^chopines?\s+([^,()]*)/i);
         const brand = brandMatch?.[1]?.trim() || '';
-        
+
+        console.log('  Brand found:', brand);
+
         // Capitalize brand name properly
-        const capitalizedBrand = brand ? brand.split(' ').map((word: string) => 
+        const capitalizedBrand = brand ? brand.split(' ').map((word: string) =>
           word.charAt(0).toUpperCase() + word.slice(1).toLowerCase()
         ).join(' ') : '';
-        
+
         const key = capitalizedBrand ? `Chopine ${capitalizedBrand}` : 'Chopine';
-        
+
+        console.log('  ✅ Adding key:', key);
+
         if (!returnableItems[key]) {
           returnableItems[key] = 0;
         }
@@ -515,7 +556,9 @@ export const calculateReturnableItems = (clientTransactions: CreditTransaction[]
       }
     }
   });
-  
+
+  console.log('📦 Final returnableItems:', returnableItems);
+
   // Calculate returned quantities with improved matching
   const returnedQuantities: {[key: string]: number} = {};
   clientTransactions
