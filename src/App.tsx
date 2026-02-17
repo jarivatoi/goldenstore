@@ -48,15 +48,46 @@ import { OverProvider } from './context/OverContext';
 import OrderManagement from './components/OrderManagement';
 import { OrderProvider } from './context/OrderContext';
 import LoadingSpinner from './components/LoadingSpinner';
-import SyncStatusIndicator from './components/SyncStatusIndicator';
 import OnDeviceConsole from './components/OnDeviceConsole';
+import SupabaseStatusIndicator from './components/SupabaseStatusIndicator';
+import AutoBackupStatusIndicator from './components/AutoBackupStatusIndicator';
+import { automaticBackupManager } from './utils/automaticBackupManager';
+import { NotificationProvider, useNotification } from './context/NotificationContext';
+
+function App() {
+  const { user, loading } = useAuth();
+
+  if (loading) {
+    return (
+      <div className="min-h-screen bg-gray-50 flex items-center justify-center">
+        <LoadingSpinner message="Initializing app..." />
+      </div>
+    );
+  }
+
+  // Always show the main app content, no authentication required
+  return (
+    <NotificationProvider>
+      <PriceListProvider>
+        <OverProvider>
+          <OrderProvider>
+            <CreditProvider>
+              <MainAppContent />
+            </CreditProvider>
+          </OrderProvider>
+        </OverProvider>
+      </PriceListProvider>
+    </NotificationProvider>
+  );
+}
 
 function MainAppContent() {
   const [activeTab, setActiveTab] = useState<'Over' | 'PriceList' | 'Order' | 'Credit'>(() => {
     const savedTab = localStorage.getItem('activeTab');
-    return (savedTab as 'Over' | 'PriceList' | 'Order' | 'Credit') || 'PriceList';
+    return (savedTab as 'Over' | 'PriceList' | 'Order' | 'Credit') || 'Credit';
   });
   const { signOut } = useAuth();
+  const { showAlert, showConfirm } = useNotification();
 
   // Save active tab to localStorage whenever it changes
   const handleTabChange = (tab: 'Over' | 'PriceList' | 'Order' | 'Credit') => {
@@ -99,7 +130,10 @@ function MainAppContent() {
       
       URL.revokeObjectURL(url);
     } catch (error) {
-      alert('Error exporting data. Please try again.');
+      showAlert({
+        type: 'error',
+        message: 'Error exporting data. Please try again.'
+      });
     }
   };
 
@@ -128,16 +162,26 @@ function MainAppContent() {
             lastEditedAt: item.lastEditedAt ? new Date(item.lastEditedAt) : undefined
           }));
 
-          const confirmImport = window.confirm(
-            `This will import ${importedItems.length} items and replace your current data. This will also create an automatic backup. Are you sure you want to continue?`
-          );
+          const confirmImport = await showConfirm({
+            title: 'Confirm Import',
+            message: `This will import ${importedItems.length} items and replace your current data. This will also create an automatic backup. Are you sure you want to continue?`,
+            confirmText: 'Import',
+            cancelText: 'Cancel',
+            type: 'warning'
+          });
 
           if (confirmImport) {
             await importItems(importedItems);
-            alert(`Successfully imported ${importedItems.length} items!`);
+            showAlert({
+              type: 'success',
+              message: `Successfully imported ${importedItems.length} items!`
+            });
           }
         } catch (error) {
-          alert('Error importing file. Please check the file format and try again.');
+          showAlert({
+            type: 'error',
+            message: 'Error importing file. Please check the file format and try again.'
+          });
         }
       };
       
@@ -179,9 +223,15 @@ function MainAppContent() {
     <div className="min-h-screen bg-gray-50 flex flex-col w-full">
       {/* Header with Sign Out */}
       <div className="bg-white border-b border-gray-200 p-4 flex items-center">
-        <div className="flex items-center gap-4 flex-1">
-          <h1 className="text-xl font-semibold text-gray-900">Golden Store</h1>
-          <SyncStatusIndicator />
+        <div className="w-7"></div> {/* Spacer to balance the right side */}
+        <div className="flex items-center justify-center flex-1">
+          <h1 className="text-xl font-semibold text-gray-900 text-center">
+            <span className="select-none">Golden Store</span>
+          </h1>
+        </div>
+        <div className="flex items-center">
+          <SupabaseStatusIndicator className="ml-3" />
+          <AutoBackupStatusIndicator className="ml-3" />
         </div>
       </div>
       
@@ -199,61 +249,6 @@ function MainAppContent() {
       {/* Development Console */}
       <OnDeviceConsole />
     </div>
-  );
-}
-
-/**
- * MAIN APP COMPONENT
- * ==================
- * 
- * PURPOSE:
- * Renders the complete application layout with all major components.
- * Wraps everything in PriceListProvider for global state management.
- * 
- * LAYOUT STRUCTURE:
- * - Full height container with gray background
- * - Sticky header at top
- * - Sticky add form below header
- * - Scrollable price list in middle
- * - Sticky search bar at bottom
- * - PWA installation prompt (conditional)
- * 
- * STYLING APPROACH:
- * - Mobile-first responsive design
- * - Flexbox layout for proper spacing
- * - Sticky positioning for key UI elements
- * - Consistent spacing and shadows
- * 
- * STATE MANAGEMENT:
- * All state is managed through PriceListContext, including:
- * - Items array with CRUD operations
- * - Search query and filtering
- * - Sort options
- * - Loading and error states
- * - IndexedDB synchronization
- */
-function App() {
-  const { user, loading } = useAuth();
-
-  if (loading) {
-    return (
-      <div className="min-h-screen bg-gray-50 flex items-center justify-center">
-        <LoadingSpinner message="Initializing app..." />
-      </div>
-    );
-  }
-
-  // Always show the main app content, no authentication required
-  return (
-    <PriceListProvider>
-      <OverProvider>
-        <OrderProvider>
-          <CreditProvider>
-            <MainAppContent />
-          </CreditProvider>
-        </OrderProvider>
-      </OverProvider>
-    </PriceListProvider>
   );
 }
 
