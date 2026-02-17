@@ -117,8 +117,10 @@ export const calculateReturnableItemsWithDates = (clientTransactions: CreditTran
       );
 
       if (!isChopinePartOfQuantified) {
-        const brandMatch = description.substring(standaloneChopineMatch.index).match(/^chopines?\s*([^,()]*)/i);
-        const brand = brandMatch?.[1]?.trim() || '';
+        const brandMatch = description.substring(standaloneChopineMatch.index).match(/^chopines?\s*(.*)$/i);
+        let brand = brandMatch?.[1]?.trim() || '';
+
+        brand = brand.replace(/[,()].*/, '').trim();
 
         const capitalizedBrand = brand ? brand.split(' ').map((word: string) =>
           word.charAt(0).toUpperCase() + word.slice(1).toLowerCase()
@@ -464,8 +466,10 @@ export const calculateReturnableItems = (clientTransactions: CreditTransaction[]
       );
 
       if (!isChopinePartOfQuantified) {
-        const brandMatch = description.substring(standaloneChopineMatch.index).match(/^chopines?\s*([^,()]*)/i);
-        const brand = brandMatch?.[1]?.trim() || '';
+        const brandMatch = description.substring(standaloneChopineMatch.index).match(/^chopines?\s*(.*)$/i);
+        let brand = brandMatch?.[1]?.trim() || '';
+
+        brand = brand.replace(/[,()].*/, '').trim();
 
         const capitalizedBrand = brand ? brand.split(' ').map((word: string) =>
           word.charAt(0).toUpperCase() + word.slice(1).toLowerCase()
