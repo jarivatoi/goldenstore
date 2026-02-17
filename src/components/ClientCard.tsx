@@ -358,7 +358,7 @@ const ClientCard: React.FC<ClientCardProps> = ({ client, onLongPress, onQuickAdd
           style={{ backgroundColor: 'transparent' }}
         >
           <div className="relative max-w-full max-h-[90vh]">
-            <div className="absolute -top-2 -right-2 text-white text-sm bg-black bg-opacity-70 px-4 py-2 rounded-full shadow-lg z-10">
+            <div className="absolute top-2 right-2 text-white text-sm bg-black bg-opacity-70 px-4 py-2 rounded-full shadow-lg z-10">
               Tap to close
             </div>
             <img
