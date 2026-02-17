@@ -28,9 +28,9 @@ export const calculateReturnableItemsWithDates = (clientTransactions: CreditTran
     while ((chopineMatch = chopinePattern.exec(description)) !== null) {
       const quantity = parseInt(chopineMatch[1]);
       const brand = chopineMatch[2]?.trim() || '';
-      // Capitalize brand name properly
-      const capitalizedBrand = brand ? brand.split(' ').map((word: string) => 
-        word.charAt(0).toUpperCase() + word.slice(1).toLowerCase()
+      // Capitalize brand name properly (keep words starting with digits unchanged)
+      const capitalizedBrand = brand ? brand.split(' ').map((word: string) =>
+        /^\d/.test(word) ? word.toLowerCase() : word.charAt(0).toUpperCase() + word.slice(1).toLowerCase()
       ).join(' ') : '';
       const key = capitalizedBrand ? `Chopine ${capitalizedBrand}` : 'Chopine';
       
@@ -50,9 +50,9 @@ export const calculateReturnableItemsWithDates = (clientTransactions: CreditTran
       const size = bouteilleMatch1[2]?.trim().replace(/l$/gi, 'L') || '';
       const brand = bouteilleMatch1[3]?.trim() || '';
       
-      // Capitalize brand name properly
-      const capitalizedBrand = brand ? brand.split(' ').map((word: string) => 
-        word.charAt(0).toUpperCase() + word.slice(1).toLowerCase()
+      // Capitalize brand name properly (keep words starting with digits unchanged)
+      const capitalizedBrand = brand ? brand.split(' ').map((word: string) =>
+        /^\d/.test(word) ? word.toLowerCase() : word.charAt(0).toUpperCase() + word.slice(1).toLowerCase()
       ).join(' ') : '';
       
       let key;
@@ -339,9 +339,9 @@ export const calculateReturnableItemsWithDates = (clientTransactions: CreditTran
       if (itemType.includes('Chopine')) {
         // For Chopine items: "8 Chopines Beer" (with proper pluralization and capitalization)
         const brand = itemType.replace(/^(Chopines?)/i, '').trim();
-        // Ensure brand is title case
-        const titleCaseBrand = brand ? brand.split(' ').map(word => 
-          word.charAt(0).toUpperCase() + word.slice(1).toLowerCase()
+        // Ensure brand is title case (keep words starting with digits unchanged)
+        const titleCaseBrand = brand ? brand.split(' ').map(word =>
+          /^\d/.test(word) ? word.toLowerCase() : word.charAt(0).toUpperCase() + word.slice(1).toLowerCase()
         ).join(' ') : '';
         if (titleCaseBrand) {
           displayText = `${remaining} Chopine${remaining > 1 ? 's' : ''} ${titleCaseBrand}`;
@@ -360,9 +360,9 @@ export const calculateReturnableItemsWithDates = (clientTransactions: CreditTran
           if (bouteilleRemoved.includes(formattedSize)) {
             // This is "Bouteille 1.5L Pepsi" format, keep the original structure
             const brandAndSize = bouteilleRemoved.replace(formattedSize, '').trim();
-            // Capitalize brand name properly
-            const capitalizedBrand = brandAndSize ? brandAndSize.split(' ').map(word => 
-              word.charAt(0).toUpperCase() + word.slice(1).toLowerCase()
+            // Capitalize brand name properly (keep words starting with digits unchanged)
+            const capitalizedBrand = brandAndSize ? brandAndSize.split(' ').map(word =>
+              /^\d/.test(word) ? word.toLowerCase() : word.charAt(0).toUpperCase() + word.slice(1).toLowerCase()
             ).join(' ') : brandAndSize;
             displayText = `${remaining} Bouteille ${formattedSize} ${capitalizedBrand}`.trim();
           } else {
@@ -437,9 +437,9 @@ export const calculateReturnableItems = (clientTransactions: CreditTransaction[]
     while ((chopineMatch = chopinePattern.exec(description)) !== null) {
       const quantity = parseInt(chopineMatch[1]);
       const brand = chopineMatch[2]?.trim() || '';
-      // Capitalize brand name properly
-      const capitalizedBrand = brand ? brand.split(' ').map((word: string) => 
-        word.charAt(0).toUpperCase() + word.slice(1).toLowerCase()
+      // Capitalize brand name properly (keep words starting with digits unchanged)
+      const capitalizedBrand = brand ? brand.split(' ').map((word: string) =>
+        /^\d/.test(word) ? word.toLowerCase() : word.charAt(0).toUpperCase() + word.slice(1).toLowerCase()
       ).join(' ') : '';
       const key = capitalizedBrand ? `Chopine ${capitalizedBrand}` : 'Chopine';
       
@@ -459,9 +459,9 @@ export const calculateReturnableItems = (clientTransactions: CreditTransaction[]
       const size = bouteilleMatch1[2]?.trim().replace(/l$/gi, 'L') || '';
       const brand = bouteilleMatch1[3]?.trim() || '';
       
-      // Capitalize brand name properly
-      const capitalizedBrand = brand ? brand.split(' ').map((word: string) => 
-        word.charAt(0).toUpperCase() + word.slice(1).toLowerCase()
+      // Capitalize brand name properly (keep words starting with digits unchanged)
+      const capitalizedBrand = brand ? brand.split(' ').map((word: string) =>
+        /^\d/.test(word) ? word.toLowerCase() : word.charAt(0).toUpperCase() + word.slice(1).toLowerCase()
       ).join(' ') : '';
       
       let key;
@@ -725,9 +725,9 @@ export const calculateReturnableItems = (clientTransactions: CreditTransaction[]
       if (itemType.includes('Chopine')) {
         // For Chopine items: "8 Chopines Beer" (with proper pluralization and capitalization)
         const brand = itemType.replace(/^(Chopines?)/i, '').trim();
-        // Ensure brand is title case
-        const titleCaseBrand = brand ? brand.split(' ').map(word => 
-          word.charAt(0).toUpperCase() + word.slice(1).toLowerCase()
+        // Ensure brand is title case (keep words starting with digits unchanged)
+        const titleCaseBrand = brand ? brand.split(' ').map(word =>
+          /^\d/.test(word) ? word.toLowerCase() : word.charAt(0).toUpperCase() + word.slice(1).toLowerCase()
         ).join(' ') : '';
         if (titleCaseBrand) {
           displayText = `${remaining} Chopine${remaining > 1 ? 's' : ''} ${titleCaseBrand}`;
@@ -746,9 +746,9 @@ export const calculateReturnableItems = (clientTransactions: CreditTransaction[]
           if (bouteilleRemoved.includes(formattedSize)) {
             // This is "Bouteille 1.5L Pepsi" format, keep the original structure
             const brandAndSize = bouteilleRemoved.replace(formattedSize, '').trim();
-            // Capitalize brand name properly
-            const capitalizedBrand = brandAndSize ? brandAndSize.split(' ').map(word => 
-              word.charAt(0).toUpperCase() + word.slice(1).toLowerCase()
+            // Capitalize brand name properly (keep words starting with digits unchanged)
+            const capitalizedBrand = brandAndSize ? brandAndSize.split(' ').map(word =>
+              /^\d/.test(word) ? word.toLowerCase() : word.charAt(0).toUpperCase() + word.slice(1).toLowerCase()
             ).join(' ') : brandAndSize;
             displayText = `${remaining} Bouteille ${formattedSize} ${capitalizedBrand}`.trim();
           } else {

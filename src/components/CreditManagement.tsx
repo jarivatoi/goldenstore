@@ -390,9 +390,9 @@ const CreditManagement: React.FC = () => {
             const size = bouteilleMatch[2]?.trim().toUpperCase() || '';
             const brand = bouteilleMatch[3]?.trim() || '';
             
-            // Capitalize brand name properly
-            const capitalizedBrand = brand ? brand.split(' ').map(word => 
-              word.charAt(0).toUpperCase() + word.slice(1).toLowerCase()
+            // Capitalize brand name properly (keep words starting with digits unchanged)
+            const capitalizedBrand = brand ? brand.split(' ').map(word =>
+              /^\d/.test(word) ? word.toLowerCase() : word.charAt(0).toUpperCase() + word.slice(1).toLowerCase()
             ).join(' ') : '';
             
             let key;
@@ -418,9 +418,9 @@ const CreditManagement: React.FC = () => {
             const brandMatch = description.match(/bouteilles?\s+([^,]*)/i);
             const brand = brandMatch?.[1]?.trim() || '';
             
-            // Capitalize brand name properly
-            const capitalizedBrand = brand ? brand.split(' ').map((word: string) => 
-              word.charAt(0).toUpperCase() + word.slice(1).toLowerCase()
+            // Capitalize brand name properly (keep words starting with digits unchanged)
+            const capitalizedBrand = brand ? brand.split(' ').map((word: string) =>
+              /^\d/.test(word) ? word.toLowerCase() : word.charAt(0).toUpperCase() + word.slice(1).toLowerCase()
             ).join(' ') : '';
             
             let key;
@@ -446,9 +446,9 @@ const CreditManagement: React.FC = () => {
             const brandMatch = description.match(/chopines?\s+([^,]*)/i);
             const brand = brandMatch?.[1]?.trim() || '';
             
-            // Capitalize brand name properly
-            const capitalizedBrand = brand ? brand.split(' ').map((word: string) => 
-              word.charAt(0).toUpperCase() + word.slice(1).toLowerCase()
+            // Capitalize brand name properly (keep words starting with digits unchanged)
+            const capitalizedBrand = brand ? brand.split(' ').map((word: string) =>
+              /^\d/.test(word) ? word.toLowerCase() : word.charAt(0).toUpperCase() + word.slice(1).toLowerCase()
             ).join(' ') : '';
             
             let key;
