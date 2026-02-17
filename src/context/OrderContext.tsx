@@ -9,15 +9,15 @@ import { supabase } from '../lib/supabase';
 interface OrderContextType {
   // Categories
   categories: OrderCategory[];
-  addCategory: (name: string) => Promise<OrderCategory>;
-  updateCategory: (id: string, name: string) => Promise<void>;
+  addCategory: (name: string, vatPercentage?: number) => Promise<OrderCategory>;
+  updateCategory: (id: string, name: string, vatPercentage: number) => Promise<void>;
   deleteCategory: (id: string) => Promise<void>;
   
   // Item Templates
   itemTemplates: OrderItemTemplate[];
   getItemTemplatesByCategory: (categoryId: string) => OrderItemTemplate[];
-  addItemTemplate: (categoryId: string, name: string, unitPrice: number) => Promise<OrderItemTemplate>;
-  updateItemTemplate: (id: string, name: string, unitPrice: number) => Promise<void>;
+  addItemTemplate: (categoryId: string, name: string, unitPrice: number, isVatNil?: boolean, isVatIncluded?: boolean, vatPercentage?: number) => Promise<OrderItemTemplate>;
+  updateItemTemplate: (id: string, name: string, unitPrice: number, isVatNil?: boolean, isVatIncluded?: boolean, vatPercentage?: number) => Promise<void>;
   deleteItemTemplate: (id: string) => Promise<void>;
   
   // Orders
@@ -85,101 +85,141 @@ export const OrderProvider: React.FC<{ children: React.ReactNode }> = ({ childre
         if (supabase) {
           try {
             // Load from Supabase
-            console.log('Loading order data from Supabase...');
             
-            // Load categories
-            const { data: categoriesData, error: categoriesError } = await supabase
+            // Test connection first
+            let connectionTest, connectionError;
+            try {
+              const result = await Promise.race([
+                supabase.from('order_categories').select('id').limit(1),
+                new Promise((_, reject) => setTimeout(() => reject(new Error('Connection timeout')), 5000))
+              ]);
+              connectionTest = result.data;
+              connectionError = result.error;
+            } catch (timeoutError) {
+              connectionError = timeoutError;
+            }
+            
+            if (connectionError) {
+              if (connectionError.message?.includes('timeout') || 
+                  connectionError.message?.includes('fetch') || 
+                  connectionError.message?.includes('Failed to fetch')) {
+                throw new Error('Unable to connect to database. Using offline mode.');
+              }
+              throw connectionError;
+            }
+            
+            // Check if tables exist by trying to query one record
+            const { data: testData, error: testError } = await supabase
               .from('order_categories')
-              .select('*')
-              .order('created_at', { ascending: false });
+              .select('id')
+              .limit(1);
             
-            if (categoriesError) throw categoriesError;
+            if (testError && testError.code === '42P01') {
+              // Table doesn't exist, throw error to fall back to localStorage
+              throw new Error('Database tables not found. Please apply migrations first.');
+            }
             
-            const transformedCategories: OrderCategory[] = (categoriesData || []).map((category: any) => ({
-              id: category.id,
-              name: category.name,
-              vatPercentage: category.vat_percentage || 15,
-              createdAt: new Date(category.created_at)
-            }));
+            if (testError) {
+              throw testError;
+            }
             
-            // Load item templates
-            const { data: templatesData, error: templatesError } = await supabase
-              .from('order_item_templates')
-              .select('*')
-              .order('created_at', { ascending: false });
-            
-            if (templatesError) throw templatesError;
-            
-            const transformedTemplates: OrderItemTemplate[] = (templatesData || []).map((template: any) => ({
-              id: template.id,
-              categoryId: template.category_id,
-              name: template.name,
-              unitPrice: template.unit_price,
-              isVatNil: template.is_vat_nil || false,
-              vatPercentage: template.vat_percentage || 15,
-              createdAt: new Date(template.created_at)
-            }));
-            
-            // Load orders with items
-            const { data: ordersData, error: ordersError } = await supabase
-              .from('orders')
-              .select(`
-                *,
-                order_items (*)
-              `)
-              .order('created_at', { ascending: false });
-            
-            if (ordersError) throw ordersError;
-            
-            const transformedOrders: Order[] = (ordersData || []).map((order: any) => ({
-              id: order.id,
-              categoryId: order.category_id,
-              orderDate: new Date(order.order_date),
-              items: (order.order_items || []).map((item: any) => ({
-                id: item.id,
-                templateId: item.template_id,
-                quantity: item.quantity,
-                unitPrice: item.unit_price,
-                isVatNil: item.is_vat_nil || false,
-                vatAmount: item.vat_amount || 0,
-                totalPrice: item.total_price,
-                isAvailable: item.is_available !== false
-              })),
-              totalCost: order.total_cost || 0,
-              createdAt: new Date(order.created_at),
-              lastEditedAt: order.last_edited_at ? new Date(order.last_edited_at) : undefined
-            }));
-            
-            setCategories(transformedCategories);
-            setItemTemplates(transformedTemplates);
-            setOrders(transformedOrders);
-            
-            // Update localStorage with Supabase data
-            localStorage.setItem('orderCategories', JSON.stringify(transformedCategories.map(category => ({
-              ...category,
-              createdAt: category.createdAt.toISOString()
-            }))));
-            
-            localStorage.setItem('orderItemTemplates', JSON.stringify(transformedTemplates.map(template => ({
-              ...template,
-              createdAt: template.createdAt.toISOString()
-            }))));
-            
-            localStorage.setItem('orders', JSON.stringify(transformedOrders.map(order => ({
-              ...order,
-              orderDate: order.orderDate.toISOString(),
-              createdAt: order.createdAt.toISOString(),
-              lastEditedAt: order.lastEditedAt?.toISOString()
-            }))));
-            
-            console.log(`Loaded ${transformedCategories.length} categories, ${transformedTemplates.length} templates, ${transformedOrders.length} orders from Supabase`);
-            
-            // NO REAL-TIME SUBSCRIPTIONS - Device-to-Supabase sync only
-            console.log('✅ Order data loaded from Supabase (device-to-Supabase sync only)');
+            // Tables exist, proceed with loading data
+            try {
+              // Load categories
+              const { data: categoriesData, error: categoriesError } = await supabase
+                .from('order_categories')
+                .select('*')
+                .order('created_at', { ascending: false });
+              
+              if (categoriesError) throw categoriesError;
+              
+              const transformedCategories: OrderCategory[] = (categoriesData || []).map((category: any) => ({
+                id: category.id,
+                name: category.name,
+                vatPercentage: category.vat_percentage || 15,
+                createdAt: new Date(category.created_at)
+              }));
+              
+              // Load item templates
+              const { data: templatesData, error: templatesError } = await supabase
+                .from('order_item_templates')
+                .select('*')
+                .order('created_at', { ascending: false });
+              
+              if (templatesError) throw templatesError;
+              
+              const transformedTemplates: OrderItemTemplate[] = (templatesData || []).map((template: any) => ({
+                id: template.id,
+                categoryId: template.category_id,
+                name: template.name,
+                unitPrice: template.unit_price,
+                isVatNil: template.is_vat_nil || false,
+                isVatIncluded: template.is_vat_included || false,
+                vatPercentage: template.vat_percentage || 15,
+                createdAt: new Date(template.created_at)
+              }));
+              
+              // Load orders with items
+              const { data: ordersData, error: ordersError } = await supabase
+                .from('orders')
+                .select(`
+                  *,
+                  order_items (*)
+                `)
+                .order('created_at', { ascending: false });
+              
+              if (ordersError) throw ordersError;
+              
+              const transformedOrders: Order[] = (ordersData || []).map((order: any) => ({
+                id: order.id,
+                categoryId: order.category_id,
+                orderDate: new Date(order.order_date),
+                items: (order.order_items || []).map((item: any) => ({
+                  id: item.id,
+                  templateId: item.template_id,
+                  quantity: item.quantity,
+                  unitPrice: item.unit_price,
+                  isVatNil: item.is_vat_nil || false,
+                  isVatIncluded: item.is_vat_included || false,
+                  vatAmount: item.vat_amount || 0,
+                  totalPrice: item.total_price,
+                  isAvailable: item.is_available !== false
+                })),
+                totalCost: order.total_cost || 0,
+                createdAt: new Date(order.created_at),
+                lastEditedAt: order.last_edited_at ? new Date(order.last_edited_at) : undefined
+              }));
+              
+              setCategories(transformedCategories);
+              setItemTemplates(transformedTemplates);
+              setOrders(transformedOrders);
+              
+              // Update localStorage with Supabase data
+              localStorage.setItem('orderCategories', JSON.stringify(transformedCategories.map(category => ({
+                ...category,
+                createdAt: category.createdAt.toISOString()
+              }))));
+              
+              localStorage.setItem('orderItemTemplates', JSON.stringify(transformedTemplates.map(template => ({
+                ...template,
+                createdAt: template.createdAt.toISOString()
+              }))));
+              
+              localStorage.setItem('orders', JSON.stringify(transformedOrders.map(order => ({
+                ...order,
+                orderDate: order.orderDate.toISOString(),
+                createdAt: order.createdAt.toISOString(),
+                lastEditedAt: order.lastEditedAt?.toISOString()
+              }))));
+              
+              
+            } catch (dataError) {
+              throw dataError;
+            }
             
           } catch (supabaseError) {
-            console.warn('Failed to load from Supabase, falling back to localStorage:', supabaseError);
-            setError('Unable to connect to online data. Using offline data.');
+            setError('Database tables not found. Using offline data only. Please apply migrations to enable online sync.');
+            
             // Fallback to localStorage if Supabase fails
             const storedCategories = localStorage.getItem('orderCategories');
             const transformedCategories: OrderCategory[] = storedCategories ? JSON.parse(storedCategories).map((category: any) => ({
@@ -190,6 +230,7 @@ export const OrderProvider: React.FC<{ children: React.ReactNode }> = ({ childre
             const storedTemplates = localStorage.getItem('orderItemTemplates');
             const transformedTemplates: OrderItemTemplate[] = storedTemplates ? JSON.parse(storedTemplates).map((template: any) => ({
               ...template,
+              isVatIncluded: template.isVatIncluded || false,
               createdAt: new Date(template.createdAt)
             })) : [];
             
@@ -198,13 +239,16 @@ export const OrderProvider: React.FC<{ children: React.ReactNode }> = ({ childre
               ...order,
               orderDate: new Date(order.orderDate),
               createdAt: new Date(order.createdAt),
-              lastEditedAt: order.lastEditedAt ? new Date(order.lastEditedAt) : undefined
+              lastEditedAt: order.lastEditedAt ? new Date(order.lastEditedAt) : undefined,
+              items: (order.items || []).map((item: any) => ({
+                ...item,
+                isVatIncluded: item.isVatIncluded || false
+              }))
             })) : [];
             
             setCategories(transformedCategories);
             setItemTemplates(transformedTemplates);
             setOrders(transformedOrders);
-            console.log(`Loaded ${transformedCategories.length} categories, ${transformedTemplates.length} templates, ${transformedOrders.length} orders from localStorage (fallback)`);
           }
         } else {
           // Fallback to localStorage when Supabase is not available
@@ -226,16 +270,18 @@ export const OrderProvider: React.FC<{ children: React.ReactNode }> = ({ childre
             ...order,
             orderDate: new Date(order.orderDate),
             createdAt: new Date(order.createdAt),
-            lastEditedAt: order.lastEditedAt ? new Date(order.lastEditedAt) : undefined
+            lastEditedAt: order.lastEditedAt ? new Date(order.lastEditedAt) : undefined,
+            items: (order.items || []).map((item: any) => ({
+              ...item,
+              isVatIncluded: item.isVatIncluded || false
+            }))
           })) : [];
           
           setCategories(transformedCategories);
           setItemTemplates(transformedTemplates);
           setOrders(transformedOrders);
-          console.log(`Loaded ${transformedCategories.length} categories, ${transformedTemplates.length} templates, ${transformedOrders.length} orders from localStorage`);
         }
       } catch (err) {
-        console.error('Failed to load order data:', err);
         setError('Failed to load order data. Please try again.');
       } finally {
         setIsLoading(false);
@@ -281,7 +327,6 @@ export const OrderProvider: React.FC<{ children: React.ReactNode }> = ({ childre
         
         // Update local state
         setCategories(prev => [newCategory, ...prev]);
-        console.log('Category added to Supabase successfully:', newCategory);
       } else {
         // Fallback to localStorage
         const updatedCategories = [newCategory, ...categories];
@@ -290,7 +335,6 @@ export const OrderProvider: React.FC<{ children: React.ReactNode }> = ({ childre
           ...category,
           createdAt: category.createdAt.toISOString()
         }))));
-        console.log('Category added to localStorage successfully:', newCategory);
       }
       
       return newCategory;
@@ -321,7 +365,6 @@ export const OrderProvider: React.FC<{ children: React.ReactNode }> = ({ childre
         setCategories(prev => prev.map(cat => 
           cat.id === id ? { ...cat, name: formattedName, vatPercentage } : cat
         ));
-        console.log('Category updated in Supabase successfully');
       } else {
         // Fallback to localStorage
         const updatedCategories = categories.map(cat => 
@@ -332,7 +375,6 @@ export const OrderProvider: React.FC<{ children: React.ReactNode }> = ({ childre
           ...category,
           createdAt: category.createdAt.toISOString()
         }))));
-        console.log('Category updated in localStorage successfully');
       }
     } catch (err) {
       setError('Failed to update category');
@@ -356,7 +398,6 @@ export const OrderProvider: React.FC<{ children: React.ReactNode }> = ({ childre
         setCategories(prev => prev.filter(cat => cat.id !== id));
         setItemTemplates(prev => prev.filter(temp => temp.categoryId !== id));
         setOrders(prev => prev.filter(order => order.categoryId !== id));
-        console.log('Category deleted from Supabase successfully');
       } else {
         // Fallback to localStorage
         const updatedCategories = categories.filter(cat => cat.id !== id);
@@ -383,7 +424,6 @@ export const OrderProvider: React.FC<{ children: React.ReactNode }> = ({ childre
           createdAt: order.createdAt.toISOString(),
           lastEditedAt: order.lastEditedAt?.toISOString()
         }))));
-        console.log('Category deleted from localStorage successfully');
       }
     } catch (err) {
       setError('Failed to delete category');
@@ -393,16 +433,18 @@ export const OrderProvider: React.FC<{ children: React.ReactNode }> = ({ childre
 
   // Item Template management
   const getItemTemplatesByCategory = (categoryId: string): OrderItemTemplate[] => {
-    return itemTemplates.filter(temp => temp.categoryId === categoryId);
+    return itemTemplates
+      .filter(temp => temp.categoryId === categoryId)
+      .sort((a, b) => a.name.localeCompare(b.name));
   };
 
-  const addItemTemplate = async (categoryId: string, name: string, unitPrice: number, isVatNil: boolean = false): Promise<OrderItemTemplate> => {
+  const addItemTemplate = async (categoryId: string, name: string, unitPrice: number, isVatNil: boolean = false, isVatIncluded: boolean = false, vatPercentage?: number): Promise<OrderItemTemplate> => {
     try {
       const formattedName = formatName(name);
       
       // Get category's VAT percentage
       const category = categories.find(c => c.id === categoryId);
-      const categoryVatPercentage = category?.vatPercentage || 15;
+      const finalVatPercentage = vatPercentage || category?.vatPercentage || 15;
       
       // Check for duplicates within category
       const existingTemplate = itemTemplates.find(temp => 
@@ -420,7 +462,8 @@ export const OrderProvider: React.FC<{ children: React.ReactNode }> = ({ childre
         name: formattedName,
         unitPrice,
         isVatNil,
-        vatPercentage: categoryVatPercentage,
+        isVatIncluded,
+        vatPercentage: finalVatPercentage,
         createdAt: new Date()
       };
       
@@ -434,6 +477,7 @@ export const OrderProvider: React.FC<{ children: React.ReactNode }> = ({ childre
             name: newItemTemplate.name,
             unit_price: newItemTemplate.unitPrice,
             is_vat_nil: newItemTemplate.isVatNil,
+            is_vat_included: newItemTemplate.isVatIncluded,
             vat_percentage: newItemTemplate.vatPercentage,
             created_at: newItemTemplate.createdAt.toISOString()
           });
@@ -442,7 +486,6 @@ export const OrderProvider: React.FC<{ children: React.ReactNode }> = ({ childre
         
         // Update local state
         setItemTemplates(prev => [newItemTemplate, ...prev]);
-        console.log('Item template added to Supabase successfully:', newItemTemplate);
       } else {
         // Fallback to localStorage
         const updatedTemplates = [newItemTemplate, ...itemTemplates];
@@ -451,7 +494,6 @@ export const OrderProvider: React.FC<{ children: React.ReactNode }> = ({ childre
           ...template,
           createdAt: template.createdAt.toISOString()
         }))));
-        console.log('Item template added to localStorage successfully:', newItemTemplate);
       }
       
       return newItemTemplate;
@@ -461,7 +503,7 @@ export const OrderProvider: React.FC<{ children: React.ReactNode }> = ({ childre
     }
   };
 
-  const updateItemTemplate = async (id: string, name: string, unitPrice: number, isVatNil: boolean): Promise<void> => {
+  const updateItemTemplate = async (id: string, name: string, unitPrice: number, isVatNil: boolean, isVatIncluded: boolean, vatPercentage?: number): Promise<void> => {
     try {
       const formattedName = formatName(name);
       
@@ -472,7 +514,9 @@ export const OrderProvider: React.FC<{ children: React.ReactNode }> = ({ childre
           .update({
             name: formattedName,
             unit_price: unitPrice,
-            is_vat_nil: isVatNil
+            is_vat_nil: isVatNil === true,
+            is_vat_included: isVatIncluded === true,
+            vat_percentage: vatPercentage ?? 15
           })
           .eq('id', id);
         
@@ -480,20 +524,33 @@ export const OrderProvider: React.FC<{ children: React.ReactNode }> = ({ childre
         
         // Update local state
         setItemTemplates(prev => prev.map(temp => 
-          temp.id === id ? { ...temp, name: formattedName, unitPrice, isVatNil } : temp
+          temp.id === id ? { 
+            ...temp, 
+            name: formattedName, 
+            unitPrice, 
+            isVatNil: isVatNil === true, 
+            isVatIncluded: isVatIncluded === true, 
+            vatPercentage: vatPercentage ?? 15 
+          } : temp
         ));
-        console.log('Item template updated in Supabase successfully');
       } else {
         // Fallback to localStorage
         const updatedTemplates = itemTemplates.map(temp => 
-          temp.id === id ? { ...temp, name: formattedName, unitPrice, isVatNil } : temp
+          temp.id === id ? { 
+            ...temp, 
+            name: formattedName, 
+            unitPrice, 
+            isVatNil: isVatNil === true, 
+            isVatIncluded: isVatIncluded === true, 
+            vatPercentage: vatPercentage ?? 15 
+          } : temp
         );
         setItemTemplates(updatedTemplates);
         localStorage.setItem('orderItemTemplates', JSON.stringify(updatedTemplates.map(template => ({
           ...template,
+          isVatIncluded: template.isVatIncluded,
           createdAt: template.createdAt.toISOString()
         }))));
-        console.log('Item template updated in localStorage successfully');
       }
     } catch (err) {
       setError('Failed to update item template');
@@ -526,7 +583,6 @@ export const OrderProvider: React.FC<{ children: React.ReactNode }> = ({ childre
         }));
         
         setOrders(updatedOrders);
-        console.log('Item template deleted from Supabase successfully');
       } else {
         // Fallback to localStorage
         setItemTemplates(prev => prev.filter(temp => temp.id !== id));
@@ -556,7 +612,6 @@ export const OrderProvider: React.FC<{ children: React.ReactNode }> = ({ childre
           createdAt: order.createdAt.toISOString(),
           lastEditedAt: order.lastEditedAt?.toISOString()
         }))));
-        console.log('Item template deleted from localStorage successfully');
       }
     } catch (err) {
       setError('Failed to delete item template');
@@ -572,6 +627,29 @@ export const OrderProvider: React.FC<{ children: React.ReactNode }> = ({ childre
 
   const addOrder = async (categoryId: string, orderDate: Date, items: OrderItem[]): Promise<Order> => {
     try {
+      // Validate that the category exists before creating the order
+      const categoryExists = categories.find(cat => cat.id === categoryId);
+      if (!categoryExists) {
+        throw new Error(`Category with ID "${categoryId}" does not exist. Please refresh the page and try again.`);
+      }
+      
+      // Check for duplicate orders (same category and same date)
+      const orderDateString = orderDate.toDateString(); // Compare dates without time
+      const existingOrder = orders.find(order => 
+        order.categoryId === categoryId && 
+        order.orderDate.toDateString() === orderDateString
+      );
+      
+      if (existingOrder) {
+        const categoryName = categoryExists.name;
+        const formattedDate = orderDate.toLocaleDateString('en-GB', {
+          day: '2-digit',
+          month: 'short',
+          year: 'numeric'
+        });
+        throw new Error(`An order for "${categoryName}" already exists for ${formattedDate}. Please edit the existing order or choose a different date.`);
+      }
+      
       const totalCost = items
         .filter(item => item.isAvailable)
         .reduce((sum, item) => sum + item.totalPrice, 0);
@@ -602,12 +680,13 @@ export const OrderProvider: React.FC<{ children: React.ReactNode }> = ({ childre
         // Add order items to Supabase
         if (items.length > 0) {
           const orderItemsToInsert = items.map(item => ({
-            id: item.id,
+            id: crypto.randomUUID(), // Generate new UUID for Supabase
             order_id: newOrder.id,
             template_id: item.templateId,
             quantity: item.quantity,
             unit_price: item.unitPrice,
             is_vat_nil: item.isVatNil,
+            is_vat_included: item.isVatIncluded || false,
             vat_amount: item.vatAmount,
             total_price: item.totalPrice,
             is_available: item.isAvailable
@@ -622,7 +701,6 @@ export const OrderProvider: React.FC<{ children: React.ReactNode }> = ({ childre
         
         // Update local state
         setOrders(prev => [newOrder, ...prev]);
-        console.log('Order added to Supabase successfully:', newOrder);
       } else {
         // Fallback to localStorage
         const updatedOrders = [newOrder, ...orders];
@@ -633,7 +711,6 @@ export const OrderProvider: React.FC<{ children: React.ReactNode }> = ({ childre
           createdAt: order.createdAt.toISOString(),
           lastEditedAt: order.lastEditedAt?.toISOString()
         }))));
-        console.log('Order added to localStorage successfully:', newOrder);
       }
       
       return newOrder;
@@ -675,12 +752,13 @@ export const OrderProvider: React.FC<{ children: React.ReactNode }> = ({ childre
         // Insert updated order items
         if (items.length > 0) {
           const orderItemsToInsert = items.map(item => ({
-            id: item.id,
+            id: crypto.randomUUID(), // Generate new UUID for Supabase
             order_id: id,
             template_id: item.templateId,
             quantity: item.quantity,
             unit_price: item.unitPrice,
             is_vat_nil: item.isVatNil,
+            is_vat_included: item.isVatIncluded || false,
             vat_amount: item.vatAmount,
             total_price: item.totalPrice,
             is_available: item.isAvailable
@@ -703,7 +781,6 @@ export const OrderProvider: React.FC<{ children: React.ReactNode }> = ({ childre
             lastEditedAt
           } : order
         ));
-        console.log('Order updated in Supabase successfully');
       } else {
         // Fallback to localStorage
         const updatedOrders = orders.map(order => 
@@ -722,7 +799,6 @@ export const OrderProvider: React.FC<{ children: React.ReactNode }> = ({ childre
           createdAt: order.createdAt.toISOString(),
           lastEditedAt: order.lastEditedAt?.toISOString()
         }))));
-        console.log('Order updated in localStorage successfully');
       }
     } catch (err) {
       setError('Failed to update order');
@@ -743,7 +819,6 @@ export const OrderProvider: React.FC<{ children: React.ReactNode }> = ({ childre
         
         // Update local state
         setOrders(prev => prev.filter(order => order.id !== id));
-        console.log('Order deleted from Supabase successfully');
       } else {
         // Fallback to localStorage
         const updatedOrders = orders.filter(order => order.id !== id);
@@ -754,7 +829,6 @@ export const OrderProvider: React.FC<{ children: React.ReactNode }> = ({ childre
           createdAt: order.createdAt.toISOString(),
           lastEditedAt: order.lastEditedAt?.toISOString()
         }))));
-        console.log('Order deleted from localStorage successfully');
       }
     } catch (err) {
       setError('Failed to delete order');

@@ -48,7 +48,7 @@ import { useAuth } from './AuthContext';
  * 
  * CRUD METHODS:
  * @param addItem - Create new price item
- * @param updateItem - Modify existing price item
+ * @param updateItem - Modify existing price item (grossPrice is now optional)
  * @param deleteItem - Remove price item
  * @param importItems - Bulk replace all items
  * 
@@ -59,8 +59,8 @@ import { useAuth } from './AuthContext';
  */
 interface PriceListContextType {
   items: PriceItem[];
-  addItem: (name: string, price: number, grossPrice: number) => Promise<void>;
-  updateItem: (id: string, name: string, price: number, grossPrice: number) => Promise<void>;
+  addItem: (name: string, price: number, grossPrice?: number) => Promise<void>;
+  updateItem: (id: string, name: string, price: number, grossPrice?: number) => Promise<void>;
   deleteItem: (id: string) => Promise<void>;
   importItems: (items: PriceItem[]) => Promise<void>;
   searchItems: (query: string) => PriceItem[];
@@ -145,7 +145,10 @@ const capitalizeWords = (str: string): string => {
     .trim()
     .split(' ')
     .filter(word => word.length > 0)
-    .map(word => word.charAt(0).toUpperCase() + word.slice(1).toLowerCase())
+    .map(word => {
+      // Only capitalize the first letter, preserve the rest of the word's case
+      return word.charAt(0).toUpperCase() + word.slice(1);
+    })
     .join(' ');
 };
 
@@ -225,65 +228,66 @@ export const PriceListProvider: React.FC<{ children: React.ReactNode }> = ({ chi
         setIsLoading(true);
         setError(null);
         
-        // Always try localStorage first for PWA reliability
-        console.log('Loading items from localStorage first for PWA');
-        const storedItems = localStorage.getItem('priceListItems');
-        const localItems: PriceItem[] = storedItems ? JSON.parse(storedItems).map((item: any) => ({
-          ...item,
-          grossPrice: item.grossPrice || 0,
-          createdAt: new Date(item.createdAt),
-          lastEditedAt: item.lastEditedAt ? new Date(item.lastEditedAt) : undefined
-        })) : [];
-        
-        setItems(localItems);
-        console.log(`Loaded ${localItems.length} items from localStorage`);
-        
-        // Then try to sync with Supabase in the background
-        try {
-          if (!supabase) {
-            console.log('Supabase not available, using localStorage only');
-            return;
-          }
-          
-          console.log('Attempting background sync with Supabase...');
-          const { data, error } = await supabase
-            .from('price_items')
-            .select('*')
-            .order('created_at', { ascending: false });
-          
-          if (error) {
-            console.warn('Supabase sync failed, continuing with localStorage:', error);
-            return;
-          }
-          
-          const priceItems: PriceItem[] = (data || []).map((item: any) => ({
-            id: item.id,
-            name: item.name,
-            price: item.price,
-            grossPrice: item.gross_price ?? 0,
-            createdAt: new Date(item.created_at),
-            lastEditedAt: item.last_edited_at ? new Date(item.last_edited_at) : undefined
-          }));
-          
-          // Only update if Supabase has different data
-          if (JSON.stringify(priceItems) !== JSON.stringify(localItems)) {
+        if (supabase) {
+          try {
+            
+            // Test connection first with timeout
+            const connectionTest = await Promise.race([
+              supabase.from('price_items').select('id').limit(1),
+              new Promise((_, reject) => setTimeout(() => reject(new Error('Connection timeout')), 10000))
+            ]);
+            
+            const { data, error } = await supabase
+              .from('price_items')
+              .select('*')
+              .order('created_at', { ascending: false });
+            
+            if (error) throw error;
+            
+            const priceItems: PriceItem[] = (data || []).map((item: any) => ({
+              id: item.id,
+              name: item.name,
+              price: item.price,
+              grossPrice: isNaN(item.gross_price) ? 0 : (item.gross_price ?? 0),
+              createdAt: new Date(item.created_at),
+              lastEditedAt: item.last_edited_at ? new Date(item.last_edited_at) : undefined
+            }));
+            
             setItems(priceItems);
+            
             // Update localStorage with Supabase data
             localStorage.setItem('priceListItems', JSON.stringify(priceItems.map(item => ({
               ...item,
               createdAt: item.createdAt.toISOString(),
               lastEditedAt: item.lastEditedAt?.toISOString()
             }))));
+            
+            
+          } catch (supabaseError) {
+            // Fallback to localStorage
+            const storedItems = localStorage.getItem('priceListItems');
+            const localItems: PriceItem[] = storedItems ? JSON.parse(storedItems).map((item: any) => ({
+              ...item,
+              grossPrice: isNaN(item.grossPrice) ? 0 : (item.grossPrice || 0),
+              createdAt: new Date(item.createdAt),
+              lastEditedAt: item.lastEditedAt ? new Date(item.lastEditedAt) : undefined
+            })) : [];
+            
+            setItems(localItems);
           }
-          console.log(`Loaded ${priceItems.length} items from Supabase`);
+        } else {
+          // Load from localStorage when Supabase is not available
+          const storedItems = localStorage.getItem('priceListItems');
+          const localItems: PriceItem[] = storedItems ? JSON.parse(storedItems).map((item: any) => ({
+            ...item,
+            grossPrice: isNaN(item.grossPrice) ? 0 : (item.grossPrice || 0),
+            createdAt: new Date(item.createdAt),
+            lastEditedAt: item.lastEditedAt ? new Date(item.lastEditedAt) : undefined
+          })) : [];
           
-          // NO REAL-TIME SUBSCRIPTIONS - Device-to-Supabase sync only
-          console.log('✅ Price items loaded from Supabase (device-to-Supabase sync only)');
-        } catch (supabaseError) {
-          console.warn('Supabase failed, falling back to localStorage:', supabaseError);
+          setItems(localItems);
         }
       } catch (err) {
-        console.error('Failed to load items:', err);
         setError('Failed to load items. Using offline mode.');
         setItems([]);
       } finally {
@@ -292,6 +296,118 @@ export const PriceListProvider: React.FC<{ children: React.ReactNode }> = ({ chi
     };
 
     loadItems();
+  }, []);
+
+  // Set up real-time subscription in a separate effect
+  useEffect(() => {
+    let channel: any = null;
+
+    const setupRealtime = async () => {
+      if (!supabase) {
+        return;
+      }
+
+      try {
+        
+        channel = supabase
+          .channel('price_items_changes')
+          .on('postgres_changes', 
+            { 
+              event: '*', 
+              schema: 'public', 
+              table: 'price_items' 
+            },
+            (payload: any) => {
+              
+              if (payload.eventType === 'INSERT') {
+                const newItem: PriceItem = {
+                  id: payload.new.id,
+                  name: payload.new.name,
+                  price: Number(payload.new.price),
+                  grossPrice: isNaN(Number(payload.new.gross_price)) ? 0 : (Number(payload.new.gross_price) || 0),
+                  createdAt: new Date(payload.new.created_at),
+                  lastEditedAt: payload.new.last_edited_at ? new Date(payload.new.last_edited_at) : undefined
+                };
+                
+                
+                setItems(prev => {
+                  // Check if item already exists to prevent duplicates
+                  if (prev.find(item => item.id === newItem.id)) {
+                    return prev;
+                  }
+                  const updated = [newItem, ...prev];
+                  
+                  // Update localStorage
+                  localStorage.setItem('priceListItems', JSON.stringify(updated.map(item => ({
+                    ...item,
+                    createdAt: item.createdAt.toISOString(),
+                    lastEditedAt: item.lastEditedAt?.toISOString()
+                  }))));
+                  
+                  return updated;
+                });
+              } else if (payload.eventType === 'UPDATE') {
+                const updatedItem: PriceItem = {
+                  id: payload.new.id,
+                  name: payload.new.name,
+                  price: Number(payload.new.price),
+                  grossPrice: isNaN(Number(payload.new.gross_price)) ? 0 : (Number(payload.new.gross_price) || 0),
+                  createdAt: new Date(payload.new.created_at),
+                  lastEditedAt: payload.new.last_edited_at ? new Date(payload.new.last_edited_at) : undefined
+                };
+                
+                
+                setItems(prev => {
+                  const updated = prev.map(item => 
+                    item.id === updatedItem.id ? updatedItem : item
+                  );
+                  
+                  // Update localStorage
+                  localStorage.setItem('priceListItems', JSON.stringify(updated.map(item => ({
+                    ...item,
+                    createdAt: item.createdAt.toISOString(),
+                    lastEditedAt: item.lastEditedAt?.toISOString()
+                  }))));
+                  
+                  return updated;
+                });
+              } else if (payload.eventType === 'DELETE') {
+                
+                setItems(prev => {
+                  const updated = prev.filter(item => item.id !== payload.old.id);
+                  
+                  // Update localStorage
+                  localStorage.setItem('priceListItems', JSON.stringify(updated.map(item => ({
+                    ...item,
+                    createdAt: item.createdAt.toISOString(),
+                    lastEditedAt: item.lastEditedAt?.toISOString()
+                  }))));
+                  
+                  return updated;
+                });
+              }
+            }
+          )
+          .subscribe((status: string) => {
+            if (status === 'SUBSCRIBED') {
+            } else if (status === 'CHANNEL_ERROR') {
+            } else if (status === 'TIMED_OUT') {
+            } else if (status === 'CLOSED') {
+            }
+          });
+      } catch (error) {
+      }
+    };
+
+    // Set up real-time subscription
+    setupRealtime();
+    
+    // Cleanup function
+    return () => {
+      if (channel) {
+        supabase?.removeChannel(channel);
+      }
+    };
   }, []);
 
   
@@ -325,10 +441,8 @@ export const PriceListProvider: React.FC<{ children: React.ReactNode }> = ({ chi
    * @returns Promise<void> - Resolves when item is added
    * @throws Error if database operation fails
    */
-  const addItem = async (name: string, price: number, grossPrice: number) => {
+  const addItem = async (name: string, price: number, grossPrice?: number) => {
     try {
-      console.log('🔍 Adding item (Mobile Safari):', { name, price, grossPrice });
-      
       const capitalizedName = capitalizeWords(name);
       
       // Mobile Safari validation
@@ -340,83 +454,96 @@ export const PriceListProvider: React.FC<{ children: React.ReactNode }> = ({ chi
         throw new Error('Valid price is required');
       }
       
-      if (isNaN(grossPrice) || grossPrice <= 0) {
-        throw new Error('Valid gross price is required');
-      }
+      // Use 0 as default grossPrice if not provided or NaN
+      const finalGrossPrice = grossPrice !== undefined ? 
+        (isNaN(grossPrice) ? 0 : grossPrice) : 0;
       
       const newItem: PriceItem = {
         id: crypto.randomUUID(),
         name: capitalizedName,
         price,
-        grossPrice,
+        grossPrice: finalGrossPrice,
         createdAt: new Date()
       };
       
-      if (supabase) {
-        // Add to Supabase
-        console.log('📤 Sending to Supabase (Mobile):', {
-          id: newItem.id,
-          name: newItem.name,
-          price: newItem.price,
-          gross_price: newItem.grossPrice,
-          created_at: newItem.createdAt.toISOString()
-        });
-        
-        // Mobile Safari timeout handling
-        const insertPromise = supabase
-          .from('price_items')
-          .insert({
-            id: newItem.id,
-            name: newItem.name,
-            price: newItem.price,
-            gross_price: newItem.grossPrice,
-            created_at: newItem.createdAt.toISOString()
-          });
-        
-        // Add timeout for mobile networks
-        const timeoutPromise = new Promise((_, reject) => {
-          setTimeout(() => reject(new Error('Request timeout - please check your connection')), 15000);
-        });
-        
-        const { error } = await Promise.race([insertPromise, timeoutPromise]);
-        
-        if (error) {
-          console.error('❌ Supabase error (Mobile):', error);
-          
-          // Mobile-specific error handling
-          if (error.message?.includes('timeout') || error.message?.includes('network')) {
-            throw new Error('Network error. Please check your internet connection and try again.');
-          }
-          
-          if (error.message?.includes('duplicate') || error.code === '23505') {
-            throw new Error('An item with this name already exists.');
-          }
-          
-          throw error;
-        }
-        
-        // Update local state
-        setItems(prev => [newItem, ...prev]);
-        console.log('✅ Item added to Supabase successfully (Mobile):', newItem);
-      } else {
-        // Fallback to localStorage
-        const updatedItems = [newItem, ...items];
-        setItems(updatedItems);
+      // ALWAYS update localStorage first - this should never fail
+      const updatedItems = [newItem, ...items];
+      setItems(updatedItems);
+      
+      // Save to localStorage immediately - this is the primary storage for iPhone
+      try {
         localStorage.setItem('priceListItems', JSON.stringify(updatedItems.map(item => ({
           ...item,
           createdAt: item.createdAt.toISOString(),
           lastEditedAt: item.lastEditedAt?.toISOString()
         }))));
-        console.log('Item added to localStorage successfully:', newItem);
+        console.log('✅ Item saved to localStorage successfully');
+      } catch (storageError) {
+        console.error('❌ localStorage save failed:', storageError);
+        throw new Error('Failed to save item to device storage');
       }
+      
+      // Try Supabase sync ONLY if online - don't block if offline
+      if (supabase && navigator.onLine) {
+        try {
+          // Mobile Safari timeout handling
+          const insertPromise = supabase
+            .from('price_items')
+            .insert({
+              id: newItem.id,
+              name: newItem.name,
+              price: newItem.price,
+              gross_price: newItem.grossPrice,
+              created_at: newItem.createdAt.toISOString()
+            });
+          
+          // Add timeout for mobile networks
+          const timeoutPromise = new Promise((_, reject) => {
+            setTimeout(() => reject(new Error('Request timeout - please check your connection')), 15000);
+          });
+          
+          const { error } = await Promise.race([insertPromise, timeoutPromise]);
+          
+          if (error) {
+            console.warn('⚠️ Supabase sync failed, but localStorage succeeded:', error);
+          } else {
+            console.log('✅ Item synced to Supabase successfully');
+          }
+        } catch (supabaseError) {
+          console.warn('⚠️ Supabase sync failed, but localStorage succeeded:', supabaseError);
+        }
+      } else if (!navigator.onLine) {
+        console.log('📱 Offline mode: Item saved to localStorage only');
+      } else {
+        console.log('📱 Supabase not available: Item saved to localStorage only');
+      }
+      
     } catch (err) {
-      console.error('Failed to add item:', err);
+      console.error('❌ Add item failed completely:', err);
       setError('Failed to add item. Please try again.');
       throw err;
     }
   };
 
-  const updateItem = async (id: string, name: string, price: number, grossPrice: number) => {
+  /**
+   * UPDATE ITEM METHOD
+   * ==================
+   * 
+   * PURPOSE:
+   * Modifies an existing price item with optional gross price.
+   * Provides optimistic updates and handles both online and offline scenarios.
+   * 
+   * CHANGES:
+   * - Made grossPrice parameter optional
+   * - Removed gross price validation requirement
+   * - Maintains backward compatibility
+   * 
+   * @param id - ID of item to update
+   * @param name - New item name
+   * @param price - New item price
+   * @param grossPrice - Optional gross price (can be undefined)
+   */
+  const updateItem = async (id: string, name: string, price: number, grossPrice?: number) => {
     try {
       const capitalizedName = capitalizeWords(name);
       const existingItem = items.find(item => item.id === id);
@@ -424,12 +551,23 @@ export const PriceListProvider: React.FC<{ children: React.ReactNode }> = ({ chi
         throw new Error('Item not found');
       }
       
+      // Use existing grossPrice if not provided, ensure no NaN values
+      const finalGrossPrice = grossPrice !== undefined ? 
+        (isNaN(grossPrice) ? 0 : grossPrice) : 
+        (isNaN(existingItem.grossPrice) ? 0 : existingItem.grossPrice);
+      
+      // Check if the item has actually changed
+      const hasChanged = existingItem.name !== capitalizedName || 
+                         existingItem.price !== price || 
+                         existingItem.grossPrice !== finalGrossPrice;
+      
+      // Only set lastEditedAt if the item has actually changed
       const updatedItem: PriceItem = {
         ...existingItem,
         name: capitalizedName,
         price,
-        grossPrice,
-        lastEditedAt: new Date()
+        grossPrice: finalGrossPrice,
+        ...(hasChanged && { lastEditedAt: new Date() })
       };
       
       if (supabase) {
@@ -440,7 +578,7 @@ export const PriceListProvider: React.FC<{ children: React.ReactNode }> = ({ chi
             name: updatedItem.name,
             price: updatedItem.price,
             gross_price: updatedItem.grossPrice,
-            last_edited_at: updatedItem.lastEditedAt?.toISOString()
+            ...(hasChanged && { last_edited_at: updatedItem.lastEditedAt?.toISOString() })
           })
           .eq('id', id);
         
@@ -448,7 +586,6 @@ export const PriceListProvider: React.FC<{ children: React.ReactNode }> = ({ chi
         
         // Update local state
         setItems(prev => prev.map(item => item.id === id ? updatedItem : item));
-        console.log('Item updated in Supabase successfully');
       } else {
         // Fallback to localStorage
         const updatedItems = items.map(item => item.id === id ? updatedItem : item);
@@ -458,10 +595,8 @@ export const PriceListProvider: React.FC<{ children: React.ReactNode }> = ({ chi
           createdAt: item.createdAt.toISOString(),
           lastEditedAt: item.lastEditedAt?.toISOString()
         }))));
-        console.log('Item updated in localStorage successfully');
       }
     } catch (err) {
-      console.error('Failed to update item:', err);
       setError('Failed to update item. Please try again.');
       throw err;
     }
@@ -480,7 +615,6 @@ export const PriceListProvider: React.FC<{ children: React.ReactNode }> = ({ chi
         
         // Update local state
         setItems(prev => prev.filter(item => item.id !== id));
-        console.log('Item deleted from Supabase successfully');
       } else {
         // Fallback to localStorage
         const updatedItems = items.filter(item => item.id !== id);
@@ -490,10 +624,8 @@ export const PriceListProvider: React.FC<{ children: React.ReactNode }> = ({ chi
           createdAt: item.createdAt.toISOString(),
           lastEditedAt: item.lastEditedAt?.toISOString()
         }))));
-        console.log('Item deleted from localStorage successfully');
       }
     } catch (err) {
-      console.error('Failed to delete item:', err);
       setError('Failed to delete item. Please try again.');
       throw err;
     }
@@ -508,7 +640,7 @@ export const PriceListProvider: React.FC<{ children: React.ReactNode }> = ({ chi
         const { error: deleteError } = await supabase
           .from('price_items')
           .delete()
-          .neq('id', '');
+          .gte('created_at', '1900-01-01');
         
         if (deleteError) throw deleteError;
         
@@ -528,7 +660,6 @@ export const PriceListProvider: React.FC<{ children: React.ReactNode }> = ({ chi
         if (insertError) throw insertError;
         
         setItems(newItems);
-        console.log(`Successfully imported ${newItems.length} items to Supabase`);
       } else {
         // Fallback to localStorage
         setItems(newItems);
@@ -537,10 +668,8 @@ export const PriceListProvider: React.FC<{ children: React.ReactNode }> = ({ chi
           createdAt: item.createdAt.toISOString(),
           lastEditedAt: item.lastEditedAt?.toISOString()
         }))));
-        console.log(`Successfully imported ${newItems.length} items to localStorage`);
       }
     } catch (err) {
-      console.error('Failed to import items:', err);
       setError('Failed to import items. Please try again.');
       throw err;
     } finally {
@@ -703,6 +832,6 @@ export const PriceListProvider: React.FC<{ children: React.ReactNode }> = ({ chi
   return (
     <PriceListContext.Provider value={value}>
       {children}
-    </PriceListContext.Provider>
+    </PriceListContext.Provider> 
   );
 };

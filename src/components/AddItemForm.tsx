@@ -105,8 +105,6 @@ const AddItemForm: React.FC = () => {
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     
-    console.log('🚀 Form submission started (Mobile):', { name, price, grossPrice });
-    
     // Mobile Safari form validation
     if (!name || name.trim().length === 0) {
       setError('Please enter an item name');
@@ -115,11 +113,6 @@ const AddItemForm: React.FC = () => {
     
     if (!price || price.trim().length === 0) {
       setError('Please enter a price');
-      return;
-    }
-    
-    if (!grossPrice || grossPrice.trim().length === 0) {
-      setError('Please enter a gross price');
       return;
     }
     
@@ -146,8 +139,9 @@ const AddItemForm: React.FC = () => {
       return;
     }
     
-    const grossPriceValue = parseFloat(grossPrice);
-    if (isNaN(grossPriceValue) || grossPriceValue <= 0) {
+    // Parse gross price (optional)
+    const grossPriceValue = grossPrice.trim() ? parseFloat(grossPrice) : undefined;
+    if (grossPriceValue !== undefined && (isNaN(grossPriceValue) || grossPriceValue <= 0)) {
       setError('Please enter a valid gross price');
       return;
     }
@@ -157,14 +151,9 @@ const AddItemForm: React.FC = () => {
       setIsSubmitting(true);
       setError('');
       
-      console.log('📝 Calling addItem with (Mobile):', { 
-        name: name.trim(), 
-        price: Math.round(priceValue * 100) / 100, 
-        grossPrice: Math.round(grossPriceValue * 100) / 100 
-      });
-      
       // Mobile Safari: Add timeout wrapper
-      const addItemPromise = addItem(name.trim(), Math.round(priceValue * 100) / 100, Math.round(grossPriceValue * 100) / 100);
+      const roundedGrossPrice = grossPriceValue !== undefined ? Math.round(grossPriceValue * 100) / 100 : undefined;
+      const addItemPromise = addItem(name.trim(), Math.round(priceValue * 100) / 100, roundedGrossPrice);
       
       const timeoutPromise = new Promise((_, reject) => {
         setTimeout(() => reject(new Error('Operation timed out. Please try again.')), 20000);
@@ -172,7 +161,6 @@ const AddItemForm: React.FC = () => {
       
       await Promise.race([addItemPromise, timeoutPromise]);
       
-      console.log('✅ Item added successfully (Mobile), resetting form');
       // Reset form on successful submission
       setName('');
       setPrice('');
@@ -180,7 +168,6 @@ const AddItemForm: React.FC = () => {
       setIsFormVisible(false);
     } catch (err) {
       // Handle submission errors
-      console.error('❌ Form submission error (Mobile):', err);
       
       // Mobile-specific error messages
       if (err instanceof Error) {
@@ -223,38 +210,39 @@ const AddItemForm: React.FC = () => {
    * - Screen reader friendly error messages
    */
   return (
-    <div className="bg-white border-b border-gray-200 shadow-sm">
+    <div className="bg-white border-b border-gray-200 shadow-sm select-none">
       {/* Sticky Container: Positioned below header */}
-      <div className="w-full px-6 py-4">
+      <div className="w-full px-6 py-4 select-none">
         {!isFormVisible ? (
           <button
             onClick={() => setIsFormVisible(true)}
-            className="w-full max-w-md mx-auto bg-blue-500 hover:bg-blue-600 text-white py-4 px-6 rounded-lg flex items-center justify-center transition-colors duration-200 shadow-sm text-lg"
+            className="w-full max-w-md mx-auto bg-blue-500 hover:bg-blue-600 text-white py-4 px-6 rounded-lg flex items-center justify-center transition-colors duration-200 shadow-sm text-lg select-none"
           >
             {/* Collapsed State: Show add button */}
             <Plus size={22} className="mr-3" />
-            <span>Add New Item</span>
+            <span className="select-none">Add New Item</span>
           </button>
         ) : (
-          <form onSubmit={handleSubmit} className="bg-white rounded-lg shadow-sm p-6 border border-gray-200 w-full max-w-2xl mx-auto">
+          <form onSubmit={handleSubmit} className="bg-white rounded-lg shadow-sm p-6 border border-gray-200 w-full max-w-2xl mx-auto select-none">
             {/* Expanded State: Show form */}
             {/* Item Name Input */}
-            <div className="mb-4">
-              <label htmlFor="itemName" className="block text-base font-medium text-gray-700 mb-2">
+            <div className="mb-4 select-none">
+              <label htmlFor="itemName" className="block text-base font-medium text-gray-700 mb-2 select-none">
                 Item Name
               </label>
               <input
                 id="itemName"
                 type="text"
                 value={name}
-               onChange={(e) => {
-                 // Auto-capitalize as user types
-                 const formatted = e.target.value
-                   .split(' ')
-                   .map(word => word.charAt(0).toUpperCase() + word.slice(1).toLowerCase())
-                   .join(' ');
-                 setName(formatted);
-               }}
+                onChange={(e) => {
+                  // Smart capitalization that handles parentheses and "/" while preserving existing case
+                  const value = e.target.value;
+                  const formatted = value.replace(/(^|\s|\/)([a-zA-Z])/g, (match, separator, letter) => {
+                    // Only capitalize the first letter, preserve the rest of the word's case
+                    return separator + letter.toUpperCase();
+                  });
+                  setName(formatted);
+                }}
                 disabled={isSubmitting}
                 className="w-full px-4 py-3 text-lg border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 bg-white disabled:bg-gray-100 disabled:cursor-not-allowed"
                 placeholder="Enter item name"
@@ -262,51 +250,50 @@ const AddItemForm: React.FC = () => {
             </div>
             
             {/* Item Price Input */}
-            <div className="mb-4">
-              <div className="flex items-center justify-between mb-2">
-                <label htmlFor="itemPrice" className="block text-base font-medium text-gray-700">
-                  Price (Rs)
-                </label>
-                <label htmlFor="grossPrice" className="block text-base font-medium text-gray-700">
-                  Gross Price (Rs)
-                </label>
-              </div>
-              <div className="flex gap-4">
-                <input
-                  id="itemPrice"
-                  type="number"
-                  value={price}
-                  onChange={(e) => setPrice(e.target.value)}
-                  step="0.01"
-                  min="0.01"
-                  disabled={isSubmitting}
-                  className="flex-1 px-4 py-3 text-lg border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 bg-white disabled:bg-gray-100 disabled:cursor-not-allowed"
-                  placeholder="0.00"
-                />
-                <input
-                  id="grossPrice"
-                  type="number"
-                  value={grossPrice}
-                  onChange={(e) => setGrossPrice(e.target.value)}
-                  step="0.01"
-                  min="0.01"
-                  disabled={isSubmitting}
-                  className="flex-1 px-4 py-3 text-lg border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 bg-white disabled:bg-gray-100 disabled:cursor-not-allowed"
-                  placeholder="0.00"
-                />
-              </div>
+            <div className="mb-4 select-none">
+              <label htmlFor="itemPrice" className="block text-base font-medium text-gray-700 mb-2 select-none">
+                Price (Rs)
+              </label>
+              <input
+                id="itemPrice"
+                type="number"
+                value={price}
+                onChange={(e) => setPrice(e.target.value)}
+                step="0.01"
+                min="0.01"
+                disabled={isSubmitting}
+                className="w-full px-4 py-3 text-lg border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 bg-white disabled:bg-gray-100 disabled:cursor-not-allowed"
+                placeholder="0.00"
+              />
+            </div>
+            
+            <div className="mb-4 select-none">
+              <label htmlFor="grossPrice" className="block text-base font-medium text-gray-700 mb-2 select-none">
+                Gross Price (Rs) <span className="text-gray-500 text-sm">(Optional)</span>
+              </label>
+              <input
+                id="grossPrice"
+                type="number"
+                value={grossPrice}
+                onChange={(e) => setGrossPrice(e.target.value)}
+                step="0.01"
+                min="0.01"
+                disabled={isSubmitting}
+                className="w-full px-4 py-3 text-lg border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 bg-white disabled:bg-gray-100 disabled:cursor-not-allowed"
+                placeholder="0.00"
+              />
             </div>
             
             {/* Error Message Display */}
-            {error && <p className="text-red-500 text-base mb-4">{error}</p>}
+            {error && <p className="text-red-500 text-base mb-4 select-none">{error}</p>}
             
             {/* Action Buttons */}
-            <div className="flex gap-4">
+            <div className="flex gap-4 select-none">
               {/* Submit Button */}
               <button
                 type="submit"
                 disabled={isSubmitting}
-                className="flex-1 bg-blue-500 hover:bg-blue-600 text-white py-3 px-6 text-lg rounded-md transition-colors duration-200 disabled:bg-blue-300 disabled:cursor-not-allowed"
+                className="flex-1 bg-blue-500 hover:bg-blue-600 text-white py-3 px-6 text-lg rounded-md transition-colors duration-200 disabled:bg-blue-300 disabled:cursor-not-allowed select-none"
               >
                 {isSubmitting ? 'Adding...' : 'Add Item'}
               </button>
@@ -323,7 +310,7 @@ const AddItemForm: React.FC = () => {
                   setError('');
                 }}
                 disabled={isSubmitting}
-                className="flex-1 bg-gray-200 hover:bg-gray-300 text-gray-800 py-3 px-6 text-lg rounded-md transition-colors duration-200 disabled:bg-gray-100 disabled:cursor-not-allowed"
+                className="flex-1 bg-gray-200 hover:bg-gray-300 text-gray-800 py-3 px-6 text-lg rounded-md transition-colors duration-200 disabled:bg-gray-100 disabled:cursor-not-allowed select-none"
               >
                 Cancel
               </button>

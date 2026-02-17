@@ -19,6 +19,7 @@ export interface SyncStatus {
   queueSize: number;
   lastSync: number;
   isProcessing: boolean;
+  realtimeStatus: 'connecting' | 'subscribed' | 'channel_error' | 'timed_out' | 'closed' | 'offline';
 }
 
 export function useSync(options: UseSyncOptions) {
@@ -26,7 +27,8 @@ export function useSync(options: UseSyncOptions) {
     isOnline: navigator.onLine,
     queueSize: 0,
     lastSync: 0,
-    isProcessing: false
+    isProcessing: false,
+    realtimeStatus: 'offline'
   });
 
   // Broadcast a change to other devices
@@ -43,12 +45,18 @@ export function useSync(options: UseSyncOptions) {
   // Update sync status
   const updateSyncStatus = useCallback(() => {
     const queueStatus = syncEngine.getQueueStatus();
-    setSyncStatus(prev => ({
-      ...prev,
-      isOnline: navigator.onLine,
-      queueSize: queueStatus.total,
-      isProcessing: queueStatus.pending > 0
-    }));
+    const realtimeStatus = syncEngine.getRealtimeConnectionStatus();
+    
+    // Use setTimeout to avoid state updates during render
+    setTimeout(() => {
+      setSyncStatus(prev => ({
+        ...prev,
+        isOnline: navigator.onLine,
+        queueSize: queueStatus.total,
+        isProcessing: queueStatus.pending > 0,
+        realtimeStatus
+      }));
+    }, 0);
   }, []);
 
   // Set up event listeners
@@ -57,7 +65,8 @@ export function useSync(options: UseSyncOptions) {
       if (options.onSyncEvent) {
         options.onSyncEvent(event);
       }
-      updateSyncStatus();
+      // Defer status update to avoid state updates during render
+      setTimeout(updateSyncStatus, 0);
     };
 
     // Register listeners for specified event types
@@ -66,8 +75,8 @@ export function useSync(options: UseSyncOptions) {
     });
 
     // Set up network status monitoring
-    const handleOnline = () => updateSyncStatus();
-    const handleOffline = () => updateSyncStatus();
+    const handleOnline = () => setTimeout(updateSyncStatus, 0);
+    const handleOffline = () => setTimeout(updateSyncStatus, 0);
 
     window.addEventListener('online', handleOnline);
     window.addEventListener('offline', handleOffline);

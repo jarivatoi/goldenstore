@@ -10,6 +10,7 @@ interface OverContextType {
   // Item management
   items: OverItem[];
   addItem: (name: string) => Promise<void>;
+  editItem: (id: string, name: string) => Promise<void>;
   toggleItem: (id: string) => Promise<void>;
   deleteItem: (id: string) => Promise<void>;
   
@@ -71,7 +72,6 @@ export const OverProvider: React.FC<{ children: React.ReactNode }> = ({ children
         
         if (supabase) {
           try {
-            // Load from Supabase
             const { data, error } = await supabase
               .from('over_items')
               .select('*')
@@ -88,12 +88,16 @@ export const OverProvider: React.FC<{ children: React.ReactNode }> = ({ children
             }));
             
             setItems(overItems);
-            console.log(`Loaded ${overItems.length} over items from Supabase`);
             
-            // NO REAL-TIME SUBSCRIPTIONS - Device-to-Supabase sync only
-            console.log('✅ Over items loaded from Supabase (device-to-Supabase sync only)');
+            // Update localStorage with Supabase data
+            localStorage.setItem('overItems', JSON.stringify(overItems.map(item => ({
+              ...item,
+              createdAt: item.createdAt.toISOString(),
+              completedAt: item.completedAt?.toISOString()
+            }))));
+            
+            
           } catch (supabaseError) {
-            console.error('Failed to load from Supabase:', supabaseError);
             // Fallback to localStorage
             const stored = localStorage.getItem('overItems');
             if (stored) {
@@ -103,7 +107,6 @@ export const OverProvider: React.FC<{ children: React.ReactNode }> = ({ children
                 completedAt: item.completedAt ? new Date(item.completedAt) : undefined
               }));
               setItems(parsedItems);
-              console.log(`Loaded ${parsedItems.length} over items from localStorage (fallback)`);
             }
           }
         } else {
@@ -116,22 +119,136 @@ export const OverProvider: React.FC<{ children: React.ReactNode }> = ({ children
               completedAt: item.completedAt ? new Date(item.completedAt) : undefined
             }));
             setItems(parsedItems);
-            console.log(`Loaded ${parsedItems.length} over items from localStorage`);
           }
         }
       } catch (err) {
         setError('Failed to load items');
-        console.error('Error loading over items:', err);
       } finally {
         setIsLoading(false);
       }
-    }
-  }
-  )
+    };
+
+    loadItems();
+  }, []);
+
+  // Set up real-time subscription in a separate effect
+  useEffect(() => {
+    let channel: any = null;
+
+    const setupRealtime = async () => {
+      if (!supabase) {
+        return;
+      }
+
+      try {
+        
+        channel = supabase
+          .channel('over_items_changes')
+          .on('postgres_changes', 
+            { 
+              event: '*', 
+              schema: 'public', 
+              table: 'over_items' 
+            },
+            (payload: any) => {
+              
+              if (payload.eventType === 'INSERT') {
+                const newItem: OverItem = {
+                  id: payload.new.id,
+                  name: payload.new.name,
+                  createdAt: new Date(payload.new.created_at),
+                  isCompleted: payload.new.is_completed || false,
+                  completedAt: payload.new.completed_at ? new Date(payload.new.completed_at) : undefined
+                };
+                
+                
+                setItems(prev => {
+                  // Check if item already exists to prevent duplicates
+                  if (prev.find(item => item.id === newItem.id)) {
+                    return prev;
+                  }
+                  const updated = [newItem, ...prev];
+                  
+                  // Update localStorage
+                  localStorage.setItem('overItems', JSON.stringify(updated.map(item => ({
+                    ...item,
+                    createdAt: item.createdAt.toISOString(),
+                    completedAt: item.completedAt?.toISOString()
+                  }))));
+                  
+                  return updated;
+                });
+              } else if (payload.eventType === 'UPDATE') {
+                const updatedItem: OverItem = {
+                  id: payload.new.id,
+                  name: payload.new.name,
+                  createdAt: new Date(payload.new.created_at),
+                  isCompleted: payload.new.is_completed || false,
+                  completedAt: payload.new.completed_at ? new Date(payload.new.completed_at) : undefined
+                };
+                
+                
+                setItems(prev => {
+                  const updated = prev.map(item => 
+                    item.id === updatedItem.id ? updatedItem : item
+                  );
+                  
+                  // Update localStorage
+                  localStorage.setItem('overItems', JSON.stringify(updated.map(item => ({
+                    ...item,
+                    createdAt: item.createdAt.toISOString(),
+                    completedAt: item.completedAt?.toISOString()
+                  }))));
+                  
+                  return updated;
+                });
+              } else if (payload.eventType === 'DELETE') {
+                
+                setItems(prev => {
+                  const updated = prev.filter(item => item.id !== payload.old.id);
+                  
+                  // Update localStorage
+                  localStorage.setItem('overItems', JSON.stringify(updated.map(item => ({
+                    ...item,
+                    createdAt: item.createdAt.toISOString(),
+                    completedAt: item.completedAt?.toISOString()
+                  }))));
+                  
+                  return updated;
+                });
+              }
+            }
+          )
+          .subscribe((status: string) => {
+            if (status === 'SUBSCRIBED') {
+            } else if (status === 'CHANNEL_ERROR') {
+            } else if (status === 'TIMED_OUT') {
+            } else if (status === 'CLOSED') {
+            }
+          });
+      } catch (error) {
+      }
+    };
+
+    // Set up real-time subscription
+    setupRealtime();
+    
+    // Cleanup function
+    return () => {
+      if (channel) {
+        supabase?.removeChannel(channel);
+      }
+    };
+  }, []);
   // Add new item
   const addItem = async (name: string): Promise<void> => {
     try {
       const formattedName = formatItemName(name);
+      
+      // Basic validation
+      if (!formattedName || formattedName.length === 0) {
+        throw new Error('Item name is required');
+      }
       
       // Check for duplicates
       const existingItem = items.find(item => 
@@ -149,35 +266,123 @@ export const OverProvider: React.FC<{ children: React.ReactNode }> = ({ children
         isCompleted: false
       };
       
-      if (supabase) {
-        // Add to Supabase
-        const { error } = await supabase
-          .from('over_items')
-          .insert({
-            id: newItem.id,
-            name: newItem.name,
-            created_at: newItem.createdAt.toISOString(),
-            is_completed: newItem.isCompleted
-          });
-        
-        if (error) throw error;
-        
-        // Update local state
-        setItems(prev => [newItem, ...prev]);
-        console.log('Over item added to Supabase successfully:', newItem);
-      } else {
-        // Fallback to localStorage
-        const updatedItems = [newItem, ...items];
-        setItems(updatedItems);
+      // ALWAYS update localStorage first - this should never fail
+      const updatedItems = [newItem, ...items];
+      setItems(updatedItems);
+      
+      // Save to localStorage immediately - this is the primary storage
+      try {
         localStorage.setItem('overItems', JSON.stringify(updatedItems.map(item => ({
           ...item,
           createdAt: item.createdAt.toISOString(),
           completedAt: item.completedAt?.toISOString()
         }))));
-        console.log('Over item added to localStorage successfully:', newItem);
+      } catch (storageError) {
+        throw new Error('Failed to save item locally');
       }
+      
+      // Try Supabase sync ONLY if online - don't block if offline
+      if (supabase && navigator.onLine) {
+        try {
+          const { error } = await supabase
+            .from('over_items')
+            .insert({
+              id: newItem.id,
+              name: newItem.name,
+              created_at: newItem.createdAt.toISOString(),
+              is_completed: newItem.isCompleted
+            });
+          
+          if (error) {
+            console.warn('Cloud sync failed (saved locally):', error.message);
+          }
+        } catch (supabaseError) {
+          console.warn('Network error (saved locally):', supabaseError instanceof Error ? supabaseError.message : 'Connection failed');
+        }
+      }
+      
     } catch (err) {
-      setError(err instanceof Error ? err.message : 'Failed to add item');
+      // Provide specific error messages
+      if (err instanceof Error) {
+        setError(err.message);
+      } else {
+        setError('Unknown error occurred. Please try again.');
+      }
+      
+      // If we get here, it's an actual failure that should be thrown
+      throw err;
+    }
+  };
+
+  // Edit existing item
+  const editItem = async (id: string, name: string): Promise<void> => {
+    try {
+      const formattedName = formatItemName(name);
+      
+      // Basic validation
+      if (!formattedName || formattedName.length === 0) {
+        throw new Error('Item name is required');
+      }
+      
+      // Check if item exists
+      const existingItem = items.find(item => item.id === id);
+      if (!existingItem) {
+        throw new Error('Item not found');
+      }
+      
+      // Check for duplicates (excluding current item)
+      const duplicateItem = items.find(item => 
+        item.id !== id && 
+        item.name === formattedName && 
+        !item.isCompleted
+      );
+      
+      if (duplicateItem) {
+        throw new Error(`"${formattedName}" already exists in the list`);
+      }
+      
+      // Update localStorage first
+      const updatedItems = items.map(item => 
+        item.id === id ? { ...item, name: formattedName } : item
+      );
+      setItems(updatedItems);
+      
+      // Save to localStorage immediately
+      try {
+        localStorage.setItem('overItems', JSON.stringify(updatedItems.map(item => ({
+          ...item,
+          createdAt: item.createdAt.toISOString(),
+          completedAt: item.completedAt?.toISOString()
+        }))));
+      } catch (storageError) {
+        throw new Error('Failed to save changes locally');
+      }
+      
+      // Try Supabase sync if online
+      if (supabase && navigator.onLine) {
+        try {
+          const { error } = await supabase
+            .from('over_items')
+            .update({ name: formattedName })
+            .eq('id', id);
+          
+          if (error) {
+            console.warn('Cloud sync failed (saved locally):', error.message);
+          }
+        } catch (supabaseError) {
+          console.warn('Network error (saved locally):', supabaseError instanceof Error ? supabaseError.message : 'Connection failed');
+        }
+      }
+      
+    } catch (err) {
+      // Provide specific error messages
+      if (err instanceof Error) {
+        setError(err.message);
+      } else {
+        setError('Unknown error occurred. Please try again.');
+      }
+      
+      // If we get here, it's an actual failure that should be thrown
       throw err;
     }
   };
@@ -191,35 +396,34 @@ export const OverProvider: React.FC<{ children: React.ReactNode }> = ({ children
       const newCompletedState = !item.isCompleted;
       const completedAt = newCompletedState ? new Date() : undefined;
 
+      // Update localStorage first
+      const updatedItems = items.map(i => 
+        i.id === id ? { ...i, isCompleted: newCompletedState, completedAt } : i
+      );
+      setItems(updatedItems);
+      localStorage.setItem('overItems', JSON.stringify(updatedItems.map(item => ({
+        ...item,
+        createdAt: item.createdAt.toISOString(),
+        completedAt: item.completedAt?.toISOString()
+      }))));
+
       if (supabase) {
-        // Update in Supabase
-        const { error } = await supabase
-          .from('over_items')
-          .update({
-            is_completed: newCompletedState,
-            completed_at: completedAt?.toISOString()
-          })
-          .eq('id', id);
-        
-        if (error) throw error;
-        
-        // Update local state
-        setItems(prev => prev.map(i => 
-          i.id === id ? { ...i, isCompleted: newCompletedState, completedAt } : i
-        ));
-        console.log('Over item toggled in Supabase successfully');
-      } else {
-        // Fallback to localStorage
-        const updatedItems = items.map(i => 
-          i.id === id ? { ...i, isCompleted: newCompletedState, completedAt } : i
-        );
-        setItems(updatedItems);
-        localStorage.setItem('overItems', JSON.stringify(updatedItems.map(item => ({
-          ...item,
-          createdAt: item.createdAt.toISOString(),
-          completedAt: item.completedAt?.toISOString()
-        }))));
-        console.log('Over item toggled in localStorage successfully');
+        // Try Supabase sync
+        try {
+          const { error } = await supabase
+            .from('over_items')
+            .update({
+              is_completed: newCompletedState,
+              completed_at: completedAt?.toISOString()
+            })
+            .eq('id', id);
+          
+          if (error) {
+            console.warn('⚠️ Supabase update failed, but localStorage succeeded:', error);
+          }
+        } catch (supabaseError) {
+          console.warn('⚠️ Supabase update failed, but localStorage succeeded:', supabaseError);
+        }
       }
     } catch (err) {
       setError('Failed to update item');
@@ -230,28 +434,29 @@ export const OverProvider: React.FC<{ children: React.ReactNode }> = ({ children
   // Delete item
   const deleteItem = async (id: string): Promise<void> => {
     try {
+      // Update localStorage first
+      const updatedItems = items.filter(item => item.id !== id);
+      setItems(updatedItems);
+      localStorage.setItem('overItems', JSON.stringify(updatedItems.map(item => ({
+        ...item,
+        createdAt: item.createdAt.toISOString(),
+        completedAt: item.completedAt?.toISOString()
+      }))));
+
       if (supabase) {
-        // Delete from Supabase
-        const { error } = await supabase
-          .from('over_items')
-          .delete()
-          .eq('id', id);
-        
-        if (error) throw error;
-        
-        // Update local state
-        setItems(prev => prev.filter(item => item.id !== id));
-        console.log('Over item deleted from Supabase successfully');
-      } else {
-        // Fallback to localStorage
-        const updatedItems = items.filter(item => item.id !== id);
-        setItems(updatedItems);
-        localStorage.setItem('overItems', JSON.stringify(updatedItems.map(item => ({
-          ...item,
-          createdAt: item.createdAt.toISOString(),
-          completedAt: item.completedAt?.toISOString()
-        }))));
-        console.log('Over item deleted from localStorage successfully');
+        // Try Supabase sync
+        try {
+          const { error } = await supabase
+            .from('over_items')
+            .delete()
+            .eq('id', id);
+          
+          if (error) {
+            console.warn('⚠️ Supabase delete failed, but localStorage succeeded:', error);
+          }
+        } catch (supabaseError) {
+          console.warn('⚠️ Supabase delete failed, but localStorage succeeded:', supabaseError);
+        }
       }
     } catch (err) {
       setError('Failed to delete item');
@@ -287,6 +492,7 @@ export const OverProvider: React.FC<{ children: React.ReactNode }> = ({ children
   const value = {
     items,
     addItem,
+    editItem,
     toggleItem,
     deleteItem,
     searchQuery,

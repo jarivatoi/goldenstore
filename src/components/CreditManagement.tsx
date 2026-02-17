@@ -1,25 +1,37 @@
-import React, { useState } from 'react';
-import { createPortal } from 'react-dom';
-import { Search, Calculator, Plus, Minus, X, Settings, Trash2, AlertTriangle, Users, UserCheck, Database, Download, Upload } from 'lucide-react';
+import React, { useState, useEffect, useRef } from 'react';
+import { Calculator, Plus, CheckCircle, ArrowLeft, ArrowRight } from 'lucide-react';
 import { useCredit } from '../context/CreditContext';
-import ClientCard from './ClientCard';
 import ClientDetailModal from './ClientDetailModal';
 import ClientSearchModal from './ClientSearchModal';
-import { Client } from '../types';
 import UnifiedDataManager from './UnifiedDataManager';
+import ScrollingTabs from './credit/ScrollingTabs';
+import CreditHeader from './credit/CreditHeader';
+import ClientGrid from './credit/ClientGrid';
+import CreditModals from './credit/CreditModals';
+import MiniCalculator from './credit/MiniCalculator';
+import { Client, CalculationStep, DuplicateCard } from '../types';
+import { CalculatorEngine } from '../calculator/CalculatorEngine';
+import { evaluateExpression } from '../utils/creditCalculatorUtils';
+import { useIndependentCalculator } from '../hooks/useIndependentCalculator';
+import { calculateReturnableItems } from '../utils/returnableItemsUtils';
 
 /**
  * CREDIT MANAGEMENT MAIN COMPONENT
  * ================================
  */
 const CreditManagement: React.FC = () => {
-  const { clients, searchClients, addTransaction, getClientTotalDebt, deleteClient, getClientTransactions } = useCredit();
+  const { 
+    clients, 
+    searchClients, 
+    addTransaction, 
+    getClientTotalDebt, 
+    deleteClient, 
+    getClientTransactions  
+  } = useCredit();
   
   // State management
   const [searchQuery, setSearchQuery] = useState('');
   const [showAllClients, setShowAllClients] = useState(false);
-  const [calculatorValue, setCalculatorValue] = useState('0');
-  const [calculatorMemory, setCalculatorMemory] = useState(0);
   const [selectedClient, setSelectedClient] = useState<Client | null>(null);
   const [showClientSearch, setShowClientSearch] = useState(false);
   const [isCalculatorActive, setIsCalculatorActive] = useState(false);
@@ -28,189 +40,466 @@ const CreditManagement: React.FC = () => {
   const [showDeleteConfirm, setShowDeleteConfirm] = useState(false);
   const [clientToDelete, setClientToDelete] = useState<Client | null>(null);
   const [deleteConfirmText, setDeleteConfirmText] = useState('');
-  const [showDatabaseMenu, setShowDatabaseMenu] = useState(false);
   const [showUnifiedDataManager, setShowUnifiedDataManager] = useState(false);
+  const [clientFilter, setClientFilter] = useState<'all' | 'returnables' | 'overdue' | 'overlimit'>('all');
+  const [showFilterDropdown, setShowFilterDropdown] = useState(false);
+  const [sortOption, setSortOption] = useState<'name' | 'date' | 'date-oldest' | 'debt'>('date');
+  const [showSortDropdown, setShowSortDropdown] = useState(false);
+  const [clientSearchDescription, setClientSearchDescription] = useState(''); // Add state to preserve description
 
-  // Database export functionality for ALL modules
-  const handleExportDatabase = async () => {
-    try {
-      const now = new Date();
-      const day = now.getDate().toString().padStart(2, '0');
-      const month = (now.getMonth() + 1).toString().padStart(2, '0');
-      const year = now.getFullYear();
-      const dateString = `${day}-${month}-${year}`;
-      
-      // Get data from all modules via localStorage
-      const priceListData = localStorage.getItem('priceListItems');
-      const creditClientsData = localStorage.getItem('creditClients');
-      const creditTransactionsData = localStorage.getItem('creditTransactions');
-      const creditPaymentsData = localStorage.getItem('creditPayments');
-      const overItemsData = localStorage.getItem('overItems');
-      const orderCategoriesData = localStorage.getItem('orderCategories');
-      const orderTemplatesData = localStorage.getItem('orderItemTemplates');
-      const ordersData = localStorage.getItem('orders');
-      
-      const exportData = {
-        version: '2.0',
-        appName: 'Golden Store',
-        exportDate: new Date().toISOString(),
-        
-        // Price List data
-        priceList: {
-          items: priceListData ? JSON.parse(priceListData) : []
-        },
-        
-        // Credit Management data
-        creditManagement: {
-          clients: creditClientsData ? JSON.parse(creditClientsData) : [],
-          transactions: creditTransactionsData ? JSON.parse(creditTransactionsData) : [],
-          payments: creditPaymentsData ? JSON.parse(creditPaymentsData) : []
-        },
-        
-        // Over Management data
-        overManagement: {
-          items: overItemsData ? JSON.parse(overItemsData) : []
-        },
-        
-        // Order Management data
-        orderManagement: {
-          categories: orderCategoriesData ? JSON.parse(orderCategoriesData) : [],
-          itemTemplates: orderTemplatesData ? JSON.parse(orderTemplatesData) : [],
-          orders: ordersData ? JSON.parse(ordersData) : []
-        }
-      };
-      
-      const dataStr = JSON.stringify(exportData, null, 2);
-      const dataBlob = new Blob([dataStr], { type: 'application/json' });
-      
-      const url = URL.createObjectURL(dataBlob);
-      const link = document.createElement('a');
-      link.href = url;
-      link.download = `GoldenStore_Complete_${dateString}.json`;
-      
-      document.body.appendChild(link);
-      link.click();
-      document.body.removeChild(link);
-      
-      URL.revokeObjectURL(url);
-      setShowDatabaseMenu(false);
-      alert('Complete database exported successfully!');
-    } catch (error) {
-      alert('Error exporting complete database. Please try again.');
-    }
-  };
+  // Ref for tracking scrolling tabs timeline state
+  const scrollingTabsTimelineRef = useRef<any>(null);
 
-  // Database import functionality for ALL modules
-  const handleImportDatabase = () => {
-    const input = document.createElement('input');
-    input.type = 'file';
-    input.accept = '.json';
-    
-    input.onchange = async (e) => {
-      const file = (e.target as HTMLInputElement).files?.[0];
-      if (!file) return;
+  // Separate search query for main grid (bottom search bar)
+  const [mainGridSearchQuery, setMainGridSearchQuery] = useState('');
 
-      const reader = new FileReader();
-      reader.onload = async (e) => {
-        try {
-          const content = e.target?.result as string;
-          const data = JSON.parse(content);
-          
-          // Validate file format
-          if (!data.version || (!data.priceList && !data.creditManagement && !data.overManagement && !data.orderManagement)) {
-            throw new Error('Invalid Golden Store database file format');
+  // Delete all clients modal state
+  const [showDeleteAllConfirm, setShowDeleteAllConfirm] = useState(false);
+  const [deleteAllPasscode, setDeleteAllPasscode] = useState('');
+  
+  // Transaction success state
+  const [showCenteredWobble, setShowCenteredWobble] = useState(false);
+  const [centeredWobbleClient, setCenteredWobbleClient] = useState<Client | null>(null);
+  const [recentTransactionClient, setRecentTransactionClient] = useState<Client | null>(null);
+  const [recentlySettledClient, setRecentlySettledClient] = useState<Client | null>(null);
+  
+  // Mini calculator state
+  const [miniCalculators, setMiniCalculators] = useState<Array<{
+    id: string;
+    label: string;
+    position: { x: number; y: number };
+  }>>([]);
+
+  // Duplicate card state
+  const [duplicateCard, setDuplicateCard] = useState<DuplicateCard | null>(null);
+  
+  // Auto replay step info state
+  const [autoReplayStepInfo, setAutoReplayStepInfo] = useState<{currentStep: number, totalSteps: number} | null>(null);
+  const [autoReplayDisplay, setAutoReplayDisplay] = useState<string>('');
+  const [autoReplayCompleted, setAutoReplayCompleted] = useState<boolean>(false);
+
+  // Use the independent calculator hook for calculator state management
+  const {
+    calculatorValue,
+    calculatorMemory,
+    lastOperation,
+    lastOperand,
+    isNewNumber,
+    calculationSteps,
+    articleCount,
+    isMarkupMode,
+    autoReplayActive,
+    transactionHistory,
+    calculatorGrandTotal,
+    lastPressedButton,
+    handleCalculatorInput: handleIndependentCalculatorInput,
+    handleResetCalculator: handleIndependentResetCalculator
+  } = useIndependentCalculator();
+
+  // Create calculator engine instance
+  const [calculatorEngine] = useState(() => new CalculatorEngine());
+
+  // Listen for credit data changes and duplicate card events
+  useEffect(() => {
+    const handleCreditDataChanged = (event: CustomEvent) => {
+      console.log('💳 CreditManagement: Received creditDataChanged event:', event.detail);
+      
+      // Check if this is a calculator interaction - if so, ignore it
+      const isCalculatorInteraction = event && event.detail && event.detail.source === 'calculator';
+      if (isCalculatorInteraction) {
+        console.log('💳 CreditManagement: Ignoring calculator interaction');
+        return;
+      }
+      
+      // Handle credit data changes with safety checks
+      console.log('💳 CreditManagement: Processing credit data change:', event.detail);
+      
+      // Update recent transaction client if provided and valid
+      if (event.detail && event.detail.clientId) {
+        console.log('💳 CreditManagement: Setting recent transaction client:', event.detail.clientId);
+        setRecentTransactionClient(event.detail.clientId);
+        
+        // Clear the recent transaction client after 5 seconds
+        setTimeout(() => {
+          console.log('💳 CreditManagement: Clearing recent transaction client');
+          setRecentTransactionClient(null);
+        }, 5000);
+      }
+      
+      // Only handle real data changes, not calculator interactions
+      // Calculator interactions should not restart the timeline
+    };
+
+    const handleShowDuplicateCard = (event: CustomEvent) => {
+      console.log('💳 CreditManagement: Received showDuplicateCard event:', event.detail);
+      
+      // Handle show duplicate card event with safety checks
+      console.log('💳 CreditManagement: Showing duplicate card:', event.detail);
+      
+      // Add safety checks for event.detail
+      if (!event.detail) {
+        console.warn('💳 CreditManagement: Invalid duplicate card event data');
+        return;
+      }
+      
+      // Pause scrolling tabs timeline when showing duplicate card
+      const scrollingTabsElement = document.querySelector('.scrolling-tabs-component');
+      if (scrollingTabsElement) {
+        const timeline = (scrollingTabsElement as any).__timelineRef;
+        if (timeline && timeline.current && timeline.current.pause) {
+          // Only pause if not already paused
+          if (!scrollingTabsTimelineRef.current) {
+            console.log('💳 CreditManagement: Pausing scrolling tabs timeline');
+            timeline.current.pause();
+            scrollingTabsTimelineRef.current = timeline.current;
           }
-
-          // Count total items for confirmation
-          const totalItems = 
-            (data.priceList?.items?.length || 0) +
-            (data.creditManagement?.clients?.length || 0) +
-            (data.creditManagement?.transactions?.length || 0) +
-            (data.creditManagement?.payments?.length || 0) +
-            (data.overManagement?.items?.length || 0) +
-            (data.orderManagement?.categories?.length || 0) +
-            (data.orderManagement?.itemTemplates?.length || 0) +
-            (data.orderManagement?.orders?.length || 0);
-
-          const confirmImport = window.confirm(
-            `This will import a complete Golden Store database with ${totalItems} total records across all modules:\n\n` +
-            `• Price List: ${data.priceList?.items?.length || 0} items\n` +
-            `• Credit: ${data.creditManagement?.clients?.length || 0} clients, ${data.creditManagement?.transactions?.length || 0} transactions\n` +
-            `• Over Items: ${data.overManagement?.items?.length || 0} items\n` +
-            `• Orders: ${data.orderManagement?.categories?.length || 0} categories, ${data.orderManagement?.orders?.length || 0} orders\n\n` +
-            `This will REPLACE ALL your current data. This action cannot be undone.\n\n` +
-            `Are you sure you want to continue?`
-          );
-
-          if (confirmImport) {
-            // Import all data to localStorage
-            if (data.priceList?.items) {
-              localStorage.setItem('priceListItems', JSON.stringify(data.priceList.items));
-            }
-            
-            if (data.creditManagement?.clients) {
-              localStorage.setItem('creditClients', JSON.stringify(data.creditManagement.clients));
-            }
-            if (data.creditManagement?.transactions) {
-              localStorage.setItem('creditTransactions', JSON.stringify(data.creditManagement.transactions));
-            }
-            if (data.creditManagement?.payments) {
-              localStorage.setItem('creditPayments', JSON.stringify(data.creditManagement.payments));
-            }
-            
-            if (data.overManagement?.items) {
-              localStorage.setItem('overItems', JSON.stringify(data.overManagement.items));
-            }
-            
-            if (data.orderManagement?.categories) {
-              localStorage.setItem('orderCategories', JSON.stringify(data.orderManagement.categories));
-            }
-            if (data.orderManagement?.itemTemplates) {
-              localStorage.setItem('orderItemTemplates', JSON.stringify(data.orderManagement.itemTemplates));
-            }
-            if (data.orderManagement?.orders) {
-              localStorage.setItem('orders', JSON.stringify(data.orderManagement.orders));
-            }
-            
-            setShowDatabaseMenu(false);
-            alert(`Successfully imported complete Golden Store database!\n\nPlease refresh the page to see all imported data.`);
-            
-            // Refresh the page to reload all data
-            window.location.reload();
-          }
-        } catch (error) {
-          alert('Error importing database file. Please check the file format and try again.');
         }
-      };
+      }
       
-      reader.readAsText(file);
+      // Set the duplicate card to show the settled client if it has client data
+      if (event.detail.client) {
+        const client = event.detail.client;
+        const isAccountClear = event.detail.isAccountClear;
+        const message = event.detail.message || 'Transaction added successfully!';
+        console.log('💳 CreditManagement: Showing duplicate card for settled client:', client.name);
+        
+        // Set the duplicate card to show the settled client
+        setDuplicateCard({
+          ...client,
+          transactionAmount: 0, // Settlement amount
+          message: message,
+          isAccountClear: isAccountClear
+        } as DuplicateCard);
+        
+        // Also set recent transaction client for wobble effect
+        setRecentTransactionClient(client);
+      } else {
+        setDuplicateCard(event.detail);
+      }
+      
+      // Auto-hide after 5 seconds and resume scrolling tabs timeline
+      setTimeout(() => {
+        console.log('💳 CreditManagement: Hiding duplicate card and resuming timeline');
+        setDuplicateCard(null);
+        setRecentTransactionClient(null);
+        
+        // Resume scrolling tabs timeline when hiding duplicate card
+        if (scrollingTabsTimelineRef.current && scrollingTabsTimelineRef.current.resume) {
+          try {
+            console.log('💳 CreditManagement: Resuming scrolling tabs timeline');
+            scrollingTabsTimelineRef.current.resume();
+          } catch (e) {
+            console.warn('💳 CreditManagement: Failed to resume timeline:', e);
+          }
+          scrollingTabsTimelineRef.current = null;
+        }
+        
+        // Dispatch creditDataChanged event with duplicateCard source to prevent timeline restart
+        console.log('💳 CreditManagement: Dispatching creditDataChanged event with duplicateCard source');
+        window.dispatchEvent(new CustomEvent('creditDataChanged', {
+          detail: { source: 'duplicateCard' }
+        }));
+      }, 5000);
     };
     
-    input.click();
-    setShowDatabaseMenu(false);
-  };
+    const handleAutoReplayStep = (event: CustomEvent) => {
+      // Handle auto replay step updates
+      // The event.detail contains displayValue, articleCount, etc.
+      const { displayValue, articleCount } = event.detail;
+      // For now, we'll just log the values to see if the events are working
+      console.log('💳 CreditManagement: Auto replay step:', displayValue, articleCount);
+      
+      // Update auto replay display
+      setAutoReplayDisplay(event.detail.displayValue);
+      
+      // Update step info if provided
+      if (event.detail.currentStep !== undefined && event.detail.totalSteps !== undefined) {
+        setAutoReplayStepInfo({
+          currentStep: event.detail.currentStep,
+          totalSteps: event.detail.totalSteps
+        });
+      }
+      
+      // Update completed status if provided
+      if (event.detail.completed !== undefined) {
+        setAutoReplayCompleted(event.detail.completed);
+      }
+    };
+    
+    console.log('💳 CreditManagement: Adding event listeners');
+    
+    window.addEventListener('creditDataChanged', handleCreditDataChanged as EventListener);
+    window.addEventListener('showDuplicateCard', handleShowDuplicateCard as EventListener);
+    window.addEventListener('autoReplayStep', handleAutoReplayStep as EventListener);
+    
+    return () => {
+      console.log('💳 CreditManagement: Removing event listeners');
+      window.removeEventListener('creditDataChanged', handleCreditDataChanged as EventListener);
+      window.removeEventListener('showDuplicateCard', handleShowDuplicateCard as EventListener);
+      window.removeEventListener('autoReplayStep', handleAutoReplayStep as EventListener);
+    };
+  }, []);
+
+  // Get filtered clients for tabs based on selected filter
+  const getFilteredClientsForTabs = React.useCallback(() => {
+    // Always search all clients, not just filtered ones
+    let baseClients = searchClients(''); // Don't apply search to scrolling tabs
+    
+    switch (clientFilter) {
+      case 'returnables':
+        return baseClients.filter(client => {
+          const clientTransactions = getClientTransactions(client.id);
+          
+          // Early exit if no transactions
+          if (clientTransactions.length === 0) return false;
+          
+          // Check for returnable items more efficiently
+          for (const transaction of clientTransactions) {
+            // Only process debt transactions (not payments) AND exclude return transactions
+            if (transaction.type === 'payment' || transaction.description.toLowerCase().includes('returned')) {
+              continue;
+            }
+            
+            const description = transaction.description.toLowerCase();
+            
+            // Early exit if no returnable items
+            if (!description.includes('chopine') && !description.includes('bouteille')) {
+              continue;
+            }
+            
+            // If we find at least one returnable item, check if it has unreturned quantities
+            return hasUnreturnedItems(clientTransactions, client.name);
+          }
+          
+          return false;
+        });
+      
+      
+      case 'overdue':
+        return baseClients.filter(client => {
+          const totalDebt = getClientTotalDebt(client.id);
+          const daysSinceLastTransaction = Math.floor(
+            (Date.now() - client.lastTransactionAt.getTime()) / (1000 * 60 * 60 * 24)
+          );
+          return totalDebt > 0 && daysSinceLastTransaction > 14; // More than 14 days
+        });
+      
+      case 'overlimit':
+        return baseClients.filter(client => {
+          const totalDebt = getClientTotalDebt(client.id);
+          return totalDebt > 1000; // Over Rs 1000
+        });
+      
+      case 'all':
+      default:
+        return baseClients.filter(client => {
+          const totalDebt = getClientTotalDebt(client.id);
+          
+          // Early exit if client has debt
+          if (totalDebt > 0) return true;
+          
+          // Check if client has returnable items
+          const clientTransactions = getClientTransactions(client.id);
+          
+          // Early exit if no transactions
+          if (clientTransactions.length === 0) return false;
+          
+          // Check for returnable items more efficiently
+          for (const transaction of clientTransactions) {
+            // Only process debt transactions (not payments) AND exclude return transactions
+            if (transaction.type === 'payment' || transaction.description.toLowerCase().includes('returned')) {
+              continue;
+            }
+            
+            const description = transaction.description.toLowerCase();
+            
+            // Early exit if no returnable items
+            if (!description.includes('chopine') && !description.includes('bouteille')) {
+              continue;
+            }
+            
+            // If we find at least one returnable item, check if it has unreturned quantities
+            if (hasUnreturnedItems(clientTransactions, client.name)) {
+              return true;
+            }
+          }
+          
+          // Exclude clients with zero debt and no returnable items
+          return false;
+        });
+    }
+  }, [clientFilter, getClientTransactions, getClientTotalDebt, searchClients]);
+
+  // Helper function to check for unreturned items
+  const hasUnreturnedItems = React.useCallback((clientTransactions: any[], clientName?: string) => {
+    // Use the shared utility function to calculate returnable items
+    const returnableItemsStrings = calculateReturnableItems(clientTransactions, clientName);
+      
+    // If there are any returnable items left after accounting for returns, return true
+    return returnableItemsStrings.length > 0;
+  }, []);
+
+  const tabClients = React.useMemo(() => getFilteredClientsForTabs(), [getFilteredClientsForTabs]);
 
   // Filter clients based on search
   const filteredClients = showAllClients 
-    ? searchClients(searchQuery) // Show all clients when toggled
-    : searchClients(searchQuery).filter(client => {
+    ? searchClients(mainGridSearchQuery) // Show all clients when toggled
+    : searchClients(mainGridSearchQuery).filter(client => {
         const totalDebt = getClientTotalDebt(client.id);
         
         // Check if client has returnable items
         const clientTransactions = getClientTransactions(client.id);
-        const hasReturnableItems = clientTransactions.some(transaction => {
+        
+        // Calculate actual unreturned returnable items
+        const returnableItems: {[key: string]: number} = {};
+        
+        clientTransactions.forEach(transaction => {
+          // Only process debt transactions (not payments) AND exclude return transactions
           if (transaction.type === 'payment' || transaction.description.toLowerCase().includes('returned')) {
-            return false;
+            return;
           }
+          
           const description = transaction.description.toLowerCase();
-          return description.includes('chopine') || description.includes('bouteille');
+          
+          // Only process items that contain "chopine" or "bouteille"
+          if (!description.includes('chopine') && !description.includes('bouteille')) {
+            return;
+          }
+          
+          // Look for Chopine items
+          const chopinePattern = /(\d+)\s+chopines?(?:\s+([^,]*))?/gi;
+          let chopineMatch;
+          
+          while ((chopineMatch = chopinePattern.exec(description)) !== null) {
+            const quantity = parseInt(chopineMatch[1]);
+            const brand = chopineMatch[2]?.trim() || '';
+            const key = brand ? `Chopine ${brand}` : 'Chopine';
+            
+            if (!returnableItems[key]) {
+              returnableItems[key] = 0;
+            }
+            returnableItems[key] += quantity;
+          }
+          
+          // Look for Bouteille items
+          const bouteillePattern = /(\d+)\s+(?:(\d+(?:\.\d+)?L)\s+)?bouteilles?(?:\s+([^,]*))?/gi;
+          let bouteilleMatch;
+          
+          while ((bouteilleMatch = bouteillePattern.exec(description)) !== null) {
+            const quantity = parseInt(bouteilleMatch[1]);
+            const size = bouteilleMatch[2]?.trim().toUpperCase() || '';
+            const brand = bouteilleMatch[3]?.trim() || '';
+            
+            // Capitalize brand name properly
+            const capitalizedBrand = brand ? brand.split(' ').map(word => 
+              word.charAt(0).toUpperCase() + word.slice(1).toLowerCase()
+            ).join(' ') : '';
+            
+            let key;
+            if (size && capitalizedBrand) {
+              key = `${size} ${capitalizedBrand}`;
+            } else if (capitalizedBrand) {
+              key = `Bouteille ${capitalizedBrand}`;
+            } else if (size) {
+              key = `${size} Bouteille`;
+            } else {
+              key = 'Bouteille';
+            }
+            
+            if (!returnableItems[key]) {
+              returnableItems[key] = 0;
+            }
+            returnableItems[key] += quantity;
+          }
+          
+          // Handle items without explicit numbers (assume quantity 1)
+          if (description.includes('bouteille') && !bouteillePattern.test(description)) {
+            const sizeMatch = description.match(/(\d+(?:\.\d+)?L)/i);
+            const brandMatch = description.match(/bouteilles?\s+([^,]*)/i);
+            const brand = brandMatch?.[1]?.trim() || '';
+            
+            // Capitalize brand name properly
+            const capitalizedBrand = brand ? brand.split(' ').map((word: string) => 
+              word.charAt(0).toUpperCase() + word.slice(1).toLowerCase()
+            ).join(' ') : '';
+            
+            let key;
+            if (sizeMatch && brand) {
+              key = `${sizeMatch[1].replace(/l$/i, 'L')} ${capitalizedBrand}`;
+            } else if (brand) {
+              key = `Bouteille ${capitalizedBrand}`;
+            } else if (sizeMatch) {
+              key = `${sizeMatch[1].replace(/l$/i, 'L')} Bouteille`;
+            } else {
+              key = 'Bouteille';
+            }
+            
+            if (!returnableItems[key]) {
+              returnableItems[key] = 0;
+            }
+            returnableItems[key] += 1;
+          }
+          
+          if (description.includes('chopine') && !chopinePattern.test(description)) {
+            // Look for size in chopine items too, similar to bouteille
+            const sizeMatch = description.match(/(\d+(?:\.\d+)?L)/i);
+            const brandMatch = description.match(/chopines?\s+([^,]*)/i);
+            const brand = brandMatch?.[1]?.trim() || '';
+            
+            // Capitalize brand name properly
+            const capitalizedBrand = brand ? brand.split(' ').map((word: string) => 
+              word.charAt(0).toUpperCase() + word.slice(1).toLowerCase()
+            ).join(' ') : '';
+            
+            let key;
+            if (sizeMatch && brand) {
+              key = `${sizeMatch[1].replace(/l$/i, 'L')} ${capitalizedBrand}`;
+            } else if (brand) {
+              key = `Chopine ${capitalizedBrand}`;
+            } else if (sizeMatch) {
+              key = `${sizeMatch[1].replace(/l$/i, 'L')} Chopine`;
+            } else {
+              key = 'Chopine';
+            }
+            
+            if (!returnableItems[key]) {
+              returnableItems[key] = 0;
+            }
+            returnableItems[key] += 1;
+          }
         });
         
-        return totalDebt > 0 || hasReturnableItems;
+        // Calculate returned quantities
+        const returnedQuantities: {[key: string]: number} = {};
+        clientTransactions
+          .filter(transaction => transaction.type === 'debt' && transaction.description.toLowerCase().includes('returned'))
+          .forEach(transaction => {
+            const description = transaction.description.toLowerCase();
+            Object.keys(returnableItems).forEach(itemType => {
+              if (description.includes(itemType.toLowerCase())) {
+                const match = description.match(/returned:\s*(\d+)\s+/);
+                if (match) {
+                  if (!returnedQuantities[itemType]) {
+                    returnedQuantities[itemType] = 0;
+                  }
+                  returnedQuantities[itemType] += parseInt(match[1]);
+                }
+              }
+            });
+          });
+        
+        // Check if there are any actual unreturned items
+        const hasActualReturnableItems = Object.entries(returnableItems).some(([itemType, total]) => {
+          const returned = returnedQuantities[itemType] || 0;
+          const remaining = Math.max(0, total - returned);
+          return remaining > 0;
+        });
+        
+        return totalDebt > 0 || hasActualReturnableItems;
       }); // Show only clients with debt
   
   // Sort clients: maintain the order from context (which handles moveClientToFront)
-  const sortedClients = [...filteredClients].sort((a, b) => {
+  const sortedClients = [...filteredClients].sort(() => {
     // Don't sort by date - maintain the order from context to preserve moveClientToFront positioning
     return 0;
   });
@@ -220,201 +509,148 @@ const CreditManagement: React.FC = () => {
     return total + getClientTotalDebt(client.id);
   }, 0);
 
+
   /**
    * CALCULATOR FUNCTIONS
    * ===================
    */
   const handleCalculatorInput = (value: string) => {
-    if (value === 'C') {
-      setCalculatorValue('0');
-      setIsCalculatorActive(false);
-    } else if (value === '=') {
-      try {
-        // Replace display symbols with JavaScript operators for evaluation
-        const expression = calculatorValue.replace(/×/g, '*').replace(/÷/g, '/');
-        
-        // Remove trailing operators before evaluation
-        const cleanExpression = expression.replace(/[+\-*/÷×]+$/, '');
-        
-        // If expression is empty after cleaning, keep current value
-        if (!cleanExpression || cleanExpression === '') {
-          return;
-        }
-        
-        const result = eval(cleanExpression);
-        
-        // Check for invalid results
-        if (!isFinite(result)) {
-          setCalculatorValue('Error');
-          return;
-        }
-        
-        setCalculatorValue(result.toString());
-      } catch {
-        setCalculatorValue('Error');
-      }
-    } else if (value === 'CE') {
-      // Clear Entry - removes the last operand only
-      const operators = ['+', '-', '*', '/'];
-      let lastOperatorIndex = -1;
-      
-      // Find the last operator from the end
-      for (let i = calculatorValue.length - 1; i >= 0; i--) {
-        if (operators.includes(calculatorValue[i])) {
-          lastOperatorIndex = i;
-          break;
-        }
-      }
-      
-      if (lastOperatorIndex >= 0) {
-        // Keep everything up to but NOT including the last operator
-        setCalculatorValue(calculatorValue.substring(0, lastOperatorIndex));
-      } else {
-        // No operator found, clear everything to 0
-        setCalculatorValue('0');
-        setIsCalculatorActive(false);
-      }
-    } else if (value === '⌫') {
-      if (calculatorValue.length > 1) {
-        setCalculatorValue(calculatorValue.slice(0, -1));
-      } else {
-        setCalculatorValue('0');
-      }
-    } else if (value === 'M+') {
-      try {
-        // Replace display symbols with JavaScript operators for evaluation
-        const expression = calculatorValue.replace(/×/g, '*').replace(/÷/g, '/');
-        
-        // Remove trailing operators before evaluation
-        const cleanExpression = expression.replace(/[+\-*/÷×]+$/, '');
-        
-        if (!cleanExpression || cleanExpression === '') {
-          return;
-        }
-        
-        const currentValue = eval(cleanExpression);
-        
-        if (!isFinite(currentValue)) {
-          return;
-        }
-        
-        setCalculatorMemory(prev => prev + currentValue);
-      } catch {
-        // Do nothing if calculation error
-      }
-    } else if (value === 'MR') {
-      setCalculatorValue(calculatorMemory.toString());
-      setIsCalculatorActive(true);
-    } else if (value === 'MC') {
-      setCalculatorMemory(0);
-    } else if (value === '*') {
-      // Display multiplication as ×
-      if (calculatorValue === '0' || calculatorValue === 'Error' || calculatorValue === 'Infinity') {
-        setCalculatorValue('0×');
-      } else if (calculatorValue.match(/[+\-×÷]$/)) {
-        // Replace last operator with ×
-        setCalculatorValue(calculatorValue.slice(0, -1) + '×');
-      } else {
-        setCalculatorValue(calculatorValue + '×');
-      }
-      setIsCalculatorActive(true);
-    } else if (value === '/') {
-      // Display division as ÷
-      if (calculatorValue === '0' || calculatorValue === 'Error' || calculatorValue === 'Infinity') {
-        setCalculatorValue('0÷');
-      } else if (calculatorValue.match(/[+\-×÷]$/)) {
-        // Replace last operator with ÷
-        setCalculatorValue(calculatorValue.slice(0, -1) + '÷');
-      } else {
-        setCalculatorValue(calculatorValue + '÷');
-      }
-      setIsCalculatorActive(true);
-    } else if (value === '+') {
-      if (calculatorValue === '0' || calculatorValue === 'Error' || calculatorValue === 'Infinity') {
-        setCalculatorValue('0+');
-      } else if (calculatorValue.match(/[+\-×÷]$/)) {
-        // Replace last operator with +
-        setCalculatorValue(calculatorValue.slice(0, -1) + '+');
-      } else {
-        setCalculatorValue(calculatorValue + '+');
-      }
-      setIsCalculatorActive(true);
-    } else if (value === '-') {
-      if (calculatorValue === '0' || calculatorValue === 'Error' || calculatorValue === 'Infinity') {
-        setCalculatorValue('0-');
-      } else if (calculatorValue.match(/[+\-×÷]$/)) {
-        // Replace last operator with -
-        setCalculatorValue(calculatorValue.slice(0, -1) + '-');
-      } else {
-        setCalculatorValue(calculatorValue + '-');
-      }
-      setIsCalculatorActive(true);
-    } else {
-      // Handle numbers and decimal point
-      if ((calculatorValue === '0' || calculatorValue === 'Error' || calculatorValue === 'Infinity') && !isNaN(Number(value))) {
-        // Clear error/infinity state when typing new number
-        setCalculatorValue(value);
-      } else {
-        setCalculatorValue(calculatorValue + value);
-      }
-      setIsCalculatorActive(true);
+    // Special case for check navigation updates
+    if (value === 'CHECK_UPDATE') {
+      // Don't process this as a normal calculator input, just update the display
+      return;
     }
+    
+    // If AC is pressed during auto replay, reset everything immediately
+    if (value === 'AC') {
+      // Interrupt auto replay if it's active
+      if (autoReplayActive || autoReplayDisplay) {
+        window.dispatchEvent(new CustomEvent('interruptAutoReplay'));
+      }
+      
+      // Reset auto replay state
+      setAutoReplayDisplay('');
+      setAutoReplayStepInfo(null);
+      setAutoReplayCompleted(false);
+      
+      // Reset calculator using independent reset
+      handleIndependentResetCalculator();
+      setIsCalculatorActive(false);
+      setLinkedClient(null);
+      return;
+    }
+    
+    // If any other input is pressed after auto replay completed, reset auto replay state
+    if (autoReplayCompleted && value !== 'AC') {
+      setAutoReplayDisplay('');
+      setAutoReplayStepInfo(null);
+      setAutoReplayCompleted(false);
+    }
+    
+    // Use the independent calculator hook's input handler
+    handleIndependentCalculatorInput(value);
+    
+    // Update calculator active state
+    setIsCalculatorActive(true);
+    
+    // Don't dispatch creditDataChanged for calculator interactions
+    // Only dispatch for actual data changes (transactions, settlements)
   };
 
   const handleQuickAdd = (client: Client) => {
     setLinkedClient(client);
-    // Don't open modal immediately, just link the client to calculator
+    // Reset calculator when linking to client using independent reset
+    handleIndependentResetCalculator();
+    setIsCalculatorActive(false);
+    // Close the client search modal to remove the keypad
+    setShowClientSearch(false);
+    // Remove focus from any input fields to dismiss keyboard
+    if (document.activeElement instanceof HTMLElement) {
+      document.activeElement.blur();
+    }
+    // Scroll to top to ensure calculator is visible
+    window.scrollTo({ top: 0, behavior: 'smooth' });
   };
 
   const handleCalculatorCancel = () => {
     setLinkedClient(null);
-    setCalculatorValue('0');
+    // Reset calculator using independent reset
+    handleIndependentResetCalculator();
     setIsCalculatorActive(false);
   };
 
   const handleResetCalculator = () => {
-    console.log('🔄 CreditManagement: Resetting calculator');
-    setCalculatorValue('0');
+    // Reset calculator using independent reset
+    handleIndependentResetCalculator();
     setIsCalculatorActive(false);
     setLinkedClient(null);
     setShowClientSearch(false);
   };
 
-  const handleResetCalculatorAndDescription = () => {
-    console.log('🔄 CreditManagement: Resetting calculator and closing modal');
-    setCalculatorValue('0');
-    setIsCalculatorActive(false);
+  const handleCloseClientSearchModal = () => {
+    // Only close modal, preserve calculator state
     setShowClientSearch(false);
   };
+  
+  const handleResetCalculatorFromModal = () => {
+    handleResetCalculator();
+  };
 
+  // Mini calculator functions
+  const createMiniCalculator = () => {
+    const baseX = 100;
+    const baseY = 150;
+    const offset = miniCalculators.length * 40;
+    
+    const newCalculator = {
+      id: `mini-calc-${Date.now()}-${Math.random().toString(36).substr(2, 9)}`,
+      label: `Quick Calc ${miniCalculators.length + 1}`,
+      position: { 
+        x: baseX + offset, 
+        y: baseY + offset 
+      }
+    };
+
+    setMiniCalculators(prev => [...prev, newCalculator]);
+  };
+
+  const closeMiniCalculator = (id: string) => {
+    setMiniCalculators(prev => prev.filter(calc => calc.id !== id));
+  };
+
+  const handleMiniCalculatorTransaction = async (amount: number, description: string, label: string) => {
+    // For now, just show an alert - in future this could open client search
+    console.log(`Transaction from ${label}: Amount: Rs ${amount.toFixed(2)}, Description: ${description}`);
+  };
+
+  const onCloseWobble = () => {
+    setRecentTransactionClient(null);
+  };
+
+  // Add function to update description state
+  const handleClientSearchDescriptionChange = (description: string) => {
+    setClientSearchDescription(description);
+  };
+
+  // Add function to reset description when needed
+  const resetClientSearchDescription = () => {
+    setClientSearchDescription('');
+  };
+
+  // Modify the handleAddToClient function to reset the description after successful transaction
   const handleAddToClient = async (client: Client, description: string) => {
     try {
-      console.log('Adding transaction:', { clientId: client.id, clientName: client.name, description, amount: calculatorValue });
-      
-      // Replace display symbols with JavaScript operators for evaluation
-      let expression = calculatorValue.replace(/×/g, '*').replace(/÷/g, '/');
-      
-      // Remove trailing operators before evaluation
-      expression = expression.replace(/[+\-*/÷×]+$/, '');
-      
-      // If expression is empty after cleaning, use 0
-      if (!expression || expression === '') {
-        expression = '0';
-      }
-      
-      let amount;
-      try {
-        // Safely evaluate the mathematical expression
-        amount = Function('"use strict"; return (' + expression + ')')();
-        console.log('Calculated amount:', amount, 'from expression:', expression);
-      } catch (evalError) {
-        console.error('Expression evaluation failed:', evalError);
-        throw new Error('Please enter a valid amount');
-      }
+      const cleanValue = calculatorValue.startsWith('=') ? calculatorValue.substring(1) : calculatorValue;
+      const amount = evaluateExpression(cleanValue);
       
       if (isNaN(amount) || !isFinite(amount) || amount < 0) {
         throw new Error('Please enter a valid amount');
       }
+      
+      // Show centered wobble effect
+      setCenteredWobbleClient(client);
+      setShowCenteredWobble(true);
+      setRecentTransactionClient(client);
       
       if (!description || !description.trim()) {
         throw new Error('Please enter a description');
@@ -426,15 +662,52 @@ const CreditManagement: React.FC = () => {
     
       await addTransaction(client, description, amount);
       
-      console.log('Transaction added successfully');
+      // Dispatch creditDataChanged event with client ID for scrolling tabs update
+      const event = new CustomEvent('creditDataChanged', {
+        detail: {
+          clientId: client.id,
+          source: 'transaction'
+        }
+      });
+      window.dispatchEvent(event);
+      console.log('📤 Dispatched creditDataChanged event for client:', client.id);
       
-      // Reset calculator state
-      setCalculatorValue('0');
-      setIsCalculatorActive(false);
+      // Force a re-render of the scrolling tabs to update text and reset timeline
+      setTimeout(() => {
+        setShowCenteredWobble(false);
+      }, 3000);
+      
+     // Auto-close duplicate card after 3 seconds
+     setTimeout(() => {
+       setDuplicateCard(null);
+     }, 3000);
+     
+      // DON'T reset calculator state - preserve for potential additional transactions
+      // Only close the modal
       setShowClientSearch(false);
       setLinkedClient(null);
+      
+      // Show wobble effect for the client that received the transaction
+      setRecentTransactionClient(client);
+      
+      // Check if the description contains returnable items to ensure arrows are shown
+      const hasReturnables = description.toLowerCase().includes('chopine') || description.toLowerCase().includes('bouteille');
+      
+      setDuplicateCard({ 
+        ...client, 
+        transactionAmount: amount, 
+        transactionDescription: description
+      } as DuplicateCard);
+      setTimeout(() => {
+        setRecentTransactionClient(null);
+      }, 3000); // Increased to 3 seconds for better visibility
+      setTimeout(() => {
+        setCenteredWobbleClient(null);
+      }, 8000);
+      
+      // Reset the description state after successful transaction
+      resetClientSearchDescription();
     } catch (error) {
-      console.error('Transaction error:', error);
       throw error; // Re-throw to be caught by the modal
     }
   };
@@ -445,9 +718,39 @@ const CreditManagement: React.FC = () => {
     setDeleteConfirmText('');
   };
 
+  const handleDeleteAllClients = () => {
+    setShowDeleteAllConfirm(true);
+    setDeleteAllPasscode('');
+  };
+
+  
+  const confirmDeleteAllClients = async () => {
+    if (deleteAllPasscode !== 'DELETE') {
+      return;
+    }
+
+    try {
+      // Clear all credit data in localStorage directly (batch operation)
+      localStorage.removeItem('creditClients');
+      localStorage.removeItem('creditTransactions');
+      localStorage.removeItem('creditPayments');
+      
+      // Force context to reload empty data
+      window.location.reload();
+      
+      setShowDeleteAllConfirm(false);
+      setDeleteAllPasscode('');
+      setShowSettings(false);
+      
+      // Don't reset calculator - preserve state for potential additional transactions
+      // User can manually reset if needed
+    } catch (error) {
+      console.error('Failed to delete all clients:', error);
+    }
+  };
+
   const confirmDeleteClient = async () => {
     if (!clientToDelete || deleteConfirmText !== 'DELETE') {
-      alert('Please type DELETE to confirm');
       return;
     }
 
@@ -457,40 +760,39 @@ const CreditManagement: React.FC = () => {
       setClientToDelete(null);
       setDeleteConfirmText('');
       setShowSettings(false);
-      alert(`Client ${clientToDelete.name} (${clientToDelete.id}) has been permanently deleted`);
     } catch (error) {
-      alert('Failed to delete client');
+      // Error handling will be done in the modal
     }
   };
 
   // Helper function to safely evaluate calculator value
-  const getCalculatorAmount = (): number => {
-    try {
-      // Replace display symbols with JavaScript operators for evaluation
-      let expression = calculatorValue.replace(/×/g, '*').replace(/÷/g, '/');
-      
-      // Remove trailing operators before evaluation
-      expression = expression.replace(/[+\-*/÷×]+$/, '');
-      
-      // If expression is empty after cleaning, use 0
-      if (!expression || expression === '') {
-        return 0;
+  const formatCalculatorValue = (value: string) => {
+    // Split the value into numbers and operators
+    // Handle both display symbols (×, ÷) and input symbols (*, /)
+    const parts = value.split(/([+\-×÷*/])/);
+    
+    return parts.map((part, index) => {
+      // Check if the part is an operator (handle both display and input symbols)
+      if (part === '+' || part === '-' || part === '×' || part === '÷' || part === '*' || part === '/') {
+        return (
+          <span 
+            key={index} 
+            className="calculator-operator"
+          >
+            {/* Display the proper symbol regardless of what was input */}
+            {part === '*' ? '×' : part === '/' ? '÷' : part}
+          </span>
+        );
       }
-      
-      const amount = Function('"use strict"; return (' + expression + ')')();
-      
-      if (isNaN(amount) || !isFinite(amount)) {
-        return 0;
-      }
-      
-      return amount;
-    } catch {
-      return 0;
-    }
+      // Return regular text for numbers and other characters
+      return part;
+    });
   };
 
+  // Database operations
+
   return (
-    <div className="flex flex-col lg:flex-row h-full bg-gray-50 select-none">
+    <div className="credit-management-container flex flex-col lg:flex-row h-full bg-gray-50 select-none overflow-hidden">
       {/* Main Content Area */}
       <div className="flex flex-col lg:flex-row flex-1 gap-4 lg:gap-6 p-4 lg:p-6 overflow-hidden">
         
@@ -498,299 +800,398 @@ const CreditManagement: React.FC = () => {
         <div className="flex-1 flex flex-col overflow-hidden min-h-0 order-2 lg:order-1">
           
           {/* Header with Settings */}
-          <div className="flex items-center justify-between mb-4">
-            <h2 className="text-lg lg:text-xl font-semibold text-gray-800">
-              Active Clients{totalDebtAllClients > 0 ? ` (Rs ${totalDebtAllClients.toLocaleString('en-IN', { minimumFractionDigits: 2, maximumFractionDigits: 2 })})` : ''}
-            </h2>
-            <div className="flex items-center gap-2">
-              <button
-                onClick={() => setShowAllClients(!showAllClients)}
-                className={`p-2 rounded-lg transition-colors ${
-                  !showAllClients 
-                    ? 'text-blue-600 bg-blue-100 hover:bg-blue-200' 
-                    : 'text-gray-600 hover:text-gray-800 hover:bg-gray-100'
-                }`}
-                title={!showAllClients ? 'Show Active Clients Only' : 'Show All Clients'}
-              >
-                {!showAllClients ? <UserCheck size={20} /> : <Users size={20} />}
-              </button>
-              <div className="relative">
-                <button
-                  onClick={() => setShowDatabaseMenu(!showDatabaseMenu)}
-                  className="p-2 text-gray-600 hover:text-gray-800 hover:bg-gray-100 rounded-lg transition-colors"
-                  title="Database Import/Export"
-                >
-                  <Database size={20} />
-                </button>
-                
-                {/* Database Menu Dropdown */}
-                {showDatabaseMenu && (
-                  <div 
-                    className="absolute right-0 top-full mt-2 w-56 bg-white rounded-lg shadow-lg border border-gray-200 overflow-hidden z-50"
-                    onClick={(e) => e.stopPropagation()}
-                  >
-                    <div className="py-1">
-                      <button
-                        onClick={handleExportDatabase}
-                        className="w-full px-4 py-3 text-left text-sm text-gray-700 hover:bg-gray-50 flex items-center transition-colors"
-                      >
-                        <Download size={16} className="mr-3 text-green-600" />
-                        Export Complete Database
-                      </button>
-                      <button
-                        onClick={handleImportDatabase}
-                        className="w-full px-4 py-3 text-left text-sm text-gray-700 hover:bg-gray-50 flex items-center transition-colors"
-                      >
-                        <Upload size={16} className="mr-3 text-blue-600" />
-                        Import Complete Database
-                      </button>
-                    </div>
-                  </div>
-                )}
-              </div>
-              {/* Invisible overlay to close dropdown when clicking outside */}
-              {showDatabaseMenu && (
-                <div 
-                  className="fixed inset-0 z-40"
-                  onClick={() => setShowDatabaseMenu(false)}
-                />
-              )}
-              <button
-                onClick={() => setShowSettings(true)}
-                className="p-2 text-gray-600 hover:text-gray-800 hover:bg-gray-100 rounded-lg transition-colors"
-                title="Client Settings"
-              >
-                <Settings size={20} />
-              </button>
-            </div>
-          </div>
-          
-          {/* Client Cards - Horizontal Scroll */}
-          <div className="flex-1 mb-4 overflow-hidden w-full min-h-0">
-            <div className="overflow-x-auto pb-4 h-full w-full min-h-[200px]">
-              <div className="flex gap-3 min-w-max h-full items-center justify-center">
-                {sortedClients.length === 0 ? (
-                  <div className="flex items-center justify-center w-full h-32 text-gray-500">
-                    <div className="text-center">
-                      <p className="text-base sm:text-lg">
-                        {showAllClients 
-                          ? (searchQuery ? `No clients found matching "${searchQuery}"` : 'No clients found')
-                          : 'No clients with outstanding debts'
-                        }
-                      </p>
-                      <p className="text-xs sm:text-sm">Use the calculator to add transactions</p>
-                    </div>
-                  </div>
-                ) : (
-                  sortedClients.map((client) => (
-                    <ClientCard
-                      key={client.id}
-                      client={client}
-                      onLongPress={() => setSelectedClient(client)}
-                      onQuickAdd={handleQuickAdd}
-                      onResetCalculator={handleResetCalculator}
-                    />
-                  ))
-                )}
-              </div>
-            </div>
-          </div>
+          <CreditHeader
+            totalDebtAllClients={totalDebtAllClients}
+            showAllClients={showAllClients}
+            onToggleAllClients={() => setShowAllClients(!showAllClients)}
+            clientFilter={clientFilter}
+            onFilterChange={setClientFilter}
+            showFilterDropdown={showFilterDropdown}
+            onToggleFilterDropdown={() => setShowFilterDropdown(!showFilterDropdown)}
+            onShowSettings={() => setShowSettings(true)}
+            onShowUnifiedDataManager={() => {
+              setShowUnifiedDataManager(true);
+            }}
+            onAddToClientFromMini={handleAddToClient}
+            sortOption={sortOption}
+            onSortChange={setSortOption}
+            showSortDropdown={showSortDropdown}
+            onToggleSortDropdown={() => setShowSortDropdown(!showSortDropdown)}
+          />
 
-          {/* Search Bar */}
-          <div className="relative w-full max-w-md mx-auto">
-            <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
-              <Search size={20} className="text-gray-400" />
-            </div>
-            <input
-              type="text"
-              value={searchQuery}
-              onChange={(e) => setSearchQuery(e.target.value)}
-              placeholder="Search by client name or ID..."
-              className="block w-full pl-10 pr-4 py-3 lg:py-4 text-lg lg:text-xl border-2 border-gray-300 rounded-xl focus:outline-none focus:ring-3 focus:ring-blue-500 focus:border-blue-500 shadow-sm"
+          {/* Auto-scrolling Client Tabs */}
+          <div className="scrolling-tabs-container w-full">
+            <ScrollingTabs
+              clients={tabClients}
+              linkedClient={linkedClient}
+              onQuickAdd={handleQuickAdd}
+              clientFilter={clientFilter}
+              getClientTotalDebt={getClientTotalDebt}
+              onResetCalculator={handleResetCalculator}
+              sortOption={sortOption}
             />
           </div>
-
+          
+          {/* Client Grid */}
+          <ClientGrid
+            clients={sortedClients}
+            searchQuery={mainGridSearchQuery}
+            onSearchChange={setMainGridSearchQuery}
+            showAllClients={showAllClients}
+            onToggleAllClients={() => setShowAllClients(!showAllClients)}
+            onClientLongPress={setSelectedClient}
+            onQuickAdd={handleQuickAdd}
+            onResetCalculator={handleResetCalculator}
+            linkedClient={linkedClient}
+            recentTransactionClient={recentTransactionClient}
+            onCloseWobble={onCloseWobble}
+          />
         </div>
 
         {/* Right Side - Calculator Section */}
-        <div className="w-full lg:w-80 bg-white rounded-lg shadow-lg p-4 lg:p-6 order-1 lg:order-2 flex flex-col">
-          <div className="flex items-center gap-2 mb-4">
-            <Calculator size={24} className="text-blue-600" />
-            <div className="flex-1">
-              <h3 className="text-lg lg:text-xl font-semibold text-gray-800">Calculator</h3>
-              {linkedClient && (
-                <p className="text-xs lg:text-sm text-green-600 font-medium">
-                  Adding to: {linkedClient.name}
-                </p>
-              )}
-            </div>
-            {linkedClient && (
+        <div className="calculator-container w-full lg:w-[32rem] calculator-container-landscape bg-white rounded-lg shadow-lg p-4 lg:p-6 order-1 lg:order-2 flex flex-col h-full">
+          {/* Calculator Header - Clickable */}
+          <div className="grid grid-cols-3 items-center gap-2 mb-4">
+            <div className="justify-self-start">
               <button
-                onClick={handleCalculatorCancel}
-                className="text-gray-500 hover:text-gray-700 transition-colors"
-                title="Cancel link to client"
+                className="flex items-center gap-2 cursor-pointer hover:bg-gray-50 p-2 rounded-lg transition-colors"
+                onClick={(e) => {
+                  e.preventDefault();
+                  e.stopPropagation();
+                  console.log('🧮 Calculator header clicked!');
+                  createMiniCalculator();
+                }}
+                title="Click to create floating mini calculator"
               >
-                <X size={20} />
+                <div className="bg-blue-100 p-2 rounded-full">
+                  <Calculator size={24} className="text-blue-600" />
+                </div>
+                <h3 className="text-lg lg:text-xl font-semibold text-gray-800">
+                  Calculator +
+                </h3>
               </button>
-            )}
+            </div>
+            <div className="justify-self-center">
+              <img src="./golden-logo.gif" alt="Golden Logo" className="w-72 h-36 object-contain" style={{ maxWidth: '100%', height: 'auto' }} />
+            </div>
+            <div className="justify-self-end">
+              {linkedClient ? (
+                <div className="flex items-center gap-2">
+                  <p className="text-xs lg:text-sm text-green-600 font-medium whitespace-nowrap">
+                    Adding to: {linkedClient.name}
+                  </p>
+                  <button
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      handleCalculatorCancel();
+                    }}
+                    className="px-2 py-1 text-xs bg-red-500 hover:bg-red-600 text-white rounded transition-colors"
+                  >
+                    Cancel
+                  </button>
+                </div>
+              ) : null}
+            </div>
           </div>
 
           {/* Calculator Display */}
           <div className="mb-4">
-            <div className="bg-gray-100 rounded-lg p-4 text-right relative">
-              {calculatorMemory !== 0 && (
-                <div className="absolute top-2 left-3 text-xs text-blue-600 font-semibold">
-                  M
+            <div className="bg-black rounded-lg p-4 mb-2 calculator-display">
+              {/* Main Display with inline counter */}
+              <div className="text-2xl sm:text-3xl font-mono text-green-400 min-h-[3rem] flex items-center overflow-hidden bg-black rounded px-3 py-2 relative calculator-display">
+                {/* Memory Indicator - Top Left */}
+                {calculatorMemory !== 0 && (
+                  <div className="absolute top-0 left-0 text-xs text-blue-400 font-semibold">
+                    {isMarkupMode ? 'MU' : 'M'}
+                  </div>
+                )}
+                {/* Article Count Circle - Left side */}
+                {(autoReplayActive && autoReplayStepInfo) || (autoReplayDisplay && autoReplayDisplay.startsWith('=')) || autoReplayStepInfo ? (
+                  <div className="bg-blue-500 text-white rounded-full w-8 h-8 flex items-center justify-center text-sm font-bold flex-shrink-0 mr-2">
+                    {/* Display "R" for result, otherwise show step counter */}
+                    {autoReplayDisplay && autoReplayDisplay.startsWith('=') ? 'R' : `${autoReplayStepInfo!.currentStep}/${autoReplayStepInfo!.totalSteps}`}
+                  </div>
+                ) : articleCount > 0 ? (
+                  <div className="bg-blue-500 text-white rounded-full w-8 h-8 flex items-center justify-center text-sm font-bold flex-shrink-0 mr-2">
+                    {articleCount}
+                  </div>
+                ) : null}
+                {/* Calculator Value - Right side */}
+                <div className="truncate text-right flex-1 flex items-center justify-end" title={autoReplayActive && autoReplayDisplay ? autoReplayDisplay : calculatorValue}>
+                  {formatCalculatorValue((autoReplayActive || (autoReplayDisplay && autoReplayDisplay.startsWith('='))) && autoReplayDisplay ? autoReplayDisplay : calculatorValue)}
                 </div>
-              )}
-              <div className="text-xl sm:text-2xl font-mono text-gray-800 min-h-[2rem] flex items-center justify-end overflow-hidden">
-                <div className="truncate max-w-full" title={calculatorValue}>
-                {calculatorValue}
-                </div>
+              </div>
+              
+              {/* Secondary Display */}
+              <div className="text-xs text-gray-400 font-mono mt-1 text-center calculator-secondary-display">
+                {autoReplayActive || (autoReplayDisplay && autoReplayDisplay.startsWith('=')) || autoReplayStepInfo ? (() => {
+                  // If we have auto replay step info, use it
+                  if (autoReplayStepInfo) {
+                    // Check if we're showing the final result (display starts with "=")
+                    if (autoReplayDisplay && autoReplayDisplay.startsWith('=')) {
+                      return `RESULT`;
+                    }
+                    return `STEP ${autoReplayStepInfo.currentStep}/${autoReplayStepInfo.totalSteps}`;
+                  }
+                  
+                  // If we don't have step info but have a display starting with "=", show RESULT
+                  if (autoReplayDisplay && autoReplayDisplay.startsWith('=')) {
+                    return `RESULT`;
+                  }
+                  
+                  // Fallback to localStorage method
+                  const currentStepIndex = parseInt(localStorage.getItem('currentCheckIndex') || '0');
+                  const hasResult = calculationSteps.length > 0 && calculationSteps.some(step => step.isComplete);
+                  
+                  // Check if we're showing the final result (display starts with "=")
+                  if (calculatorValue.startsWith('=')) {
+                    return `RESULT`;
+                  } else if (currentStepIndex < calculationSteps.length) {
+                    // Showing a calculation step
+                    const actualStepNumber = currentStepIndex + 1;
+                    const totalSteps = calculationSteps.length;
+                    return `STEP ${actualStepNumber}/${totalSteps}`;
+                  } else {
+                    // Fallback
+                    return `RESULT`;
+                  }
+                })() : 'READY'}
               </div>
             </div>
           </div>
 
           {/* Calculator Buttons */}
-          <div className="grid grid-cols-5 gap-2 mb-4">
-            {/* Row 0 - Memory Functions */}
+          <div className="grid grid-cols-6 gap-1 sm:gap-2 mb-6 p-2 sm:p-4 bg-gray-200 rounded-lg border-2 border-gray-400 shadow-inner calculator-buttons-grid flex-grow">
+            {/* Row 0 - Top row: CHECK←, CHECK→ */}
+            <div className="col-span-6 grid grid-cols-2 gap-1 sm:gap-2 mb-1 sm:mb-2">
+              {/* Empty space where link button was */}
+              <div></div>
+              <div></div>
+            </div>
+
+            {/* Row 1: MU, MRC, M-, M+, →, AUTO */}
+            <button
+              onClick={() => handleCalculatorInput('MU')}
+              className="bg-blue-400 hover:bg-blue-500 text-white p-2 sm:p-3 rounded-lg font-bold text-xs sm:text-sm shadow-md border border-blue-500 flex items-center justify-center calculator-button"
+            >
+              MU
+            </button>
+            <button
+              onClick={() => handleCalculatorInput('MRC')}
+              className="bg-blue-400 hover:bg-blue-500 text-white p-2 sm:p-3 rounded-lg font-bold text-xs sm:text-sm shadow-md border border-blue-500 flex items-center justify-center calculator-button"
+            >
+              MRC
+            </button>
+            <button
+              onClick={() => handleCalculatorInput('M-')}
+              className="bg-blue-400 hover:bg-blue-500 text-white p-2 sm:p-3 rounded-lg font-bold text-xs sm:text-sm shadow-md border border-blue-500 flex items-center justify-center calculator-button"
+            >
+              M-
+            </button>
             <button
               onClick={() => handleCalculatorInput('M+')}
-              className="bg-purple-500 hover:bg-purple-600 text-white p-3 rounded-lg font-semibold text-sm"
+              className="bg-blue-400 hover:bg-blue-500 text-white p-2 sm:p-3 rounded-lg font-bold text-xs sm:text-sm shadow-md border border-blue-500 flex items-center justify-center calculator-button"
             >
               M+
             </button>
             <button
-              onClick={() => handleCalculatorInput('MR')}
-              className="bg-purple-500 hover:bg-purple-600 text-white p-3 rounded-lg font-semibold text-sm"
+              onClick={() => handleCalculatorInput('AUTO')}
+              className="bg-gray-400 hover:bg-gray-500 text-white p-2 sm:p-3 rounded-lg font-bold text-xs sm:text-sm shadow-md border border-gray-500 flex items-center justify-center calculator-button"
             >
-              MR
+              AUTO
             </button>
             <button
-              onClick={() => handleCalculatorInput('MC')}
-              className="bg-purple-500 hover:bg-purple-600 text-white p-3 rounded-lg font-semibold text-sm"
+              onClick={() => handleCalculatorInput('→')}
+             className="bg-red-500 hover:bg-red-600 text-white p-2 sm:p-3 rounded-lg font-bold text-xs sm:text-sm shadow-md border border-red-600 flex items-center justify-center calculator-button"
             >
-              MC
-            </button>
-            <button
-              onClick={() => handleCalculatorInput('CE')}
-              className="bg-orange-500 hover:bg-orange-600 text-white p-3 rounded-lg font-semibold text-sm"
-            >
-              CE
-            </button>
-            <button
-              onClick={() => handleCalculatorInput('C')}
-              className="bg-red-500 hover:bg-red-600 text-white p-3 rounded-lg font-semibold text-sm"
-            >
-              C
+              ⌫
             </button>
 
-            {/* Row 1 */}
+            {/* Row 2: %, 7, 8, 9, (, ) */}
+            <button
+              onClick={() => handleCalculatorInput('%')}
+              className="bg-blue-400 hover:bg-blue-500 text-white p-2 sm:p-3 rounded-lg font-bold text-xs sm:text-sm shadow-md border border-blue-500 flex items-center justify-center calculator-button"
+            >
+              %
+            </button>
             <button
               onClick={() => handleCalculatorInput('7')}
-              className="bg-gray-200 hover:bg-gray-300 text-gray-800 p-4 rounded-lg font-semibold text-lg"
+              className="bg-gray-800 hover:bg-gray-900 text-white p-2 sm:p-3 rounded-lg font-bold text-lg sm:text-xl shadow-md border border-gray-600 flex items-center justify-center calculator-button calculator-button-lg"
             >
               7
             </button>
             <button
               onClick={() => handleCalculatorInput('8')}
-              className="bg-gray-200 hover:bg-gray-300 text-gray-800 p-3 rounded-lg font-semibold"
+              className="bg-gray-800 hover:bg-gray-900 text-white p-2 sm:p-3 rounded-lg font-bold text-lg sm:text-xl shadow-md border border-gray-600 flex items-center justify-center calculator-button calculator-button-lg"
             >
               8
             </button>
             <button
               onClick={() => handleCalculatorInput('9')}
-              className="bg-gray-200 hover:bg-gray-300 text-gray-800 p-3 rounded-lg font-semibold"
+              className="bg-gray-800 hover:bg-gray-900 text-white p-2 sm:p-3 rounded-lg font-bold text-lg sm:text-xl shadow-md border border-gray-600 flex items-center justify-center calculator-button calculator-button-lg"
             >
               9
             </button>
             <button
-              onClick={() => handleCalculatorInput('/')}
-              className="bg-blue-500 hover:bg-blue-600 text-white p-3 rounded-lg font-semibold"
+              onClick={() => handleCalculatorInput('CHECK←')}
+              disabled={calculationSteps.length === 0}
+              className="bg-purple-400 hover:bg-purple-500 disabled:bg-gray-300 disabled:text-gray-500 text-white p-2 sm:p-3 rounded-lg font-bold text-lg sm:text-xl shadow-md border border-purple-500 flex items-center justify-center check-arrow-button calculator-button calculator-button-lg"
             >
-              ÷
+              <div className="flex items-center">
+                <ArrowLeft size={16} />
+                <span className="ml-1 text-sm">CHK</span>
+              </div>
             </button>
             <button
-              onClick={() => handleCalculatorInput('⌫')}
-              className="bg-gray-500 hover:bg-gray-600 text-white p-3 rounded-lg font-semibold"
+              onClick={() => handleCalculatorInput('CHECK→')}
+              disabled={calculationSteps.length === 0}
+              className="bg-purple-400 hover:bg-purple-500 disabled:bg-gray-300 disabled:text-gray-500 text-white p-2 sm:p-3 rounded-lg font-bold text-lg sm:text-xl shadow-md border border-purple-500 flex items-center justify-center check-arrow-button calculator-button calculator-button-lg"
             >
-              ⌫
+              <div className="flex items-center">
+                <span className="mr-1 text-sm">CHK</span>
+                <ArrowRight size={16} />
+              </div>
             </button>
 
-            {/* Row 2 */}
+            {/* Row 3: √, 4, 5, 6, ×, ÷ */}
+            <button
+              onClick={() => handleCalculatorInput('√')}
+              className="bg-blue-400 hover:bg-blue-500 text-white p-2 sm:p-3 rounded-lg font-bold text-sm sm:text-lg shadow-md border border-blue-500 flex items-center justify-center calculator-button calculator-button-lg"
+            >
+              √
+            </button>
             <button
               onClick={() => handleCalculatorInput('4')}
-              className="bg-gray-200 hover:bg-gray-300 text-gray-800 p-3 rounded-lg font-semibold"
+              className="bg-gray-800 hover:bg-gray-900 text-white p-2 sm:p-3 rounded-lg font-bold text-lg sm:text-xl shadow-md border border-gray-600 flex items-center justify-center calculator-button calculator-button-lg"
             >
               4
             </button>
             <button
               onClick={() => handleCalculatorInput('5')}
-              className="bg-gray-200 hover:bg-gray-300 text-gray-800 p-3 rounded-lg font-semibold"
+              className="bg-gray-800 hover:bg-gray-900 text-white p-2 sm:p-3 rounded-lg font-bold text-lg sm:text-xl shadow-md border border-gray-600 flex items-center justify-center calculator-button calculator-button-lg"
             >
               5
             </button>
             <button
               onClick={() => handleCalculatorInput('6')}
-              className="bg-gray-200 hover:bg-gray-300 text-gray-800 p-3 rounded-lg font-semibold"
+              className="bg-gray-800 hover:bg-gray-900 text-white p-2 sm:p-3 rounded-lg font-bold text-lg sm:text-xl shadow-md border border-gray-600 flex items-center justify-center calculator-button calculator-button-lg"
             >
               6
             </button>
             <button
               onClick={() => handleCalculatorInput('*')}
-              className="bg-blue-500 hover:bg-blue-600 text-white p-3 rounded-lg font-semibold"
+              className={`p-2 sm:p-3 rounded-lg font-bold text-lg sm:text-xl shadow-md border flex items-center justify-center calculator-button calculator-button-xl ${
+                lastPressedButton === '*' 
+                  ? 'bg-blue-700 text-white border-blue-800' 
+                  : 'bg-blue-400 hover:bg-blue-500 text-white border-blue-500'
+              }`}
             >
               ×
             </button>
             <button
-              onClick={() => handleCalculatorInput('-')}
-              className="bg-blue-500 hover:bg-blue-600 text-white p-3 rounded-lg font-semibold row-span-2"
+              onClick={() => handleCalculatorInput('÷')}
+              className={`p-2 sm:p-3 rounded-lg font-bold text-lg sm:text-xl shadow-md border flex items-center justify-center calculator-button calculator-button-xl ${
+                lastPressedButton === '/' 
+                  ? 'bg-blue-700 text-white border-blue-800' 
+                  : 'bg-blue-400 hover:bg-blue-500 text-white border-blue-500'
+              }`}
             >
-              −
+              ÷
             </button>
 
-            {/* Row 3 */}
+            {/* Row 4: CE, 1, 2, 3, -, +/- */}
+            <button
+              onClick={() => handleCalculatorInput('CE')}
+              className={`p-2 sm:p-3 rounded-lg font-bold text-xs sm:text-sm shadow-md border flex items-center justify-center calculator-button ${
+                lastPressedButton === 'CE' 
+                  ? 'bg-yellow-700 text-white border-yellow-800' 
+                  : 'bg-yellow-500 hover:bg-yellow-600 text-white border-yellow-600'
+              }`}
+            >
+              CE
+            </button>
             <button
               onClick={() => handleCalculatorInput('1')}
-              className="bg-gray-200 hover:bg-gray-300 text-gray-800 p-3 rounded-lg font-semibold"
+              className="bg-gray-800 hover:bg-gray-900 text-white p-2 sm:p-3 rounded-lg font-bold text-lg sm:text-xl shadow-md border border-gray-600 flex items-center justify-center calculator-button calculator-button-lg"
             >
               1
             </button>
             <button
               onClick={() => handleCalculatorInput('2')}
-              className="bg-gray-200 hover:bg-gray-300 text-gray-800 p-3 rounded-lg font-semibold"
+              className="bg-gray-800 hover:bg-gray-900 text-white p-2 sm:p-3 rounded-lg font-bold text-lg sm:text-xl shadow-md border border-gray-600 flex items-center justify-center calculator-button calculator-button-lg"
             >
               2
             </button>
             <button
               onClick={() => handleCalculatorInput('3')}
-              className="bg-gray-200 hover:bg-gray-300 text-gray-800 p-3 rounded-lg font-semibold"
+              className="bg-gray-800 hover:bg-gray-900 text-white p-2 sm:p-3 rounded-lg font-bold text-lg sm:text-xl shadow-md border border-gray-600 flex items-center justify-center calculator-button calculator-button-lg"
             >
               3
             </button>
             <button
-              onClick={() => handleCalculatorInput('+')}
-              className="bg-blue-500 hover:bg-blue-600 text-white p-3 rounded-lg font-semibold row-span-2"
+              onClick={() => handleCalculatorInput('-')}
+              className={`p-2 sm:p-3 rounded-lg font-bold text-lg sm:text-xl shadow-md border flex items-center justify-center calculator-button calculator-button-xl ${
+                lastPressedButton === '-' 
+                  ? 'bg-blue-700 text-white border-blue-800' 
+                  : 'bg-blue-400 hover:bg-blue-500 text-white border-blue-500'
+              }`}
             >
-              +
+              −
+            </button>
+            <button
+              onClick={() => handleCalculatorInput('+/-')}
+              className="bg-blue-400 hover:bg-blue-500 text-white p-2 sm:p-3 rounded-lg font-bold text-sm sm:text-lg shadow-md border border-blue-500 flex items-center justify-center calculator-button calculator-button-lg"
+            >
+              +/−
             </button>
 
-            {/* Row 4 */}
+            {/* Row 5: AC, 0, 00, •, +, = */}
+            <button
+              onClick={() => handleCalculatorInput('AC')}
+              className={`p-2 sm:p-3 rounded-lg font-bold text-xs sm:text-sm shadow-md border flex items-center justify-center calculator-button ${
+                lastPressedButton === 'AC' 
+                  ? 'bg-red-700 text-white border-red-800' 
+                  : 'bg-red-500 hover:bg-red-600 text-white border-red-600'
+              }`}
+            >
+              AC
+            </button>
             <button
               onClick={() => handleCalculatorInput('0')}
-              className="bg-gray-200 hover:bg-gray-300 text-gray-800 p-3 rounded-lg font-semibold col-span-2"
+              className="bg-gray-800 hover:bg-gray-900 text-white p-2 sm:p-3 rounded-lg font-bold text-lg sm:text-xl shadow-md border border-gray-600 flex items-center justify-center calculator-button calculator-button-lg"
             >
               0
             </button>
             <button
-              onClick={() => handleCalculatorInput('.')}
-              className="bg-gray-200 hover:bg-gray-300 text-gray-800 p-3 rounded-lg font-semibold"
+              onClick={() => handleCalculatorInput('00')}
+              className="bg-gray-800 hover:bg-gray-900 text-white p-2 sm:p-3 rounded-lg font-bold text-lg sm:text-xl shadow-md border border-gray-600 flex items-center justify-center calculator-button calculator-button-lg"
             >
-              .
+              00
+            </button>
+            <button
+              onClick={() => handleCalculatorInput('.')}
+              className="bg-gray-800 hover:bg-gray-900 text-white p-2 sm:p-3 rounded-lg font-bold text-lg sm:text-xl shadow-md border border-gray-600 flex items-center justify-center calculator-button calculator-button-lg"
+            >
+              •
+            </button>
+            <button
+              onClick={() => handleCalculatorInput('+')}
+              className={`p-2 sm:p-3 rounded-lg font-bold text-lg sm:text-xl shadow-md border flex items-center justify-center calculator-button calculator-button-xl ${
+                lastPressedButton === '+' 
+                  ? 'bg-blue-700 text-white border-blue-800' 
+                  : 'bg-blue-400 hover:bg-blue-500 text-white border-blue-500'
+              }`}
+              style={{ gridRow: 'span 1' }}
+            >
+              +
             </button>
             <button
               onClick={() => handleCalculatorInput('=')}
-              className="bg-green-500 hover:bg-green-600 text-white p-3 rounded-lg font-semibold"
+              className={`p-2 sm:p-3 rounded-lg font-bold text-lg sm:text-xl shadow-md border flex items-center justify-center calculator-button calculator-button-xl ${
+                lastPressedButton === '=' 
+                  ? 'bg-green-700 text-white border-green-800' 
+                  : 'bg-green-500 hover:bg-green-600 text-white border-green-600'
+              }`}
             >
               =
             </button>
@@ -798,10 +1199,7 @@ const CreditManagement: React.FC = () => {
 
           {/* Add Button */}
           <button
-            onClick={() => {
-              // Always show client search modal (whether linked client or not)
-              setShowClientSearch(true);
-            }}
+            onClick={() => setShowClientSearch(true)}
             disabled={calculatorValue === 'Error'}
             className={`w-full ${linkedClient ? 'bg-blue-500 hover:bg-blue-600' : 'bg-green-500 hover:bg-green-600'} disabled:bg-gray-300 disabled:cursor-not-allowed text-white p-4 rounded-lg font-semibold text-lg flex items-center justify-center gap-2`}
           >
@@ -809,6 +1207,18 @@ const CreditManagement: React.FC = () => {
             {linkedClient ? `Add to ${linkedClient.name}` : 'Add to Client'}
           </button>
         </div>
+
+        {/* Render Mini Calculators */}
+        {miniCalculators.map((calc) => (
+          <MiniCalculator
+            key={calc.id}
+            id={calc.id}
+            initialLabel={calc.label}
+            initialPosition={calc.position}
+            onClose={() => closeMiniCalculator(calc.id)}
+            onAddToClient={handleMiniCalculatorTransaction}
+          />
+        ))}
       </div>
 
       {/* Modals */}
@@ -819,296 +1229,153 @@ const CreditManagement: React.FC = () => {
         />
       )}
 
-      {/* Settings Modal */}
-      {showSettings && (
-        createPortal(
-        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center p-4 z-50 overflow-hidden" style={{ height: '100vh' }}>
-          <div className="bg-white rounded-xl shadow-lg w-full max-w-md overflow-hidden">
-            
-            {/* Header */}
-            <div className="flex justify-between items-center p-6 border-b border-gray-200">
-              <h2 className="text-xl font-semibold text-gray-900">Client Settings</h2>
-              <button 
-                onClick={() => setShowSettings(false)}
-                className="text-gray-500 hover:text-gray-700 transition-colors"
-              >
-                <X size={24} />
-              </button>
-            </div>
-
-            {/* Content */}
-            <div className="p-6 overflow-y-auto" style={{ maxHeight: 'calc(80vh - 120px)' }}>
-              <h3 className="text-lg font-medium text-gray-800 mb-4">Manage All Clients</h3>
-              <p className="text-sm text-gray-600 mb-4">
-                Here you can permanently delete clients (e.g., if they have passed away). 
-                Their ID will become available for new clients.
-              </p>
-
-              {/* All Clients List */}
-              <div className="max-h-64 overflow-y-auto border border-gray-200 rounded-lg">
-                {clients.length === 0 ? (
-                  <div className="p-4 text-center text-gray-500">No clients found</div>
-                ) : (
-                  clients
-                    .sort((a, b) => a.id.localeCompare(b.id))
-                    .map((client) => (
-                      <div key={client.id} className="flex items-center justify-between p-3 border-b border-gray-100 last:border-b-0">
-                        <div className="flex-1">
-                          <h4 className="font-medium text-gray-800">{client.name}</h4>
-                          <div className="flex items-center gap-4 text-sm text-gray-500">
-                            <span>ID: {client.id}</span>
-                            <span className={getClientTotalDebt(client.id) > 0 ? 'text-red-600 font-medium' : 'text-green-600'}>
-                              Rs {getClientTotalDebt(client.id).toLocaleString('en-IN', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
-                            </span>
-                          </div>
-                        </div>
-                        <button
-                          onClick={() => handleDeleteClient(client)}
-                          className="p-2 text-red-500 hover:text-red-700 hover:bg-red-50 rounded-lg transition-colors"
-                          title={`Delete ${client.name}`}
-                        >
-                          <Trash2 size={16} />
-                        </button>
-                      </div>
-                    ))
-                )}
-              </div>
-            </div>
-          </div>
-        </div>,
-        document.body
-        )
-      )}
-
-      {/* Delete Confirmation Modal */}
-      {showDeleteConfirm && clientToDelete && (
-        createPortal(
-        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center p-4 z-50 overflow-hidden" style={{ height: '100vh' }}>
-          <div className="bg-white rounded-xl shadow-lg w-full max-w-md overflow-hidden">
-            
-            {/* Header */}
-            <div className="flex justify-between items-center p-6 border-b border-gray-200">
-              <div className="flex items-center gap-3">
-                <div className="bg-red-100 p-2 rounded-full">
-                  <AlertTriangle size={20} className="text-red-600" />
-                </div>
-                <h2 className="text-xl font-semibold text-gray-900">Delete Client</h2>
-              </div>
-              <button 
-                onClick={() => {
-                  setShowDeleteConfirm(false);
-                  setClientToDelete(null);
-                  setDeleteConfirmText('');
-                }}
-                className="text-gray-500 hover:text-gray-700 transition-colors"
-              >
-                <X size={24} />
-              </button>
-            </div>
-
-            {/* Content */}
-            <div className="p-6 overflow-y-auto" style={{ maxHeight: 'calc(80vh - 120px)' }}>
-              <div className="mb-4">
-                <h3 className="text-lg font-medium text-gray-800 mb-2">
-                  {clientToDelete.name} ({clientToDelete.id})
-                </h3>
-                <div className="bg-red-50 border border-red-200 rounded-lg p-4 mb-4">
-                  <p className="text-red-800 font-medium mb-2">⚠️ This action cannot be undone!</p>
-                  <ul className="text-sm text-red-700 space-y-1">
-                    <li>• Client will be permanently deleted</li>
-                    <li>• All transaction history will be lost</li>
-                    <li>• All payment records will be lost</li>
-                    <li>• ID "{clientToDelete.id}" will be available for new clients</li>
-                  </ul>
-                </div>
-              </div>
-
-              <div className="mb-4">
-                <label className="block text-sm font-medium text-gray-700 mb-2">
-                  Type "DELETE" to confirm:
-                </label>
-                <input
-                  type="text"
-                  value={deleteConfirmText}
-                  onChange={(e) => setDeleteConfirmText(e.target.value)}
-                  placeholder="Type DELETE"
-                  className="block w-full px-4 py-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-red-500 focus:border-red-500"
-                />
-              </div>
-
-              <div className="flex gap-3">
-                <button
-                  onClick={() => {
-                    setShowDeleteConfirm(false);
-                    setClientToDelete(null);
-                    setDeleteConfirmText('');
-                  }}
-                  className="flex-1 px-4 py-2 border border-gray-300 rounded-lg text-gray-700 hover:bg-gray-50 transition-colors"
-                >
-                  Cancel
-                </button>
-                <button
-                  onClick={confirmDeleteClient}
-                  disabled={deleteConfirmText !== 'DELETE'}
-                  className="flex-1 px-4 py-2 bg-red-500 text-white rounded-lg hover:bg-red-600 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
-                >
-                  Delete Permanently
-                </button>
-              </div>
-            </div>
-          </div>
-        </div>,
-        document.body
-        )
-      )}
-
       {showClientSearch && (
         <ClientSearchModal
-          key={`search-modal-${Date.now()}`}
           calculatorValue={calculatorValue}
-          onClose={() => {
-            setShowClientSearch(false);
-            // Unlink client when closing modal
-            setLinkedClient(null);
-          }}
+          onClose={handleCloseClientSearchModal}
+          onResetCalculator={handleResetCalculatorFromModal}
           onAddToClient={handleAddToClient}
           linkedClient={linkedClient}
-          onResetCalculator={() => {
-            setCalculatorValue('0');
-            setIsCalculatorActive(false);
-            setLinkedClient(null);
-            setShowClientSearch(false);
-          }}
+          description={clientSearchDescription}
+          onDescriptionChange={handleClientSearchDescriptionChange}
         />
       )}
 
-      {/* Unified Data Manager */}
-      <UnifiedDataManager 
-        isOpen={showUnifiedDataManager} 
-        onClose={() => setShowUnifiedDataManager(false)} 
+      {/* Unified Data Manager Modal */}
+      {showUnifiedDataManager && (
+        <UnifiedDataManager
+          isOpen={showUnifiedDataManager}
+          onClose={() => setShowUnifiedDataManager(false)}
+        />
+      )}
+
+      {/* Duplicate Card Overlay */}
+      {duplicateCard && (
+        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-[9999] p-4 select-none">
+          <div className="relative pointer-events-none">
+            {/* Pulsating Success Card */}
+            <div className="animate-pulsate bg-white rounded-lg shadow-2xl p-6 border-4 border-green-500 max-w-sm mx-4">
+              {/* Success Icon */}
+              <div className="flex items-center justify-center mb-4">
+                <div className="bg-green-100 p-3 rounded-full">
+                  <CheckCircle size={40} className="text-green-600" />
+                </div>
+              </div>
+              
+              {/* Client Info */}
+              <div className="text-center mb-4 select-none">
+                <h3 className="text-xl font-bold text-gray-800 mb-1">{duplicateCard.name}</h3>
+                <p className="text-sm text-gray-600">ID: {duplicateCard.id}</p>
+              </div>
+              
+              {/* Articles taken - larger font */}
+              {duplicateCard.transactionDescription && (
+                <div className="mb-3 text-center select-none">
+                  <p className="text-lg font-semibold text-gray-800 leading-relaxed select-none">
+                    {duplicateCard.transactionDescription}
+                  </p>
+                </div>
+              )}
+              
+              {/* Amount and Arrows Section */}
+              {(() => {
+                const hasAmount = duplicateCard.transactionAmount !== undefined && duplicateCard.transactionAmount > 0;
+                const totalDebt = getClientTotalDebt(duplicateCard.id);
+                const hasDebt = totalDebt > 0;
+                
+                // Get returnable items for this client using the shared utility function
+                const clientTransactions = getClientTransactions(duplicateCard.id);
+                const returnableItems = calculateReturnableItems(clientTransactions, duplicateCard.name);
+                const hasReturnables = returnableItems.length > 0;
+                
+               // Check if the transaction description contains returnable items AND there are still items to return
+               const transactionHasReturnables = duplicateCard.transactionDescription && (
+                 (duplicateCard.transactionDescription.toLowerCase().includes('chopine') ||
+                 duplicateCard.transactionDescription.toLowerCase().includes('bouteille')) && 
+                 hasReturnables
+               );
+               
+                return (
+                  <div className="relative mb-3">
+                    {/* Amount Section - show if amount > 0 OR if client has debt */}
+                    {(hasAmount || hasDebt) && (
+                      <div className="mb-3">
+                        {hasAmount && (
+                          <p className="text-2xl font-bold text-green-600 mb-1 text-center">
+                            Rs {duplicateCard.transactionAmount!.toLocaleString('en-IN', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
+                          </p>
+                        )}
+                        
+                        {/* Arrow pointing to debt total - only show if debt > 0 */}
+                        {hasDebt && (
+                          <div className="flex items-center justify-center gap-2 mt-2">
+                            <div className="bg-blue-500 text-white px-3 py-1 rounded-lg text-sm font-medium">
+                              Total Amount: Rs {totalDebt.toLocaleString('en-IN', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
+                            </div>
+                            <div className="animate-bounce-horizontal text-green-600">
+                              <ArrowLeft size={24} />
+                            </div>
+                          </div>
+                        )}
+                      </div>
+                    )}
+                    
+                    {/* Returnables Section - show if client has returnables or current transaction has returnables */}
+                    {(hasReturnables || transactionHasReturnables) && (
+                      <div className="mb-3">
+                       {/* Arrow pointing to returnables - show if we have amount OR debt OR just added returnables */}
+                       {(hasAmount || hasDebt || transactionHasReturnables) && (
+                          <div className="flex items-center justify-center gap-2 mb-2">
+                            <div className="bg-orange-500 text-white px-3 py-1 rounded-lg text-sm font-medium max-w-xs">
+                              {duplicateCard.message?.toLowerCase().includes('returned') ? 'Still to return:' : 'Returnables:'} {returnableItems.join(', ')}
+                            </div>
+                            <div className="animate-bounce-horizontal text-orange-600">
+                              <ArrowLeft size={24} />
+                            </div>
+                          </div>
+                        )}
+                        
+                       {/* Show returnables without arrow if no amount AND no debt AND not adding returnables */}
+                       {!hasAmount && !hasDebt && !transactionHasReturnables && (
+                          <div className="bg-orange-100 border border-orange-300 rounded-lg p-3 mb-2">
+                            <p className="text-orange-800 font-medium text-sm mb-1">Total Returnables:</p>
+                            <p className="text-orange-700 text-sm">{returnableItems.join(', ')}</p>
+                          </div>
+                        )}
+                      </div>
+                    )}
+                  </div>
+                );
+              })()}
+            </div>
+          </div>
+        </div>
+      )}
+
+      <CreditModals
+        showSettings={showSettings}
+        onCloseSettings={() => setShowSettings(false)}
+        onDeleteClient={handleDeleteClient}
+        showDeleteConfirm={showDeleteConfirm}
+        clientToDelete={clientToDelete}
+        deleteConfirmText={deleteConfirmText}
+        onDeleteConfirmTextChange={setDeleteConfirmText}
+        onConfirmDelete={confirmDeleteClient}
+        onCancelDelete={() => {
+          setShowDeleteConfirm(false);
+          setClientToDelete(null);
+          setDeleteConfirmText('');
+        }}
+        showDeleteAllConfirm={showDeleteAllConfirm}
+        deleteAllPasscode={deleteAllPasscode}
+        onDeleteAllPasscodeChange={setDeleteAllPasscode}
+        onConfirmDeleteAll={confirmDeleteAllClients}
+        onCancelDeleteAll={() => {
+          setShowDeleteAllConfirm(false);
+          setDeleteAllPasscode('');
+        }}
+        onDeleteAllClients={handleDeleteAllClients}
       />
-    </div>
-  );
-};
-
-/**
- * DRINK TYPES SETTINGS COMPONENT
- * ==============================
- */
-const DrinkTypesSettings: React.FC = () => {
-  const [drinkTypes, setDrinkTypes] = useState<string[]>(() => {
-    const stored = localStorage.getItem('drinkTypes');
-    return stored ? JSON.parse(stored) : ['Beer', 'Guinness', 'Malta', 'Coca'];
-  });
-  const [newDrinkType, setNewDrinkType] = useState('');
-  const [isAdding, setIsAdding] = useState(false);
-
-  const saveDrinkTypes = (types: string[]) => {
-    localStorage.setItem('drinkTypes', JSON.stringify(types));
-    setDrinkTypes(types);
-  };
-
-  const handleAddDrinkType = () => {
-    if (!newDrinkType.trim()) {
-      alert('Please enter a drink name');
-      return;
-    }
-
-    const formatted = newDrinkType.trim()
-      .split(' ')
-      .map(word => word.charAt(0).toUpperCase() + word.slice(1).toLowerCase())
-      .join(' ');
-
-    if (drinkTypes.includes(formatted)) {
-      alert('This drink type already exists');
-      return;
-    }
-
-    const updatedTypes = [...drinkTypes, formatted];
-    saveDrinkTypes(updatedTypes);
-    setNewDrinkType('');
-    setIsAdding(false);
-  };
-
-  const handleDeleteDrinkType = (drinkType: string) => {
-    const confirmed = window.confirm(`Are you sure you want to remove "${drinkType}"?`);
-    if (confirmed) {
-      const updatedTypes = drinkTypes.filter(type => type !== drinkType);
-      saveDrinkTypes(updatedTypes);
-    }
-  };
-
-  return (
-    <div>
-      <h3 className="text-lg font-medium text-gray-800 mb-4">Drink Types</h3>
-      <p className="text-sm text-gray-600 mb-4">
-        Customize the drink types that appear when adding bottles. These will be available in the quick selection.
-      </p>
-
-      {/* Add New Drink Type */}
-      {!isAdding ? (
-        <button
-          onClick={() => setIsAdding(true)}
-          className="mb-4 flex items-center gap-2 px-4 py-2 bg-blue-500 text-white rounded-lg hover:bg-blue-600 transition-colors"
-        >
-          <Plus size={16} />
-          Add Drink Type
-        </button>
-      ) : (
-        <div className="mb-4 p-4 bg-gray-50 rounded-lg border border-gray-200">
-          <div className="flex gap-2">
-            <input
-              type="text"
-              value={newDrinkType}
-              onChange={(e) => setNewDrinkType(e.target.value)}
-              placeholder="Enter drink name (e.g., Whiskey, Vodka)"
-              className="flex-1 px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
-              autoFocus
-              onKeyDown={(e) => {
-                if (e.key === 'Enter') handleAddDrinkType();
-                if (e.key === 'Escape') setIsAdding(false);
-              }}
-            />
-            <button
-              onClick={handleAddDrinkType}
-              className="px-4 py-2 bg-green-500 text-white rounded-md hover:bg-green-600 transition-colors"
-            >
-              Add
-            </button>
-            <button
-              onClick={() => {
-                setIsAdding(false);
-                setNewDrinkType('');
-              }}
-              className="px-4 py-2 bg-gray-500 text-white rounded-md hover:bg-gray-600 transition-colors"
-            >
-              Cancel
-            </button>
-          </div>
-        </div>
-      )}
-
-      {/* Current Drink Types */}
-      <div className="space-y-2">
-        {drinkTypes.map((drinkType) => (
-          <div key={drinkType} className="flex items-center justify-between p-3 bg-white border border-gray-200 rounded-lg">
-            <span className="font-medium text-gray-800">{drinkType}</span>
-            <button
-              onClick={() => handleDeleteDrinkType(drinkType)}
-              className="p-1 text-red-500 hover:text-red-700 hover:bg-red-50 rounded transition-colors"
-              title={`Remove ${drinkType}`}
-            >
-              <X size={16} />
-            </button>
-          </div>
-        ))}
-      </div>
-
-      {drinkTypes.length === 0 && (
-        <div className="text-center py-8 text-gray-500">
-          No drink types configured. Add some to get started.
-        </div>
-      )}
     </div>
   );
 };

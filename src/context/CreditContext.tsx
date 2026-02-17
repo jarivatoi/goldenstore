@@ -1,11 +1,11 @@
 import React, { createContext, useContext, useState, useEffect, ReactNode } from 'react';
 import { supabase } from '../lib/supabase';
-import { Client, Transaction, Payment } from '../types';
+import { Client, CreditTransaction, PaymentRecord } from '../types';
 
 interface CreditContextType {
   clients: Client[];
-  transactions: Transaction[];
-  payments: Payment[];
+  transactions: CreditTransaction[];
+  payments: PaymentRecord[];
   loading: boolean;
   error: string | null;
   
@@ -15,8 +15,8 @@ interface CreditContextType {
   searchClients: (query: string) => Client[];
   getClientTotalDebt: (clientId: string) => number;
   getClientBottlesOwed: (clientId: string) => { beer: number; guinness: number; malta: number; coca: number; chopines: number };
-  getClientTransactions: (clientId: string) => Transaction[];
-  getClientPayments: (clientId: string) => Payment[];
+  getClientTransactions: (clientId: string) => CreditTransaction[];
+  getClientPayments: (clientId: string) => PaymentRecord[];
   
   // Client update operations
   updateClient: (client: Client) => Promise<void>;
@@ -28,6 +28,7 @@ interface CreditContextType {
   // Payment operations
   addPartialPayment: (clientId: string, amount: number) => Promise<void>;
   settleClient: (clientId: string) => Promise<void>;
+  settleClientWithFullClear: (clientId: string) => Promise<void>;
   
   // Bottle operations
   returnBottles: (clientId: string, bottles: { beer?: number; guinness?: number; malta?: number; coca?: number; chopines?: number }) => Promise<void>;
@@ -52,8 +53,8 @@ interface CreditProviderProps {
 
 export const CreditProvider: React.FC<CreditProviderProps> = ({ children }) => {
   const [clients, setClients] = useState<Client[]>([]);
-  const [transactions, setTransactions] = useState<Transaction[]>([]);
-  const [payments, setPayments] = useState<Payment[]>([]);
+  const [transactions, setTransactions] = useState<CreditTransaction[]>([]);
+  const [payments, setPayments] = useState<PaymentRecord[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
 
@@ -64,7 +65,6 @@ export const CreditProvider: React.FC<CreditProviderProps> = ({ children }) => {
       setError(null);
 
       // Load from localStorage
-      console.log('Using localStorage for credit data');
       
       const storedClients = localStorage.getItem('creditClients');
       const storedTransactions = localStorage.getItem('creditTransactions');
@@ -76,12 +76,12 @@ export const CreditProvider: React.FC<CreditProviderProps> = ({ children }) => {
         lastTransactionAt: new Date(client.lastTransactionAt)
       })) : [];
       
-      const transformedTransactions: Transaction[] = storedTransactions ? JSON.parse(storedTransactions).map((transaction: any) => ({
+      const transformedTransactions: CreditTransaction[] = storedTransactions ? JSON.parse(storedTransactions).map((transaction: any) => ({
         ...transaction,
         date: new Date(transaction.date)
       })) : [];
       
-      const transformedPayments: Payment[] = storedPayments ? JSON.parse(storedPayments).map((payment: any) => ({
+      const transformedPayments: PaymentRecord[] = storedPayments ? JSON.parse(storedPayments).map((payment: any) => ({
         ...payment,
         date: new Date(payment.date)
       })) : [];
@@ -90,9 +90,7 @@ export const CreditProvider: React.FC<CreditProviderProps> = ({ children }) => {
       setTransactions(transformedTransactions);
       setPayments(transformedPayments);
       
-      console.log(`Loaded ${transformedClients.length} clients, ${transformedTransactions.length} transactions, ${transformedPayments.length} payments from localStorage`);
     } catch (err) {
-      console.error('Error loading credit data:', err);
       setError(err instanceof Error ? err.message : 'Failed to load data');
     } finally {
       setLoading(false);
@@ -109,9 +107,9 @@ export const CreditProvider: React.FC<CreditProviderProps> = ({ children }) => {
     try {
       const formattedName = name
         .trim()
-        .split(' ')
-        .map(word => word.charAt(0).toUpperCase() + word.slice(1).toLowerCase())
-        .join(' ');
+        .replace(/\b\w+/g, (word) => {
+          return word.charAt(0).toUpperCase() + word.slice(1).toLowerCase();
+        });
       
       // Check for duplicate names (case-insensitive)
       const existingClient = clients.find(c => 
@@ -168,16 +166,11 @@ export const CreditProvider: React.FC<CreditProviderProps> = ({ children }) => {
           lastTransactionAt: client.lastTransactionAt.toISOString()
         }))));
         
-        console.log('Client saved to localStorage, total clients:', updatedClients.length);
         return updatedClients;
       });
       
       return newClient;
     } catch (err) {
-      // Only log unexpected errors to console, not duplicate client errors
-      if (!(err instanceof Error && err.name === 'DuplicateClientError')) {
-        console.error('Error adding client:', err);
-      }
       throw err;
     }
   };
@@ -201,7 +194,6 @@ export const CreditProvider: React.FC<CreditProviderProps> = ({ children }) => {
         lastTransactionAt: c.lastTransactionAt.toISOString()
       }))));
     } catch (err) {
-      console.error('Error updating client:', err);
       throw err;
     }
   };
@@ -222,10 +214,8 @@ export const CreditProvider: React.FC<CreditProviderProps> = ({ children }) => {
       createdAt: c.createdAt.toISOString(),
       lastTransactionAt: c.lastTransactionAt.toISOString()
     }))));
-    
-    console.log('🔄 Moved client to rightmost position:', clientToMove.name);
   };
-  // Delete client
+    
   const deleteClient = async (clientId: string) => {
     try {
       const updatedClients = clients.filter(client => client.id !== clientId);
@@ -262,11 +252,34 @@ export const CreditProvider: React.FC<CreditProviderProps> = ({ children }) => {
   const searchClients = (query: string): Client[] => {
     if (!query.trim()) return clients;
     
-    const lowercaseQuery = query.toLowerCase();
-    return clients.filter(client => 
-      client.name.toLowerCase().includes(lowercaseQuery) ||
-      client.id.toLowerCase().includes(lowercaseQuery)
-    );
+    // Normalize function to remove accents and special characters
+    const normalize = (str: string): string => {
+      return str
+        .toLowerCase()
+        .normalize('NFD') // Decompose accented characters
+        .replace(/[\u0300-\u036f]/g, '') // Remove accent marks
+        .replace(/[^\w\s]/g, ''); // Remove other special characters except word chars and spaces
+    };
+    
+    // Check if query is numeric (for ID search)
+    const isNumericQuery = /^\d+$/.test(query.trim());
+    
+    if (isNumericQuery) {
+      // For numeric queries, format as G-prefix ID and do exact match
+      const paddedNumber = query.trim().padStart(3, '0');
+      const formattedId = `G${paddedNumber}`;
+      
+      return clients.filter(client => 
+        client.id === formattedId
+      );
+    } else {
+      // For text queries, search by name or exact ID match
+      const normalizedQuery = normalize(query);
+      return clients.filter(client => 
+        normalize(client.name).includes(normalizedQuery) ||
+        client.id.toLowerCase() === query.toLowerCase()
+      );
+    }
   };
 
   // Get client total debt
@@ -282,22 +295,21 @@ export const CreditProvider: React.FC<CreditProviderProps> = ({ children }) => {
   };
 
   // Get client transactions
-  const getClientTransactions = (clientId: string): Transaction[] => {
+  const getClientTransactions = (clientId: string): CreditTransaction[] => {
     return transactions.filter(transaction => transaction.clientId === clientId);
   };
 
   // Get client payments
-  const getClientPayments = (clientId: string): Payment[] => {
+  const getClientPayments = (clientId: string): PaymentRecord[] => {
     return payments.filter(payment => payment.clientId === clientId);
   };
 
   // Add transaction
   const addTransaction = async (client: Client, description: string, amount: number) => {
     try {
-      console.log('🏦 CreditContext: Adding transaction:', { clientId: client.id, description, amount });
       
       // Add transaction to database
-      const newTransaction: Transaction = {
+      const newTransaction: CreditTransaction = {
         id: crypto.randomUUID(),
         clientId: client.id,
         description,
@@ -333,20 +345,30 @@ export const CreditProvider: React.FC<CreditProviderProps> = ({ children }) => {
           return c;
         });
         
+        // Move the updated client to the end of the array (most recent)
+        const updatedClient = updatedClients.find(c => c.id === client.id);
+        const otherClients = updatedClients.filter(c => c.id !== client.id);
+        const reorderedClients = updatedClient ? [...otherClients, updatedClient] : updatedClients;
+        
         // Save to localStorage
-        localStorage.setItem('creditClients', JSON.stringify(updatedClients.map(c => ({
+        localStorage.setItem('creditClients', JSON.stringify(reorderedClients.map(c => ({
           ...c,
           createdAt: c.createdAt.toISOString(),
           lastTransactionAt: c.lastTransactionAt.toISOString()
         }))));
         
-        return updatedClients;
+        return reorderedClients;
       });
       
-      console.log('🏦 CreditContext: Transaction added to localStorage successfully');
       
-    } catch (err) {
-      console.error('Error adding transaction:', err);
+      // Dispatch creditDataChanged event to notify all listeners
+      window.dispatchEvent(new CustomEvent('creditDataChanged', {
+        detail: {
+          clientId: client.id,
+          source: 'addTransaction'
+        }
+      }));
+ } catch (err) {
       throw err;
     }
   };
@@ -360,7 +382,7 @@ export const CreditProvider: React.FC<CreditProviderProps> = ({ children }) => {
   // Add partial payment
   const addPartialPayment = async (clientId: string, amount: number) => {
     try {
-      const newPayment: Payment = {
+      const newPayment: PaymentRecord = {
         id: crypto.randomUUID(),
         clientId,
         amount,
@@ -379,7 +401,13 @@ export const CreditProvider: React.FC<CreditProviderProps> = ({ children }) => {
           ? { ...client, totalDebt: newDebt, lastTransactionAt: new Date() }
           : client
       );
-      setClients(updatedClients);
+      
+      // Move the updated client to the end of the array (most recent)
+      const updatedClient = updatedClients.find(c => c.id === clientId);
+      const otherClients = updatedClients.filter(c => c.id !== clientId);
+      const reorderedClients = updatedClient ? [...otherClients, updatedClient] : updatedClients;
+      
+      setClients(reorderedClients);
       
       // Save to localStorage
       localStorage.setItem('creditPayments', JSON.stringify(updatedPayments.map(payment => ({
@@ -387,19 +415,23 @@ export const CreditProvider: React.FC<CreditProviderProps> = ({ children }) => {
         date: payment.date.toISOString()
       }))));
       
-      localStorage.setItem('creditClients', JSON.stringify(updatedClients.map(client => ({
+      localStorage.setItem('creditClients', JSON.stringify(reorderedClients.map(client => ({
         ...client,
         createdAt: client.createdAt.toISOString(),
         lastTransactionAt: client.lastTransactionAt.toISOString()
       }))));
     } catch (err) {
-      console.error('Error adding partial payment:', err);
       throw err;
     }
   };
 
   // Settle client (full payment)
   const settleClient = async (clientId: string) => {
+    return settleClientAmountOnly(clientId);
+  };
+
+  // Settle client amount only (preserves returnables)
+  const settleClientAmountOnly = async (clientId: string) => {
     try {
       const currentDebt = getClientTotalDebt(clientId);
       
@@ -409,7 +441,7 @@ export const CreditProvider: React.FC<CreditProviderProps> = ({ children }) => {
       );
       
       // Add new settlement record (even if debt is 0)
-      const newPayment: Payment = {
+      const newPayment: PaymentRecord = {
         id: crypto.randomUUID(),
         clientId,
         amount: currentDebt,
@@ -420,8 +452,16 @@ export const CreditProvider: React.FC<CreditProviderProps> = ({ children }) => {
       const updatedPayments = [...filteredPayments, newPayment];
       setPayments(updatedPayments);
       
-      // Clear all transactions for this client when settling
-      const updatedTransactions = transactions.filter(transaction => transaction.clientId !== clientId);
+      // Only clear debt transactions (amount > 0), keep ALL return-related transactions
+      // This preserves returnable item tracking in transaction history
+      const updatedTransactions = transactions.filter(transaction => 
+        transaction.clientId !== clientId ? true : (
+          transaction.amount === 0 || 
+          transaction.description.toLowerCase().includes('returned') ||
+          transaction.description.toLowerCase().includes('chopine') ||
+          transaction.description.toLowerCase().includes('bouteille')
+        )
+      );
       setTransactions(updatedTransactions);
       
       const updatedClients = clients.map(client => 
@@ -430,7 +470,7 @@ export const CreditProvider: React.FC<CreditProviderProps> = ({ children }) => {
               ...client, 
               totalDebt: 0, 
               lastTransactionAt: new Date(),
-              bottlesOwed: { beer: 0, guinness: 0, malta: 0, coca: 0, chopines: 0 }
+              bottlesOwed: client.bottlesOwed // Keep existing bottle counts
             }
           : client
       );
@@ -453,8 +493,85 @@ export const CreditProvider: React.FC<CreditProviderProps> = ({ children }) => {
         lastTransactionAt: client.lastTransactionAt.toISOString()
       }))));
       
+      // Force update of duplicate card and other UI components
+      window.dispatchEvent(new CustomEvent('creditDataChanged', {
+        detail: {
+          clientId: clientId,
+          source: 'settle'
+        }
+      }));
+      
     } catch (err) {
-      console.error('Error settling client:', err);
+      throw err;
+    }
+  };
+
+  // Settle client with full clear (clears returnables too)
+  const settleClientWithFullClear = async (clientId: string) => {
+    try {
+      const currentDebt = getClientTotalDebt(clientId);
+      
+      // Always remove all previous full settlements for this client, regardless of debt amount
+      const filteredPayments = payments.filter(payment => 
+        !(payment.clientId === clientId && payment.type === 'full')
+      );
+      
+      // Add new settlement record (even if debt is 0)
+      const newPayment: PaymentRecord = {
+        id: crypto.randomUUID(),
+        clientId,
+        amount: currentDebt,
+        date: new Date(),
+        type: 'full'
+      };
+      
+      const updatedPayments = [...filteredPayments, newPayment];
+      setPayments(updatedPayments);
+      
+      // Clear ALL transactions for this client (including returnables)
+      const updatedTransactions = transactions.filter(transaction => 
+        transaction.clientId !== clientId
+      );
+      setTransactions(updatedTransactions);
+      
+      const updatedClients = clients.map(client => 
+        client.id === clientId 
+          ? { 
+              ...client, 
+              totalDebt: 0, 
+              lastTransactionAt: new Date(),
+              bottlesOwed: { beer: 0, guinness: 0, malta: 0, coca: 0, chopines: 0 } // Clear bottle counts too
+            }
+          : client
+      );
+      setClients(updatedClients);
+      
+      // Save to localStorage
+      localStorage.setItem('creditPayments', JSON.stringify(updatedPayments.map(payment => ({
+        ...payment,
+        date: payment.date.toISOString()
+      }))));
+      
+      localStorage.setItem('creditTransactions', JSON.stringify(updatedTransactions.map(transaction => ({
+        ...transaction,
+        date: transaction.date.toISOString()
+      }))));
+      
+      localStorage.setItem('creditClients', JSON.stringify(updatedClients.map(client => ({
+        ...client,
+        createdAt: client.createdAt.toISOString(),
+        lastTransactionAt: client.lastTransactionAt.toISOString()
+      }))));
+      
+      // Force update of duplicate card and other UI components
+      window.dispatchEvent(new CustomEvent('creditDataChanged', {
+        detail: {
+          clientId: clientId,
+          source: 'settleFullClear'
+        }
+      }));
+      
+    } catch (err) {
       throw err;
     }
   };
@@ -476,16 +593,21 @@ export const CreditProvider: React.FC<CreditProviderProps> = ({ children }) => {
           ? { ...client, bottlesOwed: newBottles, lastTransactionAt: new Date() }
           : client
       );
-      setClients(updatedClients);
+      
+      // Move the updated client to the end of the array (most recent)
+      const updatedClient = updatedClients.find(c => c.id === clientId);
+      const otherClients = updatedClients.filter(c => c.id !== clientId);
+      const reorderedClients = updatedClient ? [...otherClients, updatedClient] : updatedClients;
+      
+      setClients(reorderedClients);
       
       // Save to localStorage
-      localStorage.setItem('creditClients', JSON.stringify(updatedClients.map(client => ({
+      localStorage.setItem('creditClients', JSON.stringify(reorderedClients.map(client => ({
         ...client,
         createdAt: client.createdAt.toISOString(),
         lastTransactionAt: client.lastTransactionAt.toISOString()
       }))));
     } catch (err) {
-      console.error('Error returning bottles:', err);
       throw err;
     }
   };
@@ -513,6 +635,7 @@ export const CreditProvider: React.FC<CreditProviderProps> = ({ children }) => {
     addTransaction,
     addPartialPayment,
     settleClient,
+    settleClientWithFullClear,
     returnBottles,
     refreshData
   };

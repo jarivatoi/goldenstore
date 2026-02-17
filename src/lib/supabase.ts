@@ -1,37 +1,130 @@
 import { createClient } from '@supabase/supabase-js';
 
-// Supabase configuration - Use environment variables or fallback values
+// Hardcoded Supabase configuration for mobile compatibility
 const supabaseUrl = 'https://nmlroqlmtelytoghuyos.supabase.co';
 const supabaseAnonKey = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Im5tbHJvcWxtdGVseXRvZ2h1eW9zIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NTUxMTA0OTgsImV4cCI6MjA3MDY4NjQ5OH0.qnAd6-BSzNMZux6RxtQmGr5OyPYkne--y1ekccVlCeE';
+
+// Mobile PWA detection
+const isMobilePWA = () => {
+  const userAgent = navigator.userAgent.toLowerCase();
+  const isMobile = /iphone|ipad|ipod|android/.test(userAgent);
+  const isStandalone = window.matchMedia('(display-mode: standalone)').matches || 
+                       (window.navigator as any).standalone === true;
+  return isMobile && isStandalone;
+};
+
+// Enhanced mobile detection
+const isMobileDevice = () => {
+  const userAgent = navigator.userAgent.toLowerCase();
+  return /iphone|ipad|ipod|android|mobile/.test(userAgent);
+};
 
 // Initialize Supabase client with error handling
 let supabase: any = null;
 
 try {
+  console.log('🔧 Initializing Supabase client...');
+  
   // Validate configuration
   if (!supabaseUrl || !supabaseAnonKey) {
-    throw new Error('Missing Supabase configuration');
+    console.warn('⚠️ Supabase credentials missing');
+    throw new Error('Supabase credentials are missing');
   }
 
-  supabase = createClient(supabaseUrl, supabaseAnonKey, {
+  // Validate URL format
+  if (!supabaseUrl.startsWith('https://') || !supabaseUrl.includes('.supabase.co')) {
+    console.error('❌ Invalid Supabase URL format:', supabaseUrl);
+    throw new Error(`Invalid Supabase URL format: ${supabaseUrl}`);
+  }
+
+  // Mobile devices require special handling
+  const isMobile = isMobileDevice();
+  const isPWA = isMobilePWA();
+  
+  console.log('📱 Device detection:', { isMobile, isPWA });
+  
+  const mobileConfig = {
     auth: {
       persistSession: false,
-      autoRefreshToken: true,
+      autoRefreshToken: false,
+      detectSessionInUrl: false
     },
     realtime: {
       params: {
-        eventsPerSecond: 10,
+        eventsPerSecond: isMobile ? 1 : 10,
+      },
+      timeout: isMobile ? 180000 : 15000, // 3 minutes for mobile
+      heartbeatIntervalMs: isMobile ? 300000 : 30000, // 5 minutes for mobile
+    },
+    global: {
+      fetch: (url, options = {}) => {
+        const controller = new AbortController();
+        const timeoutId = setTimeout(() => controller.abort(), isMobile ? 180000 : 15000);
+        
+        // Create headers with mobile-specific handling
+        const headers = new Headers();
+        
+        // Copy existing headers first
+        if (options.headers) {
+          if (options.headers instanceof Headers) {
+            options.headers.forEach((value, key) => headers.set(key, value));
+          } else if (typeof options.headers === 'object') {
+            Object.entries(options.headers).forEach(([key, value]) => {
+              if (typeof value === 'string') headers.set(key, value);
+            });
+          }
+        }
+        
+        // Always include the API key - critical for mobile
+        headers.set('apikey', supabaseAnonKey);
+        headers.set('Authorization', `Bearer ${supabaseAnonKey}`);
+        headers.set('Content-Type', 'application/json');
+        headers.set('Accept', 'application/json');
+        headers.set('X-Requested-With', 'XMLHttpRequest');
+        
+        // Mobile-specific headers
+        if (isMobile) {
+          headers.set('X-Client-Info', `golden-store-mobile-${isPWA ? 'pwa' : 'browser'}`);
+          headers.set('Cache-Control', 'no-cache, no-store, must-revalidate');
+          headers.set('Pragma', 'no-cache');
+          headers.set('Expires', '0');
+        } else {
+          headers.set('Cache-Control', 'no-cache');
+          headers.set('X-Client-Info', 'golden-store-desktop');
+        }
+        
+        return fetch(url, {
+          ...options,
+          signal: controller.signal,
+          mode: 'cors',
+          credentials: 'omit',
+          headers: headers,
+          // Mobile-specific fetch options
+          ...(isMobile && {
+            referrerPolicy: 'no-referrer',
+            keepalive: false,
+            redirect: 'follow'
+          })
+        }).then(response => {
+          clearTimeout(timeoutId);
+          return response;
+        }).catch(error => {
+          clearTimeout(timeoutId);
+          throw error;
+        });
       },
     },
-  });
-  console.log('✅ Supabase client initialized for mobile');
+  };
+
+  supabase = createClient(supabaseUrl, supabaseAnonKey, mobileConfig);
+  console.log('✅ Supabase client initialized successfully');
+  
 } catch (error) {
-  console.error('Failed to initialize Supabase client (Mobile):', error);
+  console.error('❌ Supabase initialization failed:', error);
   supabase = null;
 }
 
 export { supabase };
-
 
 // Database types for Golden Price List app
 export type Database = {
@@ -63,7 +156,7 @@ export type Database = {
           last_edited_at?: string | null;
         };
       };
-      clients: {
+      over_items: {
         Row: {
           id: string;
           name: string;
@@ -113,6 +206,7 @@ export type Database = {
           name: string;
           unit_price: number;
           is_vat_nil: boolean | null;
+          is_vat_included: boolean | null;
           vat_percentage: number | null;
           created_at: string | null;
         };
@@ -122,6 +216,7 @@ export type Database = {
           name: string;
           unit_price: number;
           is_vat_nil?: boolean | null;
+          is_vat_included?: boolean | null;
           vat_percentage?: number | null;
           created_at?: string | null;
         };
@@ -131,6 +226,7 @@ export type Database = {
           name?: string;
           unit_price?: number;
           is_vat_nil?: boolean | null;
+          is_vat_included?: boolean | null;
           vat_percentage?: number | null;
           created_at?: string | null;
         };
@@ -169,6 +265,7 @@ export type Database = {
           quantity: number;
           unit_price: number;
           is_vat_nil: boolean | null;
+          is_vat_included: boolean | null;
           vat_amount: number | null;
           total_price: number;
           is_available: boolean | null;
@@ -180,6 +277,7 @@ export type Database = {
           quantity: number;
           unit_price: number;
           is_vat_nil?: boolean | null;
+          is_vat_included?: boolean | null;
           vat_amount?: number | null;
           total_price: number;
           is_available?: boolean | null;
@@ -191,85 +289,34 @@ export type Database = {
           quantity?: number;
           unit_price?: number;
           is_vat_nil?: boolean | null;
+          is_vat_included?: boolean | null;
           vat_amount?: number | null;
           total_price?: number;
           is_available?: boolean | null;
         };
       };
-    };
-    credit_clients: {
-      Row: {
-        id: string;
-        name: string;
-        total_debt: number;
-        bottles_owed: string | null;
-        created_at: string;
-        last_transaction_at: string;
-      };
-      Insert: {
-        id: string;
-        name: string;
-        total_debt?: number;
-        bottles_owed?: string | null;
-        created_at?: string;
-        last_transaction_at?: string;
-      };
-      Update: {
-        id?: string;
-        name?: string;
-        total_debt?: number;
-        bottles_owed?: string | null;
-        created_at?: string;
-        last_transaction_at?: string;
-      };
-    };
-    credit_transactions: {
-      Row: {
-        id: string;
-        client_id: string;
-        description: string;
-        amount: number;
-        date: string;
-        type: string;
-      };
-      Insert: {
-        id?: string;
-        client_id: string;
-        description: string;
-        amount: number;
-        date?: string;
-        type?: string;
-      };
-      Update: {
-        id?: string;
-        client_id?: string;
-        description?: string;
-        amount?: number;
-        date?: string;
-        type?: string;
-      };
-    };
-    credit_payments: {
-      Row: {
-        id: string;
-        client_id: string;
-        amount: number;
-        date: string;
-        type: string;
-      };
-      Insert: {
-        id?: string;
-        client_id: string;
-        amount: number;
-        date?: string;
-        type?: string;
-      };
-      Update: {
-        id?: string;
-        client_id?: string;
-        amount?: number;
-        date?: string;
-        type?: string;
+      database_backups: {
+        Row: {
+          id: string;
+          backup_data: any;
+          backup_name: string;
+          created_at: string | null;
+          file_size: number | null;
+        };
+        Insert: {
+          id?: string;
+          backup_data: any;
+          backup_name?: string;
+          created_at?: string | null;
+          file_size?: number | null;
+        };
+        Update: {
+          id?: string;
+          backup_data?: any;
+          backup_name?: string;
+          created_at?: string | null;
+          file_size?: number | null;
+        };
       };
     };
   };

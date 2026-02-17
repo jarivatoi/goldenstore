@@ -524,7 +524,7 @@ const SwipeableItem: React.FC<SwipeableItemProps> = ({ item, onEdit, onDelete })
             cursor: revealWidth > 0 ? 'pointer' : 'grab',
             backgroundColor: '#fef3c7', // Pale golden color (yellow-100)
             // Touch action for swipe support
-            touchAction: 'pan-y', // Allow vertical scrolling, prevent horizontal
+            touchAction: 'manipulation', // Better iPhone touch handling
           }}
         >
           {formattedPrice}
@@ -538,7 +538,7 @@ const SwipeableItem: React.FC<SwipeableItemProps> = ({ item, onEdit, onDelete })
             // Prevent text selection during swipe
             userSelect: 'none',
             WebkitUserSelect: 'none',
-            touchAction: 'pan-y', // Allow vertical scrolling, prevent horizontal
+            touchAction: 'manipulation', // Better iPhone touch handling
             backgroundColor: '#fef3c7', // Pale golden color (yellow-100)
             zIndex: 10, // Lower than price but higher than background
           }}
@@ -575,29 +575,41 @@ const SwipeableItem: React.FC<SwipeableItemProps> = ({ item, onEdit, onDelete })
                   maxWidth: '100%'
                 }}
               >
-                Gross Price: Rs {item.grossPrice.toFixed(2)}
+                {!isNaN(item.grossPrice) && item.grossPrice > 0 && (
+                  <>Gross Price: Rs {item.grossPrice.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</>
+                )}
               </div>
               {/* Last edited date display */}
-              {item.lastEditedAt && (
-                <div 
-                  className="text-xs text-gray-500 truncate"
-                  style={{ 
-                    fontSize: '11px',
-                    zIndex: 12, // Above main card background
-                    maxWidth: '100%'
-                  }}
-                >
-                  Last edited on {item.lastEditedAt.toLocaleDateString('en-GB', {
+              <div 
+                className="text-xs text-gray-500 truncate"
+                style={{ 
+                  fontSize: '11px',
+                  zIndex: 12, // Above main card background
+                  maxWidth: '100%'
+                }}
+              >
+                {item.lastEditedAt ? (
+                  <>Last edited on {item.lastEditedAt.toLocaleDateString('en-GB', {
                     day: '2-digit',
-                    month: '2-digit',
+                    month: 'short',
                     year: 'numeric'
-                  })} {item.lastEditedAt.toLocaleTimeString('en-GB', {
+                  }).replace(/\s/g, '-')} {item.lastEditedAt.toLocaleTimeString('en-GB', {
                     hour: '2-digit',
                     minute: '2-digit',
                     hour12: false
-                  })}
-                </div>
-              )}
+                  })}</>
+                ) : (
+                  <>Added on {item.createdAt.toLocaleDateString('en-GB', {
+                    day: '2-digit',
+                    month: 'short',
+                    year: 'numeric'
+                  }).replace(/\s/g, '-')} {item.createdAt.toLocaleTimeString('en-GB', {
+                    hour: '2-digit',
+                    minute: '2-digit',
+                    hour12: false
+                  })}</>
+                )}
+              </div>
             </div>
           </div>
         </div>
