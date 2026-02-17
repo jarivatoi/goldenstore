@@ -76,98 +76,80 @@ export const calculateReturnableItemsWithDates = (clientTransactions: CreditTran
     // Additional pattern to catch cases like "1 1.5L Bouteille Pepsi" (size before bouteille)
     // REMOVED to prevent duplicate counting - Pattern 1 already handles most cases
     
-    // Handle items without explicit numbers (assume quantity 1)
-    // For multiple items in a single description, we need to count all occurrences
-    // Only process standalone 'bouteille' occurrences if Pattern 1 didn't match anything
-    if (description.includes('bouteille')) {
-      // Check if Pattern 1 already matched this description
-      const pattern1Matched = /(\d+)\s+bouteilles?(?:\s+(\d+(?:\.\d+)?[Ll]))?(?:\s+([^,()]+))?(?=\s|$|,|\.)/gi.test(description);
-      
-      // Only process standalone if Pattern 1 didn't match
-      if (!pattern1Matched) {
-        // Count standalone 'bouteille' occurrences - for items without explicit numbers
-        const standaloneBouteillePattern = /\bbouteilles?\b/gi;
-        let standaloneMatch: RegExpExecArray | null;
-        while ((standaloneMatch = standaloneBouteillePattern.exec(description)) !== null) {
-          // Look for size before the bouteille word
-          const sizeMatch = description.substring(0, standaloneMatch.index).match(/(\d+(?:\.\d+)?[Ll])$/i);
-          // Look for brand after the bouteille word
-          const afterBouteille = description.substring(standaloneMatch.index + standaloneMatch[0].length).trim();
-
-          // Extract size and brand from what comes after "bouteille"
-          let sizeFromBrand = '';
-          let brand = '';
-
-          if (afterBouteille) {
-            // Check if it starts with a size pattern like "1.5L"
-            const sizePatternMatch = afterBouteille.match(/^(\d+(?:\.\d+)?[Ll])\s*(.*)/i);
-            if (sizePatternMatch && sizePatternMatch[1]) {
-              sizeFromBrand = sizePatternMatch[1].replace(/l$/gi, 'L');
-              brand = sizePatternMatch[2]?.trim() || '';
-            } else {
-              // No size pattern, entire afterBouteille is the brand
-              brand = afterBouteille.replace(/[,()].*/, '').trim();
-            }
-          }
-
-          // Use size from either source, prioritize the one from the beginning of description
-          const finalSize = sizeMatch ? sizeMatch[1].replace(/l$/gi, 'L') : sizeFromBrand;
-
-          // Capitalize brand name properly
-          const capitalizedBrand = brand ? brand.split(' ').map((word: string) =>
-            word.charAt(0).toUpperCase() + word.slice(1).toLowerCase()
-          ).join(' ') : '';
-
-          let key;
-          if (finalSize && capitalizedBrand) {
-            key = `Bouteille ${finalSize} ${capitalizedBrand}`;
-          } else if (capitalizedBrand) {
-            key = `Bouteille ${capitalizedBrand}`;
-          } else if (finalSize) {
-            key = `Bouteille ${finalSize}`;
-          } else {
-            // Handle simple "Bouteille" case from quick actions
-            key = 'Bouteille';
-          }
-
-          if (!returnableItems[key]) {
-            returnableItems[key] = 0;
-          }
-          returnableItems[key] += 1;
-        }
-      }
+    const tempBouteillePattern = /(\d+)\s+bouteilles?(?:\s+(\d+(?:\.\d+)?[Ll]))?(?:\s+([^,()]+))?(?=\s|$|,|\.)/gi;
+    let tempBouteilleMatch;
+    const quantifiedBouteilleMatches: RegExpExecArray[] = [];
+    while ((tempBouteilleMatch = tempBouteillePattern.exec(description)) !== null) {
+      quantifiedBouteilleMatches.push(tempBouteilleMatch);
     }
-    
-    // Count standalone 'chopine' occurrences - for items without explicit numbers
-    // First find all quantified matches to avoid double-counting
-    const tempChopinePattern = /(\d+)\s+chopines?(?:\s+([^,]*))?/gi;
-    let tempChopineMatch;
-    const quantifiedMatches: RegExpExecArray[] = [];
-    while ((tempChopineMatch = tempChopinePattern.exec(description)) !== null) {
-      quantifiedMatches.push(tempChopineMatch);
-    }
-    
-    const standaloneChopinePattern = /\bchopines?\b/gi;
-    let standaloneMatch: RegExpExecArray | null;
-    while ((standaloneMatch = standaloneChopinePattern.exec(description)) !== null) {
-      // Skip if this match is part of a quantified match
-      const isPartOfQuantified = quantifiedMatches.some(match => 
-        standaloneMatch!.index >= match.index && 
-        standaloneMatch!.index < match.index + match[0].length
+
+    const standaloneBouteillePattern = /\bbouteilles?\b/gi;
+    let standaloneBouteilleMatch: RegExpExecArray | null;
+    while ((standaloneBouteilleMatch = standaloneBouteillePattern.exec(description)) !== null) {
+      const isBouteillePartOfQuantified = quantifiedBouteilleMatches.some(match =>
+        standaloneBouteilleMatch!.index >= match.index &&
+        standaloneBouteilleMatch!.index < match.index + match[0].length
       );
-      
-      if (!isPartOfQuantified) {
-        // Look for brand after the chopine word
-        const brandMatch = description.substring(standaloneMatch.index).match(/^chopines?\s+([^,()]*)/i);
-        const brand = brandMatch?.[1]?.trim() || '';
-        
-        // Capitalize brand name properly
-        const capitalizedBrand = brand ? brand.split(' ').map((word: string) => 
+
+      if (!isBouteillePartOfQuantified) {
+        const sizeMatch = description.substring(0, standaloneBouteilleMatch.index).match(/(\d+(?:\.\d+)?[Ll])$/i);
+        const brandMatch = description.substring(standaloneBouteilleMatch.index).match(/^bouteilles?\s+(\d+(?:\.\d+)?[Ll])?\s*([^,()]*)/i);
+        let sizeFromBrand = brandMatch?.[1]?.trim() || '';
+        let brand = brandMatch?.[2]?.trim() || '';
+
+        if (!sizeMatch && sizeFromBrand) {
+          sizeFromBrand = sizeFromBrand.replace(/l$/gi, 'L');
+        }
+
+        const finalSize = sizeMatch ? sizeMatch[1].replace(/l$/gi, 'L') : sizeFromBrand;
+
+        const capitalizedBrand = brand ? brand.split(' ').map((word: string) =>
           word.charAt(0).toUpperCase() + word.slice(1).toLowerCase()
         ).join(' ') : '';
-        
+
+        let key;
+        if (finalSize && capitalizedBrand) {
+          key = `Bouteille ${finalSize} ${capitalizedBrand}`;
+        } else if (capitalizedBrand) {
+          key = `Bouteille ${capitalizedBrand}`;
+        } else if (finalSize) {
+          key = `Bouteille ${finalSize}`;
+        } else {
+          key = 'Bouteille';
+        }
+
+        if (!returnableItems[key]) {
+          returnableItems[key] = 0;
+        }
+        returnableItems[key] += 1;
+      }
+    }
+
+    const tempChopinePattern = /(\d+)\s+chopines?(?:\s+([^,]*))?/gi;
+    let tempChopineMatch;
+    const quantifiedChopineMatches: RegExpExecArray[] = [];
+    while ((tempChopineMatch = tempChopinePattern.exec(description)) !== null) {
+      quantifiedChopineMatches.push(tempChopineMatch);
+    }
+
+    const standaloneChopinePattern = /\bchopines?\b/gi;
+    let standaloneChopineMatch: RegExpExecArray | null;
+    while ((standaloneChopineMatch = standaloneChopinePattern.exec(description)) !== null) {
+      const isChopinePartOfQuantified = quantifiedChopineMatches.some(match =>
+        standaloneChopineMatch!.index >= match.index &&
+        standaloneChopineMatch!.index < match.index + match[0].length
+      );
+
+      if (!isChopinePartOfQuantified) {
+        const brandMatch = description.substring(standaloneChopineMatch.index).match(/^chopines?\s+([^,()]*)/i);
+        const brand = brandMatch?.[1]?.trim() || '';
+
+        const capitalizedBrand = brand ? brand.split(' ').map((word: string) =>
+          word.charAt(0).toUpperCase() + word.slice(1).toLowerCase()
+        ).join(' ') : '';
+
         const key = capitalizedBrand ? `Chopine ${capitalizedBrand}` : 'Chopine';
-        
+
         if (!returnableItems[key]) {
           returnableItems[key] = 0;
         }
@@ -494,98 +476,80 @@ export const calculateReturnableItems = (clientTransactions: CreditTransaction[]
     // Additional pattern to catch cases like "1 1.5L Bouteille Pepsi" (size before bouteille)
     // REMOVED to prevent duplicate counting - Pattern 1 already handles most cases
     
-    // Handle items without explicit numbers (assume quantity 1)
-    // For multiple items in a single description, we need to count all occurrences
-    // Only process standalone 'bouteille' occurrences if Pattern 1 didn't match anything
-    if (description.includes('bouteille')) {
-      // Check if Pattern 1 already matched this description
-      const pattern1Matched = /(\d+)\s+bouteilles?(?:\s+(\d+(?:\.\d+)?[Ll]))?(?:\s+([^,()]+))?(?=\s|$|,|\.)/gi.test(description);
-      
-      // Only process standalone if Pattern 1 didn't match
-      if (!pattern1Matched) {
-        // Count standalone 'bouteille' occurrences - for items without explicit numbers
-        const standaloneBouteillePattern = /\bbouteilles?\b/gi;
-        let standaloneMatch: RegExpExecArray | null;
-        while ((standaloneMatch = standaloneBouteillePattern.exec(description)) !== null) {
-          // Look for size before the bouteille word
-          const sizeMatch = description.substring(0, standaloneMatch.index).match(/(\d+(?:\.\d+)?[Ll])$/i);
-          // Look for brand after the bouteille word
-          const afterBouteille = description.substring(standaloneMatch.index + standaloneMatch[0].length).trim();
-
-          // Extract size and brand from what comes after "bouteille"
-          let sizeFromBrand = '';
-          let brand = '';
-
-          if (afterBouteille) {
-            // Check if it starts with a size pattern like "1.5L"
-            const sizePatternMatch = afterBouteille.match(/^(\d+(?:\.\d+)?[Ll])\s*(.*)/i);
-            if (sizePatternMatch && sizePatternMatch[1]) {
-              sizeFromBrand = sizePatternMatch[1].replace(/l$/gi, 'L');
-              brand = sizePatternMatch[2]?.trim() || '';
-            } else {
-              // No size pattern, entire afterBouteille is the brand
-              brand = afterBouteille.replace(/[,()].*/, '').trim();
-            }
-          }
-
-          // Use size from either source, prioritize the one from the beginning of description
-          const finalSize = sizeMatch ? sizeMatch[1].replace(/l$/gi, 'L') : sizeFromBrand;
-
-          // Capitalize brand name properly
-          const capitalizedBrand = brand ? brand.split(' ').map((word: string) =>
-            word.charAt(0).toUpperCase() + word.slice(1).toLowerCase()
-          ).join(' ') : '';
-
-          let key;
-          if (finalSize && capitalizedBrand) {
-            key = `Bouteille ${finalSize} ${capitalizedBrand}`;
-          } else if (capitalizedBrand) {
-            key = `Bouteille ${capitalizedBrand}`;
-          } else if (finalSize) {
-            key = `Bouteille ${finalSize}`;
-          } else {
-            // Handle simple "Bouteille" case from quick actions
-            key = 'Bouteille';
-          }
-
-          if (!returnableItems[key]) {
-            returnableItems[key] = 0;
-          }
-          returnableItems[key] += 1;
-        }
-      }
+    const tempBouteillePattern = /(\d+)\s+bouteilles?(?:\s+(\d+(?:\.\d+)?[Ll]))?(?:\s+([^,()]+))?(?=\s|$|,|\.)/gi;
+    let tempBouteilleMatch;
+    const quantifiedBouteilleMatches: RegExpExecArray[] = [];
+    while ((tempBouteilleMatch = tempBouteillePattern.exec(description)) !== null) {
+      quantifiedBouteilleMatches.push(tempBouteilleMatch);
     }
-    
-    // Count standalone 'chopine' occurrences - for items without explicit numbers
-    // First find all quantified matches to avoid double-counting
-    const tempChopinePattern = /(\d+)\s+chopines?(?:\s+([^,]*))?/gi;
-    let tempChopineMatch;
-    const quantifiedMatches: RegExpExecArray[] = [];
-    while ((tempChopineMatch = tempChopinePattern.exec(description)) !== null) {
-      quantifiedMatches.push(tempChopineMatch);
-    }
-    
-    const standaloneChopinePattern = /\bchopines?\b/gi;
-    let standaloneMatch: RegExpExecArray | null;
-    while ((standaloneMatch = standaloneChopinePattern.exec(description)) !== null) {
-      // Skip if this match is part of a quantified match
-      const isPartOfQuantified = quantifiedMatches.some(match => 
-        standaloneMatch!.index >= match.index && 
-        standaloneMatch!.index < match.index + match[0].length
+
+    const standaloneBouteillePattern = /\bbouteilles?\b/gi;
+    let standaloneBouteilleMatch: RegExpExecArray | null;
+    while ((standaloneBouteilleMatch = standaloneBouteillePattern.exec(description)) !== null) {
+      const isBouteillePartOfQuantified = quantifiedBouteilleMatches.some(match =>
+        standaloneBouteilleMatch!.index >= match.index &&
+        standaloneBouteilleMatch!.index < match.index + match[0].length
       );
-      
-      if (!isPartOfQuantified) {
-        // Look for brand after the chopine word
-        const brandMatch = description.substring(standaloneMatch.index).match(/^chopines?\s+([^,()]*)/i);
-        const brand = brandMatch?.[1]?.trim() || '';
-        
-        // Capitalize brand name properly
-        const capitalizedBrand = brand ? brand.split(' ').map((word: string) => 
+
+      if (!isBouteillePartOfQuantified) {
+        const sizeMatch = description.substring(0, standaloneBouteilleMatch.index).match(/(\d+(?:\.\d+)?[Ll])$/i);
+        const brandMatch = description.substring(standaloneBouteilleMatch.index).match(/^bouteilles?\s+(\d+(?:\.\d+)?[Ll])?\s*([^,()]*)/i);
+        let sizeFromBrand = brandMatch?.[1]?.trim() || '';
+        let brand = brandMatch?.[2]?.trim() || '';
+
+        if (!sizeMatch && sizeFromBrand) {
+          sizeFromBrand = sizeFromBrand.replace(/l$/gi, 'L');
+        }
+
+        const finalSize = sizeMatch ? sizeMatch[1].replace(/l$/gi, 'L') : sizeFromBrand;
+
+        const capitalizedBrand = brand ? brand.split(' ').map((word: string) =>
           word.charAt(0).toUpperCase() + word.slice(1).toLowerCase()
         ).join(' ') : '';
-        
+
+        let key;
+        if (finalSize && capitalizedBrand) {
+          key = `Bouteille ${finalSize} ${capitalizedBrand}`;
+        } else if (capitalizedBrand) {
+          key = `Bouteille ${capitalizedBrand}`;
+        } else if (finalSize) {
+          key = `Bouteille ${finalSize}`;
+        } else {
+          key = 'Bouteille';
+        }
+
+        if (!returnableItems[key]) {
+          returnableItems[key] = 0;
+        }
+        returnableItems[key] += 1;
+      }
+    }
+
+    const tempChopinePattern = /(\d+)\s+chopines?(?:\s+([^,]*))?/gi;
+    let tempChopineMatch;
+    const quantifiedChopineMatches: RegExpExecArray[] = [];
+    while ((tempChopineMatch = tempChopinePattern.exec(description)) !== null) {
+      quantifiedChopineMatches.push(tempChopineMatch);
+    }
+
+    const standaloneChopinePattern = /\bchopines?\b/gi;
+    let standaloneChopineMatch: RegExpExecArray | null;
+    while ((standaloneChopineMatch = standaloneChopinePattern.exec(description)) !== null) {
+      const isChopinePartOfQuantified = quantifiedChopineMatches.some(match =>
+        standaloneChopineMatch!.index >= match.index &&
+        standaloneChopineMatch!.index < match.index + match[0].length
+      );
+
+      if (!isChopinePartOfQuantified) {
+        const brandMatch = description.substring(standaloneChopineMatch.index).match(/^chopines?\s+([^,()]*)/i);
+        const brand = brandMatch?.[1]?.trim() || '';
+
+        const capitalizedBrand = brand ? brand.split(' ').map((word: string) =>
+          word.charAt(0).toUpperCase() + word.slice(1).toLowerCase()
+        ).join(' ') : '';
+
         const key = capitalizedBrand ? `Chopine ${capitalizedBrand}` : 'Chopine';
-        
+
         if (!returnableItems[key]) {
           returnableItems[key] = 0;
         }
