@@ -352,20 +352,24 @@ const ClientCard: React.FC<ClientCardProps> = ({ client, onLongPress, onQuickAdd
       {/* Zoomed Image Modal */}
       {showZoomedImage && client.profilePictureUrl && (
         <div
-          className="fixed inset-0 flex items-center justify-center z-[10000] p-4"
+          className="fixed inset-0 bg-black bg-opacity-90 flex items-center justify-center z-[10000]"
           onClick={() => setShowZoomedImage(false)}
           onTouchEnd={() => setShowZoomedImage(false)}
-          style={{ backgroundColor: 'transparent' }}
+          onContextMenu={(e) => e.preventDefault()}
+          style={{
+            userSelect: 'none',
+            WebkitUserSelect: 'none',
+            WebkitTouchCallout: 'none',
+            overflow: 'hidden'
+          }}
         >
-          <div className="relative max-w-full max-h-[90vh]">
-            <div className="absolute top-2 right-2 text-white text-sm bg-black bg-opacity-70 px-4 py-2 rounded-full shadow-lg z-10">
-              Tap to close
-            </div>
+          <div className="relative max-w-[90vw] max-h-[90vh] flex items-center justify-center">
             <img
               src={client.profilePictureUrl}
-              alt={`${client.name} profile`}
+              alt={client.name}
               className="max-w-full max-h-[90vh] object-contain rounded-lg shadow-2xl"
               style={{ pointerEvents: 'none' }}
+              onContextMenu={(e) => e.preventDefault()}
             />
           </div>
         </div>
