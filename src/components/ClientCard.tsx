@@ -157,7 +157,7 @@ const ClientCard: React.FC<ClientCardProps> = ({ client, onLongPress, onQuickAdd
           <div className="flex justify-center mb-2">
             {client.profilePictureUrl ? (
               <div
-                className="w-16 h-16 rounded-full overflow-hidden border-3 border-white shadow-lg relative flex-shrink-0"
+                className="w-24 h-24 rounded-full overflow-hidden border-4 border-white shadow-lg relative flex-shrink-0"
                 style={{
                   background: `url(${client.profilePictureUrl})`,
                   backgroundSize: 'cover',
@@ -170,8 +170,8 @@ const ClientCard: React.FC<ClientCardProps> = ({ client, onLongPress, onQuickAdd
                 }}></div>
               </div>
             ) : (
-              <div className="bg-blue-100 p-2 rounded-full flex-shrink-0">
-                <User size={18} className="text-blue-600 sm:w-5 sm:h-5" />
+              <div className="bg-blue-100 p-3 rounded-full flex-shrink-0">
+                <User size={24} className="text-blue-600" />
               </div>
             )}
           </div>
