@@ -239,12 +239,12 @@ const ClientDetailModal: React.FC<ClientDetailModalProps> = ({ client, onClose }
       <div className="bg-white rounded-xl shadow-lg w-full max-w-2xl max-h-[90vh] overflow-hidden select-none">
         
         {/* Header */}
-        <div className="flex justify-between items-start p-6 border-b border-gray-200 select-none">
-          <div className="flex gap-4 items-start">
+        <div className="flex justify-between items-center p-6 border-b border-gray-200 select-none">
+          <div className="flex gap-4 items-center">
             {/* Profile Picture */}
             <div className="relative group">
               <div
-                className="w-24 h-24 rounded-full overflow-hidden border-4 border-gray-200 shadow-lg relative"
+                className="w-20 h-20 rounded-full overflow-hidden border-4 border-gray-200 shadow-lg relative"
                 style={{
                   background: profilePicture
                     ? `url(${profilePicture})`
@@ -255,7 +255,7 @@ const ClientDetailModal: React.FC<ClientDetailModalProps> = ({ client, onClose }
               >
                 {!profilePicture && (
                   <div className="absolute inset-0 flex items-center justify-center">
-                    <span className="text-3xl font-bold text-white">
+                    <span className="text-2xl font-bold text-white">
                       {client.name.charAt(0).toUpperCase()}
                     </span>
                   </div>
