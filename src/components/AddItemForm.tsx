@@ -129,6 +129,7 @@ const AddItemForm: React.FC = () => {
     
     if (duplicateItem) {
       setError(`Item "${name.trim()}" already exists in the price list`);
+      console.log('❌ Duplicate item found:', duplicateItem.name);
       return;
     }
     
@@ -160,7 +161,9 @@ const AddItemForm: React.FC = () => {
       });
       
       await Promise.race([addItemPromise, timeoutPromise]);
-      
+
+      console.log('✅ Item added successfully:', name.trim());
+
       // Reset form on successful submission
       setName('');
       setPrice('');

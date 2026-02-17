@@ -13,8 +13,18 @@ const PriceList: React.FC = () => {
   const [editingItem, setEditingItem] = useState<PriceItem | null>(null);
   const [deletingItem, setDeletingItem] = useState<PriceItem | null>(null);
   const [isDeleting, setIsDeleting] = useState(false);
-  
+
   const filteredItems = searchItems(searchQuery);
+
+  // Debug logging
+  React.useEffect(() => {
+    console.log('📋 Total items:', items.length);
+    console.log('🔍 Search query:', searchQuery || '(none)');
+    console.log('✅ Filtered items:', filteredItems.length);
+    if (searchQuery) {
+      console.log('Hidden items:', items.length - filteredItems.length);
+    }
+  }, [items.length, searchQuery, filteredItems.length]);
   
   const handleEdit = (item: PriceItem) => {
     setEditingItem(item);
