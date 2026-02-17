@@ -53,8 +53,9 @@ function parseReturnableSegment(segment: string): ReturnableItem | null {
     quantity = parseInt(numberMatch[1]);
   }
 
-  // Everything after keyword = brand (already capitalized in description)
-  const brand = parts[1].trim();
+  // Everything after keyword = brand
+  // Normalize brand to lowercase for consistent key generation
+  const brand = parts[1].trim().toLowerCase();
 
   return {
     quantity,
@@ -227,7 +228,9 @@ export const calculateReturnableItemsWithDates = (clientTransactions: CreditTran
 
       let displayText: string;
       if (brand) {
-        displayText = `${remaining} ${type}${remaining > 1 ? 's' : ''} ${brand}`;
+        // Capitalize first letter of brand for display
+        const capitalizedBrand = brand.charAt(0).toUpperCase() + brand.slice(1);
+        displayText = `${remaining} ${type}${remaining > 1 ? 's' : ''} ${capitalizedBrand}`;
       } else {
         displayText = `${remaining} ${type}${remaining > 1 ? 's' : ''}`;
       }
