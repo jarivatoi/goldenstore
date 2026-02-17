@@ -1,0 +1,94 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Pattern Test</title>
+</head>
+<body>
+    <h1>Test Bouteille vs Chopine Pattern</h1>
+    <div id="results"></div>
+
+    <script>
+        const testDescriptions = [
+            "1 bouteille 7seas",
+            "bouteille 7seas",
+            "1 chopine 7seas",
+            "chopine 7seas",
+            "1 Bouteille 7seas",
+            "1 bouteille 7Seas"
+        ];
+
+        let results = '<h2>Testing Pattern Matching:</h2>';
+
+        testDescriptions.forEach(desc => {
+            const description = desc.toLowerCase();
+            results += `<h3>Input: "${desc}" → Lowercase: "${description}"</h3>`;
+
+            // Test Bouteille pattern
+            const bouteillePattern = /(\d+)\s+bouteilles?(?:\s+([^,]*))?/gi;
+            let bouteilleMatch = bouteillePattern.exec(description);
+
+            if (bouteilleMatch) {
+                results += `<p style="color: green;">✓ Bouteille matched: quantity=${bouteilleMatch[1]}, brand="${bouteilleMatch[2]}"</p>`;
+
+                const brand = bouteilleMatch[2]?.trim() || '';
+                const capitalizedBrand = brand ? brand.split(' ').map((word) => {
+                    const firstLetterIndex = word.search(/[a-zA-Z]/);
+                    if (firstLetterIndex === -1) return word;
+                    if (firstLetterIndex === 0) {
+                        return word.charAt(0).toUpperCase() + word.slice(1).toLowerCase();
+                    } else {
+                        return word.slice(0, firstLetterIndex) +
+                               word.charAt(firstLetterIndex).toUpperCase() +
+                               word.slice(firstLetterIndex + 1).toLowerCase();
+                    }
+                }).join(' ') : '';
+                const key = capitalizedBrand ? `Bouteille ${capitalizedBrand}` : 'Bouteille';
+                results += `<p>   Key created: "${key}"</p>`;
+            } else {
+                results += `<p style="color: red;">✗ Bouteille pattern did NOT match</p>`;
+            }
+
+            // Test Chopine pattern
+            const chopinePattern = /(\d+)\s+chopines?(?:\s+([^,]*))?/gi;
+            let chopineMatch = chopinePattern.exec(description);
+
+            if (chopineMatch) {
+                results += `<p style="color: green;">✓ Chopine matched: quantity=${chopineMatch[1]}, brand="${chopineMatch[2]}"</p>`;
+
+                const brand = chopineMatch[2]?.trim() || '';
+                const capitalizedBrand = brand ? brand.split(' ').map((word) => {
+                    const firstLetterIndex = word.search(/[a-zA-Z]/);
+                    if (firstLetterIndex === -1) return word;
+                    if (firstLetterIndex === 0) {
+                        return word.charAt(0).toUpperCase() + word.slice(1).toLowerCase();
+                    } else {
+                        return word.slice(0, firstLetterIndex) +
+                               word.charAt(firstLetterIndex).toUpperCase() +
+                               word.slice(firstLetterIndex + 1).toLowerCase();
+                    }
+                }).join(' ') : '';
+                const key = capitalizedBrand ? `Chopine ${capitalizedBrand}` : 'Chopine';
+                results += `<p>   Key created: "${key}"</p>`;
+            } else {
+                results += `<p style="color: red;">✗ Chopine pattern did NOT match</p>`;
+            }
+
+            // Test standalone patterns
+            const standaloneBouteillePattern = /\bbouteilles?\b/gi;
+            const standaloneBouteilleMatch = standaloneBouteillePattern.exec(description);
+            if (standaloneBouteilleMatch) {
+                results += `<p style="color: blue;">ℹ Standalone Bouteille matched at index ${standaloneBouteilleMatch.index}</p>`;
+
+                const brandMatch = description.substring(standaloneBouteilleMatch.index).match(/^bouteilles?\s+([^,()]*)/i);
+                if (brandMatch) {
+                    results += `<p>   Extracted brand: "${brandMatch[1]}"</p>`;
+                }
+            }
+
+            results += '<hr>';
+        });
+
+        document.getElementById('results').innerHTML = results;
+    </script>
+</body>
+</html>
