@@ -152,7 +152,7 @@ const ClientCard: React.FC<ClientCardProps> = ({ client, onLongPress, onQuickAdd
         }}
       >
         {/* Client Header with Profile Picture */}
-        <div className="flex items-center gap-3 mb-2 sm:mb-3">
+        <div className="flex items-center justify-center gap-3 mb-2 sm:mb-3">
           {/* Profile Picture or Icon */}
           {client.profilePictureUrl ? (
             <div
@@ -178,7 +178,7 @@ const ClientCard: React.FC<ClientCardProps> = ({ client, onLongPress, onQuickAdd
           <div className="flex-1 min-w-0">
             <h3 className="font-semibold text-gray-800 text-sm sm:text-base">
               <ScrollingText
-                className="font-semibold text-gray-800 text-sm sm:text-base text-left"
+                className="font-semibold text-gray-800 text-sm sm:text-base text-center"
                 pauseDuration={1}
                 scrollDuration={3}
                 easing="power1.inOut"
@@ -186,7 +186,7 @@ const ClientCard: React.FC<ClientCardProps> = ({ client, onLongPress, onQuickAdd
                 {client.name}
               </ScrollingText>
             </h3>
-            <p className="text-xs sm:text-sm text-gray-500 text-left">ID: {client.id}</p>
+            <p className="text-xs sm:text-sm text-gray-500 text-center">ID: {client.id}</p>
           </div>
         </div>
 
