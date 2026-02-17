@@ -24,14 +24,16 @@ export const calculateReturnableItemsWithDates = (clientTransactions: CreditTran
     }
 
     // Process quantified Chopines and collect for standalone detection
-    const chopinePattern = /(\d+)\s+chopines?(?:\s+([^,]*))?/gi;
+    const chopinePattern = /(\d+)\s+chopines?(?:\s+([^,\-\d]*))?/gi;
     let chopineMatch;
     const quantifiedChopineMatches: RegExpExecArray[] = [];
 
     while ((chopineMatch = chopinePattern.exec(description)) !== null) {
       quantifiedChopineMatches.push(chopineMatch);
       const quantity = parseInt(chopineMatch[1]);
-      const brand = chopineMatch[2]?.trim() || '';
+      let brand = chopineMatch[2]?.trim() || '';
+
+      brand = brand.replace(/[,(\-].*/, '').trim();
 
       const capitalizedBrand = brand ? brand.split(' ').map((word: string) =>
         properCapitalize(word)
@@ -84,14 +86,16 @@ export const calculateReturnableItemsWithDates = (clientTransactions: CreditTran
     }
 
     // Process quantified Bouteilles and collect for standalone detection
-    const bouteillePattern = /(\d+)\s+bouteilles?(?:\s+([^,]*))?/gi;
+    const bouteillePattern = /(\d+)\s+bouteilles?(?:\s+([^,\-\d]*))?/gi;
     let bouteilleMatch;
     const quantifiedBouteilleMatches: RegExpExecArray[] = [];
 
     while ((bouteilleMatch = bouteillePattern.exec(description)) !== null) {
       quantifiedBouteilleMatches.push(bouteilleMatch);
       const quantity = parseInt(bouteilleMatch[1]);
-      const brand = bouteilleMatch[2]?.trim() || '';
+      let brand = bouteilleMatch[2]?.trim() || '';
+
+      brand = brand.replace(/[,(\-].*/, '').trim();
 
       const capitalizedBrand = brand ? brand.split(' ').map((word: string) =>
         properCapitalize(word)
