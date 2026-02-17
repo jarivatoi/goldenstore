@@ -1,94 +1,42 @@
-import React, { useState, useEffect } from 'react';
+import React from 'react';
 import { createPortal } from 'react-dom';
-import { X, Edit2, Minus, Plus, CheckCircle, AlertTriangle, Receipt, Calendar, CreditCard, Filter as FilterIcon } from 'lucide-react';
-import { useCredit } from '../context/CreditContext';
+import { X, Calendar, Receipt, CreditCard, Plus, Edit2, Minus, Filter } from 'lucide-react';
 import { Client } from '../types';
-import { useNotification } from '../context/NotificationContext';
-import { calculateReturnableItems } from '../utils/returnableItemsUtils';
+import { useCredit } from '../context/CreditContext';
 
 interface ClientDetailModalProps {
   client: Client;
   onClose: () => void;
+  onQuickAdd?: (client: Client) => void;
 }
 
-const ClientDetailModal: React.FC<ClientDetailModalProps> = ({ client, onClose }) => {
-  const { getClientTransactions, getClientPayments, updateClient, addTransaction } = useCredit();
-  const { showAlert } = useNotification();
-  const [isEditingName, setIsEditingName] = useState(false);
-  const [editedName, setEditedName] = useState(client.name);
-  const [isSaving, setIsSaving] = useState(false);
-  const [transactionFilter, setTransactionFilter] = useState<'all' | 'returnable' | 'taken' | 'returned'>('all');
-  const [modal, setModal] = useState<{
-    type: 'confirm' | 'success' | 'error' | null;
-    title: string;
-    message: string;
-    onConfirm?: () => void;
-    onCancel?: () => void;
-  }>({ type: null, title: '', message: '' });
-  const [forceUpdate, setForceUpdate] = useState(0);
+/**
+ * CLIENT DETAIL MODAL COMPONENT
+ * =============================
+ * 
+ * Shows detailed breakdown of client's transactions and payments
+ */
+const ClientDetailModal: React.FC<ClientDetailModalProps> = ({ client, onClose, onQuickAdd }) => {
+  const { getClientTransactions, getClientPayments, getClientTotalDebt, updateClient, moveClientToFront, addTransaction } = useCredit();
+  const [isEditingName, setIsEditingName] = React.useState(false);
+  const [editedName, setEditedName] = React.useState(client.name);
+  const [isSaving, setIsSaving] = React.useState(false);
+  const [transactionFilter, setTransactionFilter] = React.useState<'all' | 'returnable' | 'taken' | 'returned'>('all');
   
-  // Listen for credit data changes to force re-render
-  React.useEffect(() => {
-    const handleCreditDataChanged = () => {
-      setForceUpdate(prev => prev + 1);
-    };
-
-    window.addEventListener('creditDataChanged', handleCreditDataChanged);
-    
-    return () => {
-      window.removeEventListener('creditDataChanged', handleCreditDataChanged);
-    };
-  }, []);
-
   const transactions = getClientTransactions(client.id);
   const payments = getClientPayments(client.id);
-  const totalDebt = client.totalDebt;
+  const totalDebt = getClientTotalDebt(client.id);
 
-  // Get returnable items for client using the same logic as ClientCard
-  const returnableItems = React.useMemo(() => {
-    // Use the utility function to get returnable items as strings
-    const returnableItemsStrings = calculateReturnableItems(transactions, client.name);
-    
-    // Convert the string format back to the object format used by the modal
-    const returnableItems: {[key: string]: number} = {};
-    
-    returnableItemsStrings.forEach(itemString => {
-      // Parse the string format "3 Bouteilles", "1 Bouteille Vin", "2 Chopines Beer", etc.
-      const match = itemString.match(/^(\d+)\s+(.+)$/);
-      if (match) {
-        const quantity = parseInt(match[1]);
-        const displayText = match[2];
-        
-        // Create the key based on the display text
-        let key = displayText;
-        
-        // For branded items like "Bouteille Vin", use that as the key
-        if (displayText.startsWith('Bouteille ') || displayText.startsWith('Chopine ')) {
-          key = displayText;
-        } 
-        // For generic items like "Bouteilles", convert to "Bouteille"
-        else if (displayText === 'Bouteilles') {
-          key = 'Bouteille';
-        }
-        // For generic items like "Chopines", convert to "Chopine"
-        else if (displayText === 'Chopines') {
-          key = 'Chopine';
-        }
-        // For sized bottles like "1.5L Bouteilles Green", keep as is
-        else if (/\d+(?:\.\d+)?L Bouteilles? /.test(displayText)) {
-          // key is already correct
-        }
-        // For sized bottles like "1.5L Bouteilles", convert to "1.5L Bouteille"
-        else if (/\d+(?:\.\d+)?L Bouteilles$/.test(displayText)) {
-          key = displayText.replace('Bouteilles', 'Bouteille');
-        }
-        
-        returnableItems[key] = quantity;
-      }
-    });
-    
-    return returnableItems;
-  }, [transactions, forceUpdate]);
+  const handleClose = () => {
+    onClose();
+  };
+
+  // Also move to front when using the X button or any other close method
+  const handleAnyClose = () => {
+    // Move client to end (rightmost, near calculator) when modal is closed
+    moveClientToFront(client.id);
+    onClose();
+  };
 
   const handleSaveName = async () => {
     if (!editedName.trim() || editedName.trim() === client.name) {
@@ -99,23 +47,18 @@ const ClientDetailModal: React.FC<ClientDetailModalProps> = ({ client, onClose }
 
     setIsSaving(true);
     try {
-      // Improved capitalization that handles special characters like / and (
-      const capitalizeWords = (str: string): string => {
-        return str
-          .trim()
-          .toLowerCase()
-          .replace(/(^|[\s\/\(\)\-\[\]\{\}])\w/g, (match) => match.toUpperCase());
-      };
-      
       const updatedClient = {
         ...client,
-        name: capitalizeWords(editedName)
+        name: editedName.trim()
+          .split(' ')
+          .map(word => word.charAt(0).toUpperCase() + word.slice(1).toLowerCase())
+          .join(' ')
       };
       
       await updateClient(updatedClient);
       setIsEditingName(false);
     } catch (error) {
-      showAlert({ type: 'error', message: 'Failed to update client name' });
+      alert('Failed to update client name');
       setEditedName(client.name);
     } finally {
       setIsSaving(false);
@@ -131,37 +74,15 @@ const ClientDetailModal: React.FC<ClientDetailModalProps> = ({ client, onClose }
   const getFilteredTransactions = () => {
     const allTransactions = transactions
       .sort((a, b) => b.date.getTime() - a.date.getTime())
-      .filter(transaction => {
-        // For returnable filter, allow zero amount transactions if they have returnable items
-        if (transactionFilter === 'returnable') {
-          const description = transaction.description.toLowerCase();
-          const hasReturnableItems = description.includes('chopine') || description.includes('bouteille');
-          const isReturnTransaction = description.includes('returned');
-          return transaction.amount >= 0 && hasReturnableItems && !isReturnTransaction;
-        }
-        
-        // For other filters, exclude zero amount transactions
-        return transaction.amount >= 0;
-      });
+      .filter(transaction => transaction.amount >= 0);
 
     switch (transactionFilter) {
       case 'returnable':
-        // Simplified returnable filter - show transactions that contain chopine or bouteille
-        const returnableTransactions = allTransactions.filter(transaction => {
-          // Skip return transactions
-          if (transaction.description.toLowerCase().includes('returned')) {
-            return false;
-          }
-          
+        return allTransactions.filter(transaction => {
+          if (transaction.description.toLowerCase().includes('returned')) return false;
           const description = transaction.description.toLowerCase();
-          
-          // Must contain returnable items
-          const hasReturnableItems = description.includes('chopine') || description.includes('bouteille');
-          
-          return hasReturnableItems;
+          return description.includes('chopine') || description.includes('bouteille');
         });
-        
-        return returnableTransactions;
       
       case 'taken':
         return allTransactions.filter(transaction => 
@@ -182,34 +103,30 @@ const ClientDetailModal: React.FC<ClientDetailModalProps> = ({ client, onClose }
   const filteredTransactions = getFilteredTransactions();
 
   const modalContent = (
-    <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center p-4 z-[9999] select-none">
-      <div className="bg-white rounded-xl shadow-lg w-full max-w-2xl max-h-[90vh] overflow-hidden select-none">
+    <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center p-4 z-50 overflow-hidden" style={{ height: '100vh' }}>
+      <div className="bg-white rounded-xl shadow-lg w-full max-w-2xl max-h-[80vh] overflow-hidden">
         
         {/* Header */}
-        <div className="flex justify-between items-center p-6 border-b border-gray-200 select-none">
+        <div className="flex justify-between items-center p-6 border-b border-gray-200">
           <div>
             {!isEditingName ? (
-              <div className="flex items-center gap-2 select-none">
-                <h2 className="text-2xl font-semibold text-gray-900 select-none">{client.name}</h2>
+              <div className="flex items-center gap-2">
+                <h2 className="text-2xl font-semibold text-gray-900">{client.name}</h2>
                 <button
                   onClick={() => setIsEditingName(true)}
-                  className="p-1 text-gray-500 hover:text-gray-700 transition-colors select-none"
+                  className="p-1 text-gray-500 hover:text-gray-700 transition-colors"
                   title="Edit client name"
                 >
                   <Edit2 size={16} />
                 </button>
               </div>
             ) : (
-              <div className="flex items-center gap-2 select-none">
+              <div className="flex items-center gap-2">
                 <input
                   type="text"
                   value={editedName}
-                  onChange={(e) => {
-                    // Store the raw input value without automatic capitalization
-                    // Capitalization will be applied when saving
-                    setEditedName(e.target.value);
-                  }}
-                  className="text-2xl font-semibold text-gray-900 bg-transparent border-b-2 border-blue-500 focus:outline-none select-text"
+                  onChange={(e) => setEditedName(e.target.value)}
+                  className="text-2xl font-semibold text-gray-900 bg-transparent border-b-2 border-blue-500 focus:outline-none"
                   disabled={isSaving}
                   autoFocus
                   onKeyDown={(e) => {
@@ -217,106 +134,174 @@ const ClientDetailModal: React.FC<ClientDetailModalProps> = ({ client, onClose }
                     if (e.key === 'Escape') handleCancelEdit();
                   }}
                 />
-                <div className="flex gap-1 select-none">
+                <div className="flex gap-1">
                   <button
                     onClick={handleSaveName}
                     disabled={isSaving}
-                    className="px-2 py-1 text-xs bg-green-500 text-white rounded hover:bg-green-600 disabled:opacity-50 select-none"
+                    className="px-2 py-1 text-xs bg-green-500 text-white rounded hover:bg-green-600 disabled:opacity-50"
                   >
                     {isSaving ? '...' : '✓'}
                   </button>
                   <button
                     onClick={handleCancelEdit}
                     disabled={isSaving}
-                    className="px-2 py-1 text-xs bg-gray-500 text-white rounded hover:bg-gray-600 disabled:opacity-50 select-none"
+                    className="px-2 py-1 text-xs bg-gray-500 text-white rounded hover:bg-gray-600 disabled:opacity-50"
                   >
                     ✕
                   </button>
                 </div>
               </div>
             )}
-            <p className="text-gray-600 select-none">Client ID: {client.id}</p>
+            <p className="text-gray-600">Client ID: {client.id}</p>
           </div>
           <div className="flex items-center gap-2">
             {/* Close Button */}
             <button 
-              onClick={onClose}
-              className="text-gray-500 hover:text-gray-700 transition-colors select-none"
+              onClick={handleAnyClose}
+              className="text-gray-500 hover:text-gray-700 transition-colors"
             >
               <X size={24} />
             </button>
           </div>
         </div>
 
-      {/* Modal for confirmations */}
-      {modal.type && createPortal(
-        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center p-4 z-[9999] overflow-hidden select-none">
-          <div className="bg-white rounded-xl shadow-lg w-full max-w-md max-h-[90vh] overflow-y-auto select-none">
-            
-            {/* Header */}
-            <div className="flex justify-between items-center p-6 border-b border-gray-200 select-none">
-              <div className="flex items-center gap-3 select-none">
-                <div className={`p-2 rounded-full select-none ${
-                  modal.type === 'success' ? 'bg-green-100' :
-                  modal.type === 'error' ? 'bg-red-100' :
-                  'bg-yellow-100'
-                }`}>
-                  {modal.type === 'success' ? (
-                    <CheckCircle size={20} className="text-green-600" />
-                  ) : modal.type === 'error' ? (
-                    <X size={20} className="text-red-600" />
-                  ) : (
-                    <AlertTriangle size={20} className="text-yellow-600" />
-                  )}
-                </div>
-                <h2 className="text-xl font-semibold text-gray-900 select-none">{modal.title}</h2>
-              </div>
-            </div>
-
-            {/* Content */}
-            <div className="p-6 select-none">
-              <p className="text-gray-700 whitespace-pre-line select-none">{modal.message}</p>
-              
-              <div className="flex gap-3 mt-6 select-none">
-                {modal.type === 'confirm' && modal.onCancel && (
-                  <button
-                    onClick={modal.onCancel}
-                    className="flex-1 px-4 py-2 bg-gray-200 text-gray-800 rounded-lg hover:bg-gray-300 transition-colors select-none"
-                  >
-                    Cancel
-                  </button>
-                )}
-                <button
-                  onClick={modal.onConfirm}
-                  className={`${modal.type === 'confirm' ? 'flex-1' : 'w-full'} px-4 py-2 rounded-lg transition-colors select-none ${
-                    modal.type === 'success' ? 'bg-green-500 hover:bg-green-600 text-white' :
-                    modal.type === 'error' ? 'bg-red-500 hover:bg-red-600 text-white' :
-                    'bg-blue-500 hover:bg-blue-600 text-white'
-                  }`}
-                >
-                  {modal.type === 'confirm' ? 'Continue' : 'OK'}
-                </button>
-              </div>
-            </div>
-          </div>
-        </div>,
-        document.body
-      )}
         {/* Content */}
-        <div className="p-6 flex-1 select-none" style={{ 
-          maxHeight: 'calc(90vh - 120px)',
-          overflowY: 'auto',
-          WebkitOverflowScrolling: 'touch'
-        }}>
+        <div className="p-6 overflow-y-auto" style={{ maxHeight: 'calc(80vh - 160px)' }}>
           
           {/* Summary */}
-          <div className="bg-red-50 rounded-lg p-4 mb-6 select-none">
-            <h3 className="text-lg font-semibold text-red-800 mb-2 select-none">Outstanding Balance</h3>
-            <p className="text-3xl font-bold text-red-600 select-none">Rs {totalDebt.toLocaleString('en-IN', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</p>
+          <div className="bg-red-50 rounded-lg p-4 mb-6">
+            <h3 className="text-lg font-semibold text-red-800 mb-2">Outstanding Balance</h3>
+            <p className="text-3xl font-bold text-red-600">Rs {totalDebt.toLocaleString('en-IN', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</p>
           </div>
 
           {/* Returnable Items Section */}
           {(() => {
+            // Get returnable items for this client
+            const getReturnableItems = () => {
+              const returnableItems: {[key: string]: number} = {};
+              
+              transactions.forEach(transaction => {
+                // Only process debt transactions (not payments) AND exclude return transactions
+                if (transaction.type === 'payment' || transaction.description.toLowerCase().includes('returned')) {
+                  return;
+                }
+                
+                const description = transaction.description.toLowerCase();
+                
+                // Only process items that contain "chopine" or "bouteille"
+                if (!description.includes('chopine') && !description.includes('bouteille')) {
+                  return;
+                }
+                
+                // Look for Chopine items
+                const chopinePattern = /(\d+)\s+chopines?(?:\s+([^,]*))?/gi;
+                let chopineMatch;
+                
+                while ((chopineMatch = chopinePattern.exec(description)) !== null) {
+                  const quantity = parseInt(chopineMatch[1]);
+                  const brand = chopineMatch[2]?.trim() || '';
+                  const key = brand ? `Chopine ${brand}` : 'Chopine';
+                  
+                  if (!returnableItems[key]) {
+                    returnableItems[key] = 0;
+                  }
+                  returnableItems[key] += quantity;
+                }
+                
+                // Look for Bouteille items
+                const bouteillePattern = /(\d+)\s+(?:(\d+(?:\.\d+)?L)\s+)?bouteilles?(?:\s+([^,]*))?/gi;
+                let bouteilleMatch;
+                
+                while ((bouteilleMatch = bouteillePattern.exec(description)) !== null) {
+                  const quantity = parseInt(bouteilleMatch[1]);
+                  const size = bouteilleMatch[2]?.trim() || '';
+                  const brand = bouteilleMatch[3]?.trim() || '';
+                  
+                  let key;
+                  if (size && brand) {
+                    key = `${size} ${brand}`;
+                  } else if (brand) {
+                    key = `Bouteille ${brand}`;
+                  } else if (size) {
+                    key = `${size} Bouteille`;
+                  } else {
+                    key = 'Bouteille';
+                  }
+                  
+                  if (!returnableItems[key]) {
+                    returnableItems[key] = 0;
+                  }
+                  returnableItems[key] += quantity;
+                }
+                
+                // Handle items without explicit numbers (assume quantity 1)
+                if (description.includes('bouteille') && !bouteillePattern.test(description)) {
+                  const sizeMatch = description.match(/(\d+(?:\.\d+)?L)/i);
+                  const brandMatch = description.match(/bouteilles?\s+([^,]*)/i);
+                  const brand = brandMatch?.[1]?.trim() || '';
+                  
+                  let key;
+                  if (sizeMatch && brand) {
+                    key = `${sizeMatch[1]} ${brand}`;
+                  } else if (brand) {
+                    key = `Bouteille ${brand}`;
+                  } else if (sizeMatch) {
+                    key = `${sizeMatch[1]} Bouteille`;
+                  } else {
+                    key = 'Bouteille';
+                  }
+                  
+                  if (!returnableItems[key]) {
+                    returnableItems[key] = 0;
+                  }
+                  returnableItems[key] += 1;
+                }
+                
+                if (description.includes('chopine') && !chopinePattern.test(description)) {
+                  const brandMatch = description.match(/chopines?\s+([^,]*)/i);
+                  const brand = brandMatch?.[1]?.trim() || '';
+                  const key = brand ? `Chopine ${brand}` : 'Chopine';
+                  
+                  if (!returnableItems[key]) {
+                    returnableItems[key] = 0;
+                  }
+                  returnableItems[key] += 1;
+                }
+              });
+              
+              // Calculate returned quantities
+              const returnedQuantities: {[key: string]: number} = {};
+              transactions
+                .filter(transaction => transaction.type === 'debt' && transaction.description.toLowerCase().includes('returned'))
+                .forEach(transaction => {
+                  const description = transaction.description.toLowerCase();
+                  Object.keys(returnableItems).forEach(itemType => {
+                    if (description.includes(itemType.toLowerCase())) {
+                      const match = description.match(/returned:\s*(\d+)\s+/);
+                      if (match) {
+                        if (!returnedQuantities[itemType]) {
+                          returnedQuantities[itemType] = 0;
+                        }
+                        returnedQuantities[itemType] += parseInt(match[1]);
+                      }
+                    }
+                  });
+                });
+              
+              // Calculate net returnable quantities
+              const netReturnableItems: {[key: string]: number} = {};
+              Object.entries(returnableItems).forEach(([itemType, total]) => {
+                const returned = returnedQuantities[itemType] || 0;
+                const remaining = Math.max(0, total - returned);
+                if (remaining > 0) {
+                  netReturnableItems[itemType] = remaining;
+                }
+              });
+              
+              return netReturnableItems;
+            };
+            
+            const returnableItems = getReturnableItems();
             const hasReturnableItems = Object.keys(returnableItems).length > 0;
             
             return hasReturnableItems ? (
@@ -325,42 +310,22 @@ const ClientDetailModal: React.FC<ClientDetailModalProps> = ({ client, onClose }
                   <h3 className="text-lg font-semibold text-orange-800">Returnable Items</h3>
                   <button
                     onClick={async () => {
-                      // Show confirmation modal instead of window.confirm
-                      setModal({
-                        type: 'confirm',
-                        title: 'Clear All Returnable Items',
-                        message: `Clear all returnable items for ${client.name}? This will mark all Chopine and Bouteille items as returned.`,
-                        onConfirm: async () => {
-                          try {
-                            setModal({ type: null, title: '', message: '' });
-                            // Process returns for all items
-                            for (const [itemType, quantity] of Object.entries(returnableItems)) {
-                              const returnDescription = `Returned: ${quantity} ${itemType}${quantity > 1 ? 's' : ''}`;
-                              await addTransaction(client, returnDescription, 0);
-                            }
-                            
-                            // Show duplicate card with transaction description to trigger arrows
-                            window.dispatchEvent(new CustomEvent('showDuplicateCard', {
-                              detail: { 
-                                ...client,
-                                isAccountClear: false,
-                                message: 'All returnable items cleared successfully!',
-                                transactionDescription: 'Returned all returnable items'
-                              }
-                            }));
-                            // Close modal after clearing
-                            onClose();
-                          } catch (error) {
-                            setModal({
-                              type: 'error',
-                              title: 'Error',
-                              message: 'Failed to clear returnable items',
-                              onConfirm: () => setModal({ type: null, title: '', message: '' })
-                            });
+                      const confirmed = window.confirm(
+                        `Clear all returnable items for ${client.name}? This will mark all Chopine and Bouteille items as returned.`
+                      );
+                      if (confirmed) {
+                        try {
+                          // Process returns for all items
+                          for (const [itemType, quantity] of Object.entries(returnableItems)) {
+                            const returnDescription = `Returned: ${quantity} ${itemType}${quantity > 1 ? 's' : ''}`;
+                            await addTransaction(client, returnDescription, 0);
                           }
-                        },
-                        onCancel: () => setModal({ type: null, title: '', message: '' })
-                      });
+                          // Close modal after clearing
+                          handleAnyClose();
+                        } catch (error) {
+                          alert('Failed to clear returnable items');
+                        }
+                      }
                     }}
                     className="px-3 py-1 text-sm bg-red-500 hover:bg-red-600 text-white rounded-md transition-colors"
                   >
@@ -381,7 +346,6 @@ const ClientDetailModal: React.FC<ClientDetailModalProps> = ({ client, onClose }
                         itemType={itemType}
                         quantity={quantity}
                         client={client}
-                        showAlert={showAlert}
                         onUpdate={() => {
                           // Force re-render by updating a dummy state
                           setEditedName(prev => prev);
@@ -409,29 +373,26 @@ const ClientDetailModal: React.FC<ClientDetailModalProps> = ({ client, onClose }
                   onChange={(e) => setTransactionFilter(e.target.value as 'all' | 'returnable' | 'taken' | 'returned')}
                   className="appearance-none bg-white border border-gray-300 rounded-lg px-3 py-2 pr-8 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
                 >
-                  <option value="all">All ({transactions && Array.isArray(transactions) ? transactions.filter(t => t.amount >= 0).length : 0})</option>
-                  <option value="returnable">Returnable ({transactions && Array.isArray(transactions) ? transactions.filter(t => {
+                  <option value="all">All ({transactions.filter(t => t.amount >= 0).length})</option>
+                  <option value="returnable">Returnable ({transactions.filter(t => {
                     if (t.description.toLowerCase().includes('returned')) return false;
                     const desc = t.description.toLowerCase();
                     return desc.includes('chopine') || desc.includes('bouteille');
-                  }).length : 0})</option>
-                  <option value="taken">Taken ({transactions && Array.isArray(transactions) ? transactions.filter(t => t.amount > 0 && !t.description.toLowerCase().includes('returned')).length : 0})</option>
-                  <option value="returned">Returned ({transactions && Array.isArray(transactions) ? transactions.filter(t => t.description.toLowerCase().includes('returned')).length : 0})</option>
+                  }).length})</option>
+                  <option value="taken">Taken ({transactions.filter(t => t.amount > 0 && !t.description.toLowerCase().includes('returned')).length})</option>
+                  <option value="returned">Returned ({transactions.filter(t => t.description.toLowerCase().includes('returned')).length})</option>
                 </select>
                 <div className="absolute inset-y-0 right-0 flex items-center pr-2 pointer-events-none">
-                  <FilterIcon size={16} className="text-gray-400" />
+                  <Filter size={16} className="text-gray-400" />
                 </div>
               </div>
             </div>
             
             {filteredTransactions.length === 0 ? (
-              <div className="text-center py-4">
-                <p className="text-gray-500">No transactions found</p>
-              </div>
+              <p className="text-gray-500 text-center py-4">No transactions found</p>
             ) : (
               <div className="space-y-3">
-                {filteredTransactions
-                  .map((transaction) => (
+                {filteredTransactions.map((transaction) => (
                   <div key={transaction.id} className="bg-gray-50 rounded-lg p-4">
                     <div className={`${transaction.amount > 0 ? 'flex justify-between items-start' : ''} mb-2`}>
                       <h4 className="font-medium text-gray-800">{transaction.description}</h4>
@@ -458,9 +419,9 @@ const ClientDetailModal: React.FC<ClientDetailModalProps> = ({ client, onClose }
                       <span>
                         {transaction.date.toLocaleDateString('en-GB', {
                           day: '2-digit',
-                          month: 'short',
+                          month: '2-digit',
                           year: 'numeric'
-                        }).replace(/\s/g, '-')} {transaction.date.toLocaleTimeString('en-GB', {
+                        })} {transaction.date.toLocaleTimeString('en-GB', {
                           hour: '2-digit',
                           minute: '2-digit',
                           hour12: false
@@ -478,7 +439,7 @@ const ClientDetailModal: React.FC<ClientDetailModalProps> = ({ client, onClose }
             <div>
               <div className="flex items-center gap-2 mb-4">
                 <CreditCard size={20} className="text-green-600" />
-                <h3 className="text-lg font-semibold text-gray-8800">Payment History</h3>
+                <h3 className="text-lg font-semibold text-gray-800">Payment History</h3>
               </div>
               
               <div className="space-y-3">
@@ -490,7 +451,7 @@ const ClientDetailModal: React.FC<ClientDetailModalProps> = ({ client, onClose }
                       </h4>
                       {(payment.type === 'partial' || payment.amount > 0) && (
                         <span className="text-lg font-semibold text-green-600">
-                          -Rs {payment.amount.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
+                          -Rs {payment.amount.toLocaleString('en-IN', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
                         </span>
                       )}
                     </div>
@@ -499,9 +460,9 @@ const ClientDetailModal: React.FC<ClientDetailModalProps> = ({ client, onClose }
                       <span>
                         {payment.date.toLocaleDateString('en-GB', {
                           day: '2-digit',
-                          month: 'short',
+                          month: '2-digit',
                           year: 'numeric'
-                        }).replace(/\s/g, '-')} at {payment.date.toLocaleTimeString('en-GB', {
+                        })} at {payment.date.toLocaleTimeString('en-GB', {
                           hour: '2-digit',
                           minute: '2-digit',
                           hour12: false
@@ -518,7 +479,7 @@ const ClientDetailModal: React.FC<ClientDetailModalProps> = ({ client, onClose }
         {/* Footer */}
         <div className="p-6 border-t border-gray-200 flex justify-end">
           <button
-            onClick={onClose}
+            onClick={handleAnyClose}
             className="px-6 py-2 bg-blue-500 text-white rounded-lg hover:bg-blue-600 transition-colors"
           >
             Close
@@ -539,17 +500,13 @@ interface ReturnableItemRowProps {
   itemType: string;
   quantity: number;
   client: Client;
-  showAlert: (options: { type: 'error'; message: string }) => void;
   onUpdate: () => void;
 }
 
-const ReturnableItemRow: React.FC<ReturnableItemRowProps> = ({ itemType, quantity, client, showAlert, onUpdate }) => {
+const ReturnableItemRow: React.FC<ReturnableItemRowProps> = ({ itemType, quantity, client, onUpdate }) => {
   const { addTransaction } = useCredit();
-  const [isProcessing, setIsProcessing] = useState(false);
-  const [pendingQuantity, setPendingQuantity] = useState(0);
-  
-  // Declare displayItemType here so it's accessible throughout the component
-  const [displayItemType, setDisplayItemType] = useState(itemType);
+  const [isProcessing, setIsProcessing] = React.useState(false);
+  const [pendingQuantity, setPendingQuantity] = React.useState(0);
 
   const handleQuantityChange = (change: number) => {
     setPendingQuantity(prev => Math.max(0, Math.min(quantity, prev + change)));
@@ -560,85 +517,12 @@ const ReturnableItemRow: React.FC<ReturnableItemRowProps> = ({ itemType, quantit
     
     try {
       setIsProcessing(true);
-      // Create unique return transaction with timestamp to prevent ID conflicts
-      // Don't pluralize brand names - only add 's' to the base item type
-      let returnDescription = `Returned: ${pendingQuantity} `;
-      
-      if (itemType.includes('Chopine')) {
-        // For Chopine items: "Returned: 2 Chopines Beer" (pluralize Chopine, not brand)
-        // Handle both singular and plural forms
-        const brand = itemType.replace(/^(Chopines?)/i, '').trim();
-        returnDescription += `Chopine${pendingQuantity > 1 ? 's' : ''}${brand ? ` ${brand}` : ''}`;
-      } else if (itemType.includes('Bouteille')) {
-        // For Bouteille items: "Returned: 2 Bouteilles Green" (pluralize Bouteille, not brand)
-        // Use the same logic as Chopine
-        // Handle both singular and plural forms
-        let brand = itemType.replace(/^(Bouteilles?)/i, '').trim();
-        // Singularize French plural words when quantity is 1 (e.g., "Vins" → "Vin")
-        // But don't singularize brand names like "7seas"
-        if (pendingQuantity === 1 && brand.endsWith('s') && !brand.match(/^\d/)) {
-          const lowerBrand = brand.toLowerCase();
-          const frenchPlurals = ['vins', 'bières', 'jus', 'sodas'];
-          if (frenchPlurals.some(plural => lowerBrand === plural)) {
-            brand = brand.slice(0, -1);
-          }
-        }
-        returnDescription += `Bouteille${pendingQuantity > 1 ? 's' : ''}${brand ? ` ${brand}` : ''}`;
-      } else {
-        // For other items: add 's' only if quantity > 1
-        returnDescription += `${itemType}${pendingQuantity > 1 ? 's' : ''}`;
-      }
-      
-      const uniqueReturnDescription = `${returnDescription} - ${new Date().toLocaleDateString('en-GB')} ${new Date().toLocaleTimeString('en-GB', { hour: '2-digit', minute: '2-digit' })}`;
-      await addTransaction(client, uniqueReturnDescription, 0);
+      const returnDescription = `Returned: ${pendingQuantity} ${itemType}${pendingQuantity > 1 ? 's' : ''}`;
+      await addTransaction(client, returnDescription, 0);
       setPendingQuantity(0);
-      
-      // Update displayItemType for the button text
-      let newDisplayItemType = itemType;
-      if (itemType.includes('Chopine')) {
-        // Handle both singular and plural forms
-        const brand = itemType.replace(/^(Chopines?)/i, '').trim();
-        newDisplayItemType = `Chopine${pendingQuantity > 1 ? 's' : ''}${brand ? ` ${brand}` : ''}`;
-      } else if (itemType.includes('Bouteille')) {
-        // Handle both singular and plural forms
-        let brand = itemType.replace(/^(Bouteilles?)/i, '').trim();
-        // Singularize French plural words when quantity is 1 (e.g., "Vins" → "Vin")
-        // But don't singularize brand names like "7seas"
-        if (pendingQuantity === 1 && brand.endsWith('s') && !brand.match(/^\d/)) {
-          const lowerBrand = brand.toLowerCase();
-          const frenchPlurals = ['vins', 'bières', 'jus', 'sodas'];
-          if (frenchPlurals.some(plural => lowerBrand === plural)) {
-            brand = brand.slice(0, -1);
-          }
-        }
-        newDisplayItemType = `Bouteille${pendingQuantity > 1 ? 's' : ''}${brand ? ` ${brand}` : ''}`;
-      } else if (pendingQuantity > 1) {
-        newDisplayItemType = `${itemType}s`;
-      }
-      
-      setDisplayItemType(newDisplayItemType);
-      
-      window.dispatchEvent(new CustomEvent('showDuplicateCard', {
-        detail: { 
-          ...client,
-          isAccountClear: false,
-          message: `${pendingQuantity} ${newDisplayItemType} returned successfully!`,
-          transactionDescription: `${uniqueReturnDescription}`
-        }
-      }));
-      
-      // Don't dispatch creditDataChanged - let MutationObserver handle it automatically
-      // window.dispatchEvent(new CustomEvent('creditDataChanged', {
-      //   detail: {
-      //     clientId: client.id,
-      //     source: 'return'
-      //   }
-      // }));
-      
-      // Don't close modal automatically - let user see the update and close manually
-      // This allows the big card to update properly
+      onUpdate();
     } catch (error) {
-      showAlert({ type: 'error', message: 'Failed to process return' });
+      alert('Failed to process return');
     } finally {
       setIsProcessing(false);
     }
@@ -676,11 +560,11 @@ const ReturnableItemRow: React.FC<ReturnableItemRowProps> = ({ itemType, quantit
           disabled={isProcessing}
           className="w-full px-3 py-2 bg-orange-500 hover:bg-orange-600 text-white rounded-md transition-colors disabled:opacity-50 text-sm"
         >
-          {isProcessing ? 'Processing...' : `Return ${pendingQuantity} ${displayItemType}`}
+          {isProcessing ? 'Processing...' : `Return ${pendingQuantity} ${itemType}${pendingQuantity > 1 ? 's' : ''}`}
         </button>
       )}
     </div>
   );
 };
- 
+
 export default ClientDetailModal;

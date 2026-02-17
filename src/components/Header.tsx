@@ -30,7 +30,6 @@
 import React, { useState } from 'react';
 import { Menu, Download, Upload, X, Database } from 'lucide-react';
 import { usePriceList } from '../context/PriceListContext';
-import { useNotification } from '../context/NotificationContext';
 
 /**
  * HEADER COMPONENT
@@ -62,7 +61,6 @@ const Header: React.FC = () => {
   
   // Access global state and operations
   const { items, importItems } = usePriceList();
-  const { showAlert, showConfirm } = useNotification();
 
   /**
    * EXPORT FUNCTIONALITY
@@ -123,7 +121,7 @@ const Header: React.FC = () => {
       const url = URL.createObjectURL(dataBlob);
       const link = document.createElement('a');
       link.href = url;
-      link.download = `GoldenStore_${dateString}.json`;
+      link.download = `Goldenpricelist_${dateString}.json`;
       
       // Temporarily add to DOM, click, and remove
       document.body.appendChild(link);
@@ -137,7 +135,7 @@ const Header: React.FC = () => {
       setIsMenuOpen(false);
     } catch (error) {
       // Handle export errors gracefully
-      showAlert({ type: 'error', message: 'Error exporting data. Please try again.' });
+      alert('Error exporting data. Please try again.');
     }
   };
 
@@ -206,20 +204,18 @@ const Header: React.FC = () => {
           }));
 
           // Show confirmation dialog with details
-          const confirmImport = await showConfirm({
-            title: 'Confirm Import',
-            message: `This will import ${importedItems.length} items and replace your current data. This will also create an automatic backup. Are you sure you want to continue?`,
-            type: 'warning'
-          });
+          const confirmImport = window.confirm(
+            `This will import ${importedItems.length} items and replace your current data. This will also create an automatic backup. Are you sure you want to continue?`
+          );
 
           if (confirmImport) {
             // Perform import operation
             await importItems(importedItems);
-            showAlert({ type: 'success', message: `Successfully imported ${importedItems.length} items!` });
+            alert(`Successfully imported ${importedItems.length} items!`);
           }
         } catch (error) {
           // Handle parsing and validation errors
-          showAlert({ type: 'error', message: 'Error importing file. Please check the file format and try again.' });
+          alert('Error importing file. Please check the file format and try again.');
         }
       };
       
@@ -261,7 +257,7 @@ const Header: React.FC = () => {
       {/* Sticky Header: Stays at top during scroll */}
       <div className="w-full px-6 py-4 flex items-center justify-center relative">
         {/* Centered Title: Main app branding */}
-        <h1 className="text-2xl font-semibold text-gray-900">Golden Store</h1>
+        <h1 className="text-2xl font-semibold text-gray-900">Golden Price List</h1>
         
         {/* Menu Button: Positioned absolutely to the right */}
         <div className="absolute right-6">

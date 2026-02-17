@@ -1,11 +1,9 @@
 import React, { useState } from 'react'
 import { useAuth } from '../context/AuthContext'
 import { LogIn, UserPlus, Loader2 } from 'lucide-react'
-import { useNotification } from '../context/NotificationContext'
 
 const Auth: React.FC = () => {
   const { signIn, signUp } = useAuth()
-  const { showAlert } = useNotification()
   const [isSignUp, setIsSignUp] = useState(false)
   const [email, setEmail] = useState('')
   const [password, setPassword] = useState('')
@@ -20,7 +18,7 @@ const Auth: React.FC = () => {
     try {
       if (isSignUp) {
         await signUp(email, password)
-        showAlert({ type: 'success', message: 'Check your email for the confirmation link!' })
+        alert('Check your email for the confirmation link!')
       } else {
         await signIn(email, password)
       }

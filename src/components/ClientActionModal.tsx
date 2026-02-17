@@ -1,20 +1,13 @@
-import React, { useState, useMemo } from 'react';
+import React, { useState } from 'react';
 import { createPortal } from 'react-dom';
-import { X, CreditCard, CheckCircle, DollarSign, RotateCcw, Minus, Plus, Calculator, User, ArrowLeft, AlertTriangle } from 'lucide-react';
+import { X, CreditCard, CheckCircle, DollarSign, RotateCcw, Minus, Plus } from 'lucide-react';
 import { Client } from '../types';
 import { useCredit } from '../context/CreditContext';
-import SettleConfirmationModal from './SettleConfirmationModal';
-import ClientDetailModal from './ClientDetailModal';
-import { ScrollingText } from './ScrollingText';
-import { useNotification } from '../context/NotificationContext';
-import { calculateReturnableItemsWithDates, calculateReturnableItems } from '../utils/returnableItemsUtils';
 
 interface ClientActionModalProps {
   client: Client;
   onClose: () => void;
-  onQuickAdd?: (client: Client) => void;
   onResetCalculator?: () => void;
-  onViewDetails?: (client: Client) => void;
 }
 
 /**
@@ -23,22 +16,13 @@ interface ClientActionModalProps {
  * 
  * Shows partial payment and settle options when swiping up on client card
  */
-const ClientActionModal: React.FC<ClientActionModalProps> = ({ client, onClose, onQuickAdd, onResetCalculator, onViewDetails }) => {
-  const { addPartialPayment, settleClient, settleClientWithFullClear, getClientTotalDebt, returnBottles, getClientBottlesOwed, getClientTransactions, addTransaction } = useCredit();
-  const { showAlert } = useNotification();
+const ClientActionModal: React.FC<ClientActionModalProps> = ({ client, onClose, onResetCalculator }) => {
+  const { addPartialPayment, settleClient, getClientTotalDebt, returnBottles, getClientBottlesOwed, getClientTransactions, addTransaction } = useCredit();
   const [showPartialPayment, setShowPartialPayment] = useState(false);
   const [showReturnTab, setShowReturnTab] = useState(false);
   const [paymentAmount, setPaymentAmount] = useState('');
   const [returnItems, setReturnItems] = useState<{[key: string]: number}>({});
   const [isProcessing, setIsProcessing] = useState(false);
-  const [showSettleConfirm, setShowSettleConfirm] = useState(false);
-  const [settleAction, setSettleAction] = useState<{
-    type: 'all' | 'individual';
-    itemType?: string;
-    quantity?: number;
-  } | null>(null);
-  const [showAccountSettleConfirm, setShowAccountSettleConfirm] = useState(false);
-  const [showSimpleSettleConfirm, setShowSimpleSettleConfirm] = useState(false); // New state for simple confirmation
 
   const totalDebt = getClientTotalDebt(client.id);
   const bottlesOwed = getClientBottlesOwed(client.id);
@@ -47,177 +31,176 @@ const ClientActionModal: React.FC<ClientActionModalProps> = ({ client, onClose, 
   const handlePartialPayment = async () => {
     const amount = parseFloat(paymentAmount);
     if (isNaN(amount) || amount <= 0 || amount > totalDebt) {
-      showAlert({ type: 'warning', message: 'Please enter a valid payment amount' });
+      alert('Please enter a valid payment amount');
       return;
     }
 
     try {
       setIsProcessing(true);
       await addPartialPayment(client.id, amount);
-      
-      // Get returnable items for this client to include in the transaction description
-      const allReturnableItems = getReturnableItems();
-      const availableItems: {[key: string]: {total: number, transactions: Array<{id: string, description: string, amount: number, quantity: number, date: Date}>}} = {};
-      
-      // Filter out items that have already been returned
-      Object.entries(allReturnableItems).forEach(([itemType, data]) => {
-        // Since allReturnableItems comes from getReturnableItems which uses calculateReturnableItems 
-        // that already accounts for returns, we can directly use the total
-        if (data.total > 0) {
-          availableItems[itemType] = data;
-        }
-      });
-      
-      // Format returnable items for display
-      const returnableItemsList = Object.entries(availableItems)
-        .map(([itemType, data]) => `${data.total} ${itemType}${data.total > 1 ? 's' : ''}`)
-        .join(', ');
-      
-      // Show duplicate card for successful partial payment
-      console.log('📱 ClientActionModal: Dispatching showDuplicateCard event for partial payment');
-      window.dispatchEvent(new CustomEvent('showDuplicateCard', {
-        detail: { 
-          ...client,
-          isAccountClear: false,
-          message: `Payment of Rs ${amount.toLocaleString('en-IN', { minimumFractionDigits: 2, maximumFractionDigits: 2 })} Recorded Successfully!`,
-          transactionAmount: amount,
-          transactionDescription: returnableItemsList ? 
-            `Returnables: ${returnableItemsList}` : 
-            ''
-        }
-      }));
-      
-      // Force timeline reset after payment
-      console.log('📱 ClientActionModal: Dispatching creditDataChanged event with clientActionAdd source');
-      window.dispatchEvent(new CustomEvent('creditDataChanged', { detail: { source: 'clientActionAdd' } }));
-      
       // Reset calculator after successful payment
       if (onResetCalculator) {
         onResetCalculator();
       }
       onClose();
     } catch (error) {
-      console.error('📱 ClientActionModal: Error processing partial payment:', error);
-      showAlert({ type: 'error', message: 'Failed to Process Payment' });
+      console.error('Error processing partial payment:', error);
+      alert('Failed to process payment');
     } finally {
       setIsProcessing(false);
     }
   };
 
-  const handleSettle = async (clearAllTransactions: boolean = false) => {
+  const handleSettle = async () => {
     try {
       setIsProcessing(true);
-      
-      if (clearAllTransactions) {
-        // Clear all transactions including returnables
-        await settleClientWithFullClear(client.id);
-      } else {
-        // Check if client has returnables
-        const hasReturnables = Object.keys(availableItems).length > 0;
-        
-        if (hasReturnables) {
-          // If client has returnables, use settleClient to preserve returnables
-          await settleClient(client.id);
-        } else {
-          // If client has no returnables, use settleClient (clears only debt transactions)
-          await settleClient(client.id);
-        }
-      }
-      
-      // Force timeline reset after settling
-      console.log('📱 ClientActionModal: Dispatching creditDataChanged event with clientActionSettle source');
-      window.dispatchEvent(new CustomEvent('creditDataChanged', { detail: { source: 'clientActionSettle' } }));
-      
+      await settleClient(client.id);
       onClose();
       if (onResetCalculator) {
         onResetCalculator();
       }
     } catch (error) {
-      console.error('📱 ClientActionModal: Error settling client:', error);
-      // Error handling without alert - could add error state here
+      console.error('Error settling client:', error);
+      alert('Failed to settle client');
     } finally {
       setIsProcessing(false);
     }
   };
 
-  const handleSettleWithFullClear = async () => {
-    try {
-      setIsProcessing(true);
-      await settleClientWithFullClear(client.id);
-      
-      // Force timeline reset after settling
-      console.log('📱 ClientActionModal: Dispatching creditDataChanged event with clientActionSettle source (full clear)');
-      window.dispatchEvent(new CustomEvent('creditDataChanged', { detail: { source: 'clientActionSettle' } }));
-      
-      onClose();
-      if (onResetCalculator) {
-        onResetCalculator();
-      }
-    } catch (error) {
-      console.error('📱 ClientActionModal: Error settling client with full clear:', error);
-      // Error handling without alert - could add error state here
-    } finally {
-      setIsProcessing(false);
-    }
-  };
-
-  // Get returnable items using the same logic as ClientCard and ClientDetailModal
+  // Parse transactions to find returnable items (Chopine and Bouteille)
   const getReturnableItems = () => {
-    // Use the utility function to get returnable items as strings (same as ClientDetailModal)
-    const returnableItemsStrings = calculateReturnableItems(clientTransactions, client.name);
+    const returnableItems: {[key: string]: {total: number, transactions: Array<{id: string, description: string, amount: number, quantity: number}>}} = {};
     
-    // Convert the string format back to the object format used by the modal
-    const returnableItems: {[key: string]: {total: number, transactions: Array<{id: string, description: string, amount: number, quantity: number, date: Date}>}} = {};
+    console.log('🔍 Processing transactions for returnable items...');
     
-    // Process each returnable item string
-    returnableItemsStrings.forEach((itemString: string) => {
-      // Parse the string format "3 Bouteille Vin" or "2 Chopine Beer"
-      const match = itemString.match(/^(\d+)\s+(.+)$/);
-      if (match) {
-        const quantity = parseInt(match[1]);
-        const displayText = match[2]; // e.g., "Bouteille Vin" or "Chopine Beer"
+    clientTransactions.forEach(transaction => {
+      // Only process debt transactions (not payments) AND exclude return transactions
+      if (transaction.type === 'payment' || transaction.description.toLowerCase().includes('returned')) {
+        console.log(`⏭️ Skipping transaction: "${transaction.description}" (type: ${transaction.type})`);
+        return;
+      }
+      
+      const description = transaction.description.toLowerCase();
+      console.log(`📝 Processing: "${transaction.description}" (amount: ${transaction.amount})`);
+      
+      // Only process items that contain "chopine" or "bouteille"
+      if (!description.includes('chopine') && !description.includes('bouteille')) {
+        console.log(`⏭️ Skipping: "${transaction.description}" (no chopine/bouteille)`);
+        return;
+      }
+      
+      // Look for Chopine items with improved parsing
+      // Pattern: number + space + chopine (with optional brand after)
+      const chopinePattern = /(\d+)\s+chopines?(?:\s+([^,]*))?/gi;
+      let chopineMatch;
+      
+      while ((chopineMatch = chopinePattern.exec(description)) !== null) {
+        const quantity = parseInt(chopineMatch[1]);
+        const brand = chopineMatch[2]?.trim() || '';
+        const key = brand ? `Chopine ${brand}` : 'Chopine';
         
-        // Create the key based on the display text (same logic as ClientDetailModal)
-        let key = displayText;
-        
-        // For branded items like "Bouteille Vin", use that as the key
-        if (displayText.startsWith('Bouteille ') || displayText.startsWith('Chopine ')) {
-          key = displayText;
-        } 
-        // For generic items like "Bouteilles", convert to "Bouteille"
-        else if (displayText === 'Bouteilles') {
-          key = 'Bouteille';
-        }
-        // For generic items like "Chopines", convert to "Chopine"
-        else if (displayText === 'Chopines') {
-          key = 'Chopine';
-        }
-        // For sized bottles like "1.5L Bouteilles Green", keep as is
-        else if (/\d+(?:\.\d+)?L Bouteilles? /.test(displayText)) {
-          // key is already correct
-        }
-        // For sized bottles like "1.5L Bouteilles", convert to "1.5L Bouteille"
-        else if (/\d+(?:\.\d+)?L Bouteilles$/.test(displayText)) {
-          key = displayText.replace('Bouteilles', 'Bouteille');
-        }
+        console.log(`✅ Adding ${quantity} ${key} from: "${transaction.description}"`);
         
         if (!returnableItems[key]) {
-          returnableItems[key] = { total: quantity, transactions: [] };
+          returnableItems[key] = { total: 0, transactions: [] };
+        }
+        returnableItems[key].total += quantity;
+        returnableItems[key].transactions.push({
+          id: transaction.id,
+          description: transaction.description,
+          amount: transaction.amount,
+          quantity: quantity
+        });
+      }
+      
+      // Look for Bouteille items with improved parsing
+      // Pattern: number + space + optional size + bouteille + optional brand
+      const bouteillePattern = /(\d+)\s+(?:(\d+(?:\.\d+)?L)\s+)?bouteilles?(?:\s+([^,]*))?/gi;
+      let bouteilleMatch;
+      
+      while ((bouteilleMatch = bouteillePattern.exec(description)) !== null) {
+        const quantity = parseInt(bouteilleMatch[1]);
+        const size = bouteilleMatch[2]?.trim() || '';
+        const brand = bouteilleMatch[3]?.trim() || '';
+        
+        // Format the key based on what we found
+        let key;
+        if (size && brand) {
+          key = `${size} ${brand}`;
+        } else if (brand) {
+          key = `Bouteille ${brand}`;
+        } else if (size) {
+          key = `${size} Bouteille`;
         } else {
-          returnableItems[key].total += quantity;
+          key = 'Bouteille';
         }
         
-        // Add a dummy transaction entry for this item type
+        console.log(`✅ Adding ${quantity} ${key} from: "${transaction.description}"`);
+        
+        if (!returnableItems[key]) {
+          returnableItems[key] = { total: 0, transactions: [] };
+        }
+        returnableItems[key].total += quantity;
         returnableItems[key].transactions.push({
-          id: `dummy-${key}`,
-          description: displayText,
-          amount: 0,
-          quantity: quantity,
-          date: new Date()
+          id: transaction.id,
+          description: transaction.description,
+          amount: transaction.amount,
+          quantity: quantity
+        });
+      }
+      
+      // Handle items without explicit numbers (assume quantity 1)
+      if (description.includes('bouteille') && !bouteillePattern.test(description)) {
+        const sizeMatch = description.match(/(\d+(?:\.\d+)?L)/i);
+        const brandMatch = description.match(/bouteilles?\s+([^,]*)/i);
+        const brand = brandMatch?.[1]?.trim() || '';
+        
+        let key;
+        if (sizeMatch && brand) {
+          key = `${sizeMatch[1]} ${brand}`;
+        } else if (brand) {
+          key = `Bouteille ${brand}`;
+        } else if (sizeMatch) {
+          key = `${sizeMatch[1]} Bouteille`;
+        } else {
+          key = 'Bouteille';
+        }
+        
+        console.log(`✅ Adding 1 ${key} (no number) from: "${transaction.description}"`);
+        
+        if (!returnableItems[key]) {
+          returnableItems[key] = { total: 0, transactions: [] };
+        }
+        returnableItems[key].total += 1;
+        returnableItems[key].transactions.push({
+          id: transaction.id,
+          description: transaction.description,
+          amount: transaction.amount,
+          quantity: 1
+        });
+      }
+      
+      if (description.includes('chopine') && !chopinePattern.test(description)) {
+        const brandMatch = description.match(/chopines?\s+([^,]*)/i);
+        const brand = brandMatch?.[1]?.trim() || '';
+        const key = brand ? `Chopine ${brand}` : 'Chopine';
+        
+        console.log(`✅ Adding 1 ${key} (no number) from: "${transaction.description}"`);
+        
+        if (!returnableItems[key]) {
+          returnableItems[key] = { total: 0, transactions: [] };
+        }
+        returnableItems[key].total += 1;
+        returnableItems[key].transactions.push({
+          id: transaction.id,
+          description: transaction.description,
+          amount: transaction.amount,
+          quantity: 1
         });
       }
     });
     
+    console.log('🎯 Final returnable items:', returnableItems);
     return returnableItems;
   };
 
@@ -231,144 +214,76 @@ const ClientActionModal: React.FC<ClientActionModalProps> = ({ client, onClose, 
   const handleProcessReturns = async () => {
     try {
       setIsProcessing(true);
-      
-      // Collect items being returned for the success message
-      const itemsBeingReturned = Object.entries(returnItems)
-        .filter(([_, quantity]) => quantity > 0)
-        .map(([itemType, quantity]) => {
-          // Properly format the item type for display in return success message
-          if (itemType.includes('Bouteille')) {
-            // For Bouteille items like "Bouteille Pepsi", format as "1 Bouteille Pepsi"
-            let brand = itemType.replace(/^(Bouteilles?)/i, '').trim();
-            if (brand) {
-              // Always pluralize Bouteille when quantity > 1
-              const needsPlural = quantity > 1;
-              // Singularize French plural words when quantity is 1 (e.g., "Vins" → "Vin")
-              // But don't singularize brand names like "7seas"
-              if (quantity === 1 && brand.endsWith('s') && !brand.match(/^\d/)) {
-                const lowerBrand = brand.toLowerCase();
-                const frenchPlurals = ['vins', 'bières', 'jus', 'sodas'];
-                if (frenchPlurals.some(plural => lowerBrand === plural)) {
-                  brand = brand.slice(0, -1);
-                }
-              }
-              return `${quantity} Bouteille${needsPlural ? 's' : ''} ${brand}`;
-            } else {
-              // For generic Bouteille, always pluralize when quantity > 1
-              const needsPlural = quantity > 1;
-              return `${quantity} Bouteille${needsPlural ? 's' : ''}`;
-            }
-          } else if (itemType.includes('Chopine')) {
-            // For chopine items
-            const brand = itemType.replace(/^(Chopines?)/i, '').trim();
-            if (brand) {
-              // Always pluralize Chopine when quantity > 1
-              const needsPlural = quantity > 1;
-              return `${quantity} Chopine${needsPlural ? 's' : ''} ${brand}`;
-            } else {
-              // For generic Chopine, always pluralize when quantity > 1
-              const needsPlural = quantity > 1;
-              return `${quantity} Chopine${needsPlural ? 's' : ''}`;
-            }
-          }
-          // Fallback for other formats
-          return `${quantity} ${itemType}${quantity > 1 ? 's' : ''}`;
-        })
-        .join(', ');
-    
-    for (const [itemType, quantity] of Object.entries(returnItems)) {
-      if (quantity > 0) {
-        await processItemReturn(itemType, quantity);
-      }
-    }
-    
-    // Show duplicate card for successful return processing
-    console.log('📱 ClientActionModal: Dispatching showDuplicateCard event for returns');
-    window.dispatchEvent(new CustomEvent('showDuplicateCard', {
-      detail: { 
-        ...client,
-        isAccountClear: false,
-        message: `${itemsBeingReturned} returned successfully!`,
-        transactionDescription: `Returned: ${itemsBeingReturned} - ${new Date().toLocaleDateString('en-GB')} ${new Date().toLocaleTimeString('en-GB', { hour: '2-digit', minute: '2-digit' })}`
-      }
-    }));
-    
-    // Don't dispatch creditDataChanged - let MutationObserver handle it automatically
-    // console.log('📱 ClientActionModal: Dispatching creditDataChanged event with clientActionReturn source');
-    // window.dispatchEvent(new CustomEvent('creditDataChanged', { detail: { source: 'clientActionReturn' } }));
-    
-    setShowSettleConfirm(false);
-    setSettleAction(null);
-    onClose();
-  } catch (error) {
-    console.error('📱 ClientActionModal: Error processing returns:', error);
-    showAlert({ type: 'error', message: 'Failed to Process Returns' });
-  } finally {
-    setIsProcessing(false);
-  }
-};
-
-const processItemReturn = async (itemType: string, returnQuantity: number) => {
-  try {
-    // Create unique return transaction with timestamp to prevent ID conflicts
-    // Don't pluralize brand names - only add 's' to the base item type
-    // EXACT SAME LOGIC AS ClientDetailModal
-    let returnDescription = `Returned: ${returnQuantity} `;
-
-    if (itemType.includes('Chopine')) {
-      // For Chopine items: "Returned: 2 Chopines Beer" (pluralize Chopine, not brand)
-      // Handle both singular and plural forms
-      const brand = itemType.replace(/^(Chopines?)/i, '').trim();
-      returnDescription += `Chopine${returnQuantity > 1 ? 's' : ''}${brand ? ` ${brand}` : ''}`;
-    } else if (itemType.includes('Bouteille')) {
-      // For Bouteille items: "Returned: 2 Bouteilles Green" (pluralize Bouteille, not brand)
-      // Use the same logic as Chopine
-      // Handle both singular and plural forms
-      let brand = itemType.replace(/^(Bouteilles?)/i, '').trim();
-      // Singularize French plural words when quantity is 1 (e.g., "Vins" → "Vin")
-      // But don't singularize brand names like "7seas"
-      if (returnQuantity === 1 && brand.endsWith('s') && !brand.match(/^\d/)) {
-        const lowerBrand = brand.toLowerCase();
-        const frenchPlurals = ['vins', 'bières', 'jus', 'sodas'];
-        if (frenchPlurals.some(plural => lowerBrand === plural)) {
-          brand = brand.slice(0, -1);
+      for (const [itemType, quantity] of Object.entries(returnItems)) {
+        if (quantity > 0) {
+          await processItemReturn(itemType, quantity);
         }
       }
-      returnDescription += `Bouteille${returnQuantity > 1 ? 's' : ''}${brand ? ` ${brand}` : ''}`;
-    } else {
-      // For other items: add 's' only if quantity > 1
-      returnDescription += `${itemType}${returnQuantity > 1 ? 's' : ''}`;
-    }
-
-    const uniqueReturnDescription = `${returnDescription} - ${new Date().toLocaleDateString('en-GB')} ${new Date().toLocaleTimeString('en-GB', { hour: '2-digit', minute: '2-digit' })}`;
-    await addTransaction(client, uniqueReturnDescription, 0);
-
-    // NOTE: We don't dispatch showDuplicateCard here because it's handled at a higher level
-    // This prevents duplicate animations when processing multiple items
-  } catch (error) {
-    throw error;
-  }
-};
-
-
-
-  // Memoize returnable items to recalculate when transactions change
-  const { returnableItems, availableItems } = useMemo(() => {
-    const returnableItems = getReturnableItems();
-    
-    // Since getReturnableItems uses calculateReturnableItems which already accounts for returns,
-    // the returnableItems represent the available items (net of returns)
-    // So availableItems is the same as returnableItems, but only include items with quantity > 0
-    const availableItems: {[key: string]: {total: number, transactions: Array<{id: string, description: string, amount: number, quantity: number, date: Date}>}} = {};
-    
-    Object.entries(returnableItems).forEach(([itemType, data]) => {
-      if (data.total > 0) {
-        availableItems[itemType] = data;
+      // Reset calculator after successful returns processing
+      if (onResetCalculator) {
+        onResetCalculator();
       }
-    });
+      onClose();
+    } catch (error) {
+      console.error('Error processing returns:', error);
+      alert('Failed to process returns');
+    } finally {
+      setIsProcessing(false);
+    }
+  };
+
+  const processItemReturn = async (itemType: string, returnQuantity: number) => {
+    console.log(`🔄 Processing return of ${returnQuantity} ${itemType}`);
     
-    return { returnableItems, availableItems };
-  }, [clientTransactions]); // Recalculate when transactions change
+    // Create a return transaction (negative transaction)
+    const returnDescription = `Returned: ${returnQuantity} ${itemType}${returnQuantity > 1 ? 's' : ''}`;
+    
+    try {
+      // Add a return transaction with negative amount or zero amount
+      await addTransaction(client, returnDescription, 0);
+      
+      console.log(`✅ Successfully processed return of ${returnQuantity} ${itemType}`);
+    } catch (error) {
+      console.error(`❌ Failed to process return:`, error);
+      throw error;
+    }
+  };
+
+  // Helper function to calculate how much has already been returned
+  const getReturnedQuantity = (itemType: string): number => {
+    return clientTransactions
+      .filter(transaction => transaction.type === 'debt' && transaction.description.toLowerCase().includes('returned'))
+      .reduce((total, transaction) => {
+        const description = transaction.description.toLowerCase();
+        if (description.includes(itemType.toLowerCase())) {
+          // Extract quantity from return transaction
+          const match = description.match(/returned:\s*(\d+)\s+/);
+          if (match) {
+            return total + parseInt(match[1]);
+          }
+        }
+        return total;
+      }, 0);
+  };
+
+  // Get returnable items from transaction history
+  const returnableItems = getReturnableItems();
+  
+  // Filter out items that have already been returned
+  const availableItems: {[key: string]: {total: number, transactions: Array<{id: string, description: string, amount: number, quantity: number}>}} = {};
+  
+  Object.entries(returnableItems).forEach(([itemType, data]) => {
+    // Calculate net quantity (original - returned)
+    const returnedQuantity = getReturnedQuantity(itemType);
+    const availableQuantity = Math.max(0, data.total - returnedQuantity);
+    
+    if (availableQuantity > 0) {
+      availableItems[itemType] = {
+        ...data,
+        total: availableQuantity
+      };
+    }
+  });
 
   // Sort items by type (Chopine first, then bottle sizes)
   const sortedItemTypes = Object.keys(availableItems).sort((a, b) => {
@@ -378,17 +293,16 @@ const processItemReturn = async (itemType: string, returnQuantity: number) => {
   });
 
   const modalContent = (
-    <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-[9999] p-4 select-none">
-      <div className="bg-white rounded-2xl w-full max-w-md max-h-[90vh] overflow-y-auto select-none">
+    <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 overflow-hidden p-4" style={{ height: '100vh' }}>
+      <div className="bg-white rounded-2xl w-full max-w-md max-h-[90vh] overflow-y-auto">
         {/* Header */}
-        <div className="flex items-center justify-between p-6 border-b border-gray-200 select-none">
+        <div className="flex items-center justify-between p-6 border-b border-gray-200">
           <div>
-            <h2 className="text-xl font-semibold text-gray-900 select-none">{client.name}</h2>
-            <p className="text-gray-600 select-none">ID: {client.id}</p>
-            <div className="text-gray-600 select-none">
-              <p className="select-none">Outstanding: Rs {totalDebt.toLocaleString('en-IN', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</p>
+            <h2 className="text-xl font-semibold text-gray-900">{client.name}</h2>
+            <div className="text-gray-600">
+              <p>Outstanding: Rs {totalDebt.toLocaleString('en-IN', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</p>
               {Object.values(bottlesOwed).some(count => count > 0) && (
-                <p className="text-sm select-none">
+                <p className="text-sm">
                   Bottles owed: {Object.entries(bottlesOwed)
                     .filter(([type, count]) => count > 0)
                     .map(([type, count]) => `${count} ${type.charAt(0).toUpperCase() + type.slice(1)}${count > 1 ? 's' : ''}`)
@@ -406,57 +320,11 @@ const processItemReturn = async (itemType: string, returnQuantity: number) => {
         </div>
 
         {/* Content */}
-        <div className="p-6 overflow-y-auto select-none">
+        <div className="p-6">
           {!showPartialPayment && !showReturnTab ? (
             // Action Selection
-            <div className="space-y-4 select-none">
-              <h3 className="text-lg font-medium text-gray-800 mb-4 select-none">Choose Action</h3>
-              
-              {/* View Details Button */}
-              <button
-                onClick={() => {
-                  onClose();
-                  onViewDetails?.(client);
-                }}
-                disabled={isProcessing}
-                className="w-full flex items-center gap-4 p-4 bg-blue-50 hover:bg-blue-100 rounded-lg border border-blue-200 transition-colors disabled:opacity-50"
-              >
-                <div className="bg-blue-500 p-2 rounded-full">
-                  <User size={20} className="text-white" />
-                </div>
-                <div className="text-left select-none">
-                  <h4 className="font-medium text-gray-800 select-none">View Details</h4>
-                  <p className="text-sm text-gray-600 select-none">See Transaction History and Client Info</p>
-                </div>
-              </button>
-              
-              {/* Link to Calculator Button */}
-              <button
-                onClick={(e) => {
-                  e.preventDefault();
-                  e.stopPropagation();
-                  if (onQuickAdd) {
-                    onQuickAdd(client);
-                    onClose();
-                    // Remove focus from any input fields to dismiss keyboard
-                    if (document.activeElement instanceof HTMLElement) {
-                      document.activeElement.blur();
-                    }
-                    // Scroll to top to ensure calculator is visible
-                    window.scrollTo({ top: 0, behavior: 'smooth' });
-                  }
-                }}
-                disabled={isProcessing}
-                className="w-full flex items-center gap-4 p-4 bg-purple-50 hover:bg-purple-100 rounded-lg border border-purple-200 transition-colors disabled:opacity-50"
-              >
-                <div className="bg-purple-500 p-2 rounded-full">
-                  <Calculator size={20} className="text-white" />
-                </div>
-                <div className="text-left select-none">
-                  <h4 className="font-medium text-gray-800 select-none">Link to Calculator</h4>
-                  <p className="text-sm text-gray-600 select-none">Connect Client to Calculator for Quick Transactions</p>
-                </div>
-              </button>
+            <div className="space-y-4">
+              <h3 className="text-lg font-medium text-gray-800 mb-4">Choose Action</h3>
               
               {/* Return Button - Only show if there are returnable items */}
               {Object.keys(availableItems).length > 0 && (
@@ -468,9 +336,9 @@ const processItemReturn = async (itemType: string, returnQuantity: number) => {
                   <div className="bg-orange-500 p-2 rounded-full">
                     <RotateCcw size={20} className="text-white" />
                   </div>
-                  <div className="text-left select-none">
-                    <h4 className="font-medium text-gray-800 select-none">Return</h4>
-                    <p className="text-sm text-gray-600 select-none">Return Items or Make Adjustments</p>
+                  <div className="text-left">
+                    <h4 className="font-medium text-gray-800">Return</h4>
+                    <p className="text-sm text-gray-600">Return items or make adjustments</p>
                   </div>
                 </button>
               )}
@@ -485,53 +353,35 @@ const processItemReturn = async (itemType: string, returnQuantity: number) => {
                 <div className="bg-blue-500 p-2 rounded-full">
                   <CreditCard size={20} className="text-white" />
                 </div>
-                <div className="text-left select-none">
-                  <h4 className="font-medium text-gray-800 select-none">Partial Payment</h4>
-                  <p className="text-sm text-gray-600 select-none">Record a Partial Payment Amount</p>
+                <div className="text-left">
+                  <h4 className="font-medium text-gray-800">Partial Payment</h4>
+                  <p className="text-sm text-gray-600">Record a partial payment amount</p>
                 </div>
               </button>
              )}
 
               {/* Settle Button */}
-              {/* Settle Button - Only show if there's debt AND returnables */}
-              {totalDebt > 0 && Object.keys(availableItems).length > 0 ? (
-                <button
-                  onClick={() => setShowAccountSettleConfirm(true)}
-                  disabled={isProcessing}
-                  className="w-full flex items-center gap-4 p-4 bg-green-50 hover:bg-green-100 rounded-lg border border-green-200 transition-colors disabled:opacity-50"
-                >
-                  <div className="bg-green-500 p-2 rounded-full">
-                    <CheckCircle size={20} className="text-white" />
-                  </div>
-                  <div className="text-left">
-                    <h4 className="font-medium text-gray-800">Settle Account</h4>
-                    <p className="text-sm text-gray-600">Mark as Fully Paid and Remove</p>
-                  </div>
-                </button>
-              ) : totalDebt > 0 && Object.keys(availableItems).length === 0 ? (
-                /* Show simple confirmation modal for clients with debt but no returnables */
-                <button
-                  onClick={() => setShowSimpleSettleConfirm(true)}
-                  disabled={isProcessing}
-                  className="w-full flex items-center gap-4 p-4 bg-blue-50 hover:bg-blue-100 rounded-lg border border-blue-200 transition-colors disabled:opacity-50"
-                >
-                  <div className="bg-blue-500 p-2 rounded-full">
-                    <CheckCircle size={20} className="text-white" />
-                  </div>
-                  <div className="text-left">
-                    <h4 className="font-medium text-gray-800">Settle Account</h4>
-                    <p className="text-sm text-gray-600">Mark Debt as Fully Paid and Clear All Transactions</p>
-                  </div>
-                </button>
-              ) : null /* Hide settle option if no debt and no returnables */}
+              <button
+                onClick={handleSettle}
+                disabled={isProcessing}
+                className="w-full flex items-center gap-4 p-4 bg-green-50 hover:bg-green-100 rounded-lg border border-green-200 transition-colors disabled:opacity-50"
+              >
+                <div className="bg-green-500 p-2 rounded-full">
+                  <CheckCircle size={20} className="text-white" />
+                </div>
+                <div className="text-left">
+                  <h4 className="font-medium text-gray-800">Settle Account</h4>
+                  <p className="text-sm text-gray-600">Mark as fully paid and remove</p>
+                </div>
+              </button>
             </div>
           ) : showPartialPayment ? (
             // Partial Payment Form
-            <div className="select-none">
-              <h3 className="text-lg font-medium text-gray-800 mb-4 select-none">Partial Payment</h3>
+            <div>
+              <h3 className="text-lg font-medium text-gray-800 mb-4">Partial Payment</h3>
               
               <div className="mb-4">
-                <label className="block text-sm font-medium text-gray-700 mb-2 select-none">
+                <label className="block text-sm font-medium text-gray-700 mb-2">
                   Payment Amount (Rs)
                 </label>
                 <div className="relative">
@@ -539,13 +389,15 @@ const processItemReturn = async (itemType: string, returnQuantity: number) => {
                     type="number"
                     value={paymentAmount}
                     onChange={(e) => setPaymentAmount(e.target.value)}
+                    max={totalDebt}
+                    min="0.01"
                     step="0.01"
                     placeholder="0.00"
                     className="block w-full px-4 py-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
                   />
                 </div>
-                <p className="text-xs text-gray-500 mt-1 select-none">
-                  Maximum: Rs {totalDebt.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
+                <p className="text-xs text-gray-500 mt-1">
+                  Maximum: Rs {totalDebt.toLocaleString('en-IN', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
                 </p>
               </div>
 
@@ -558,7 +410,6 @@ const processItemReturn = async (itemType: string, returnQuantity: number) => {
                   Back
                 </button>
                 <button
-                  type="button"
                   onClick={handlePartialPayment}
                   disabled={isProcessing || !paymentAmount}
                   className="flex-1 px-4 py-2 bg-blue-500 text-white rounded-lg hover:bg-blue-600 transition-colors disabled:opacity-50"
@@ -569,20 +420,48 @@ const processItemReturn = async (itemType: string, returnQuantity: number) => {
             </div>
           ) : (
             // Return Tab
-            <div className="select-none">
+            <div>
               <div className="flex items-center gap-2 mb-4">
                 <button
                   onClick={() => setShowReturnTab(false)}
                   className="text-gray-500 hover:text-gray-700"
                 >
-                  <ArrowLeft size={20} />
+                  <X size={20} />
                 </button>
-                <h3 className="text-lg font-medium text-gray-800 select-none">Return Chopine & Bouteille</h3>
+                <h3 className="text-lg font-medium text-gray-800">Return Chopine & Bouteille</h3>
                 <div className="flex-1"></div>
                 <button
                   onClick={async () => {
-                    setSettleAction({ type: 'all' });
-                    setShowSettleConfirm(true);
+                    const confirmed = window.confirm(
+                      `Return ALL available Chopine & Bouteille items for ${client.name}? This will mark all returnable containers as returned.`
+                    );
+                    if (confirmed) {
+                      try {
+                        setIsProcessing(true);
+                        // Set all available items to be returned
+                        const allReturns: {[key: string]: number} = {};
+                        Object.entries(availableItems).forEach(([itemType, data]) => {
+                          allReturns[itemType] = data.total;
+                        });
+                        
+                        // Process all returns
+                        for (const [itemType, quantity] of Object.entries(allReturns)) {
+                          if (quantity > 0) {
+                            await processItemReturn(itemType, quantity);
+                          }
+                        }
+                        onClose();
+                        // Reset calculator after settling all returnables
+                        if (onResetCalculator) {
+                          onResetCalculator();
+                        }
+                      } catch (error) {
+                        console.error('Error settling all returnables:', error);
+                        alert('Failed to settle all returnables');
+                      } finally {
+                        setIsProcessing(false);
+                      }
+                    }
                   }}
                   disabled={isProcessing || Object.keys(availableItems).length === 0}
                   className="bg-red-500 hover:bg-red-600 text-white p-2 rounded-lg transition-colors disabled:opacity-50 flex items-center gap-1"
@@ -594,8 +473,8 @@ const processItemReturn = async (itemType: string, returnQuantity: number) => {
               </div>
               
               {Object.keys(availableItems).length === 0 ? (
-                <div className="text-center py-8 text-gray-500 select-none">
-                  <p className="select-none">No Chopine or Bouteille items found in transaction history</p>
+                <div className="text-center py-8 text-gray-500">
+                  <p>No Chopine or Bouteille items found in transaction history</p>
                 </div>
               ) : (
                 <div className="space-y-4 mb-6">
@@ -604,85 +483,34 @@ const processItemReturn = async (itemType: string, returnQuantity: number) => {
                     return (
                     <div key={itemType} className="bg-gray-50 rounded-lg p-4 border border-gray-200">
                       <div className="flex items-center justify-between mb-3">
-                        <div className="select-none">
-                          <h4 className="font-medium text-gray-800 select-none">
-                            {(() => {
-                              // Properly format the item type for display
-                              if (itemType.includes('Bouteille') || itemType.includes('Chopine')) {
-                                // Already in correct format like "Bouteille 1.5L Pepsi" or "Chopine Beer"
-                                // But ensure proper capitalization of brand names
-                                if (itemType.includes('Bouteille')) {
-                                  // Split by spaces and capitalize each word after the first occurrence of a size pattern
-                                  const parts = itemType.split(' ');
-                                  const capitalizedParts = [];
-                                  let foundSize = false;
-                                  
-                                  for (let i = 0; i < parts.length; i++) {
-                                    const part = parts[i];
-                                    if (/\d+[Ll]$/.test(part) || part === 'Bouteille') {
-                                      capitalizedParts.push(part);
-                                      if (/\d+[Ll]$/.test(part)) foundSize = true;
-                                    } else if (foundSize) {
-                                      // This is a brand name after the size, capitalize it (preserve alphanumeric brands like "7les")
-                                      if (/^\d/.test(part)) {
-                                        capitalizedParts.push(part.toLowerCase());
-                                      } else {
-                                        capitalizedParts.push(part.charAt(0).toUpperCase() + part.slice(1).toLowerCase());
-                                      }
-                                    } else {
-                                      // This is a brand name before the size, capitalize it (preserve alphanumeric brands like "7les")
-                                      if (/^\d/.test(part)) {
-                                        capitalizedParts.push(part.toLowerCase());
-                                      } else {
-                                        capitalizedParts.push(part.charAt(0).toUpperCase() + part.slice(1).toLowerCase());
-                                      }
-                                    }
-                                  }
-                                  return capitalizedParts.join(' ');
-                                } else {
-                                  return itemType;
-                                }
-                              } else if (itemType.includes('L ') && itemType.includes(' ')) {
-                                // This is likely a sized bottle like "1.5L Pepsi", format as "Bouteille 1.5L Pepsi"
-                                // Also ensure proper capitalization
-                                const parts = itemType.split(' ');
-                                if (parts.length >= 2) {
-                                  // Capitalize the brand name part (preserve alphanumeric brands like "7les")
-                                  const brand = parts.slice(1).map(word => {
-                                    if (/^\d/.test(word)) {
-                                      return word.toLowerCase();
-                                    }
-                                    return word.charAt(0).toUpperCase() + word.slice(1).toLowerCase();
-                                  }).join(' ');
-                                  return `Bouteille ${parts[0]} ${brand}`;
-                                }
-                                return `Bouteille ${itemType}`;
-                              } else {
-                                // This is likely a general brand, format as "Bouteille Brand"
-                                // Capitalize the brand name properly (preserve alphanumeric brands like "7les")
-                                const capitalizedBrand = itemType.split(' ').map(word => {
-                                  if (/^\d/.test(word)) {
-                                    return word.toLowerCase();
-                                  }
-                                  return word.charAt(0).toUpperCase() + word.slice(1).toLowerCase();
-                                }).join(' ');
-                                return `Bouteille ${capitalizedBrand}`;
-                              }
-                            })()}
-                          </h4>
-                          <p className="text-sm text-gray-600 select-none">Available to return: {data.total}</p>
+                        <div>
+                          <h4 className="font-medium text-gray-800">{itemType}</h4>
+                          <p className="text-sm text-gray-600">Available to return: {data.total}</p>
                         </div>
                         <div className="flex items-center gap-2">
                           {/* Individual Settle Button */}
                           <button
                             type="button"
                             onClick={async () => {
-                              setSettleAction({ 
-                                type: 'individual', 
-                                itemType: itemType, 
-                                quantity: data.total 
-                              });
-                              setShowSettleConfirm(true);
+                              const confirmed = window.confirm(
+                                `Return all ${data.total} ${itemType}${data.total > 1 ? 's' : ''} for ${client.name}?`
+                              );
+                              if (confirmed) {
+                                try {
+                                  setIsProcessing(true);
+                                  await processItemReturn(itemType, data.total);
+                                  onClose();
+                                  // Reset calculator after settling individual item
+                                  if (onResetCalculator) {
+                                    onResetCalculator();
+                                  }
+                                } catch (error) {
+                                  console.error('Error settling item type:', error);
+                                  alert(`Failed to settle ${itemType}`);
+                                } finally {
+                                  setIsProcessing(false);
+                                }
+                              }
                             }}
                             disabled={isProcessing}
                             className="p-1 text-red-500 hover:text-red-700 hover:bg-red-50 rounded transition-colors disabled:opacity-50"
@@ -717,122 +545,22 @@ const processItemReturn = async (itemType: string, returnQuantity: number) => {
                       {/* Show recent transactions for this item type */}
                       <div className="text-xs text-gray-500">
                         <p className="font-medium mb-1">Recent transactions:</p>
-                        {(() => {
-                          // Calculate the original total by considering all transactions
-                          // Since data.total already reflects the net available after returns,
-                          // we need to reconstruct the original amount for display purposes
-                          // by finding original transactions that created these items
-                          
-                          // Get the original total from the original transactions before returns were applied
-                          // For display purposes, we'll calculate based on transaction analysis
-                          const originalTransactions = clientTransactions.filter(t => 
-                            !t.description.toLowerCase().includes('returned') &&
-                            (t.description.toLowerCase().includes('bouteille') || 
-                             t.description.toLowerCase().includes('chopine'))
-                          );
-                          
-                          // Find transactions that match this item type
-                          const matchingOriginalTransactions = originalTransactions.filter(t => 
-                            t.description.toLowerCase().includes(itemType.toLowerCase().split(' ')[0])
-                          );
-                          
-                          // Sum up quantities from matching original transactions
-                          let originalTotal = 0;
-                          matchingOriginalTransactions.forEach(t => {
-                            // Extract quantity from transaction description
-                            const quantityMatch = t.description.match(/(\d+)\s+/);
-                            if (quantityMatch) {
-                              originalTotal += parseInt(quantityMatch[1]);
-                            }
-                          });
-                          
-                          // Calculate returned quantity by finding return transactions for this item
-                          const returnTransactions = clientTransactions.filter(t =>
-                            t.type === 'debt' &&
-                            t.description.toLowerCase().includes('returned') &&
-                            t.description.toLowerCase().includes(itemType.toLowerCase())
-                          );
-                          
-                          let returnedTotal = 0;
-                          returnTransactions.forEach(t => {
-                            // Extract quantity from return transaction
-                            const quantityMatch = t.description.toLowerCase().match(/returned:\s*(\d+)/i);
-                            if (quantityMatch) {
-                              returnedTotal += parseInt(quantityMatch[1]);
-                            }
-                          });
-                          
-                          const totalOriginal = originalTotal; // Use original total calculated from transactions
-                          
-                          // Get unique transactions for this item type
-                          const uniqueTransactions = data.transactions.reduce((unique: any[], transaction) => {
-                            // Check if this transaction is already in the unique array
-                            const exists = unique.find(t => 
-                              t.id === transaction.id || 
-                              (t.description === transaction.description && 
-                               Math.abs(t.date.getTime() - transaction.date.getTime()) < 1000) // Same description within 1 second
-                            );
-                            
-                            if (!exists) {
-                              unique.push(transaction);
-                            }
-                            return unique;
-                          }, []);
-                          
-                          // Only show transactions if there are still unreturned items
-                          const relevantTransactions = availableItems[itemType] && availableItems[itemType].total > 0 
-                            ? uniqueTransactions.slice(-2) // Show last 2 unique transactions
-                            : [];
-                          
-                          return relevantTransactions.map((transaction, index) => {
+                        {data.transactions.slice(-2).map((transaction, index) => {
+                          const transactionDate = new Date(transaction.date || Date.now());
                           return (
-                            <div key={index} className="truncate">
-                              • <ScrollingText 
-                                text={`${transaction.description} (${transaction.quantity} ${(() => {
-                                  // Properly format the item type for display in transaction
-                                  if (itemType.includes('Bouteille') || itemType.includes('Chopine')) {
-                                    // Already in correct format like "Bouteille 1.5L Pepsi" or "Chopine Beer"
-                                    return itemType;
-                                  } else if (itemType.includes('L ') && itemType.includes(' ')) {
-                                    // This is likely a sized bottle like "1.5L Pepsi", format as "Bouteille 1.5L Pepsi"
-                                    // Capitalize brand name properly (preserve alphanumeric brands like "7les")
-                                    const parts = itemType.split(' ');
-                                    const brand = parts.slice(1).map(word => {
-                                      if (/^\d/.test(word)) {
-                                        return word.toLowerCase();
-                                      }
-                                      return word.charAt(0).toUpperCase() + word.slice(1).toLowerCase();
-                                    }).join(' ');
-                                    return `Bouteille ${parts[0]} ${brand}`;
-                                  } else {
-                                    // This is likely a general brand, format as "Bouteille Brand"
-                                    // Capitalize brand name properly (preserve alphanumeric brands like "7les")
-                                    const capitalizedBrand = itemType.split(' ').map(word => {
-                                      if (/^\d/.test(word)) {
-                                        return word.toLowerCase();
-                                      }
-                                      return word.charAt(0).toUpperCase() + word.slice(1).toLowerCase();
-                                    }).join(' ');
-                                    return `Bouteille ${capitalizedBrand}`;
-                                  }
-                                })()}) - ${transaction.date.toLocaleDateString('en-GB', {
+                            <p key={index} className="truncate">
+                              • {transaction.description} ({transaction.quantity} {itemType}) - {transactionDate.toLocaleDateString('en-GB', {
                                 day: '2-digit',
                                 month: '2-digit',
                                 year: 'numeric'
-                              })} ${transaction.date.toLocaleTimeString('en-GB', {
+                              })} {transactionDate.toLocaleTimeString('en-GB', {
                                 hour: '2-digit',
                                 minute: '2-digit',
                                 hour12: false
-                              })}`}
-                                className="text-xs text-gray-500"
-                                pauseDuration={1}
-                                scrollDuration={3}
-                                easing="power1.inOut"
-                              />
-                            </div>
+                              })}
+                            </p>
                           );
-                          });
-                        })()}
+                        })}
                         
                         {/* Show returned items for this type */}
                         {(() => {
@@ -842,42 +570,20 @@ const processItemReturn = async (itemType: string, returnQuantity: number) => {
                               transaction.description.toLowerCase().includes('returned') &&
                               transaction.description.toLowerCase().includes(itemType.toLowerCase())
                             )
-                            .filter(transaction => {
-                              // Only show returned transactions that are newer than the most recent non-return transaction for this item type
-                              const mostRecentTakeTransaction = clientTransactions
-                                .filter(t => 
-                                  t.type === 'debt' && 
-                                  !t.description.toLowerCase().includes('returned') &&
-                                  t.description.toLowerCase().includes(itemType.toLowerCase().split(' ')[0])
-                                )
-                                .sort((a, b) => b.date.getTime() - a.date.getTime())[0];
-                              
-                              // If no take transaction exists, don't show any returns
-                              if (!mostRecentTakeTransaction) return false;
-                              
-                              // Only show returns that happened after the most recent take
-                              return transaction.date.getTime() > mostRecentTakeTransaction.date.getTime();
-                            })
-                            .slice(-2); // Show last 2 relevant returned transactions
+                            .slice(-2); // Show last 2 returned transactions
                           
                           return returnedTransactions.map((transaction, index) => (
-                            <div key={`returned-${index}`} className="truncate text-green-600">
-                              • <ScrollingText 
-                                text={`${transaction.description} - ${transaction.date.toLocaleDateString('en-GB', {
-                                  day: '2-digit',
-                                  month: 'short',
-                                  year: '2-digit'
-                                }).replace(/\s/g, '-')} ${transaction.date.toLocaleTimeString('en-GB', {
-                                  hour: '2-digit',
-                                  minute: '2-digit',
-                                  hour12: false
-                                })}`}
-                                className="text-xs text-green-600"
-                                pauseDuration={1}
-                                scrollDuration={3}
-                                easing="power1.inOut"
-                              />
-                            </div>
+                            <p key={`returned-${index}`} className="truncate text-green-600">
+                              • {transaction.description} - {transaction.date.toLocaleDateString('en-GB', {
+                                day: '2-digit',
+                                month: '2-digit',
+                                year: 'numeric'
+                              })} {transaction.date.toLocaleTimeString('en-GB', {
+                                hour: '2-digit',
+                                minute: '2-digit',
+                                hour12: false
+                              })}
+                            </p>
                           ));
                         })()}
                       </div>
@@ -897,405 +603,6 @@ const processItemReturn = async (itemType: string, returnQuantity: number) => {
           )}
         </div>
       </div>
-
-      {/* Settle Confirmation Modal */}
-      {showSettleConfirm && settleAction && (
-        <SettleConfirmationModal
-          isOpen={showSettleConfirm}
-          title={settleAction.type === 'all' ? 'Settle All Returns' : 'Settle Item Returns'}
-          message={
-            settleAction.type === 'all'
-              ? `Return All Available Chopine & Bouteille Items for ${client.name}?`
-              : `Return All ${settleAction.quantity} ${settleAction.itemType}${(settleAction.quantity || 0) > 1 ? 's' : ''} for ${client.name}?`
-          }
-          itemDetails={
-            settleAction.type === 'all'
-              ? `This Will Mark All Returnable Containers as Returned.`
-              : `This Will Mark ${settleAction.quantity} ${settleAction.itemType}${(settleAction.quantity || 0) > 1 ? 's' : ''} as returned.`
-          }
-          clientName={client.name}
-          clientId={client.id}
-          outstandingDebt={totalDebt.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
-          remainingItems={Object.entries(availableItems)
-            .map(([itemType, data]) => `${data.total} ${itemType}`)
-            .join(', ')}
-          onConfirm={async () => {
-            try {
-              setIsProcessing(true);
-              if (settleAction.type === 'all') {
-                // Set all available items to be returned
-                const allReturns: {[key: string]: number} = {};
-                Object.entries(availableItems).forEach(([itemType, data]) => {
-                  allReturns[itemType] = data.total;
-                });
-                
-                // Process all returns
-                for (const [itemType, quantity] of Object.entries(allReturns)) {
-                  await processItemReturn(itemType, quantity);
-                }
-                
-                // Show duplicate card for successful return settlement
-                window.dispatchEvent(new CustomEvent('showDuplicateCard', {
-                  detail: { 
-                    ...client,
-                    isAccountClear: false,
-                    message: 'All Returnables Settled Successfully!',
-                    transactionDescription: 'Returned All Returnable Items'
-                  }
-                }));
-              } else if (settleAction.itemType && settleAction.quantity) {
-                // Process individual item return
-                await processItemReturn(settleAction.itemType, settleAction.quantity);
-                
-                // Show duplicate card for successful individual return settlement
-                // Properly format the item type for display in return success message
-                let formattedItemDisplay = settleAction.itemType;
-                if (settleAction.itemType.includes('Bouteille')) {
-                  // For Bouteille items like "Bouteille Pepsi", format as "1 Bouteille Pepsi"
-                  let brand = settleAction.itemType.replace(/^(Bouteilles?)/i, '').trim();
-                  if (brand) {
-                    // Singularize French plural words when quantity is 1 (e.g., "Vins" → "Vin")
-                    // But don't singularize brand names like "7seas"
-                    if ((settleAction.quantity || 0) === 1 && brand.endsWith('s') && !brand.match(/^\d/)) {
-                      const lowerBrand = brand.toLowerCase();
-                      const frenchPlurals = ['vins', 'bières', 'jus', 'sodas'];
-                      if (frenchPlurals.some(plural => lowerBrand === plural)) {
-                        brand = brand.slice(0, -1);
-                      }
-                    }
-                    formattedItemDisplay = `Bouteille${(settleAction.quantity || 0) > 1 ? 's' : ''} ${brand}`;
-                  } else {
-                    formattedItemDisplay = `Bouteille${(settleAction.quantity || 0) > 1 ? 's' : ''}`;
-                  }
-                } else if (settleAction.itemType.includes('Chopine')) {
-                  // For chopine items
-                  const brand = settleAction.itemType.replace(/^(Chopines?)/i, '').trim();
-                  if (brand) {
-                    formattedItemDisplay = `Chopine${(settleAction.quantity || 0) > 1 ? 's' : ''} ${brand}`;
-                  } else {
-                    formattedItemDisplay = `Chopine${(settleAction.quantity || 0) > 1 ? 's' : ''}`;
-                  }
-                }
-                
-                window.dispatchEvent(new CustomEvent('showDuplicateCard', {
-                  detail: { 
-                    ...client,
-                    isAccountClear: false,
-                    message: `${settleAction.quantity} ${formattedItemDisplay} returned successfully!`,
-                    transactionDescription: `Returned: ${settleAction.quantity} ${formattedItemDisplay}`
-                  }
-                }));
-              }
-              
-              // Don't dispatch creditDataChanged - let MutationObserver handle it automatically
-              // window.dispatchEvent(new CustomEvent('creditDataChanged', { detail: { source: 'clientActionReturn' } }));
-              
-              setShowSettleConfirm(false);
-              setSettleAction(null);
-              onClose();
-            } catch (error) {
-              console.error('Error settling items:', error);
-              showAlert({ type: 'error', message: `Failed to Settle ${settleAction.type === 'all' ? 'All Items' : settleAction.itemType}` });
-            } finally {
-              setIsProcessing(false);
-            }
-          }}
-          onCancel={() => {
-            setShowSettleConfirm(false);
-            setSettleAction(null);
-          }}
-          isProcessing={isProcessing}
-        />
-      )}
-
-      {/* Account Settle Confirmation Modal */}
-      {showAccountSettleConfirm && (
-        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-[9999] p-4 select-none">
-          <div className="bg-white rounded-2xl w-full max-w-md max-h-[90vh] overflow-y-auto select-none">
-            
-            {/* Header */}
-            <div className="flex items-center justify-between p-6 border-b border-gray-200 select-none">
-              <div className="flex items-center gap-3 select-none">
-                <div className="bg-green-100 p-2 rounded-full select-none">
-                  <CheckCircle size={20} className="text-green-600" />
-                </div>
-                <h2 className="text-xl font-semibold text-gray-900 select-none">Settle Account</h2>
-              </div>
-              <button 
-                onClick={() => setShowAccountSettleConfirm(false)}
-                disabled={isProcessing}
-                className="text-gray-500 hover:text-gray-700 transition-colors disabled:opacity-50"
-              >
-                <X size={24} />
-              </button>
-            </div>
-
-            {/* Content */}
-            <div className="p-6 overflow-y-auto select-none">
-              <div className="flex items-start gap-3 mb-4 select-none">
-                <div className="bg-yellow-100 p-2 rounded-full flex-shrink-0 select-none">
-                  <AlertTriangle size={20} className="text-yellow-600" />
-                </div>
-                <div className="flex-1 select-none">
-                  <p className="text-gray-700 mb-2 select-none">
-                    Are you sure you want to settle the account for <strong>{client.name}</strong>?
-                  </p>
-                  <div className="bg-gray-50 rounded-lg p-3 border border-gray-200 mb-3 select-none">
-                    <div className="space-y-1 text-sm select-none">
-                      <p className="select-none">
-                        <span className="font-medium">Outstanding Debt:</span> Rs {totalDebt.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
-                      </p>
-                      {Object.values(bottlesOwed).some(count => count > 0) && (
-                        <p className="select-none">
-                          <span className="font-medium">Bottles Owed:</span> {Object.entries(bottlesOwed)
-                            .filter(([_, count]) => count > 0)
-                            .map(([type, count]) => `${count} ${type.charAt(0).toUpperCase() + type.slice(1)}${count > 1 ? 's' : ''}`)
-                            .join(', ')}
-                        </p>
-                      )}
-                      {Object.keys(availableItems).length > 0 && (
-                        <p className="select-none">
-                          <span className="font-medium">Returnable Items:</span> {Object.entries(availableItems)
-                            .map(([itemType, data]) => `${data.total} ${itemType}`)
-                            .join(', ')}
-                        </p>
-                      )}
-                    </div>
-                  </div>
-                </div>
-              </div>
-
-              {/* Settlement Options */}
-              <div className="space-y-3 mb-6 select-none">
-                {/* Settle Amount Only - Only show if client has debt */}
-                {totalDebt > 0 && (
-                  <button
-                    onClick={async () => {
-                      setShowAccountSettleConfirm(false);
-                      try {
-                        await handleSettle();
-                        
-                        // Force update of duplicate card and other UI components with delay
-                        setTimeout(() => {
-                          window.dispatchEvent(new CustomEvent('creditDataChanged', { detail: { source: 'clientActionSettle' } }));
-                          
-                          // Show duplicate card for settled client
-                          window.dispatchEvent(new CustomEvent('showDuplicateCard', {
-                            detail: { 
-                              ...client, 
-                              isAccountClear: true,
-                              message: 'Account Cleared Successfully!',
-                              transactionDescription: Object.keys(availableItems).length > 0 ? 'Account Settled (Returnables Preserved)' : 'Account Settled Successfully'
-                            }
-                          }));
-                        }, 100);
-                      } catch (error) {
-                        console.error('Error settling account:', error);
-                      }
-                    }}
-                    disabled={isProcessing}
-                    className="w-full flex items-center gap-4 p-4 bg-blue-50 hover:bg-blue-100 rounded-lg border border-blue-200 transition-colors disabled:opacity-50 select-none"
-                  >
-                    <div className="bg-blue-500 p-2 rounded-full select-none">
-                      <DollarSign size={20} className="text-white" />
-                    </div>
-                    <div className="text-left flex-1 select-none">
-                      <h4 className="font-medium text-gray-800 select-none">Settle Account Only</h4>
-                      <p className="text-sm text-gray-600 select-none">
-                        {Object.keys(availableItems).length > 0 
-                          ? 'Mark Account as Fully Paid but Keep Returnables' 
-                          : 'Mark Account as Fully Paid'}
-                      </p>
-                      <p className="text-xs text-green-600 select-none">
-                        Debt: Rs {totalDebt.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
-                      </p>
-                    </div>
-                  </button>
-                )}
-
-                {/* Settle Account + Clear Returnables - Only show if there are returnables or debt */}
-                {(totalDebt > 0 || Object.keys(availableItems).length > 0) && (
-                  <button
-                    onClick={async () => {
-                      try {
-                        setIsProcessing(true);
-                        setShowAccountSettleConfirm(false);
-                        
-                        // Settle the account with full clear (this clears ALL transactions including returnables)
-                        await handleSettleWithFullClear();
-                        
-                        // Force update of duplicate card and other UI components with delay
-                        setTimeout(() => {
-                          window.dispatchEvent(new CustomEvent('creditDataChanged', { detail: { source: 'clientActionSettle' } }));
-                          
-                          // Show duplicate card for settled client
-                          window.dispatchEvent(new CustomEvent('showDuplicateCard', {
-                            detail: { 
-                              ...client,
-                              isAccountClear: true,
-                              message: 'Account Cleared Successfully!',
-                              transactionDescription: Object.keys(availableItems).length > 0 
-                                ? 'Account Settled And All Returnables Cleared' 
-                                : 'Account Settled Successfully'
-                            }
-                          }));
-                        }, 100);
-                      } catch (error) {
-                        console.error('Error settling account with returns:', error);
-                        showAlert({ type: 'error', message: 'Failed to Settle Account' });
-                      } finally {
-                        setIsProcessing(false);
-                      }
-                    }}
-                    disabled={isProcessing}
-                    className="w-full flex items-center gap-4 p-4 bg-green-50 hover:bg-green-100 rounded-lg border border-green-200 transition-colors disabled:opacity-50 select-none"
-                  >
-                    <div className="bg-green-500 p-2 rounded-full select-none">
-                      <CheckCircle size={20} className="text-white" />
-                    </div>
-                    <div className="text-left flex-1 select-none">
-                      <h4 className="font-medium text-gray-800">
-                        {Object.keys(availableItems).length > 0 
-                          ? 'Settle Account + Clear Returnables' 
-                          : 'Settle Account'}
-                      </h4>
-                      <p className="text-sm text-gray-600 select-none">
-                        {totalDebt > 0 
-                          ? (Object.keys(availableItems).length > 0 
-                              ? 'Mark Account as Fully Paid and Clear All Returnables' 
-                              : 'Mark Account as Fully Paid')
-                          : 'Clear all data for this client'}
-                      </p>
-                      {totalDebt > 0 && (
-                        <p className="text-xs text-green-600 select-none">
-                          Debt: Rs {totalDebt.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
-                        </p>
-                      )}
-                      {Object.keys(availableItems).length > 0 && (
-                        <p className="text-xs text-orange-600 select-none">
-                          + Clears: {Object.entries(availableItems)
-                            .map(([itemType, data]) => `${data.total} ${itemType}`)
-                            .join(', ')}
-                        </p>
-                      )}
-                    </div>
-                  </button>
-                )}
-              </div>
-
-              {/* Cancel Button */}
-              <div className="flex justify-center select-none">
-                <button
-                  onClick={() => setShowAccountSettleConfirm(false)}
-                  disabled={isProcessing}
-                  className="px-6 py-2 border border-gray-300 rounded-lg text-gray-700 bg-white hover:bg-gray-50 transition-colors disabled:opacity-50 font-medium select-none"
-                >
-                  Cancel
-                </button>
-              </div>
-            </div>
-          </div>
-        </div>
-      )}
-
-      {/* Simple Settle Confirmation Modal for clients with only amount */}
-      {showSimpleSettleConfirm && (
-        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-[9999] p-4 select-none">
-          <div className="bg-white rounded-2xl w-full max-w-md max-h-[90vh] overflow-y-auto select-none">
-            
-            {/* Header */}
-            <div className="flex items-center justify-between p-6 border-b border-gray-200 select-none">
-              <div className="flex items-center gap-3 select-none">
-                <div className="bg-blue-100 p-2 rounded-full select-none">
-                  <CheckCircle size={20} className="text-blue-600" />
-                </div>
-                <h2 className="text-xl font-semibold text-gray-900 select-none">Settle Account</h2>
-              </div>
-              <button 
-                onClick={() => setShowSimpleSettleConfirm(false)}
-                disabled={isProcessing}
-                className="text-gray-500 hover:text-gray-700 transition-colors disabled:opacity-50"
-              >
-                <X size={24} />
-              </button>
-            </div>
-
-            {/* Content */}
-            <div className="p-6 overflow-y-auto select-none">
-              <div className="flex items-start gap-3 mb-4 select-none">
-                <div className="bg-yellow-100 p-2 rounded-full flex-shrink-0 select-none">
-                  <AlertTriangle size={20} className="text-yellow-600" />
-                </div>
-                <div className="flex-1 select-none">
-                  <p className="text-gray-700 mb-2 select-none">
-                    Are you sure you want to settle the account for <strong>{client.name}</strong>?
-                  </p>
-                  <div className="bg-gray-50 rounded-lg p-3 border border-gray-200 mb-3 select-none">
-                    <div className="space-y-1 text-sm select-none">
-                      <p className="select-none">
-                        <span className="font-medium">Outstanding Debt:</span> Rs {totalDebt.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
-                      </p>
-                    </div>
-                  </div>
-                  <p className="text-gray-600 text-sm select-none">
-                    This will mark the account as fully paid and clear all transactions.
-                  </p>
-                </div>
-              </div>
-
-              {/* Action Buttons */}
-              <div className="flex gap-3 select-none">
-                <button
-                  onClick={() => setShowSimpleSettleConfirm(false)}
-                  disabled={isProcessing}
-                  className="flex-1 px-4 py-3 border border-gray-300 rounded-lg text-gray-700 bg-white hover:bg-gray-50 transition-colors disabled:opacity-50 font-medium select-none"
-                >
-                  Cancel
-                </button>
-                <button
-                  onClick={async () => {
-                    try {
-                      setIsProcessing(true);
-                      setShowSimpleSettleConfirm(false);
-                      
-                      // Settle the account with full clear
-                      await handleSettleWithFullClear();
-                      
-                      // Force update of duplicate card and other UI components with delay
-                      setTimeout(() => {
-                        window.dispatchEvent(new CustomEvent('creditDataChanged', { detail: { source: 'clientActionSettle' } }));
-                        
-                        // Show duplicate card for settled client
-                        window.dispatchEvent(new CustomEvent('showDuplicateCard', {
-                          detail: { 
-                            ...client,
-                            isAccountClear: true,
-                            message: 'Account Cleared Successfully!',
-                            transactionDescription: 'Account Settled Successfully'
-                          }
-                        }));
-                      }, 100);
-                    } catch (error) {
-                      console.error('Error settling account:', error);
-                      showAlert({ type: 'error', message: 'Failed to Settle Account' });
-                    } finally {
-                      setIsProcessing(false);
-                      onClose();
-                      if (onResetCalculator) {
-                        onResetCalculator();
-                      }
-                    }
-                  }}
-                  disabled={isProcessing}
-                  className="flex-1 px-4 py-3 bg-blue-500 text-white rounded-lg hover:bg-blue-600 transition-colors disabled:opacity-50 font-medium select-none"
-                >
-                  {isProcessing ? 'Settling...' : 'Confirm Settle'}
-                </button>
-              </div>
-            </div>
-          </div>
-        </div>
-      )}
     </div>
   );
 

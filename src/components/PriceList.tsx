@@ -20,7 +20,7 @@ const PriceList: React.FC = () => {
     setEditingItem(item);
   };
   
-  const handleSave = async (id: string, name: string, price: number, grossPrice?: number) => {
+  const handleSave = async (id: string, name: string, price: number, grossPrice: number) => {
     try {
       await updateItem(id, name, price, grossPrice);
       setEditingItem(null);
@@ -61,7 +61,7 @@ const PriceList: React.FC = () => {
   if (isLoading) {
     return (
       <div 
-        className="overflow-y-auto select-none"
+        className="overflow-y-auto"
         style={{ 
           height: 'calc(100vh - 60px - 84px - 64px)',
           minHeight: '200px'
@@ -75,7 +75,7 @@ const PriceList: React.FC = () => {
   if (error) {
     return (
       <div 
-        className="overflow-y-auto select-none"
+        className="overflow-y-auto"
         style={{ 
           height: 'calc(100vh - 60px - 84px - 64px)',
           minHeight: '200px'
@@ -88,19 +88,19 @@ const PriceList: React.FC = () => {
 
   return (
     <div 
-      className="overflow-y-auto select-none"
+      className="overflow-y-auto"
       style={{ 
         height: 'calc(100vh - 64px - 84px - 64px)',
         minHeight: '200px'
       }}
     >
-      <div className="w-full px-6 pb-6 select-none">
+      <div className="w-full px-6 pb-6">
         <div style={{ height: '25px' }} />
         
         {filteredItems.length === 0 && (
           searchQuery ? (
-            <div className="text-center py-12 select-none">
-              <p className="text-gray-500 text-lg select-none">No items found matching "{searchQuery}"</p>
+            <div className="text-center py-12">
+              <p className="text-gray-500 text-lg">No items found matching "{searchQuery}"</p>
             </div>
           ) : (
             <EmptyState />
@@ -108,7 +108,7 @@ const PriceList: React.FC = () => {
         )}
         
         {filteredItems.map((item) => (
-          <div key={item.id} className="mb-3 select-none">
+          <div key={item.id} className="mb-3">
             <SwipeableItem
               item={item}
               onEdit={handleEdit}
@@ -124,7 +124,6 @@ const PriceList: React.FC = () => {
           item={editingItem}
           onClose={() => setEditingItem(null)}
           onSave={handleSave}
-          requireGrossPrice={false}
         />
       )}
 
