@@ -287,7 +287,7 @@ const ClientCard: React.FC<ClientCardProps> = ({ client, onLongPress, onQuickAdd
         {/* Swipe Indicator */}
         <div className="mt-2 sm:mt-3 text-center">
           <div className="inline-block w-8 h-1 bg-gray-300 rounded-full"></div>
-          <div className="absolute left-0 right-0 mt-1" style={{ transform: 'translateY(-6px)' }}>
+          <div className="mt-1">
             <div className="text-xs text-gray-400 hidden sm:block text-center">
               <p className="select-none">Double click for actions</p>
               <p className="select-none">Long press for details</p>
