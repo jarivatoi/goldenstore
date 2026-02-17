@@ -5,6 +5,7 @@ import { useCredit } from '../context/CreditContext';
 import { Client } from '../types';
 import { useNotification } from '../context/NotificationContext';
 import { calculateReturnableItems } from '../utils/returnableItemsUtils';
+import ImageCropperModal from './ImageCropperModal';
 
 interface ClientDetailModalProps {
   client: Client;
@@ -27,6 +28,7 @@ const ClientDetailModal: React.FC<ClientDetailModalProps> = ({ client, onClose }
   }>({ type: null, title: '', message: '' });
   const [forceUpdate, setForceUpdate] = useState(0);
   const [profilePicture, setProfilePicture] = useState<string | undefined>(client.profilePictureUrl);
+  const [imageForCropping, setImageForCropping] = useState<string | null>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
   
   // Listen for credit data changes to force re-render
@@ -98,34 +100,46 @@ const ClientDetailModal: React.FC<ClientDetailModalProps> = ({ client, onClose }
 
     // Validate file type
     if (!file.type.startsWith('image/')) {
-      showAlert('Please select an image file', 'error');
+      showAlert({ type: 'error', message: 'Please select an image file' });
       return;
     }
 
-    // Validate file size (max 2MB)
-    if (file.size > 2 * 1024 * 1024) {
-      showAlert('Image size should be less than 2MB', 'error');
+    // Validate file size (max 5MB for original, will be compressed after crop)
+    if (file.size > 5 * 1024 * 1024) {
+      showAlert({ type: 'error', message: 'Image size should be less than 5MB' });
       return;
     }
 
     try {
-      // Convert image to base64
+      // Convert image to base64 and open cropper
       const reader = new FileReader();
-      reader.onloadend = async () => {
+      reader.onloadend = () => {
         const base64String = reader.result as string;
-        setProfilePicture(base64String);
-
-        // Save to database
-        const updatedClient = {
-          ...client,
-          profilePictureUrl: base64String
-        };
-        await updateClient(updatedClient);
-        showAlert('Profile picture updated', 'success');
+        setImageForCropping(base64String);
       };
       reader.readAsDataURL(file);
     } catch (error) {
-      showAlert('Failed to update profile picture', 'error');
+      showAlert({ type: 'error', message: 'Failed to load image' });
+    }
+
+    // Reset file input so same file can be selected again
+    event.target.value = '';
+  };
+
+  const handleCroppedImage = async (croppedImage: string) => {
+    try {
+      setProfilePicture(croppedImage);
+      setImageForCropping(null);
+
+      // Save to database
+      const updatedClient = {
+        ...client,
+        profilePictureUrl: croppedImage
+      };
+      await updateClient(updatedClient);
+      showAlert({ type: 'success', message: 'Profile picture updated' });
+    } catch (error) {
+      showAlert({ type: 'error', message: 'Failed to update profile picture' });
     }
   };
 
@@ -137,9 +151,9 @@ const ClientDetailModal: React.FC<ClientDetailModalProps> = ({ client, onClose }
         profilePictureUrl: undefined
       };
       await updateClient(updatedClient);
-      showAlert('Profile picture removed', 'success');
+      showAlert({ type: 'success', message: 'Profile picture removed' });
     } catch (error) {
-      showAlert('Failed to remove profile picture', 'error');
+      showAlert({ type: 'error', message: 'Failed to remove profile picture' });
     }
   };
 
@@ -640,7 +654,18 @@ const ClientDetailModal: React.FC<ClientDetailModalProps> = ({ client, onClose }
     </div>
   );
 
-  return createPortal(modalContent, document.body);
+  return (
+    <>
+      {createPortal(modalContent, document.body)}
+      {imageForCropping && (
+        <ImageCropperModal
+          image={imageForCropping}
+          onComplete={handleCroppedImage}
+          onCancel={() => setImageForCropping(null)}
+        />
+      )}
+    </>
+  );
 };
 
 /**
