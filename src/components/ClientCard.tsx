@@ -151,11 +151,12 @@ const ClientCard: React.FC<ClientCardProps> = ({ client, onLongPress, onQuickAdd
           zIndex: 1
         }}
       >
-        {/* Profile Picture or Icon */}
-        <div className="flex justify-center mb-3">
+        {/* Client Header with Profile Picture */}
+        <div className="flex items-center gap-3 mb-2 sm:mb-3">
+          {/* Profile Picture or Icon */}
           {client.profilePictureUrl ? (
             <div
-              className="w-20 h-20 rounded-full overflow-hidden border-3 border-white shadow-lg relative"
+              className="w-16 h-16 rounded-full overflow-hidden border-3 border-white shadow-lg relative flex-shrink-0"
               style={{
                 background: `url(${client.profilePictureUrl})`,
                 backgroundSize: 'cover',
@@ -172,14 +173,12 @@ const ClientCard: React.FC<ClientCardProps> = ({ client, onLongPress, onQuickAdd
               <User size={18} className="text-blue-600 sm:w-5 sm:h-5" />
             </div>
           )}
-        </div>
 
-        {/* Client Header */}
-        <div className="flex items-center gap-2 sm:gap-3 mb-2 sm:mb-3">
+          {/* Name and ID */}
           <div className="flex-1 min-w-0">
             <h3 className="font-semibold text-gray-800 text-sm sm:text-base">
               <ScrollingText
-                className="font-semibold text-gray-800 text-sm sm:text-base text-center"
+                className="font-semibold text-gray-800 text-sm sm:text-base text-left"
                 pauseDuration={1}
                 scrollDuration={3}
                 easing="power1.inOut"
@@ -187,7 +186,7 @@ const ClientCard: React.FC<ClientCardProps> = ({ client, onLongPress, onQuickAdd
                 {client.name}
               </ScrollingText>
             </h3>
-            <p className="text-xs sm:text-sm text-gray-500 text-center">ID: {client.id}</p>
+            <p className="text-xs sm:text-sm text-gray-500 text-left">ID: {client.id}</p>
           </div>
         </div>
 
