@@ -357,15 +357,17 @@ const ClientCard: React.FC<ClientCardProps> = ({ client, onLongPress, onQuickAdd
           onTouchEnd={() => setShowZoomedImage(false)}
           style={{ backgroundColor: 'transparent' }}
         >
-          <div className="absolute top-4 right-4 text-white text-sm bg-black bg-opacity-70 px-4 py-2 rounded-full shadow-lg">
-            Tap to close
+          <div className="relative max-w-full max-h-[90vh]">
+            <div className="absolute -top-2 -right-2 text-white text-sm bg-black bg-opacity-70 px-4 py-2 rounded-full shadow-lg z-10">
+              Tap to close
+            </div>
+            <img
+              src={client.profilePictureUrl}
+              alt={`${client.name} profile`}
+              className="max-w-full max-h-[90vh] object-contain rounded-lg shadow-2xl"
+              style={{ pointerEvents: 'none' }}
+            />
           </div>
-          <img
-            src={client.profilePictureUrl}
-            alt={`${client.name} profile`}
-            className="max-w-full max-h-[90vh] object-contain rounded-lg shadow-2xl"
-            style={{ pointerEvents: 'none' }}
-          />
         </div>
       )}
     </>
