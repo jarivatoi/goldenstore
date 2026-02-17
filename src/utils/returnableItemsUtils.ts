@@ -92,23 +92,32 @@ export const calculateReturnableItemsWithDates = (clientTransactions: CreditTran
           // Look for size before the bouteille word
           const sizeMatch = description.substring(0, standaloneMatch.index).match(/(\d+(?:\.\d+)?[Ll])$/i);
           // Look for brand after the bouteille word
-          const brandMatch = description.substring(standaloneMatch.index).match(/^bouteilles?\s+(\d+(?:\.\d+)?[Ll])?\s*([^,()]*)/i);
-          let sizeFromBrand = brandMatch?.[1]?.trim() || '';
-          let brand = brandMatch?.[2]?.trim() || '';
-          
-          // If no separate size was found before the word 'bouteille', check if size is in the brand part
-          if (!sizeMatch && sizeFromBrand) {
-            sizeFromBrand = sizeFromBrand.replace(/l$/gi, 'L');
+          const afterBouteille = description.substring(standaloneMatch.index + standaloneMatch[0].length).trim();
+
+          // Extract size and brand from what comes after "bouteille"
+          let sizeFromBrand = '';
+          let brand = '';
+
+          if (afterBouteille) {
+            // Check if it starts with a size pattern like "1.5L"
+            const sizePatternMatch = afterBouteille.match(/^(\d+(?:\.\d+)?[Ll])\s*(.*)/i);
+            if (sizePatternMatch && sizePatternMatch[1]) {
+              sizeFromBrand = sizePatternMatch[1].replace(/l$/gi, 'L');
+              brand = sizePatternMatch[2]?.trim() || '';
+            } else {
+              // No size pattern, entire afterBouteille is the brand
+              brand = afterBouteille.replace(/[,()].*/, '').trim();
+            }
           }
-          
+
           // Use size from either source, prioritize the one from the beginning of description
           const finalSize = sizeMatch ? sizeMatch[1].replace(/l$/gi, 'L') : sizeFromBrand;
-          
+
           // Capitalize brand name properly
-          const capitalizedBrand = brand ? brand.split(' ').map((word: string) => 
+          const capitalizedBrand = brand ? brand.split(' ').map((word: string) =>
             word.charAt(0).toUpperCase() + word.slice(1).toLowerCase()
           ).join(' ') : '';
-          
+
           let key;
           if (finalSize && capitalizedBrand) {
             key = `Bouteille ${finalSize} ${capitalizedBrand}`;
@@ -120,7 +129,7 @@ export const calculateReturnableItemsWithDates = (clientTransactions: CreditTran
             // Handle simple "Bouteille" case from quick actions
             key = 'Bouteille';
           }
-          
+
           if (!returnableItems[key]) {
             returnableItems[key] = 0;
           }
@@ -501,23 +510,32 @@ export const calculateReturnableItems = (clientTransactions: CreditTransaction[]
           // Look for size before the bouteille word
           const sizeMatch = description.substring(0, standaloneMatch.index).match(/(\d+(?:\.\d+)?[Ll])$/i);
           // Look for brand after the bouteille word
-          const brandMatch = description.substring(standaloneMatch.index).match(/^bouteilles?\s+(\d+(?:\.\d+)?[Ll])?\s*([^,()]*)/i);
-          let sizeFromBrand = brandMatch?.[1]?.trim() || '';
-          let brand = brandMatch?.[2]?.trim() || '';
-          
-          // If no separate size was found before the word 'bouteille', check if size is in the brand part
-          if (!sizeMatch && sizeFromBrand) {
-            sizeFromBrand = sizeFromBrand.replace(/l$/gi, 'L');
+          const afterBouteille = description.substring(standaloneMatch.index + standaloneMatch[0].length).trim();
+
+          // Extract size and brand from what comes after "bouteille"
+          let sizeFromBrand = '';
+          let brand = '';
+
+          if (afterBouteille) {
+            // Check if it starts with a size pattern like "1.5L"
+            const sizePatternMatch = afterBouteille.match(/^(\d+(?:\.\d+)?[Ll])\s*(.*)/i);
+            if (sizePatternMatch && sizePatternMatch[1]) {
+              sizeFromBrand = sizePatternMatch[1].replace(/l$/gi, 'L');
+              brand = sizePatternMatch[2]?.trim() || '';
+            } else {
+              // No size pattern, entire afterBouteille is the brand
+              brand = afterBouteille.replace(/[,()].*/, '').trim();
+            }
           }
-          
+
           // Use size from either source, prioritize the one from the beginning of description
           const finalSize = sizeMatch ? sizeMatch[1].replace(/l$/gi, 'L') : sizeFromBrand;
-          
+
           // Capitalize brand name properly
-          const capitalizedBrand = brand ? brand.split(' ').map((word: string) => 
+          const capitalizedBrand = brand ? brand.split(' ').map((word: string) =>
             word.charAt(0).toUpperCase() + word.slice(1).toLowerCase()
           ).join(' ') : '';
-          
+
           let key;
           if (finalSize && capitalizedBrand) {
             key = `Bouteille ${finalSize} ${capitalizedBrand}`;
@@ -529,7 +547,7 @@ export const calculateReturnableItems = (clientTransactions: CreditTransaction[]
             // Handle simple "Bouteille" case from quick actions
             key = 'Bouteille';
           }
-          
+
           if (!returnableItems[key]) {
             returnableItems[key] = 0;
           }
