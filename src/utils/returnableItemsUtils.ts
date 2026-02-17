@@ -196,11 +196,15 @@ export const calculateReturnableItemsWithDates = (clientTransactions: CreditTran
     if (remaining > 0) {
       // Get most recent transaction date for this item
       const recentTransaction = clientTransactions
-        .filter(transaction =>
-          transaction.type === 'debt' &&
-          !transaction.description.toLowerCase().includes('returned') &&
-          transaction.description.toLowerCase().includes(itemType.toLowerCase().split(' ')[0])
-        )
+        .filter(transaction => {
+          if (transaction.type !== 'debt' || transaction.description.toLowerCase().includes('returned')) {
+            return false;
+          }
+          // Check if this transaction contains this exact item (case-insensitive)
+          const lowerDesc = transaction.description.toLowerCase();
+          const lowerItemType = itemType.toLowerCase();
+          return lowerDesc.includes(lowerItemType);
+        })
         .sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime())[0];
 
       const transactionDate = recentTransaction ? new Date(recentTransaction.date) : new Date();
