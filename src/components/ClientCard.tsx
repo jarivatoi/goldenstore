@@ -151,30 +151,27 @@ const ClientCard: React.FC<ClientCardProps> = ({ client, onLongPress, onQuickAdd
           zIndex: 1
         }}
       >
-        {/* Profile Picture */}
+        {/* Profile Picture or Icon */}
         <div className="flex justify-center mb-3">
-          <div
-            className="w-20 h-20 rounded-full overflow-hidden border-3 border-white shadow-lg relative"
-            style={{
-              background: client.profilePictureUrl
-                ? `url(${client.profilePictureUrl})`
-                : 'linear-gradient(135deg, #667eea 0%, #764ba2 100%)',
-              backgroundSize: 'cover',
-              backgroundPosition: 'center'
-            }}
-          >
-            {!client.profilePictureUrl && (
-              <div className="absolute inset-0 flex items-center justify-center">
-                <span className="text-2xl font-bold text-white">
-                  {client.name.charAt(0).toUpperCase()}
-                </span>
-              </div>
-            )}
-            {/* Vignette overlay */}
-            <div className="absolute inset-0 rounded-full" style={{
-              boxShadow: 'inset 0 0 15px rgba(0,0,0,0.3)'
-            }}></div>
-          </div>
+          {client.profilePictureUrl ? (
+            <div
+              className="w-20 h-20 rounded-full overflow-hidden border-3 border-white shadow-lg relative"
+              style={{
+                background: `url(${client.profilePictureUrl})`,
+                backgroundSize: 'cover',
+                backgroundPosition: 'center'
+              }}
+            >
+              {/* Vignette overlay */}
+              <div className="absolute inset-0 rounded-full" style={{
+                boxShadow: 'inset 0 0 15px rgba(0,0,0,0.3)'
+              }}></div>
+            </div>
+          ) : (
+            <div className="bg-blue-100 p-2 rounded-full flex-shrink-0">
+              <User size={18} className="text-blue-600 sm:w-5 sm:h-5" />
+            </div>
+          )}
         </div>
 
         {/* Client Header */}
