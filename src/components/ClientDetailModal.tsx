@@ -299,23 +299,31 @@ const ClientDetailModal: React.FC<ClientDetailModalProps> = ({ client, onClose }
                 onTouchCancel={handlePressEnd}
               >
                 {!profilePicture && (
-                  <div className="absolute inset-0 flex items-center justify-center">
+                  <div className="absolute inset-0 flex items-center justify-center pointer-events-none">
                     <span className="text-3xl font-bold text-white">
                       {client.name.charAt(0).toUpperCase()}
                     </span>
                   </div>
                 )}
                 {/* Vignette overlay */}
-                <div className="absolute inset-0 rounded-full" style={{
+                <div className="absolute inset-0 rounded-full pointer-events-none" style={{
                   boxShadow: 'inset 0 0 20px rgba(0,0,0,0.3)'
                 }}></div>
               </div>
 
               {/* Upload/Remove buttons overlay */}
-              <div className="absolute inset-0 rounded-full bg-black bg-opacity-0 group-hover:bg-opacity-60 transition-all duration-200 flex items-center justify-center">
-                <div className="opacity-0 group-hover:opacity-100 transition-opacity duration-200 flex gap-2">
+              <div
+                className="absolute inset-0 rounded-full bg-black bg-opacity-0 group-hover:bg-opacity-60 transition-all duration-200 flex items-center justify-center pointer-events-none"
+                onMouseDown={(e) => e.stopPropagation()}
+                onTouchStart={(e) => e.stopPropagation()}
+              >
+                <div className="opacity-0 group-hover:opacity-100 transition-opacity duration-200 flex gap-2 pointer-events-auto">
                   <button
-                    onClick={() => fileInputRef.current?.click()}
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      handlePressEnd();
+                      fileInputRef.current?.click();
+                    }}
                     className="p-2 bg-blue-500 rounded-full hover:bg-blue-600 transition-colors shadow-lg"
                     title="Upload photo"
                   >
@@ -323,7 +331,11 @@ const ClientDetailModal: React.FC<ClientDetailModalProps> = ({ client, onClose }
                   </button>
                   {profilePicture && (
                     <button
-                      onClick={handleRemoveProfilePicture}
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        handlePressEnd();
+                        handleRemoveProfilePicture();
+                      }}
                       className="p-2 bg-red-500 rounded-full hover:bg-red-600 transition-colors shadow-lg"
                       title="Remove photo"
                     >
