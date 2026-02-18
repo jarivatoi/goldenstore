@@ -209,6 +209,14 @@ export const CreditProvider: React.FC<CreditProviderProps> = ({ children }) => {
         lastTransactionAt: newClient.lastTransactionAt.toISOString()
       });
 
+      // Dispatch creditDataChanged event to notify all listeners
+      window.dispatchEvent(new CustomEvent('creditDataChanged', {
+        detail: {
+          clientId: newClient.id,
+          source: 'addClient'
+        }
+      }));
+
       return newClient;
     } catch (err) {
       throw err;
@@ -238,6 +246,14 @@ export const CreditProvider: React.FC<CreditProviderProps> = ({ children }) => {
         createdAt: c.createdAt.toISOString(),
         lastTransactionAt: c.lastTransactionAt.toISOString()
       })));
+
+      // Dispatch creditDataChanged event to notify all listeners
+      window.dispatchEvent(new CustomEvent('creditDataChanged', {
+        detail: {
+          clientId: client.id,
+          source: 'updateClient'
+        }
+      }));
     } catch (err) {
       throw err;
     }
@@ -259,6 +275,14 @@ export const CreditProvider: React.FC<CreditProviderProps> = ({ children }) => {
       createdAt: c.createdAt.toISOString(),
       lastTransactionAt: c.lastTransactionAt.toISOString()
     })));
+
+    // Dispatch creditDataChanged event to notify all listeners
+    window.dispatchEvent(new CustomEvent('creditDataChanged', {
+      detail: {
+        clientId: clientId,
+        source: 'moveClientToFront'
+      }
+    }));
   };
     
   const deleteClient = async (clientId: string) => {
@@ -285,6 +309,14 @@ export const CreditProvider: React.FC<CreditProviderProps> = ({ children }) => {
       for (const payment of clientPayments) {
         await creditDBManager.deletePayment(payment.id);
       }
+
+      // Dispatch creditDataChanged event to notify all listeners
+      window.dispatchEvent(new CustomEvent('creditDataChanged', {
+        detail: {
+          clientId: clientId,
+          source: 'deleteClient'
+        }
+      }));
     } catch (err) {
       console.error('Error deleting client:', err);
       throw err;
@@ -457,6 +489,14 @@ export const CreditProvider: React.FC<CreditProviderProps> = ({ children }) => {
         createdAt: client.createdAt.toISOString(),
         lastTransactionAt: client.lastTransactionAt.toISOString()
       })));
+
+      // Dispatch creditDataChanged event to notify all listeners
+      window.dispatchEvent(new CustomEvent('creditDataChanged', {
+        detail: {
+          clientId: clientId,
+          source: 'addPartialPayment'
+        }
+      }));
     } catch (err) {
       throw err;
     }
@@ -644,6 +684,14 @@ export const CreditProvider: React.FC<CreditProviderProps> = ({ children }) => {
         createdAt: client.createdAt.toISOString(),
         lastTransactionAt: client.lastTransactionAt.toISOString()
       })));
+
+      // Dispatch creditDataChanged event to notify all listeners
+      window.dispatchEvent(new CustomEvent('creditDataChanged', {
+        detail: {
+          clientId: clientId,
+          source: 'returnBottles'
+        }
+      }));
     } catch (err) {
       throw err;
     }
