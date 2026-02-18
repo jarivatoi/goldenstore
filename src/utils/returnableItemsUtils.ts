@@ -16,6 +16,7 @@ interface ReturnableItem {
   quantity: number;
   type: 'Chopine' | 'Bouteille';
   brand: string;
+  displayBrand: string; // Preserve original case for display
 }
 
 /**
@@ -54,20 +55,26 @@ function parseReturnableSegment(segment: string): ReturnableItem | null {
   }
 
   // Everything after keyword = brand
-  const brand = parts[1].trim();
+  const brandOriginal = parts[1].trim();
+  const brandNormalized = brandOriginal.toLowerCase();
 
   return {
     quantity,
     type,
-    brand
+    brand: brandNormalized,        // Normalized for key matching
+    displayBrand: brandOriginal     // Original case for display
   };
 }
 
 /**
  * Process description and extract all returnable items
  */
-function extractReturnableItems(description: string): { [key: string]: number } {
+function extractReturnableItems(description: string): {
+  items: { [key: string]: number };
+  displayBrands: { [key: string]: string }; // Map normalized key to display brand
+} {
   const items: { [key: string]: number } = {};
+  const displayBrands: { [key: string]: string } = {};
 
   // Split by comma
   const segments = description.split(',');
@@ -76,17 +83,22 @@ function extractReturnableItems(description: string): { [key: string]: number } 
     const item = parseReturnableSegment(segment);
 
     if (item) {
-      // Create key: "Chopine Brand" or "Bouteille Brand"
+      // Create key using normalized brand: "Chopine brand" or "Bouteille brand"
       const key = item.brand ? `${item.type} ${item.brand}` : item.type;
 
       if (!items[key]) {
         items[key] = 0;
       }
       items[key] += item.quantity;
+
+      // Store the display brand (original case) for this key
+      if (item.brand) {
+        displayBrands[key] = item.displayBrand;
+      }
     }
   }
 
-  return items;
+  return { items, displayBrands };
 }
 
 /**
@@ -141,6 +153,7 @@ function extractReturnedItems(description: string, returnableKeys: string[]): { 
  */
 export const calculateReturnableItemsWithDates = (clientTransactions: CreditTransaction[]): {text: string, date: string, time: string}[] => {
   const returnableItems: {[key: string]: number} = {};
+  const displayBrands: {[key: string]: string} = {}; // Track display brands for each key
 
   // Step 1: Extract all returnable items from debt transactions
   clientTransactions.forEach(transaction => {
@@ -158,14 +171,19 @@ export const calculateReturnableItemsWithDates = (clientTransactions: CreditTran
       return;
     }
 
-    const items = extractReturnableItems(description);
+    const result = extractReturnableItems(description);
 
     // Add to total
-    for (const [key, quantity] of Object.entries(items)) {
+    for (const [key, quantity] of Object.entries(result.items)) {
       if (!returnableItems[key]) {
         returnableItems[key] = 0;
       }
       returnableItems[key] += quantity;
+
+      // Store the display brand (most recent one wins)
+      if (result.displayBrands[key]) {
+        displayBrands[key] = result.displayBrands[key];
+      }
     }
   });
 
@@ -223,12 +241,13 @@ export const calculateReturnableItemsWithDates = (clientTransactions: CreditTran
 
       // Format display text with pluralization
       const [type, ...brandParts] = itemType.split(' ');
-      const brand = brandParts.join(' ');
+      const brandNormalized = brandParts.join(' ');
 
       let displayText: string;
-      if (brand) {
-        // Use brand as-is, preserving original case
-        displayText = `${remaining} ${type}${remaining > 1 ? 's' : ''} ${brand}`;
+      if (brandNormalized) {
+        // Use the stored display brand (with original case) if available
+        const brandToDisplay = displayBrands[itemType] || brandNormalized;
+        displayText = `${remaining} ${type}${remaining > 1 ? 's' : ''} ${brandToDisplay}`;
       } else {
         displayText = `${remaining} ${type}${remaining > 1 ? 's' : ''}`;
       }
