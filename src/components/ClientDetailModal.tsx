@@ -332,9 +332,21 @@ const ClientDetailModal: React.FC<ClientDetailModalProps> = ({ client, onClose }
                 <div className="opacity-0 group-hover:opacity-100 transition-opacity duration-200 flex gap-2 pointer-events-auto">
                   <button
                     onClick={(e) => {
+                      e.preventDefault();
                       e.stopPropagation();
-                      handlePressEnd();
+                      if (longPressTimerRef.current) {
+                        clearTimeout(longPressTimerRef.current);
+                        longPressTimerRef.current = null;
+                      }
                       fileInputRef.current?.click();
+                    }}
+                    onMouseDown={(e) => {
+                      e.preventDefault();
+                      e.stopPropagation();
+                    }}
+                    onTouchStart={(e) => {
+                      e.preventDefault();
+                      e.stopPropagation();
                     }}
                     className="p-2 bg-blue-500 rounded-full hover:bg-blue-600 transition-colors shadow-lg"
                     title="Upload photo"
@@ -344,9 +356,21 @@ const ClientDetailModal: React.FC<ClientDetailModalProps> = ({ client, onClose }
                   {profilePicture && (
                     <button
                       onClick={(e) => {
+                        e.preventDefault();
                         e.stopPropagation();
-                        handlePressEnd();
+                        if (longPressTimerRef.current) {
+                          clearTimeout(longPressTimerRef.current);
+                          longPressTimerRef.current = null;
+                        }
                         handleRemoveProfilePicture();
+                      }}
+                      onMouseDown={(e) => {
+                        e.preventDefault();
+                        e.stopPropagation();
+                      }}
+                      onTouchStart={(e) => {
+                        e.preventDefault();
+                        e.stopPropagation();
                       }}
                       className="p-2 bg-red-500 rounded-full hover:bg-red-600 transition-colors shadow-lg"
                       title="Remove photo"
