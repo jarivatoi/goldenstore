@@ -231,7 +231,7 @@ const ClientActionModal: React.FC<ClientActionModalProps> = ({ client, onClose, 
   const handleProcessReturns = async () => {
     try {
       setIsProcessing(true);
-      
+
       // Collect items being returned for the success message
       const itemsBeingReturned = Object.entries(returnItems)
         .filter(([_, quantity]) => quantity > 0)
@@ -275,12 +275,13 @@ const ClientActionModal: React.FC<ClientActionModalProps> = ({ client, onClose, 
           return `${quantity} ${itemType}${quantity > 1 ? 's' : ''}`;
         })
         .join(', ');
-    
-    for (const [itemType, quantity] of Object.entries(returnItems)) {
-      if (quantity > 0) {
-        await processItemReturn(itemType, quantity);
-      }
-    }
+
+    // Process all returns using Promise.all to handle them concurrently
+    await Promise.all(
+      Object.entries(returnItems)
+        .filter(([_, quantity]) => quantity > 0)
+        .map(([itemType, quantity]) => processItemReturn(itemType, quantity))
+    );
     
     // Show duplicate card for successful return processing
     console.log('📱 ClientActionModal: Dispatching showDuplicateCard event for returns');
@@ -928,11 +929,13 @@ const processItemReturn = async (itemType: string, returnQuantity: number) => {
                 Object.entries(availableItems).forEach(([itemType, data]) => {
                   allReturns[itemType] = data.total;
                 });
-                
-                // Process all returns
-                for (const [itemType, quantity] of Object.entries(allReturns)) {
-                  await processItemReturn(itemType, quantity);
-                }
+
+                // Process all returns concurrently using Promise.all
+                await Promise.all(
+                  Object.entries(allReturns).map(([itemType, quantity]) =>
+                    processItemReturn(itemType, quantity)
+                  )
+                );
                 
                 // Show duplicate card for successful return settlement
                 window.dispatchEvent(new CustomEvent('showDuplicateCard', {
