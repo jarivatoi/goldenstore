@@ -24,7 +24,7 @@ interface ClientActionModalProps {
  * Shows partial payment and settle options when swiping up on client card
  */
 const ClientActionModal: React.FC<ClientActionModalProps> = ({ client, onClose, onQuickAdd, onResetCalculator, onViewDetails }) => {
-  const { addPartialPayment, settleClient, settleClientWithFullClear, getClientTotalDebt, returnBottles, getClientBottlesOwed, getClientTransactions, addTransaction } = useCredit();
+  const { addPartialPayment, settleClient, settleClientWithFullClear, getClientTotalDebt, returnBottles, getClientBottlesOwed, getClientTransactions, addTransaction, addBatchTransactions } = useCredit();
   const { showAlert } = useNotification();
   const [showPartialPayment, setShowPartialPayment] = useState(false);
   const [showReturnTab, setShowReturnTab] = useState(false);
@@ -276,12 +276,38 @@ const ClientActionModal: React.FC<ClientActionModalProps> = ({ client, onClose, 
         })
         .join(', ');
 
-    // Process all returns using Promise.all to handle them concurrently
-    await Promise.all(
-      Object.entries(returnItems)
-        .filter(([_, quantity]) => quantity > 0)
-        .map(([itemType, quantity]) => processItemReturn(itemType, quantity))
-    );
+    // Prepare all return transactions
+    const returnTransactions = Object.entries(returnItems)
+      .filter(([_, quantity]) => quantity > 0)
+      .map(([itemType, quantity]) => {
+        let returnDescription = `Returned: ${quantity} `;
+
+        if (itemType.includes('Chopine')) {
+          const brand = itemType.replace(/^(Chopines?)/i, '').trim();
+          returnDescription += `Chopine${quantity > 1 ? 's' : ''}${brand ? ` ${brand}` : ''}`;
+        } else if (itemType.includes('Bouteille')) {
+          let brand = itemType.replace(/^(Bouteilles?)/i, '').trim();
+          if (quantity === 1 && brand.endsWith('s') && !brand.match(/^\d/)) {
+            const lowerBrand = brand.toLowerCase();
+            const frenchPlurals = ['vins', 'bières', 'jus', 'sodas'];
+            if (frenchPlurals.some(plural => lowerBrand === plural)) {
+              brand = brand.slice(0, -1);
+            }
+          }
+          returnDescription += `Bouteille${quantity > 1 ? 's' : ''}${brand ? ` ${brand}` : ''}`;
+        } else {
+          returnDescription += `${itemType}${quantity > 1 ? 's' : ''}`;
+        }
+
+        const uniqueReturnDescription = `${returnDescription} - ${new Date().toLocaleDateString('en-GB')} ${new Date().toLocaleTimeString('en-GB', { hour: '2-digit', minute: '2-digit' })}`;
+        return {
+          description: uniqueReturnDescription,
+          amount: 0
+        };
+      });
+
+    // Process all returns as a single batch
+    await addBatchTransactions(client, returnTransactions);
     
     // Show duplicate card for successful return processing
     console.log('📱 ClientActionModal: Dispatching showDuplicateCard event for returns');
@@ -924,18 +950,37 @@ const processItemReturn = async (itemType: string, returnQuantity: number) => {
             try {
               setIsProcessing(true);
               if (settleAction.type === 'all') {
-                // Set all available items to be returned
-                const allReturns: {[key: string]: number} = {};
-                Object.entries(availableItems).forEach(([itemType, data]) => {
-                  allReturns[itemType] = data.total;
+                // Prepare all return transactions
+                const allReturnTransactions = Object.entries(availableItems).map(([itemType, data]) => {
+                  const quantity = data.total;
+                  let returnDescription = `Returned: ${quantity} `;
+
+                  if (itemType.includes('Chopine')) {
+                    const brand = itemType.replace(/^(Chopines?)/i, '').trim();
+                    returnDescription += `Chopine${quantity > 1 ? 's' : ''}${brand ? ` ${brand}` : ''}`;
+                  } else if (itemType.includes('Bouteille')) {
+                    let brand = itemType.replace(/^(Bouteilles?)/i, '').trim();
+                    if (quantity === 1 && brand.endsWith('s') && !brand.match(/^\d/)) {
+                      const lowerBrand = brand.toLowerCase();
+                      const frenchPlurals = ['vins', 'bières', 'jus', 'sodas'];
+                      if (frenchPlurals.some(plural => lowerBrand === plural)) {
+                        brand = brand.slice(0, -1);
+                      }
+                    }
+                    returnDescription += `Bouteille${quantity > 1 ? 's' : ''}${brand ? ` ${brand}` : ''}`;
+                  } else {
+                    returnDescription += `${itemType}${quantity > 1 ? 's' : ''}`;
+                  }
+
+                  const uniqueReturnDescription = `${returnDescription} - ${new Date().toLocaleDateString('en-GB')} ${new Date().toLocaleTimeString('en-GB', { hour: '2-digit', minute: '2-digit' })}`;
+                  return {
+                    description: uniqueReturnDescription,
+                    amount: 0
+                  };
                 });
 
-                // Process all returns concurrently using Promise.all
-                await Promise.all(
-                  Object.entries(allReturns).map(([itemType, quantity]) =>
-                    processItemReturn(itemType, quantity)
-                  )
-                );
+                // Process all returns as a single batch
+                await addBatchTransactions(client, allReturnTransactions);
                 
                 // Show duplicate card for successful return settlement
                 window.dispatchEvent(new CustomEvent('showDuplicateCard', {

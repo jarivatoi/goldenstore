@@ -25,6 +25,7 @@ interface CreditContextType {
   
   // Transaction operations
   addTransaction: (client: Client, description: string, amount: number) => Promise<void>;
+  addBatchTransactions: (client: Client, transactionData: Array<{description: string, amount: number}>) => Promise<void>;
   
   // Payment operations
   addPartialPayment: (clientId: string, amount: number) => Promise<void>;
@@ -442,6 +443,72 @@ export const CreditProvider: React.FC<CreditProviderProps> = ({ children }) => {
     }
   };
 
+  // Add multiple transactions at once (batch operation)
+  const addBatchTransactions = async (client: Client, transactionData: Array<{description: string, amount: number}>) => {
+    try {
+      // Create all new transactions
+      const newTransactions: CreditTransaction[] = transactionData.map(data => ({
+        id: crypto.randomUUID(),
+        clientId: client.id,
+        description: data.description,
+        amount: data.amount,
+        date: new Date(),
+        type: 'debt'
+      }));
+
+      // Update transactions state once
+      const updatedTransactions = [...transactions, ...newTransactions];
+      setTransactions(updatedTransactions);
+
+      // Save all transactions to IndexedDB
+      await Promise.all(newTransactions.map(transaction =>
+        creditDBManager.saveTransaction({
+          ...transaction,
+          date: transaction.date.toISOString()
+        })
+      ));
+
+      // Calculate total amount for client debt update
+      const totalAmount = transactionData.reduce((sum, data) => sum + data.amount, 0);
+
+      // Update client's total debt and last transaction time
+      const updatedClients = clients.map(c => {
+        if (c.id === client.id) {
+          return {
+            ...c,
+            totalDebt: c.totalDebt + totalAmount,
+            lastTransactionAt: new Date()
+          };
+        }
+        return c;
+      });
+
+      // Move the updated client to the end of the array (most recent)
+      const updatedClient = updatedClients.find(c => c.id === client.id);
+      const otherClients = updatedClients.filter(c => c.id !== client.id);
+      const reorderedClients = updatedClient ? [...otherClients, updatedClient] : updatedClients;
+
+      setClients(reorderedClients);
+
+      // Save to IndexedDB
+      await creditDBManager.saveAllClients(reorderedClients.map(c => ({
+        ...c,
+        createdAt: c.createdAt.toISOString(),
+        lastTransactionAt: c.lastTransactionAt.toISOString()
+      })));
+
+      // Dispatch creditDataChanged event to notify all listeners
+      window.dispatchEvent(new CustomEvent('creditDataChanged', {
+        detail: {
+          clientId: client.id,
+          source: 'addBatchTransactions'
+        }
+      }));
+    } catch (err) {
+      throw err;
+    }
+  };
+
   // Parse bottles from description
   const parseBottlesFromDescription = (description: string) => {
     // No automatic bottle parsing - bottles are tracked manually if needed
@@ -718,6 +785,7 @@ export const CreditProvider: React.FC<CreditProviderProps> = ({ children }) => {
     getClientPayments,
     moveClientToFront,
     addTransaction,
+    addBatchTransactions,
     addPartialPayment,
     settleClient,
     settleClientWithFullClear,
