@@ -1,9 +1,11 @@
 /**
  * CREDIT DATA UTILITIES
  * =====================
- * 
+ *
  * Utility functions for credit data management and export/import operations
  */
+
+import { creditDBManager } from './creditIndexedDB';
 
 export interface NotificationCallbacks {
   showAlert: (options: { type: 'success' | 'error'; message: string }) => void;
@@ -20,12 +22,15 @@ export const exportCompleteDatabase = async (notifications?: NotificationCallbac
     const month = (now.getMonth() + 1).toString().padStart(2, '0');
     const year = now.getFullYear();
     const dateString = `${day}-${month}-${year}`;
-    
-    // Get data from all modules via localStorage
+
+    // Initialize IndexedDB for credit data
+    await creditDBManager.initDB();
+
+    // Get data from all modules
     const priceListData = localStorage.getItem('priceListItems');
-    const creditClientsData = localStorage.getItem('creditClients');
-    const creditTransactionsData = localStorage.getItem('creditTransactions');
-    const creditPaymentsData = localStorage.getItem('creditPayments');
+    const creditClientsData = await creditDBManager.getAllClients();
+    const creditTransactionsData = await creditDBManager.getAllTransactions();
+    const creditPaymentsData = await creditDBManager.getAllPayments();
     const overItemsData = localStorage.getItem('overItems');
     const orderCategoriesData = localStorage.getItem('orderCategories');
     const orderTemplatesData = localStorage.getItem('orderItemTemplates');
@@ -35,24 +40,24 @@ export const exportCompleteDatabase = async (notifications?: NotificationCallbac
       version: '2.0',
       appName: 'Golden Store',
       exportDate: new Date().toISOString(),
-      
+
       // Price List data
       priceList: {
         items: priceListData ? JSON.parse(priceListData) : []
       },
-      
-      // Credit Management data
+
+      // Credit Management data (from IndexedDB)
       creditManagement: {
-        clients: creditClientsData ? JSON.parse(creditClientsData) : [],
-        transactions: creditTransactionsData ? JSON.parse(creditTransactionsData) : [],
-        payments: creditPaymentsData ? JSON.parse(creditPaymentsData) : []
+        clients: creditClientsData || [],
+        transactions: creditTransactionsData || [],
+        payments: creditPaymentsData || []
       },
-      
+
       // Over Management data
       overManagement: {
         items: overItemsData ? JSON.parse(overItemsData) : []
       },
-      
+
       // Order Management data
       orderManagement: {
         categories: orderCategoriesData ? JSON.parse(orderCategoriesData) : [],
@@ -143,25 +148,29 @@ export const importCompleteDatabase = (notifications?: NotificationCallbacks): P
               );
 
           if (confirmImport) {
-            // Import all data to localStorage
+            // Initialize IndexedDB
+            await creditDBManager.initDB();
+
+            // Import all data
             if (data.priceList?.items) {
               localStorage.setItem('priceListItems', JSON.stringify(data.priceList.items));
             }
-            
+
+            // Import credit data to IndexedDB
             if (data.creditManagement?.clients) {
-              localStorage.setItem('creditClients', JSON.stringify(data.creditManagement.clients));
+              await creditDBManager.saveAllClients(data.creditManagement.clients);
             }
             if (data.creditManagement?.transactions) {
-              localStorage.setItem('creditTransactions', JSON.stringify(data.creditManagement.transactions));
+              await creditDBManager.saveAllTransactions(data.creditManagement.transactions);
             }
             if (data.creditManagement?.payments) {
-              localStorage.setItem('creditPayments', JSON.stringify(data.creditManagement.payments));
+              await creditDBManager.saveAllPayments(data.creditManagement.payments);
             }
-            
+
             if (data.overManagement?.items) {
               localStorage.setItem('overItems', JSON.stringify(data.overManagement.items));
             }
-            
+
             if (data.orderManagement?.categories) {
               localStorage.setItem('orderCategories', JSON.stringify(data.orderManagement.categories));
             }

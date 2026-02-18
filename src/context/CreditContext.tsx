@@ -1,6 +1,7 @@
 import React, { createContext, useContext, useState, useEffect, ReactNode } from 'react';
 import { supabase } from '../lib/supabase';
 import { Client, CreditTransaction, PaymentRecord } from '../types';
+import { creditDBManager } from '../utils/creditIndexedDB';
 
 interface CreditContextType {
   clients: Client[];
@@ -58,38 +59,81 @@ export const CreditProvider: React.FC<CreditProviderProps> = ({ children }) => {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
 
-  // Load data from Supabase
+  // Load data from IndexedDB
   const loadData = async () => {
     try {
       setLoading(true);
       setError(null);
 
-      // Load from localStorage
-      
-      const storedClients = localStorage.getItem('creditClients');
-      const storedTransactions = localStorage.getItem('creditTransactions');
-      const storedPayments = localStorage.getItem('creditPayments');
-      
-      const transformedClients: Client[] = storedClients ? JSON.parse(storedClients).map((client: any) => ({
+      // Initialize IndexedDB
+      await creditDBManager.initDB();
+
+      // Try to migrate from localStorage if IndexedDB is empty
+      const dbClients = await creditDBManager.getAllClients();
+
+      if (dbClients.length === 0) {
+        // Check if there's data in localStorage to migrate
+        const storedClients = localStorage.getItem('creditClients');
+        const storedTransactions = localStorage.getItem('creditTransactions');
+        const storedPayments = localStorage.getItem('creditPayments');
+
+        if (storedClients || storedTransactions || storedPayments) {
+          console.log('Migrating data from localStorage to IndexedDB...');
+
+          // Migrate clients
+          if (storedClients) {
+            const localClients = JSON.parse(storedClients);
+            await creditDBManager.saveAllClients(localClients);
+          }
+
+          // Migrate transactions
+          if (storedTransactions) {
+            const localTransactions = JSON.parse(storedTransactions);
+            await creditDBManager.saveAllTransactions(localTransactions);
+          }
+
+          // Migrate payments
+          if (storedPayments) {
+            const localPayments = JSON.parse(storedPayments);
+            await creditDBManager.saveAllPayments(localPayments);
+          }
+
+          // Clear localStorage after successful migration
+          localStorage.removeItem('creditClients');
+          localStorage.removeItem('creditTransactions');
+          localStorage.removeItem('creditPayments');
+
+          console.log('Migration complete!');
+        }
+      }
+
+      // Load from IndexedDB
+      const [dbClientsData, dbTransactionsData, dbPaymentsData] = await Promise.all([
+        creditDBManager.getAllClients(),
+        creditDBManager.getAllTransactions(),
+        creditDBManager.getAllPayments()
+      ]);
+
+      const transformedClients: Client[] = dbClientsData.map((client: any) => ({
         ...client,
         createdAt: new Date(client.createdAt),
         lastTransactionAt: new Date(client.lastTransactionAt)
-      })) : [];
-      
-      const transformedTransactions: CreditTransaction[] = storedTransactions ? JSON.parse(storedTransactions).map((transaction: any) => ({
+      }));
+
+      const transformedTransactions: CreditTransaction[] = dbTransactionsData.map((transaction: any) => ({
         ...transaction,
         date: new Date(transaction.date)
-      })) : [];
-      
-      const transformedPayments: PaymentRecord[] = storedPayments ? JSON.parse(storedPayments).map((payment: any) => ({
+      }));
+
+      const transformedPayments: PaymentRecord[] = dbPaymentsData.map((payment: any) => ({
         ...payment,
         date: new Date(payment.date)
-      })) : [];
-      
+      }));
+
       setClients(transformedClients);
       setTransactions(transformedTransactions);
       setPayments(transformedPayments);
-      
+
     } catch (err) {
       setError(err instanceof Error ? err.message : 'Failed to load data');
     } finally {
@@ -156,19 +200,15 @@ export const CreditProvider: React.FC<CreditProviderProps> = ({ children }) => {
       };
 
       // Update state first to trigger re-render
-      setClients(prevClients => {
-        const updatedClients = [...prevClients, newClient];
-        
-        // Save to localStorage after state update
-        localStorage.setItem('creditClients', JSON.stringify(updatedClients.map(client => ({
-          ...client,
-          createdAt: client.createdAt.toISOString(),
-          lastTransactionAt: client.lastTransactionAt.toISOString()
-        }))));
-        
-        return updatedClients;
+      setClients(prevClients => [...prevClients, newClient]);
+
+      // Save to IndexedDB
+      await creditDBManager.saveClient({
+        ...newClient,
+        createdAt: newClient.createdAt.toISOString(),
+        lastTransactionAt: newClient.lastTransactionAt.toISOString()
       });
-      
+
       return newClient;
     } catch (err) {
       throw err;
@@ -192,33 +232,33 @@ export const CreditProvider: React.FC<CreditProviderProps> = ({ children }) => {
 
       setClients(finalClients);
 
-      // Save to localStorage
-      localStorage.setItem('creditClients', JSON.stringify(finalClients.map(c => ({
+      // Save to IndexedDB
+      await creditDBManager.saveAllClients(finalClients.map(c => ({
         ...c,
         createdAt: c.createdAt.toISOString(),
         lastTransactionAt: c.lastTransactionAt.toISOString()
-      }))));
+      })));
     } catch (err) {
       throw err;
     }
   };
 
   // Move client to end of list (rightmost position near calculator)
-  const moveClientToFront = (clientId: string) => {
+  const moveClientToFront = async (clientId: string) => {
     const clientToMove = clients.find(c => c.id === clientId);
     if (!clientToMove) return;
-    
+
     const otherClients = clients.filter(c => c.id !== clientId);
     const reorderedClients = [...otherClients, clientToMove];
-    
+
     setClients(reorderedClients);
-    
-    // Save to localStorage
-    localStorage.setItem('creditClients', JSON.stringify(reorderedClients.map(c => ({
+
+    // Save to IndexedDB
+    await creditDBManager.saveAllClients(reorderedClients.map(c => ({
       ...c,
       createdAt: c.createdAt.toISOString(),
       lastTransactionAt: c.lastTransactionAt.toISOString()
-    }))));
+    })));
   };
     
   const deleteClient = async (clientId: string) => {
@@ -226,27 +266,25 @@ export const CreditProvider: React.FC<CreditProviderProps> = ({ children }) => {
       const updatedClients = clients.filter(client => client.id !== clientId);
       const updatedTransactions = transactions.filter(transaction => transaction.clientId !== clientId);
       const updatedPayments = payments.filter(payment => payment.clientId !== clientId);
-      
+
       setClients(updatedClients);
       setTransactions(updatedTransactions);
       setPayments(updatedPayments);
-      
-      // Save to localStorage
-      localStorage.setItem('creditClients', JSON.stringify(updatedClients.map(client => ({
-        ...client,
-        createdAt: client.createdAt.toISOString(),
-        lastTransactionAt: client.lastTransactionAt.toISOString()
-      }))));
-      
-      localStorage.setItem('creditTransactions', JSON.stringify(updatedTransactions.map(transaction => ({
-        ...transaction,
-        date: transaction.date.toISOString()
-      }))));
-      
-      localStorage.setItem('creditPayments', JSON.stringify(updatedPayments.map(payment => ({
-        ...payment,
-        date: payment.date.toISOString()
-      }))));
+
+      // Delete from IndexedDB
+      await creditDBManager.deleteClient(clientId);
+
+      // Delete associated transactions
+      const clientTransactions = transactions.filter(t => t.clientId === clientId);
+      for (const trans of clientTransactions) {
+        await creditDBManager.deleteTransaction(trans.id);
+      }
+
+      // Delete associated payments
+      const clientPayments = payments.filter(p => p.clientId === clientId);
+      for (const payment of clientPayments) {
+        await creditDBManager.deletePayment(payment.id);
+      }
     } catch (err) {
       console.error('Error deleting client:', err);
       throw err;
@@ -324,46 +362,40 @@ export const CreditProvider: React.FC<CreditProviderProps> = ({ children }) => {
       };
       
       // Update transactions state
-      setTransactions(prevTransactions => {
-        const updatedTransactions = [...prevTransactions, newTransaction];
-        
-        // Save to localStorage
-        localStorage.setItem('creditTransactions', JSON.stringify(updatedTransactions.map(transaction => ({
-          ...transaction,
-          date: transaction.date.toISOString()
-        }))));
-        
-        return updatedTransactions;
+      const updatedTransactions = [...transactions, newTransaction];
+      setTransactions(updatedTransactions);
+
+      // Save to IndexedDB
+      await creditDBManager.saveTransaction({
+        ...newTransaction,
+        date: newTransaction.date.toISOString()
       });
       
       // Update client's total debt and last transaction time
-      // Update clients state
-      setClients(prevClients => {
-        const updatedClients = prevClients.map(c => {
-          if (c.id === client.id) {
-            return {
-              ...c,
-              totalDebt: c.totalDebt + amount,
-              lastTransactionAt: new Date()
-            };
-          }
-          return c;
-        });
-        
-        // Move the updated client to the end of the array (most recent)
-        const updatedClient = updatedClients.find(c => c.id === client.id);
-        const otherClients = updatedClients.filter(c => c.id !== client.id);
-        const reorderedClients = updatedClient ? [...otherClients, updatedClient] : updatedClients;
-        
-        // Save to localStorage
-        localStorage.setItem('creditClients', JSON.stringify(reorderedClients.map(c => ({
-          ...c,
-          createdAt: c.createdAt.toISOString(),
-          lastTransactionAt: c.lastTransactionAt.toISOString()
-        }))));
-        
-        return reorderedClients;
+      const updatedClients = clients.map(c => {
+        if (c.id === client.id) {
+          return {
+            ...c,
+            totalDebt: c.totalDebt + amount,
+            lastTransactionAt: new Date()
+          };
+        }
+        return c;
       });
+
+      // Move the updated client to the end of the array (most recent)
+      const updatedClient = updatedClients.find(c => c.id === client.id);
+      const otherClients = updatedClients.filter(c => c.id !== client.id);
+      const reorderedClients = updatedClient ? [...otherClients, updatedClient] : updatedClients;
+
+      setClients(reorderedClients);
+
+      // Save to IndexedDB
+      await creditDBManager.saveAllClients(reorderedClients.map(c => ({
+        ...c,
+        createdAt: c.createdAt.toISOString(),
+        lastTransactionAt: c.lastTransactionAt.toISOString()
+      })));
       
       
       // Dispatch creditDataChanged event to notify all listeners
@@ -413,18 +445,18 @@ export const CreditProvider: React.FC<CreditProviderProps> = ({ children }) => {
       const reorderedClients = updatedClient ? [...otherClients, updatedClient] : updatedClients;
       
       setClients(reorderedClients);
-      
-      // Save to localStorage
-      localStorage.setItem('creditPayments', JSON.stringify(updatedPayments.map(payment => ({
-        ...payment,
-        date: payment.date.toISOString()
-      }))));
-      
-      localStorage.setItem('creditClients', JSON.stringify(reorderedClients.map(client => ({
+
+      // Save to IndexedDB
+      await creditDBManager.savePayment({
+        ...newPayment,
+        date: newPayment.date.toISOString()
+      });
+
+      await creditDBManager.saveAllClients(reorderedClients.map(client => ({
         ...client,
         createdAt: client.createdAt.toISOString(),
         lastTransactionAt: client.lastTransactionAt.toISOString()
-      }))));
+      })));
     } catch (err) {
       throw err;
     }
@@ -480,23 +512,23 @@ export const CreditProvider: React.FC<CreditProviderProps> = ({ children }) => {
           : client
       );
       setClients(updatedClients);
-      
-      // Save to localStorage
-      localStorage.setItem('creditPayments', JSON.stringify(updatedPayments.map(payment => ({
+
+      // Save to IndexedDB
+      await creditDBManager.saveAllPayments(updatedPayments.map(payment => ({
         ...payment,
         date: payment.date.toISOString()
-      }))));
-      
-      localStorage.setItem('creditTransactions', JSON.stringify(updatedTransactions.map(transaction => ({
+      })));
+
+      await creditDBManager.saveAllTransactions(updatedTransactions.map(transaction => ({
         ...transaction,
         date: transaction.date.toISOString()
-      }))));
-      
-      localStorage.setItem('creditClients', JSON.stringify(updatedClients.map(client => ({
+      })));
+
+      await creditDBManager.saveAllClients(updatedClients.map(client => ({
         ...client,
         createdAt: client.createdAt.toISOString(),
         lastTransactionAt: client.lastTransactionAt.toISOString()
-      }))));
+      })));
       
       // Force update of duplicate card and other UI components
       window.dispatchEvent(new CustomEvent('creditDataChanged', {
@@ -550,23 +582,23 @@ export const CreditProvider: React.FC<CreditProviderProps> = ({ children }) => {
           : client
       );
       setClients(updatedClients);
-      
-      // Save to localStorage
-      localStorage.setItem('creditPayments', JSON.stringify(updatedPayments.map(payment => ({
+
+      // Save to IndexedDB
+      await creditDBManager.saveAllPayments(updatedPayments.map(payment => ({
         ...payment,
         date: payment.date.toISOString()
-      }))));
-      
-      localStorage.setItem('creditTransactions', JSON.stringify(updatedTransactions.map(transaction => ({
+      })));
+
+      await creditDBManager.saveAllTransactions(updatedTransactions.map(transaction => ({
         ...transaction,
         date: transaction.date.toISOString()
-      }))));
-      
-      localStorage.setItem('creditClients', JSON.stringify(updatedClients.map(client => ({
+      })));
+
+      await creditDBManager.saveAllClients(updatedClients.map(client => ({
         ...client,
         createdAt: client.createdAt.toISOString(),
         lastTransactionAt: client.lastTransactionAt.toISOString()
-      }))));
+      })));
       
       // Force update of duplicate card and other UI components
       window.dispatchEvent(new CustomEvent('creditDataChanged', {
@@ -605,13 +637,13 @@ export const CreditProvider: React.FC<CreditProviderProps> = ({ children }) => {
       const reorderedClients = updatedClient ? [...otherClients, updatedClient] : updatedClients;
       
       setClients(reorderedClients);
-      
-      // Save to localStorage
-      localStorage.setItem('creditClients', JSON.stringify(reorderedClients.map(client => ({
+
+      // Save to IndexedDB
+      await creditDBManager.saveAllClients(reorderedClients.map(client => ({
         ...client,
         createdAt: client.createdAt.toISOString(),
         lastTransactionAt: client.lastTransactionAt.toISOString()
-      }))));
+      })));
     } catch (err) {
       throw err;
     }
