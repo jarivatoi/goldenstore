@@ -30,6 +30,7 @@ import React, { createContext, useContext, useState, useEffect } from 'react';
 import { PriceItem, SortOption } from '../types';
 import { supabase } from '../lib/supabase';
 import { useAuth } from './AuthContext';
+import { appDBManager } from '../utils/appIndexedDB';
 
 /**
  * CONTEXT TYPE DEFINITION
@@ -254,37 +255,40 @@ export const PriceListProvider: React.FC<{ children: React.ReactNode }> = ({ chi
             }));
             
             setItems(priceItems);
-            
-            // Update localStorage with Supabase data
-            localStorage.setItem('priceListItems', JSON.stringify(priceItems.map(item => ({
+
+            // Update IndexedDB with Supabase data
+            await appDBManager.initDB();
+            await appDBManager.savePriceListItems(priceItems.map(item => ({
               ...item,
               createdAt: item.createdAt.toISOString(),
               lastEditedAt: item.lastEditedAt?.toISOString()
-            }))));
-            
-            
+            })));
+
+
           } catch (supabaseError) {
-            // Fallback to localStorage
-            const storedItems = localStorage.getItem('priceListItems');
-            const localItems: PriceItem[] = storedItems ? JSON.parse(storedItems).map((item: any) => ({
+            // Fallback to IndexedDB
+            await appDBManager.initDB();
+            const storedItems = await appDBManager.getPriceListItems();
+            const localItems: PriceItem[] = storedItems.map((item: any) => ({
               ...item,
               grossPrice: isNaN(item.grossPrice) ? 0 : (item.grossPrice || 0),
               createdAt: new Date(item.createdAt),
               lastEditedAt: item.lastEditedAt ? new Date(item.lastEditedAt) : undefined
-            })) : [];
-            
+            }));
+
             setItems(localItems);
           }
         } else {
-          // Load from localStorage when Supabase is not available
-          const storedItems = localStorage.getItem('priceListItems');
-          const localItems: PriceItem[] = storedItems ? JSON.parse(storedItems).map((item: any) => ({
+          // Load from IndexedDB when Supabase is not available
+          await appDBManager.initDB();
+          const storedItems = await appDBManager.getPriceListItems();
+          const localItems: PriceItem[] = storedItems.map((item: any) => ({
             ...item,
             grossPrice: isNaN(item.grossPrice) ? 0 : (item.grossPrice || 0),
             createdAt: new Date(item.createdAt),
             lastEditedAt: item.lastEditedAt ? new Date(item.lastEditedAt) : undefined
-          })) : [];
-          
+          }));
+
           setItems(localItems);
         }
       } catch (err) {
@@ -338,11 +342,11 @@ export const PriceListProvider: React.FC<{ children: React.ReactNode }> = ({ chi
                   const updated = [newItem, ...prev];
                   
                   // Update localStorage
-                  localStorage.setItem('priceListItems', JSON.stringify(updated.map(item => ({
+                  appDBManager.savePriceListItems(updated.map(item => ({
                     ...item,
                     createdAt: item.createdAt.toISOString(),
                     lastEditedAt: item.lastEditedAt?.toISOString()
-                  }))));
+                  })));
                   
                   return updated;
                 });
@@ -363,11 +367,11 @@ export const PriceListProvider: React.FC<{ children: React.ReactNode }> = ({ chi
                   );
                   
                   // Update localStorage
-                  localStorage.setItem('priceListItems', JSON.stringify(updated.map(item => ({
+                  appDBManager.savePriceListItems(updated.map(item => ({
                     ...item,
                     createdAt: item.createdAt.toISOString(),
                     lastEditedAt: item.lastEditedAt?.toISOString()
-                  }))));
+                  })));
                   
                   return updated;
                 });
@@ -377,11 +381,11 @@ export const PriceListProvider: React.FC<{ children: React.ReactNode }> = ({ chi
                   const updated = prev.filter(item => item.id !== payload.old.id);
                   
                   // Update localStorage
-                  localStorage.setItem('priceListItems', JSON.stringify(updated.map(item => ({
+                  appDBManager.savePriceListItems(updated.map(item => ({
                     ...item,
                     createdAt: item.createdAt.toISOString(),
                     lastEditedAt: item.lastEditedAt?.toISOString()
-                  }))));
+                  })));
                   
                   return updated;
                 });
@@ -472,11 +476,11 @@ export const PriceListProvider: React.FC<{ children: React.ReactNode }> = ({ chi
       
       // Save to localStorage immediately - this is the primary storage for iPhone
       try {
-        localStorage.setItem('priceListItems', JSON.stringify(updatedItems.map(item => ({
+        appDBManager.savePriceListItems(updatedItems.map(item => ({
           ...item,
           createdAt: item.createdAt.toISOString(),
           lastEditedAt: item.lastEditedAt?.toISOString()
-        }))));
+        })));
         console.log('✅ Item saved to localStorage successfully');
       } catch (storageError) {
         console.error('❌ localStorage save failed:', storageError);
@@ -590,11 +594,11 @@ export const PriceListProvider: React.FC<{ children: React.ReactNode }> = ({ chi
         // Fallback to localStorage
         const updatedItems = items.map(item => item.id === id ? updatedItem : item);
         setItems(updatedItems);
-        localStorage.setItem('priceListItems', JSON.stringify(updatedItems.map(item => ({
+        appDBManager.savePriceListItems(updatedItems.map(item => ({
           ...item,
           createdAt: item.createdAt.toISOString(),
           lastEditedAt: item.lastEditedAt?.toISOString()
-        }))));
+        })));
       }
     } catch (err) {
       setError('Failed to update item. Please try again.');
@@ -619,11 +623,11 @@ export const PriceListProvider: React.FC<{ children: React.ReactNode }> = ({ chi
         // Fallback to localStorage
         const updatedItems = items.filter(item => item.id !== id);
         setItems(updatedItems);
-        localStorage.setItem('priceListItems', JSON.stringify(updatedItems.map(item => ({
+        appDBManager.savePriceListItems(updatedItems.map(item => ({
           ...item,
           createdAt: item.createdAt.toISOString(),
           lastEditedAt: item.lastEditedAt?.toISOString()
-        }))));
+        })));
       }
     } catch (err) {
       setError('Failed to delete item. Please try again.');
@@ -663,11 +667,11 @@ export const PriceListProvider: React.FC<{ children: React.ReactNode }> = ({ chi
       } else {
         // Fallback to localStorage
         setItems(newItems);
-        localStorage.setItem('priceListItems', JSON.stringify(newItems.map(item => ({
+        appDBManager.savePriceListItems(newItems.map(item => ({
           ...item,
           createdAt: item.createdAt.toISOString(),
           lastEditedAt: item.lastEditedAt?.toISOString()
-        }))));
+        })));
       }
     } catch (err) {
       setError('Failed to import items. Please try again.');

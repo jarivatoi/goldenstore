@@ -1,6 +1,7 @@
 import React, { createContext, useContext, useState, useEffect } from 'react';
 import { OverItem } from '../types';
 import { supabase } from '../lib/supabase';
+import { appDBManager } from '../utils/appIndexedDB';
 
 /**
  * OVER CONTEXT TYPE DEFINITION
@@ -88,20 +89,22 @@ export const OverProvider: React.FC<{ children: React.ReactNode }> = ({ children
             }));
             
             setItems(overItems);
-            
-            // Update localStorage with Supabase data
-            localStorage.setItem('overItems', JSON.stringify(overItems.map(item => ({
+
+            // Update IndexedDB with Supabase data
+            await appDBManager.initDB();
+            await appDBManager.saveOverItems(overItems.map(item => ({
               ...item,
               createdAt: item.createdAt.toISOString(),
               completedAt: item.completedAt?.toISOString()
-            }))));
+            })));
             
             
           } catch (supabaseError) {
-            // Fallback to localStorage
-            const stored = localStorage.getItem('overItems');
-            if (stored) {
-              const parsedItems = JSON.parse(stored).map((item: any) => ({
+            // Fallback to IndexedDB
+            await appDBManager.initDB();
+            const storedData = await appDBManager.getOverItems();
+            if (storedData && storedData.length > 0) {
+              const parsedItems = storedData.map((item: any) => ({
                 ...item,
                 createdAt: new Date(item.createdAt),
                 completedAt: item.completedAt ? new Date(item.completedAt) : undefined
@@ -110,10 +113,11 @@ export const OverProvider: React.FC<{ children: React.ReactNode }> = ({ children
             }
           }
         } else {
-          // Load from localStorage when Supabase is not available
-          const stored = localStorage.getItem('overItems');
-          if (stored) {
-            const parsedItems = JSON.parse(stored).map((item: any) => ({
+          // Load from IndexedDB when Supabase is not available
+          await appDBManager.initDB();
+          const storedData = await appDBManager.getOverItems();
+          if (storedData && storedData.length > 0) {
+            const parsedItems = storedData.map((item: any) => ({
               ...item,
               createdAt: new Date(item.createdAt),
               completedAt: item.completedAt ? new Date(item.completedAt) : undefined
@@ -170,11 +174,11 @@ export const OverProvider: React.FC<{ children: React.ReactNode }> = ({ children
                   const updated = [newItem, ...prev];
                   
                   // Update localStorage
-                  localStorage.setItem('overItems', JSON.stringify(updated.map(item => ({
+                  appDBManager.saveOverItems(updated.map(item => ({
                     ...item,
                     createdAt: item.createdAt.toISOString(),
                     completedAt: item.completedAt?.toISOString()
-                  }))));
+                  })));
                   
                   return updated;
                 });
@@ -194,11 +198,11 @@ export const OverProvider: React.FC<{ children: React.ReactNode }> = ({ children
                   );
                   
                   // Update localStorage
-                  localStorage.setItem('overItems', JSON.stringify(updated.map(item => ({
+                  appDBManager.saveOverItems(updated.map(item => ({
                     ...item,
                     createdAt: item.createdAt.toISOString(),
                     completedAt: item.completedAt?.toISOString()
-                  }))));
+                  })));
                   
                   return updated;
                 });
@@ -208,11 +212,11 @@ export const OverProvider: React.FC<{ children: React.ReactNode }> = ({ children
                   const updated = prev.filter(item => item.id !== payload.old.id);
                   
                   // Update localStorage
-                  localStorage.setItem('overItems', JSON.stringify(updated.map(item => ({
+                  appDBManager.saveOverItems(updated.map(item => ({
                     ...item,
                     createdAt: item.createdAt.toISOString(),
                     completedAt: item.completedAt?.toISOString()
-                  }))));
+                  })));
                   
                   return updated;
                 });
@@ -272,11 +276,11 @@ export const OverProvider: React.FC<{ children: React.ReactNode }> = ({ children
       
       // Save to localStorage immediately - this is the primary storage
       try {
-        localStorage.setItem('overItems', JSON.stringify(updatedItems.map(item => ({
+        appDBManager.saveOverItems(updatedItems.map(item => ({
           ...item,
           createdAt: item.createdAt.toISOString(),
           completedAt: item.completedAt?.toISOString()
-        }))));
+        })));
       } catch (storageError) {
         throw new Error('Failed to save item locally');
       }
@@ -349,11 +353,11 @@ export const OverProvider: React.FC<{ children: React.ReactNode }> = ({ children
       
       // Save to localStorage immediately
       try {
-        localStorage.setItem('overItems', JSON.stringify(updatedItems.map(item => ({
+        appDBManager.saveOverItems(updatedItems.map(item => ({
           ...item,
           createdAt: item.createdAt.toISOString(),
           completedAt: item.completedAt?.toISOString()
-        }))));
+        })));
       } catch (storageError) {
         throw new Error('Failed to save changes locally');
       }
@@ -401,11 +405,11 @@ export const OverProvider: React.FC<{ children: React.ReactNode }> = ({ children
         i.id === id ? { ...i, isCompleted: newCompletedState, completedAt } : i
       );
       setItems(updatedItems);
-      localStorage.setItem('overItems', JSON.stringify(updatedItems.map(item => ({
+      appDBManager.saveOverItems(updatedItems.map(item => ({
         ...item,
         createdAt: item.createdAt.toISOString(),
         completedAt: item.completedAt?.toISOString()
-      }))));
+      })));
 
       if (supabase) {
         // Try Supabase sync
@@ -437,11 +441,11 @@ export const OverProvider: React.FC<{ children: React.ReactNode }> = ({ children
       // Update localStorage first
       const updatedItems = items.filter(item => item.id !== id);
       setItems(updatedItems);
-      localStorage.setItem('overItems', JSON.stringify(updatedItems.map(item => ({
+      appDBManager.saveOverItems(updatedItems.map(item => ({
         ...item,
         createdAt: item.createdAt.toISOString(),
         completedAt: item.completedAt?.toISOString()
-      }))));
+      })));
 
       if (supabase) {
         // Try Supabase sync

@@ -1,6 +1,7 @@
 import React, { createContext, useContext, useState, useEffect } from 'react';
 import { OrderCategory, OrderItemTemplate, Order, OrderItem } from '../types';
 import { supabase } from '../lib/supabase';
+import { appDBManager } from '../utils/appIndexedDB';
 
 /**
  * ORDER CONTEXT TYPE DEFINITION
@@ -195,22 +196,22 @@ export const OrderProvider: React.FC<{ children: React.ReactNode }> = ({ childre
               setOrders(transformedOrders);
               
               // Update localStorage with Supabase data
-              localStorage.setItem('orderCategories', JSON.stringify(transformedCategories.map(category => ({
+              appDBManager.saveOrderCategories(transformedCategories.map(category => ({
                 ...category,
                 createdAt: category.createdAt.toISOString()
-              }))));
+              })));
               
-              localStorage.setItem('orderItemTemplates', JSON.stringify(transformedTemplates.map(template => ({
+              appDBManager.saveOrderTemplates(transformedTemplates.map(template => ({
                 ...template,
                 createdAt: template.createdAt.toISOString()
-              }))));
+              })));
               
-              localStorage.setItem('orders', JSON.stringify(transformedOrders.map(order => ({
+              appDBManager.saveOrders(transformedOrders.map(order => ({
                 ...order,
                 orderDate: order.orderDate.toISOString(),
                 createdAt: order.createdAt.toISOString(),
                 lastEditedAt: order.lastEditedAt?.toISOString()
-              }))));
+              })));
               
               
             } catch (dataError) {
@@ -221,20 +222,20 @@ export const OrderProvider: React.FC<{ children: React.ReactNode }> = ({ childre
             setError('Database tables not found. Using offline data only. Please apply migrations to enable online sync.');
             
             // Fallback to localStorage if Supabase fails
-            const storedCategories = localStorage.getItem('orderCategories');
+            const storedCategories = await appDBManager.initDB(); JSON.stringify(await appDBManager.getOrderCategories());
             const transformedCategories: OrderCategory[] = storedCategories ? JSON.parse(storedCategories).map((category: any) => ({
               ...category,
               createdAt: new Date(category.createdAt)
             })) : [];
             
-            const storedTemplates = localStorage.getItem('orderItemTemplates');
+            const storedTemplates = await appDBManager.initDB(); JSON.stringify(await appDBManager.getOrderTemplates());
             const transformedTemplates: OrderItemTemplate[] = storedTemplates ? JSON.parse(storedTemplates).map((template: any) => ({
               ...template,
               isVatIncluded: template.isVatIncluded || false,
               createdAt: new Date(template.createdAt)
             })) : [];
             
-            const storedOrders = localStorage.getItem('orders');
+            const storedOrders = await appDBManager.initDB(); JSON.stringify(await appDBManager.getOrders());
             const transformedOrders: Order[] = storedOrders ? JSON.parse(storedOrders).map((order: any) => ({
               ...order,
               orderDate: new Date(order.orderDate),
@@ -253,19 +254,19 @@ export const OrderProvider: React.FC<{ children: React.ReactNode }> = ({ childre
         } else {
           // Fallback to localStorage when Supabase is not available
           console.log('Using localStorage for order data');
-          const storedCategories = localStorage.getItem('orderCategories');
+          const storedCategories = await appDBManager.initDB(); JSON.stringify(await appDBManager.getOrderCategories());
           const transformedCategories: OrderCategory[] = storedCategories ? JSON.parse(storedCategories).map((category: any) => ({
             ...category,
             createdAt: new Date(category.createdAt)
           })) : [];
           
-          const storedTemplates = localStorage.getItem('orderItemTemplates');
+          const storedTemplates = await appDBManager.initDB(); JSON.stringify(await appDBManager.getOrderTemplates());
           const transformedTemplates: OrderItemTemplate[] = storedTemplates ? JSON.parse(storedTemplates).map((template: any) => ({
             ...template,
             createdAt: new Date(template.createdAt)
           })) : [];
           
-          const storedOrders = localStorage.getItem('orders');
+          const storedOrders = await appDBManager.initDB(); JSON.stringify(await appDBManager.getOrders());
           const transformedOrders: Order[] = storedOrders ? JSON.parse(storedOrders).map((order: any) => ({
             ...order,
             orderDate: new Date(order.orderDate),
@@ -331,10 +332,10 @@ export const OrderProvider: React.FC<{ children: React.ReactNode }> = ({ childre
         // Fallback to localStorage
         const updatedCategories = [newCategory, ...categories];
         setCategories(updatedCategories);
-        localStorage.setItem('orderCategories', JSON.stringify(updatedCategories.map(category => ({
+        appDBManager.saveOrderCategories(updatedCategories.map(category => ({
           ...category,
           createdAt: category.createdAt.toISOString()
-        }))));
+        })));
       }
       
       return newCategory;
@@ -371,10 +372,10 @@ export const OrderProvider: React.FC<{ children: React.ReactNode }> = ({ childre
           cat.id === id ? { ...cat, name: formattedName, vatPercentage } : cat
         );
         setCategories(updatedCategories);
-        localStorage.setItem('orderCategories', JSON.stringify(updatedCategories.map(category => ({
+        appDBManager.saveOrderCategories(updatedCategories.map(category => ({
           ...category,
           createdAt: category.createdAt.toISOString()
-        }))));
+        })));
       }
     } catch (err) {
       setError('Failed to update category');
@@ -408,22 +409,22 @@ export const OrderProvider: React.FC<{ children: React.ReactNode }> = ({ childre
         setItemTemplates(updatedTemplates);
         setOrders(updatedOrders);
         
-        localStorage.setItem('orderCategories', JSON.stringify(updatedCategories.map(category => ({
+        appDBManager.saveOrderCategories(updatedCategories.map(category => ({
           ...category,
           createdAt: category.createdAt.toISOString()
-        }))));
+        })));
         
-        localStorage.setItem('orderItemTemplates', JSON.stringify(updatedTemplates.map(template => ({
+        appDBManager.saveOrderTemplates(updatedTemplates.map(template => ({
           ...template,
           createdAt: template.createdAt.toISOString()
-        }))));
+        })));
         
-        localStorage.setItem('orders', JSON.stringify(updatedOrders.map(order => ({
+        appDBManager.saveOrders(updatedOrders.map(order => ({
           ...order,
           orderDate: order.orderDate.toISOString(),
           createdAt: order.createdAt.toISOString(),
           lastEditedAt: order.lastEditedAt?.toISOString()
-        }))));
+        })));
       }
     } catch (err) {
       setError('Failed to delete category');
@@ -490,10 +491,10 @@ export const OrderProvider: React.FC<{ children: React.ReactNode }> = ({ childre
         // Fallback to localStorage
         const updatedTemplates = [newItemTemplate, ...itemTemplates];
         setItemTemplates(updatedTemplates);
-        localStorage.setItem('orderItemTemplates', JSON.stringify(updatedTemplates.map(template => ({
+        appDBManager.saveOrderTemplates(updatedTemplates.map(template => ({
           ...template,
           createdAt: template.createdAt.toISOString()
-        }))));
+        })));
       }
       
       return newItemTemplate;
@@ -546,11 +547,11 @@ export const OrderProvider: React.FC<{ children: React.ReactNode }> = ({ childre
           } : temp
         );
         setItemTemplates(updatedTemplates);
-        localStorage.setItem('orderItemTemplates', JSON.stringify(updatedTemplates.map(template => ({
+        appDBManager.saveOrderTemplates(updatedTemplates.map(template => ({
           ...template,
           isVatIncluded: template.isVatIncluded,
           createdAt: template.createdAt.toISOString()
-        }))));
+        })));
       }
     } catch (err) {
       setError('Failed to update item template');
@@ -601,17 +602,17 @@ export const OrderProvider: React.FC<{ children: React.ReactNode }> = ({ childre
         
         // Save to localStorage
         const updatedTemplates = itemTemplates.filter(temp => temp.id !== id);
-        localStorage.setItem('orderItemTemplates', JSON.stringify(updatedTemplates.map(template => ({
+        appDBManager.saveOrderTemplates(updatedTemplates.map(template => ({
           ...template,
           createdAt: template.createdAt.toISOString()
-        }))));
+        })));
         
-        localStorage.setItem('orders', JSON.stringify(updatedOrders.map(order => ({
+        appDBManager.saveOrders(updatedOrders.map(order => ({
           ...order,
           orderDate: order.orderDate.toISOString(),
           createdAt: order.createdAt.toISOString(),
           lastEditedAt: order.lastEditedAt?.toISOString()
-        }))));
+        })));
       }
     } catch (err) {
       setError('Failed to delete item template');
@@ -705,12 +706,12 @@ export const OrderProvider: React.FC<{ children: React.ReactNode }> = ({ childre
         // Fallback to localStorage
         const updatedOrders = [newOrder, ...orders];
         setOrders(updatedOrders);
-        localStorage.setItem('orders', JSON.stringify(updatedOrders.map(order => ({
+        appDBManager.saveOrders(updatedOrders.map(order => ({
           ...order,
           orderDate: order.orderDate.toISOString(),
           createdAt: order.createdAt.toISOString(),
           lastEditedAt: order.lastEditedAt?.toISOString()
-        }))));
+        })));
       }
       
       return newOrder;
@@ -793,12 +794,12 @@ export const OrderProvider: React.FC<{ children: React.ReactNode }> = ({ childre
           } : order
         );
         setOrders(updatedOrders);
-        localStorage.setItem('orders', JSON.stringify(updatedOrders.map(order => ({
+        appDBManager.saveOrders(updatedOrders.map(order => ({
           ...order,
           orderDate: order.orderDate.toISOString(),
           createdAt: order.createdAt.toISOString(),
           lastEditedAt: order.lastEditedAt?.toISOString()
-        }))));
+        })));
       }
     } catch (err) {
       setError('Failed to update order');
@@ -823,12 +824,12 @@ export const OrderProvider: React.FC<{ children: React.ReactNode }> = ({ childre
         // Fallback to localStorage
         const updatedOrders = orders.filter(order => order.id !== id);
         setOrders(updatedOrders);
-        localStorage.setItem('orders', JSON.stringify(updatedOrders.map(order => ({
+        appDBManager.saveOrders(updatedOrders.map(order => ({
           ...order,
           orderDate: order.orderDate.toISOString(),
           createdAt: order.createdAt.toISOString(),
           lastEditedAt: order.lastEditedAt?.toISOString()
-        }))));
+        })));
       }
     } catch (err) {
       setError('Failed to delete order');

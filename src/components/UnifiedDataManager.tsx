@@ -9,6 +9,7 @@ import { SupabaseBackupManager } from '../utils/supabaseBackupManager';
 import AutoBackupSettings from './AutoBackupSettings';
 import { automaticBackupManager } from '../utils/automaticBackupManager';
 import { creditDBManager } from '../utils/creditIndexedDB';
+import { appDBManager } from '../utils/appIndexedDB';
 
 interface UnifiedDataManagerProps {
   isOpen: boolean;
@@ -300,19 +301,16 @@ const UnifiedDataManager: React.FC<UnifiedDataManagerProps> = ({ isOpen, onClose
       setIsProcessing(true);
       setModal({ type: null, title: '', message: '' });
 
-      // Initialize IndexedDB for credit data
+      // Initialize both IndexedDB databases
       await creditDBManager.initDB();
+      await appDBManager.initDB();
 
-      // Import Price List data with quota error handling
+      // Import Price List data to IndexedDB ONLY
       if (data.priceList?.items) {
-        try {
-          localStorage.setItem('priceListItems', JSON.stringify(data.priceList.items));
-        } catch (quotaError) {
-          console.warn('localStorage quota exceeded for priceList, skipping localStorage save');
-        }
+        await appDBManager.savePriceListItems(data.priceList.items);
       }
 
-      // Import Credit Management data to IndexedDB (NOT localStorage to avoid quota issues)
+      // Import Credit Management data to IndexedDB
       if (data.creditManagement?.clients) {
         await creditDBManager.saveAllClients(data.creditManagement.clients);
       }
@@ -323,36 +321,20 @@ const UnifiedDataManager: React.FC<UnifiedDataManagerProps> = ({ isOpen, onClose
         await creditDBManager.saveAllPayments(data.creditManagement.payments);
       }
 
-      // Import Over Management data with quota error handling
+      // Import Over Management data to IndexedDB ONLY
       if (data.overManagement?.items) {
-        try {
-          localStorage.setItem('overItems', JSON.stringify(data.overManagement.items));
-        } catch (quotaError) {
-          console.warn('localStorage quota exceeded for overItems, skipping localStorage save');
-        }
+        await appDBManager.saveOverItems(data.overManagement.items);
       }
 
-      // Import Order Management data with quota error handling
+      // Import Order Management data to IndexedDB ONLY
       if (data.orderManagement?.categories) {
-        try {
-          localStorage.setItem('orderCategories', JSON.stringify(data.orderManagement.categories));
-        } catch (quotaError) {
-          console.warn('localStorage quota exceeded for orderCategories, skipping localStorage save');
-        }
+        await appDBManager.saveOrderCategories(data.orderManagement.categories);
       }
       if (data.orderManagement?.itemTemplates) {
-        try {
-          localStorage.setItem('orderItemTemplates', JSON.stringify(data.orderManagement.itemTemplates));
-        } catch (quotaError) {
-          console.warn('localStorage quota exceeded for orderTemplates, skipping localStorage save');
-        }
+        await appDBManager.saveOrderTemplates(data.orderManagement.itemTemplates);
       }
       if (data.orderManagement?.orders) {
-        try {
-          localStorage.setItem('orders', JSON.stringify(data.orderManagement.orders));
-        } catch (quotaError) {
-          console.warn('localStorage quota exceeded for orders, skipping localStorage save');
-        }
+        await appDBManager.saveOrders(data.orderManagement.orders);
       }
 
       setModal({

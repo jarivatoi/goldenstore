@@ -4,10 +4,15 @@
  *
  * Manages ALL app data storage in IndexedDB to avoid localStorage quota limits.
  * Provides unlimited storage capacity for all modules.
+ *
+ * This replaces localStorage for:
+ * - Price List items
+ * - Over Management items
+ * - Order categories, templates, and orders
  */
 
 const DB_NAME = 'GoldenStoreDB';
-const DB_VERSION = 2;
+const DB_VERSION = 1;
 const PRICE_LIST_STORE = 'priceList';
 const OVER_ITEMS_STORE = 'overItems';
 const ORDER_CATEGORIES_STORE = 'orderCategories';
