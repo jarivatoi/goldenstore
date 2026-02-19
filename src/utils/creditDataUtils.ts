@@ -151,9 +151,13 @@ export const importCompleteDatabase = (notifications?: NotificationCallbacks): P
             // Initialize IndexedDB for credit data
             await creditDBManager.initDB();
 
-            // Import Price List data to localStorage
+            // Import Price List data with quota error handling
             if (data.priceList?.items) {
-              localStorage.setItem('priceListItems', JSON.stringify(data.priceList.items));
+              try {
+                localStorage.setItem('priceListItems', JSON.stringify(data.priceList.items));
+              } catch (quotaError) {
+                console.warn('localStorage quota exceeded for priceList, skipping localStorage save');
+              }
             }
 
             // Import credit data to IndexedDB (NOT localStorage to avoid quota issues)
@@ -167,20 +171,36 @@ export const importCompleteDatabase = (notifications?: NotificationCallbacks): P
               await creditDBManager.saveAllPayments(data.creditManagement.payments);
             }
 
-            // Import Over Management data to localStorage
+            // Import Over Management data with quota error handling
             if (data.overManagement?.items) {
-              localStorage.setItem('overItems', JSON.stringify(data.overManagement.items));
+              try {
+                localStorage.setItem('overItems', JSON.stringify(data.overManagement.items));
+              } catch (quotaError) {
+                console.warn('localStorage quota exceeded for overItems, skipping localStorage save');
+              }
             }
 
-            // Import Order Management data to localStorage
+            // Import Order Management data with quota error handling
             if (data.orderManagement?.categories) {
-              localStorage.setItem('orderCategories', JSON.stringify(data.orderManagement.categories));
+              try {
+                localStorage.setItem('orderCategories', JSON.stringify(data.orderManagement.categories));
+              } catch (quotaError) {
+                console.warn('localStorage quota exceeded for orderCategories, skipping localStorage save');
+              }
             }
             if (data.orderManagement?.itemTemplates) {
-              localStorage.setItem('orderItemTemplates', JSON.stringify(data.orderManagement.itemTemplates));
+              try {
+                localStorage.setItem('orderItemTemplates', JSON.stringify(data.orderManagement.itemTemplates));
+              } catch (quotaError) {
+                console.warn('localStorage quota exceeded for orderTemplates, skipping localStorage save');
+              }
             }
             if (data.orderManagement?.orders) {
-              localStorage.setItem('orders', JSON.stringify(data.orderManagement.orders));
+              try {
+                localStorage.setItem('orders', JSON.stringify(data.orderManagement.orders));
+              } catch (quotaError) {
+                console.warn('localStorage quota exceeded for orders, skipping localStorage save');
+              }
             }
 
             if (notifications) {
