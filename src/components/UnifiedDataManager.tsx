@@ -298,29 +298,32 @@ const UnifiedDataManager: React.FC<UnifiedDataManagerProps> = ({ isOpen, onClose
     try {
       setIsProcessing(true);
       setModal({ type: null, title: '', message: '' });
-      
-      // Import all data to localStorage (since contexts don't have import methods)
+
+      // Initialize IndexedDB for credit data
+      await creditDBManager.initDB();
+
+      // Import Price List data to localStorage
       if (data.priceList?.items) {
         localStorage.setItem('priceListItems', JSON.stringify(data.priceList.items));
       }
-      
-      // Import Credit Management data
+
+      // Import Credit Management data to IndexedDB (NOT localStorage to avoid quota issues)
       if (data.creditManagement?.clients) {
-        localStorage.setItem('creditClients', JSON.stringify(data.creditManagement.clients));
+        await creditDBManager.saveAllClients(data.creditManagement.clients);
       }
       if (data.creditManagement?.transactions) {
-        localStorage.setItem('creditTransactions', JSON.stringify(data.creditManagement.transactions));
+        await creditDBManager.saveAllTransactions(data.creditManagement.transactions);
       }
       if (data.creditManagement?.payments) {
-        localStorage.setItem('creditPayments', JSON.stringify(data.creditManagement.payments));
+        await creditDBManager.saveAllPayments(data.creditManagement.payments);
       }
-      
-      // Import Over Management data
+
+      // Import Over Management data to localStorage
       if (data.overManagement?.items) {
         localStorage.setItem('overItems', JSON.stringify(data.overManagement.items));
       }
-      
-      // Import Order Management data
+
+      // Import Order Management data to localStorage
       if (data.orderManagement?.categories) {
         localStorage.setItem('orderCategories', JSON.stringify(data.orderManagement.categories));
       }
@@ -330,7 +333,7 @@ const UnifiedDataManager: React.FC<UnifiedDataManagerProps> = ({ isOpen, onClose
       if (data.orderManagement?.orders) {
         localStorage.setItem('orders', JSON.stringify(data.orderManagement.orders));
       }
-      
+
       setModal({
         type: 'success',
         title: 'Import Successful',

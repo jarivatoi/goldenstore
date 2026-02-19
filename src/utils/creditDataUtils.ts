@@ -148,15 +148,15 @@ export const importCompleteDatabase = (notifications?: NotificationCallbacks): P
               );
 
           if (confirmImport) {
-            // Initialize IndexedDB
+            // Initialize IndexedDB for credit data
             await creditDBManager.initDB();
 
-            // Import all data
+            // Import Price List data to localStorage
             if (data.priceList?.items) {
               localStorage.setItem('priceListItems', JSON.stringify(data.priceList.items));
             }
 
-            // Import credit data to IndexedDB
+            // Import credit data to IndexedDB (NOT localStorage to avoid quota issues)
             if (data.creditManagement?.clients) {
               await creditDBManager.saveAllClients(data.creditManagement.clients);
             }
@@ -167,10 +167,12 @@ export const importCompleteDatabase = (notifications?: NotificationCallbacks): P
               await creditDBManager.saveAllPayments(data.creditManagement.payments);
             }
 
+            // Import Over Management data to localStorage
             if (data.overManagement?.items) {
               localStorage.setItem('overItems', JSON.stringify(data.overManagement.items));
             }
 
+            // Import Order Management data to localStorage
             if (data.orderManagement?.categories) {
               localStorage.setItem('orderCategories', JSON.stringify(data.orderManagement.categories));
             }
@@ -180,13 +182,13 @@ export const importCompleteDatabase = (notifications?: NotificationCallbacks): P
             if (data.orderManagement?.orders) {
               localStorage.setItem('orders', JSON.stringify(data.orderManagement.orders));
             }
-            
+
             if (notifications) {
               notifications.showAlert({ type: 'success', message: `Successfully imported complete Golden Store database!\n\nPlease refresh the page to see all imported data.` });
             } else {
               alert(`Successfully imported complete Golden Store database!\n\nPlease refresh the page to see all imported data.`);
             }
-            
+
             // Refresh the page to reload all data
             window.location.reload();
             resolve();
