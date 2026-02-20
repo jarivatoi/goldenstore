@@ -144,6 +144,21 @@ const ClientGrid: React.FC<ClientGridProps> = ({
     const nameStartsMatch = clients.find(c => c.name.toLowerCase().startsWith(input));
     if (nameStartsMatch) return nameStartsMatch.name;
 
+    // Check if input contains/starts with any client name (handles "vasan" containing "vas")
+    // Sort clients by name length (longer first) to match longer names first
+    const sortedByLength = [...clients].sort((a, b) => b.name.length - a.name.length);
+    const inputContainsName = sortedByLength.find(c => {
+      const nameLower = c.name.toLowerCase();
+      const nameNoSpaces = nameLower.replace(/\s+/g, '');
+
+      // Check if input starts with the client name (with or without spaces)
+      if (input.startsWith(nameLower)) return true;
+      if (inputNoSpaces.startsWith(nameNoSpaces)) return true;
+
+      return false;
+    });
+    if (inputContainsName) return inputContainsName.name;
+
     // Check if removing spaces from input matches client name (handles "black are you" -> "blackareyou" ~ "blackayo")
     const noSpaceMatch = clients.find(c => {
       const nameLower = c.name.toLowerCase();
