@@ -62,6 +62,7 @@ const ClientCard: React.FC<ClientCardProps> = ({ client, onLongPress, onQuickAdd
   const [showZoomedImage, setShowZoomedImage] = useState(false);
   const zoomPressTimer = useRef<NodeJS.Timeout | null>(null);
   const isLongPressActive = useRef<boolean>(false);
+  const justOpenedZoom = useRef<boolean>(false);
 
   const totalDebt = getClientTotalDebt(client.id);
   const bottlesOwed = getClientBottlesOwed(client.id);
@@ -146,6 +147,7 @@ const ClientCard: React.FC<ClientCardProps> = ({ client, onLongPress, onQuickAdd
 
     zoomPressTimer.current = setTimeout(() => {
       setShowZoomedImage(true);
+      justOpenedZoom.current = true;
       // Prevent scrolling when zoomed image is shown
       document.body.style.overflow = 'hidden';
     }, 500);
@@ -158,6 +160,11 @@ const ClientCard: React.FC<ClientCardProps> = ({ client, onLongPress, onQuickAdd
       clearTimeout(zoomPressTimer.current);
       zoomPressTimer.current = null;
     }
+
+    // Reset the flag after a delay to prevent immediate close
+    setTimeout(() => {
+      justOpenedZoom.current = false;
+    }, 100);
   };
 
   const handleCloseZoom = () => {
@@ -372,11 +379,15 @@ const ClientCard: React.FC<ClientCardProps> = ({ client, onLongPress, onQuickAdd
           className="fixed inset-0 flex items-center justify-center z-[10000] overflow-hidden"
           onClick={(e) => {
             e.preventDefault();
-            handleCloseZoom();
+            if (!justOpenedZoom.current) {
+              handleCloseZoom();
+            }
           }}
           onTouchEnd={(e) => {
             e.preventDefault();
-            handleCloseZoom();
+            if (!justOpenedZoom.current) {
+              handleCloseZoom();
+            }
           }}
           onTouchStart={(e) => {
             e.preventDefault();
