@@ -127,6 +127,10 @@ const ClientGrid: React.FC<ClientGridProps> = ({
 
     console.log('🎤 Voice search - Transcript:', transcript, '→ Processed:', input);
 
+    // Log all client names that start with 'v' for debugging
+    const vClients = clients.filter(c => c.name.toLowerCase().startsWith('v'));
+    console.log('📋 Clients starting with V:', vClients.map(c => `"${c.name}"`).join(', '));
+
     // Skip very short inputs (less than 2 characters)
     if (input.length < 2) {
       console.log('❌ Input too short (<2 chars)');
@@ -155,11 +159,18 @@ const ClientGrid: React.FC<ClientGridProps> = ({
     }
 
     // Name starts with input (strict)
-    const nameStartsMatch = clients.find(c => c.name.toLowerCase().startsWith(input));
+    console.log('🔍 Checking name starts with "' + input + '"...');
+    const nameStartsMatch = clients.find(c => {
+      const nameLower = c.name.toLowerCase();
+      const matches = nameLower.startsWith(input);
+      if (matches) console.log(`  ✓ "${c.name}".toLowerCase() = "${nameLower}" starts with "${input}"`);
+      return matches;
+    });
     if (nameStartsMatch) {
       console.log('✅ Name starts with match:', nameStartsMatch.name);
       return nameStartsMatch.name;
     }
+    console.log('  ✗ No names start with "' + input + '"');
 
     // Check if input contains/starts with any client name (handles "vasan" containing "vas")
     // Sort clients by name length (longer first) to match longer names first
