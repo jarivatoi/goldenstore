@@ -162,8 +162,9 @@ const ClientGrid: React.FC<ClientGridProps> = ({
     const applyPhoneticRules = (text: string): string => {
       let result = text;
 
-      // Common voice recognition patterns - "vi" is more common than "ve"
+      // Common voice recognition patterns
       const rules: [RegExp, string][] = [
+        // English/Hindi phonetics
         [/^vee/i, 'vi'],              // "vee" → "vi" at start
         [/^ve([^r])/i, 'vi$1'],       // "ve" → "vi" at start (but not "ver")
         [/^bee/i, 'bi'],              // "bee" → "bi" at start
@@ -172,6 +173,15 @@ const ClientGrid: React.FC<ClientGridProps> = ({
         [/^de([^a-z])/i, 'di$1'],     // "de" → "di" at start before non-letter
         [/^gee/i, 'gi'],              // "gee" → "gi" at start
         [/^ge([^a-z])/i, 'gi$1'],     // "ge" → "gi" at start before non-letter
+
+        // French phonetics
+        [/^jean\s*/i, 'john '],       // "jean" → "john" (Jean Paul → John Paul)
+        [/^jhon/i, 'john'],           // "jhon" → "john"
+        [/^jon\s/i, 'john '],         // "jon " → "john "
+        [/^pierre/i, 'peter'],        // "pierre" → "peter"
+        [/^jacque/i, 'jack'],         // "jacque" → "jack"
+        [/^jacques/i, 'jack'],        // "jacques" → "jack"
+        [/(\s|^)paul(\s|$)/i, '$1pol$2'],  // "paul" → "pol" (but preserve spaces)
       ];
 
       for (const [pattern, replacement] of rules) {
