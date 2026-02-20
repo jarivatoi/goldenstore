@@ -30,22 +30,22 @@ const SearchBar: React.FC = () => {
               value={searchQuery}
               onChange={(e) => setSearchQuery(e.target.value)}
               placeholder="Search items..."
-              className="block w-full pl-12 pr-4 py-4 text-xl border-2 border-gray-300 rounded-xl focus:outline-none focus:ring-3 focus:ring-blue-500 focus:border-blue-500 shadow-sm"
+              className="block w-full h-[72px] pl-12 pr-4 text-xl border-2 border-gray-300 rounded-xl focus:outline-none focus:ring-3 focus:ring-blue-500 focus:border-blue-500 shadow-sm"
             />
           </div>
-          
+
           {/* CLEAR BUTTON - ALWAYS VISIBLE FOR TESTING */}
           <button
             onClick={() => setSearchQuery('')}
-            className="w-16 h-16 bg-red-500 hover:bg-red-600 text-white rounded-xl flex items-center justify-center shadow-lg border-2 border-red-600 select-none"
+            className="w-16 h-[72px] bg-red-500 hover:bg-red-600 text-white rounded-xl flex items-center justify-center shadow-lg border-2 border-red-600 select-none"
           >
             <X size={32} />
           </button>
-          
+
           {/* Filter Button */}
           <button
             onClick={() => setIsFilterOpen(!isFilterOpen)}
-            className="w-16 h-16 bg-blue-500 hover:bg-blue-600 text-white rounded-xl flex items-center justify-center shadow-lg border-2 border-blue-600 select-none"
+            className="w-16 h-[72px] bg-blue-500 hover:bg-blue-600 text-white rounded-xl flex items-center justify-center shadow-lg border-2 border-blue-600 select-none"
           >
             <Filter size={24} />
           </button>
