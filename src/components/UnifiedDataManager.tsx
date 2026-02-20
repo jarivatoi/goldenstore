@@ -10,7 +10,6 @@ import AutoBackupSettings from './AutoBackupSettings';
 import { automaticBackupManager } from '../utils/automaticBackupManager';
 import { creditDBManager } from '../utils/creditIndexedDB';
 import { appDBManager } from '../utils/appIndexedDB';
-import { removeDuplicateClients } from '../utils/fixDuplicateClients';
 
 interface UnifiedDataManagerProps {
   isOpen: boolean;
@@ -453,42 +452,6 @@ Please check the file format and try again.`,
     input.click();
   };
 
-  // Fix duplicate clients
-  const handleFixDuplicates = async () => {
-    setModal({
-      type: 'confirm',
-      title: 'Fix Duplicate Clients',
-      message: 'This will remove duplicate client records that may have been created during migration. This action cannot be undone.\n\nDo you want to continue?',
-      onConfirm: async () => {
-        try {
-          setIsProcessing(true);
-          setModal({ type: null, title: '', message: '' });
-
-          const result = await removeDuplicateClients();
-
-          setModal({
-            type: 'success',
-            title: 'Duplicates Removed',
-            message: `Successfully removed ${result.duplicatesRemoved} duplicate client(s).\n\nRemaining clients: ${result.remainingClients}\n\nPlease refresh the page to see the updated client list.`,
-            onConfirm: () => {
-              setModal({ type: null, title: '', message: '' });
-              window.location.reload();
-            }
-          });
-        } catch (error) {
-          setModal({
-            type: 'error',
-            title: 'Fix Failed',
-            message: `Error removing duplicates: ${error instanceof Error ? error.message : 'Unknown error'}`,
-            onConfirm: () => setModal({ type: null, title: '', message: '' })
-          });
-        } finally {
-          setIsProcessing(false);
-        }
-      },
-      onCancel: () => setModal({ type: null, title: '', message: '' })
-    });
-  };
 
   // Import from Supabase server
   const handleImportFromServer = async () => {
