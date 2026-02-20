@@ -158,6 +158,37 @@ const ClientGrid: React.FC<ClientGridProps> = ({
       return idStartsMatch.id;
     }
 
+    // Apply phonetic substitutions for common voice recognition errors
+    const applyPhoneticRules = (text: string): string => {
+      let result = text;
+
+      // Common voice recognition patterns - "vi" is more common than "ve"
+      const rules: [RegExp, string][] = [
+        [/^vee/i, 'vi'],              // "vee" → "vi" at start
+        [/^ve([^r])/i, 'vi$1'],       // "ve" → "vi" at start (but not "ver")
+        [/^bee/i, 'bi'],              // "bee" → "bi" at start
+        [/^be([^a-z])/i, 'bi$1'],     // "be" → "bi" at start before non-letter
+        [/^dee/i, 'di'],              // "dee" → "di" at start
+        [/^de([^a-z])/i, 'di$1'],     // "de" → "di" at start before non-letter
+        [/^gee/i, 'gi'],              // "gee" → "gi" at start
+        [/^ge([^a-z])/i, 'gi$1'],     // "ge" → "gi" at start before non-letter
+      ];
+
+      for (const [pattern, replacement] of rules) {
+        result = result.replace(pattern, replacement);
+      }
+
+      return result;
+    };
+
+    const phoneticInput = applyPhoneticRules(input);
+    if (phoneticInput !== input) {
+      console.log(`🔤 Phonetic: "${input}" → "${phoneticInput}"`);
+      // Recursively try with phonetic version
+      const phoneticResult = getClientNameById(phoneticInput, clients);
+      if (phoneticResult) return phoneticResult;
+    }
+
     // Exact name match
     const exactNameMatch = clients.find(c => c.name.toLowerCase() === input);
     if (exactNameMatch) {
