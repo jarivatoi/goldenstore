@@ -341,10 +341,14 @@ export const CreditProvider: React.FC<CreditProviderProps> = ({ children }) => {
     const isNumericQuery = /^\d+$/.test(query.trim());
 
     if (isNumericQuery) {
-      // For numeric queries, search in ID (partial match)
-      return clients.filter(client =>
-        client.id.includes(query.trim())
-      );
+      // For numeric queries, search in ID (exact prefix match)
+      const queryStr = query.trim();
+      return clients.filter(client => {
+        // Extract just the numeric part from the ID (e.g., "G001" -> "001")
+        const idNumeric = client.id.replace(/\D/g, '');
+        // Match if the numeric part starts with the query
+        return idNumeric.startsWith(queryStr);
+      });
     } else {
       // For text queries, use flexible matching
       const normalizedQuery = normalize(query);
