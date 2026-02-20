@@ -6,6 +6,7 @@ import { Draggable, DraggableInstance } from '../../lib/draggable';
 import { Search, X, Users, UserCheck, Mic, MicOff } from 'lucide-react';
 import { Client } from '../../types';
 import ClientCard from '../ClientCard';
+import { useCredit } from '../../context/CreditContext';
 
 // Register GSAP plugins
 gsap.registerPlugin(Draggable, InertiaPlugin);
@@ -48,6 +49,9 @@ const ClientGrid: React.FC<ClientGridProps> = ({
   const draggableRef = useRef<DraggableInstance[] | null>(null);
   const dragStartXRef = useRef(0);
   const dragDirectionRef = useRef<'left' | 'right' | null>(null);
+
+  // Get ALL clients from context for voice search (not filtered by debt)
+  const { clients: allClients } = useCredit();
 
   // Voice recognition state
   const [isListening, setIsListening] = useState(false);
@@ -120,6 +124,9 @@ const ClientGrid: React.FC<ClientGridProps> = ({
 
   // Function to find best matching client from voice input
   const findBestClientMatch = (transcript: string): string | null => {
+    // Use ALL clients from context, not filtered clients
+    const clients = allClients;
+
     // Convert spoken numbers to digits (e.g., "one" -> "1")
     const convertedInput = convertSpokenToDigit(transcript);
     const input = convertedInput.toLowerCase().trim();
