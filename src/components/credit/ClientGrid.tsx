@@ -123,6 +123,7 @@ const ClientGrid: React.FC<ClientGridProps> = ({
     // Convert spoken numbers to digits (e.g., "one" -> "1")
     const convertedInput = convertSpokenToDigit(transcript);
     const input = convertedInput.toLowerCase().trim();
+    const inputNoSpaces = input.replace(/\s+/g, '');
 
     // Skip very short inputs (less than 2 characters)
     if (input.length < 2) return null;
@@ -143,12 +144,22 @@ const ClientGrid: React.FC<ClientGridProps> = ({
     const nameStartsMatch = clients.find(c => c.name.toLowerCase().startsWith(input));
     if (nameStartsMatch) return nameStartsMatch.name;
 
-    // Check if input starts with any client name (handles "blackayo" in "black are you")
-    const inputStartsWithName = clients.find(c => {
+    // Check if removing spaces from input matches client name (handles "black are you" -> "blackareyou" ~ "blackayo")
+    const noSpaceMatch = clients.find(c => {
       const nameLower = c.name.toLowerCase();
-      return input.startsWith(nameLower) || input.replace(/\s+/g, '').startsWith(nameLower.replace(/\s+/g, ''));
+      const nameNoSpaces = nameLower.replace(/\s+/g, '');
+
+      // Check if input without spaces starts with name without spaces
+      if (inputNoSpaces.startsWith(nameNoSpaces)) return true;
+
+      // Check if name without spaces starts with input without spaces
+      if (nameNoSpaces.startsWith(inputNoSpaces)) return true;
+
+      // Calculate similarity between no-space versions
+      const similarity = calculateSimilarity(inputNoSpaces, nameNoSpaces);
+      return similarity >= 0.65; // Lower threshold for no-space matching
     });
-    if (inputStartsWithName) return inputStartsWithName.name;
+    if (noSpaceMatch) return noSpaceMatch.name;
 
     // Check if any word in input matches a client name closely
     const inputWords = input.split(/[\s/]+/);
