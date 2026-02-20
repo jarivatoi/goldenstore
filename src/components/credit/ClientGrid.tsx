@@ -143,13 +143,39 @@ const ClientGrid: React.FC<ClientGridProps> = ({
     const nameStartsMatch = clients.find(c => c.name.toLowerCase().startsWith(input));
     if (nameStartsMatch) return nameStartsMatch.name;
 
-    // Check if any word in client name starts with input
+    // Check if input starts with any client name (handles "blackayo" in "black are you")
+    const inputStartsWithName = clients.find(c => {
+      const nameLower = c.name.toLowerCase();
+      return input.startsWith(nameLower) || input.replace(/\s+/g, '').startsWith(nameLower.replace(/\s+/g, ''));
+    });
+    if (inputStartsWithName) return inputStartsWithName.name;
+
+    // Check if any word in input matches a client name closely
+    const inputWords = input.split(/[\s/]+/);
+    for (const inputWord of inputWords) {
+      if (inputWord.length < 3) continue; // Skip very short words
+
+      const wordMatch = clients.find(c => {
+        const nameLower = c.name.toLowerCase();
+        // Check if the input word is very similar to the client name
+        const similarity = calculateSimilarity(inputWord, nameLower);
+        return similarity >= 0.75;
+      });
+
+      if (wordMatch) return wordMatch.name;
+    }
+
+    // Check if any word in client name starts with any word in input
     const wordStartsMatch = clients.find(c =>
-      c.name.toLowerCase().split(/[\s/]+/).some(word => word.startsWith(input))
+      c.name.toLowerCase().split(/[\s/]+/).some(nameWord =>
+        inputWords.some(inputWord =>
+          inputWord.length >= 3 && nameWord.startsWith(inputWord)
+        )
+      )
     );
     if (wordStartsMatch) return wordStartsMatch.name;
 
-    // Fuzzy match - MUCH STRICTER: minimum 70% similarity and length must be close
+    // Fuzzy match - STRICTER: minimum 70% similarity and length must be close
     let bestMatch: { client: Client; score: number; matchType: string } | null = null;
 
     clients.forEach(client => {
