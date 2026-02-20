@@ -245,7 +245,9 @@ const ClientCard: React.FC<ClientCardProps> = ({ client, onLongPress, onQuickAdd
                     backgroundPosition: 'center',
                     userSelect: 'none',
                     WebkitUserSelect: 'none',
-                    WebkitTouchCallout: 'none'
+                    WebkitTouchCallout: 'none',
+                    pointerEvents: 'auto',
+                    zIndex: 5
                   }}
                   onMouseDown={handleImagePressStart}
                   onMouseUp={handleImagePressEnd}
