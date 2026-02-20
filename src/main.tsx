@@ -73,26 +73,12 @@ automaticBackupManager;
 if ('serviceWorker' in navigator) {
   navigator.serviceWorker.addEventListener('message', (event) => {
     if (event.data.type === 'PROCESS_AUTO_BACKUP') {
-      console.log('📨 Received auto backup request from service worker');
       // Trigger backup processing
-      automaticBackupManager.forceBackupNow().catch(error => {
-        console.error('❌ Auto backup from service worker failed:', error);
+      automaticBackupManager.forceBackupNow().catch(() => {
+        // Silent fail
       });
     }
   });
-}
-
-// Add console logging for debugging
-console.log('🚀 Golden Store starting up...');
-console.log('📱 User Agent:', navigator.userAgent);
-console.log('🌐 Location:', window.location.href);
-
-// Check for critical dependencies
-try {
-  console.log('✅ React version:', React.version);
-  console.log('✅ ReactDOM available:', !!ReactDOM);
-} catch (error) {
-  console.error('❌ Critical dependency missing:', error);
 }
 
 ReactDOM.createRoot(document.getElementById('root')!).render(

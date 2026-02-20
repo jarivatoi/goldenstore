@@ -133,106 +133,77 @@ const ScrollingTabs: React.FC<ScrollingTabsProps> = ({
   // Listen for credit data changes to force re-render
   React.useEffect(() => {
     const handleCreditDataChanged = (event: CustomEvent) => {
-      console.log('🔍 ScrollingTabs: Received creditDataChanged event:', event.detail);
-      
       // Check if this is a calculator interaction - if so, ignore it
       const isCalculatorInteraction = event && event.detail && event.detail.source === 'calculator';
       if (isCalculatorInteraction) {
-        console.log('🔍 ScrollingTabs: Ignoring calculator interaction');
         return;
       }
-      
+
       // Check if this is a duplicate card interaction - if so, ignore it to prevent timeline restart
       const isDuplicateCardInteraction = event && event.detail && event.detail.source === 'duplicateCard';
       if (isDuplicateCardInteraction) {
-        console.log('🔍 ScrollingTabs: Ignoring duplicate card interaction');
         return;
       }
-      
+
       // Check if this is a client action interaction for adding transactions - if so, ignore it to prevent timeline restart
       const isClientActionAddInteraction = event && event.detail && event.detail.source === 'clientActionAdd';
       if (isClientActionAddInteraction) {
-        console.log('🔍 ScrollingTabs: Ignoring client action add interaction');
         return;
       }
-      
+
       // Check if this is a transaction interaction - ignore BOTH 'transaction' and 'addTransaction' sources
       const isTransactionInteraction = event && event.detail &&
         (event.detail.source === 'transaction' || event.detail.source === 'addTransaction');
       if (isTransactionInteraction) {
-        console.log('🔍 ScrollingTabs: Ignoring transaction interaction');
         return;
       }
-      
-      // Check if this is a client action interaction for settling - allow timeline restart for settling
-      const isClientActionSettleInteraction = event && event.detail && event.detail.source === 'clientActionSettle';
-      if (isClientActionSettleInteraction) {
-        console.log('🔍 ScrollingTabs: Processing client action settle interaction');
-      }
-      
+
       // Check if this is a client action interaction for returns - allow UI update but prevent timeline restart
       const isClientActionReturnInteraction = event && event.detail && event.detail.source === 'clientActionReturn';
-      if (isClientActionReturnInteraction) {
-        console.log('🔍 ScrollingTabs: Processing client action return interaction');
-      }
-      
+
       // Check if this is a specific client update
       const updatedClientId = event && event.detail && event.detail.clientId;
       if (updatedClientId) {
-        console.log('🔍 ScrollingTabs: Setting recently updated client:', updatedClientId);
         setRecentlyUpdatedClient(updatedClientId);
         // Clear the recently updated flag after 5 seconds
         setTimeout(() => {
-          console.log('🔍 ScrollingTabs: Clearing recently updated client');
           setRecentlyUpdatedClient(null);
         }, 5000);
       }
-      
+
       // Kill existing timeline
       if (timelineRef.current) {
-        console.log('🔍 ScrollingTabs: Killing existing timeline due to creditDataChanged');
         timelineRef.current.kill();
         timelineRef.current = null;
       }
-      
+
       // Kill existing draggable
       if (draggableRef.current) {
-        console.log('🔍 ScrollingTabs: Killing existing draggable due to creditDataChanged');
         draggableRef.current.forEach(d => d.kill());
         draggableRef.current = null;
       }
-      
+
       // Clear any stored position
       pausedPositionRef.current = null;
-      
+
       // For return actions, we want to update UI but not restart timeline
       if (isClientActionReturnInteraction) {
-        console.log('🔍 ScrollingTabs: Forcing update without timeline restart for return action');
         // Force a re-render without restarting timeline
         setForceUpdate(prev => prev + 1);
         return;
       }
-      
+
       // Restart timeline after a short delay to ensure DOM updates
-      console.log('🔍 ScrollingTabs: Scheduling timeline restart');
       setTimeout(() => {
         if (stableSortedClients.length > 0) {
-          console.log('🔍 ScrollingTabs: Restarting timeline with', stableSortedClients.length, 'clients');
           setupContinuousScroll();
-        } else {
-          console.log('🔍 ScrollingTabs: No clients to restart timeline with');
         }
       }, 100);
     };
 
-    console.log('🔍 ScrollingTabs: Adding creditDataChanged event listener');
-    
-    // Handle long press to show client details
-    
     window.addEventListener('creditDataChanged', handleCreditDataChanged as EventListener);
-    
+
     return () => {
-      console.log('🔍 ScrollingTabs: Removing creditDataChanged event listener');
       window.removeEventListener('creditDataChanged', handleCreditDataChanged as EventListener);
     };
   }, [clients, recentlyUpdatedClient, stableSortedClients]); // Depend on all relevant variables
@@ -344,60 +315,49 @@ const ScrollingTabs: React.FC<ScrollingTabsProps> = ({
   const setupContinuousScroll = useCallback(() => {
     const content = contentRef.current;
     const container = containerRef.current;
-    
+
     if (!container || !content) {
-      console.log('🔍 ScrollingTabs: Cannot setup scroll - missing container or content');
       return;
     }
-    
+
     // Prevent multiple timeline creation
     if (timelineRef.current && timelineRef.current.isActive()) {
-      console.log('🔍 ScrollingTabs: Timeline already active, skipping creation');
       return;
     }
-    
+
     // Kill any existing timeline before creating new one
     if (timelineRef.current) {
-      console.log('🔍 ScrollingTabs: Killing existing timeline');
       timelineRef.current.kill();
       timelineRef.current = null;
     }
-    
-    console.log('🔍 ScrollingTabs: Setting up continuous scroll for', stableSortedClients.length, 'clients');
-    
+
     requestAnimationFrame(() => {
       const containerWidth = container.offsetWidth;
       const contentWidth = content.scrollWidth;
-      
+
       // Calculate total distance including container width gap
       const totalDistance = contentWidth + containerWidth;
       const duration = totalDistance / 60; // 60px per second for faster speed
-      
-      console.log('🔍 ScrollingTabs: Animation parameters - containerWidth:', containerWidth, 'contentWidth:', contentWidth, 'duration:', duration);
-      
+
       // Create seamless infinite timeline with protection against external interference
-      timelineRef.current = gsap.timeline({ 
-        repeat: -1, 
+      timelineRef.current = gsap.timeline({
+        repeat: -1,
         ease: "none",
         paused: false,
         immediateRender: true,
         overwrite: false // Don't let other animations overwrite this
       });
-      
-      console.log('🔍 ScrollingTabs: Created new timeline instance');
-      
+
       timelineRef.current
-        .fromTo(content, 
+        .fromTo(content,
           { x: containerWidth }, // Enter from right
-          { 
+          {
             x: -contentWidth, // Exit to left
             duration: duration,
             ease: "none",
             overwrite: false // Prevent external interference
         });
-      
-      console.log('🔍 ScrollingTabs: Timeline animation configured');
-      
+
       // Create draggable instance with updated bounds
       draggableRef.current = Draggable.create(content, {
         type: "x",
@@ -418,7 +378,6 @@ const ScrollingTabs: React.FC<ScrollingTabsProps> = ({
         lockAxis: true, // Lock to horizontal axis only
         minimumMovement: 3, // Require minimum movement to start drag
         onDragStart: function() {
-          console.log('🔍 ScrollingTabs: Drag started, killing timeline');
           // Kill the timeline on drag start but don't store position yet
           if (timelineRef.current) {
             timelineRef.current.kill();
@@ -426,53 +385,40 @@ const ScrollingTabs: React.FC<ScrollingTabsProps> = ({
           }
         },
         onThrowComplete: function() {
-          console.log('🔍 ScrollingTabs: Throw completed, restarting timeline');
           // Always resume timeline after throw completes
           const currentX = gsap.getProperty(contentRef.current, "x") as number;
           restartTimelineFromPosition(currentX);
           pausedPositionRef.current = null; // Clear any stored position
         }
       });
-      
-      console.log('🔍 ScrollingTabs: Draggable instance created');
     });
   }, [stableSortedClients]); // Update dependency to stableSortedClients
 
   // Setup animation when clients change
   useEffect(() => {
-    console.log('🔍 ScrollingTabs: Clients changed, current count:', stableSortedClients.length);
-    
     // Kill existing timeline and recreate immediately when client list changes
     if (timelineRef.current) {
-      console.log('🔍 ScrollingTabs: Killing timeline due to client list change');
       timelineRef.current.kill();
       timelineRef.current = null;
     }
-    
+
     // Only setup if we have clients
     if (stableSortedClients.length > 0) {
-      console.log('🔍 ScrollingTabs: Setting up scroll after client list change');
       // Small delay to ensure DOM has updated with new client list
       setTimeout(() => {
         setupContinuousScroll();
       }, 50);
-    } else {
-      console.log('🔍 ScrollingTabs: No clients to setup scroll with');
     }
   }, [stableSortedClients]); // Depend on stableSortedClients instead of sortedClients
 
   // Additional effect to handle filter changes that might not change length
   useEffect(() => {
-    console.log('🔍 ScrollingTabs: Filter or sort changed, forcing timeline restart');
-    
     // Force timeline restart when clients array reference changes (filter changes)
     if (timelineRef.current && stableSortedClients.length > 0) {
-      console.log('🔍 ScrollingTabs: Killing timeline due to filter/sort change');
       timelineRef.current.kill();
       timelineRef.current = null;
-      
+
       // Immediate restart for filter changes
-      console.log('🔍 ScrollingTabs: Restarting timeline due to filter/sort change');
       setupContinuousScroll();
     }
   }, [stableSortedClients]);
