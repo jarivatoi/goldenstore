@@ -201,6 +201,25 @@ const ClientGrid: React.FC<ClientGridProps> = ({
     );
     if (wordStartsMatch) return wordStartsMatch.name;
 
+    // Progressive substring matching: If no match found, try progressively shorter substrings
+    // "vasant" -> "vasan" -> "vasa" -> "vas" -> find "vas" -> show "vassen"
+    // This handles speech-to-text errors by trying to find the closest matching prefix
+    for (let len = input.length; len >= 3; len--) {
+      const substring = input.substring(0, len);
+
+      // Try to find a client whose name starts with this substring
+      const prefixMatch = clients.find(c => c.name.toLowerCase().startsWith(substring));
+      if (prefixMatch) {
+        return prefixMatch.name;
+      }
+
+      // Try to find a client whose ID starts with this substring
+      const idPrefixMatch = clients.find(c => c.id.toLowerCase().startsWith(substring));
+      if (idPrefixMatch) {
+        return idPrefixMatch.id;
+      }
+    }
+
     // Fuzzy match - STRICTER: minimum 70% similarity and length must be close
     let bestMatch: { client: Client; score: number; matchType: string } | null = null;
 
