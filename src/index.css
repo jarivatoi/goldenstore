@@ -430,6 +430,7 @@ input[type=number] {
 
 .animate-zoom {
   animation: zoomInOut 3s ease-in-out infinite;
+  transform-origin: center center;
 }
 
 .animate-zoom-delayed {
