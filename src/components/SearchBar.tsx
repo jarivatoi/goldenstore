@@ -34,18 +34,20 @@ const SearchBar: React.FC = () => {
             />
           </div>
 
-          {/* CLEAR BUTTON - ALWAYS VISIBLE FOR TESTING */}
-          <button
-            onClick={() => setSearchQuery('')}
-            className="w-16 h-[72px] bg-red-500 hover:bg-red-600 text-white rounded-xl flex items-center justify-center shadow-lg border-2 border-red-600 select-none"
-          >
-            <X size={32} />
-          </button>
+          {/* CLEAR BUTTON - VISIBLE WHEN TYPING */}
+          {searchQuery && (
+            <button
+              onClick={() => setSearchQuery('')}
+              className="w-16 h-[72px] flex-shrink-0 bg-red-500 hover:bg-red-600 text-white rounded-xl flex items-center justify-center shadow-lg border-2 border-red-600 select-none"
+            >
+              <X size={32} />
+            </button>
+          )}
 
           {/* Filter Button */}
           <button
             onClick={() => setIsFilterOpen(!isFilterOpen)}
-            className="w-16 h-[72px] bg-blue-500 hover:bg-blue-600 text-white rounded-xl flex items-center justify-center shadow-lg border-2 border-blue-600 select-none"
+            className="w-16 h-[72px] flex-shrink-0 bg-blue-500 hover:bg-blue-600 text-white rounded-xl flex items-center justify-center shadow-lg border-2 border-blue-600 select-none"
           >
             <Filter size={24} />
           </button>
