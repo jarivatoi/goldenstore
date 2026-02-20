@@ -158,9 +158,12 @@ const ClientCard: React.FC<ClientCardProps> = ({ client, onLongPress, onQuickAdd
       zoomPressTimer.current = null;
     }
 
-    // If zoom was just triggered by long press, consume this release event
+    // If zoom was just triggered by long press, consume this release event completely
     if (isLongPressActive.current) {
-      isLongPressActive.current = false;
+      e.preventDefault();
+      setTimeout(() => {
+        isLongPressActive.current = false;
+      }, 100);
       return;
     }
   };
@@ -376,12 +379,16 @@ const ClientCard: React.FC<ClientCardProps> = ({ client, onLongPress, onQuickAdd
         <div
           className="fixed inset-0 flex items-center justify-center z-[10000] overflow-hidden"
           onClick={(e) => {
-            e.stopPropagation();
-            handleCloseZoom();
+            if (!isLongPressActive.current) {
+              e.stopPropagation();
+              handleCloseZoom();
+            }
           }}
           onTouchEnd={(e) => {
-            e.stopPropagation();
-            handleCloseZoom();
+            if (!isLongPressActive.current) {
+              e.stopPropagation();
+              handleCloseZoom();
+            }
           }}
           onContextMenu={(e) => {
             e.preventDefault();
