@@ -134,7 +134,7 @@ const ClientCard: React.FC<ClientCardProps> = ({ client, onLongPress, onQuickAdd
 
   // Zoom handlers for profile picture
   const handleImagePressStart = (e: React.MouseEvent | React.TouchEvent) => {
-    e.stopPropagation();
+    e.preventDefault();
     if (!client.profilePictureUrl) return;
 
     // Clear card long press timer
@@ -145,26 +145,16 @@ const ClientCard: React.FC<ClientCardProps> = ({ client, onLongPress, onQuickAdd
 
     zoomPressTimer.current = setTimeout(() => {
       setShowZoomedImage(true);
-      isLongPressActive.current = true;
       // Prevent scrolling when zoomed image is shown
       document.body.style.overflow = 'hidden';
     }, 500);
   };
 
   const handleImagePressEnd = (e: React.MouseEvent | React.TouchEvent) => {
-    e.stopPropagation();
+    e.preventDefault();
     if (zoomPressTimer.current) {
       clearTimeout(zoomPressTimer.current);
       zoomPressTimer.current = null;
-    }
-
-    // If zoom was just triggered by long press, consume this release event completely
-    if (isLongPressActive.current) {
-      e.preventDefault();
-      setTimeout(() => {
-        isLongPressActive.current = false;
-      }, 100);
-      return;
     }
   };
 
@@ -379,16 +369,18 @@ const ClientCard: React.FC<ClientCardProps> = ({ client, onLongPress, onQuickAdd
         <div
           className="fixed inset-0 flex items-center justify-center z-[10000] overflow-hidden"
           onClick={(e) => {
-            if (!isLongPressActive.current) {
-              e.stopPropagation();
-              handleCloseZoom();
-            }
+            e.preventDefault();
+            handleCloseZoom();
           }}
           onTouchEnd={(e) => {
-            if (!isLongPressActive.current) {
-              e.stopPropagation();
-              handleCloseZoom();
-            }
+            e.preventDefault();
+            handleCloseZoom();
+          }}
+          onTouchStart={(e) => {
+            e.preventDefault();
+          }}
+          onTouchMove={(e) => {
+            e.preventDefault();
           }}
           onContextMenu={(e) => {
             e.preventDefault();
@@ -425,6 +417,8 @@ const ClientCard: React.FC<ClientCardProps> = ({ client, onLongPress, onQuickAdd
               e.stopPropagation();
               return false;
             }}
+            onTouchStart={(e) => e.preventDefault()}
+            onTouchEnd={(e) => e.preventDefault()}
           />
         </div>,
         document.body
