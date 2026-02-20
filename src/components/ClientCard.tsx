@@ -262,7 +262,7 @@ const ClientCard: React.FC<ClientCardProps> = ({ client, onLongPress, onQuickAdd
             <TrendingUp size={14} className="text-red-500 sm:w-4 sm:h-4" />
             <span className="text-xs sm:text-sm text-gray-600">Outstanding</span>
           </div>
-          <p className="text-xl sm:text-2xl font-bold text-red-600 text-center">
+          <p className={`text-xl sm:text-2xl font-bold text-red-600 text-center ${totalDebt > 0 ? 'animate-zoom' : ''}`}>
             Rs {totalDebt.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
           </p>
           {(bottlesOwed.beer > 0 || bottlesOwed.guinness > 0 || bottlesOwed.malta > 0 || bottlesOwed.coca > 0 || bottlesOwed.chopines > 0) && (
