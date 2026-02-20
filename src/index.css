@@ -523,3 +523,74 @@ input[type=number] {
 .alternating-orange-text {
   animation: alternatingOrangeText 2s ease-in-out infinite;
 }
+
+/* Bottle badge animations */
+@keyframes bottleBadgeOrange {
+  0%, 100% {
+    border: 2px solid rgb(249, 115, 22);
+    box-shadow: 0 0 8px rgba(249, 115, 22, 0.6), 0 0 12px rgba(249, 115, 22, 0.3);
+  }
+  50% {
+    border: 2px solid rgb(234, 88, 12);
+    box-shadow: 0 0 12px rgba(249, 115, 22, 0.8), 0 0 18px rgba(249, 115, 22, 0.5);
+  }
+}
+
+@keyframes bottleBadgeAlternating {
+  0% {
+    border: 2px solid rgb(239, 68, 68);
+    box-shadow: 0 0 8px rgba(239, 68, 68, 0.6), 0 0 12px rgba(239, 68, 68, 0.3);
+  }
+  25% {
+    border: 2px solid rgb(220, 38, 38);
+    box-shadow: 0 0 12px rgba(239, 68, 68, 0.8), 0 0 18px rgba(239, 68, 68, 0.5);
+  }
+  50% {
+    border: 2px solid rgb(249, 115, 22);
+    box-shadow: 0 0 8px rgba(249, 115, 22, 0.6), 0 0 12px rgba(249, 115, 22, 0.3);
+  }
+  75% {
+    border: 2px solid rgb(234, 88, 12);
+    box-shadow: 0 0 12px rgba(249, 115, 22, 0.8), 0 0 18px rgba(249, 115, 22, 0.5);
+  }
+  100% {
+    border: 2px solid rgb(239, 68, 68);
+    box-shadow: 0 0 8px rgba(239, 68, 68, 0.6), 0 0 12px rgba(239, 68, 68, 0.3);
+  }
+}
+
+.bottle-badge-orange {
+  animation: bottleBadgeOrange 2s ease-in-out infinite;
+}
+
+.bottle-badge-alternating {
+  animation: bottleBadgeAlternating 4s ease-in-out infinite;
+}
+
+/* Bottle icon color animations */
+@keyframes bottleIconAlternating {
+  0%, 100% {
+    color: rgb(239, 68, 68);
+  }
+  50% {
+    color: rgb(249, 115, 22);
+  }
+}
+
+.bottle-icon-alternating {
+  animation: bottleIconAlternating 4s ease-in-out infinite;
+}
+
+/* Bottle text color animations */
+@keyframes bottleTextAlternating {
+  0%, 100% {
+    color: rgb(239, 68, 68);
+  }
+  50% {
+    color: rgb(249, 115, 22);
+  }
+}
+
+.bottle-text-alternating {
+  animation: bottleTextAlternating 4s ease-in-out infinite;
+}

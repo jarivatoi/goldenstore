@@ -1,6 +1,6 @@
 import React, { useState, useRef } from 'react';
 import { createPortal } from 'react-dom';
-import { User, TrendingUp, Plus, Calendar } from 'lucide-react';
+import { User, TrendingUp, Plus, Calendar, Milk } from 'lucide-react';
 import { Client } from '../types';
 import { useCredit } from '../context/CreditContext';
 import ClientDetailModal from './ClientDetailModal';
@@ -66,6 +66,14 @@ const ClientCard: React.FC<ClientCardProps> = ({ client, onLongPress, onQuickAdd
 
   const totalDebt = getClientTotalDebt(client.id);
   const bottlesOwed = getClientBottlesOwed(client.id);
+
+  // Calculate total returnables count
+  const totalReturnablesCount = React.useMemo(() => {
+    return returnableItemsText.reduce((total, item) => {
+      const match = item.text.match(/(\d+)\s*(?:chopine|bouteille|verre)/i);
+      return total + (match ? parseInt(match[1]) : 0);
+    }, 0);
+  }, [returnableItemsText]);
 
   // Determine if client has any outstanding debt or returnables
   const hasOutstanding = totalDebt > 0 || returnableItemsText.length > 0;
@@ -226,36 +234,58 @@ const ClientCard: React.FC<ClientCardProps> = ({ client, onLongPress, onQuickAdd
         {/* Client Header with Profile Picture */}
         <div className="mb-2 sm:mb-3">
           {/* Profile Picture or Icon - Centered */}
-          <div className="flex justify-center mb-2">
-            {client.profilePictureUrl ? (
-              <div
-                className={`w-24 h-24 rounded-full overflow-hidden border-4 shadow-lg relative flex-shrink-0 cursor-zoom-in ${hasOutstanding ? 'animate-zoom' : ''} ${getBorderGlowClass()}`}
-                style={{
-                  background: `url(${client.profilePictureUrl})`,
-                  backgroundSize: 'cover',
-                  backgroundPosition: 'center',
-                  userSelect: 'none',
-                  WebkitUserSelect: 'none',
-                  WebkitTouchCallout: 'none'
-                }}
-                onMouseDown={handleImagePressStart}
-                onMouseUp={handleImagePressEnd}
-                onMouseLeave={handleImagePressEnd}
-                onTouchStart={handleImagePressStart}
-                onTouchEnd={handleImagePressEnd}
-                onTouchCancel={handleImagePressEnd}
-                onContextMenu={(e) => e.preventDefault()}
-              >
-                {/* Vignette overlay */}
-                <div className="absolute inset-0 rounded-full pointer-events-none" style={{
-                  boxShadow: 'inset 0 0 15px rgba(0,0,0,0.3)'
-                }}></div>
-              </div>
-            ) : (
-              <div className={`w-24 h-24 bg-blue-100 rounded-full flex items-center justify-center flex-shrink-0 border-4 shadow-lg ${hasOutstanding ? 'animate-zoom' : ''} ${getBorderGlowClass()}`}>
-                <User size={40} className="text-blue-600" />
-              </div>
-            )}
+          <div className="flex justify-center mb-2 relative">
+            <div className="relative">
+              {client.profilePictureUrl ? (
+                <div
+                  className={`w-24 h-24 rounded-full overflow-hidden border-4 shadow-lg relative flex-shrink-0 cursor-zoom-in ${hasOutstanding ? 'animate-zoom' : ''} ${getBorderGlowClass()}`}
+                  style={{
+                    background: `url(${client.profilePictureUrl})`,
+                    backgroundSize: 'cover',
+                    backgroundPosition: 'center',
+                    userSelect: 'none',
+                    WebkitUserSelect: 'none',
+                    WebkitTouchCallout: 'none'
+                  }}
+                  onMouseDown={handleImagePressStart}
+                  onMouseUp={handleImagePressEnd}
+                  onMouseLeave={handleImagePressEnd}
+                  onTouchStart={handleImagePressStart}
+                  onTouchEnd={handleImagePressEnd}
+                  onTouchCancel={handleImagePressEnd}
+                  onContextMenu={(e) => e.preventDefault()}
+                >
+                  {/* Vignette overlay */}
+                  <div className="absolute inset-0 rounded-full pointer-events-none" style={{
+                    boxShadow: 'inset 0 0 15px rgba(0,0,0,0.3)'
+                  }}></div>
+                </div>
+              ) : (
+                <div className={`w-24 h-24 bg-blue-100 rounded-full flex items-center justify-center flex-shrink-0 border-4 shadow-lg ${hasOutstanding ? 'animate-zoom' : ''} ${getBorderGlowClass()}`}>
+                  <User size={40} className="text-blue-600" />
+                </div>
+              )}
+
+              {/* Bottle Count Badge at 2pm position */}
+              {hasReturnables && totalReturnablesCount > 0 && (
+                <div
+                  className={`absolute flex items-center gap-1 px-2 py-1 rounded-full shadow-lg pointer-events-none ${
+                    hasDebt ? 'bottle-badge-alternating' : 'bottle-badge-orange'
+                  }`}
+                  style={{
+                    top: '8px',
+                    right: '-8px',
+                    backgroundColor: 'white',
+                    zIndex: 10
+                  }}
+                >
+                  <Milk size={14} className={hasDebt ? 'bottle-icon-alternating' : 'text-orange-600'} />
+                  <span className={`text-xs font-bold ${hasDebt ? 'bottle-text-alternating' : 'text-orange-600'}`}>
+                    {totalReturnablesCount}
+                  </span>
+                </div>
+              )}
+            </div>
           </div>
 
           {/* Name and ID - Centered */}
