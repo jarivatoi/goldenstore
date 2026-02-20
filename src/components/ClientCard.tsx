@@ -67,6 +67,9 @@ const ClientCard: React.FC<ClientCardProps> = ({ client, onLongPress, onQuickAdd
   const totalDebt = getClientTotalDebt(client.id);
   const bottlesOwed = getClientBottlesOwed(client.id);
 
+  // Determine if client has any outstanding debt or returnables
+  const hasOutstanding = totalDebt > 0 || returnableItemsText.length > 0;
+
   // Determine card background color based on debt amount
   const getCardBackgroundColor = () => {
     if (totalDebt <= 300) return 'bg-green-100 border-green-200';
@@ -211,7 +214,7 @@ const ClientCard: React.FC<ClientCardProps> = ({ client, onLongPress, onQuickAdd
           <div className="flex justify-center mb-2">
             {client.profilePictureUrl ? (
               <div
-                className="w-24 h-24 rounded-full overflow-hidden border-4 border-white shadow-lg relative flex-shrink-0 cursor-zoom-in animate-zoom"
+                className={`w-24 h-24 rounded-full overflow-hidden border-4 border-white shadow-lg relative flex-shrink-0 cursor-zoom-in ${hasOutstanding ? 'animate-zoom' : ''}`}
                 style={{
                   background: `url(${client.profilePictureUrl})`,
                   backgroundSize: 'cover',
@@ -234,7 +237,7 @@ const ClientCard: React.FC<ClientCardProps> = ({ client, onLongPress, onQuickAdd
                 }}></div>
               </div>
             ) : (
-              <div className="w-24 h-24 bg-blue-100 rounded-full flex items-center justify-center flex-shrink-0 border-4 border-white shadow-lg animate-zoom">
+              <div className={`w-24 h-24 bg-blue-100 rounded-full flex items-center justify-center flex-shrink-0 border-4 border-white shadow-lg ${hasOutstanding ? 'animate-zoom' : ''}`}>
                 <User size={40} className="text-blue-600" />
               </div>
             )}
@@ -242,7 +245,7 @@ const ClientCard: React.FC<ClientCardProps> = ({ client, onLongPress, onQuickAdd
 
           {/* Name and ID - Centered */}
           <div className="w-full">
-            <h3 className="font-semibold text-gray-800 text-sm sm:text-base animate-zoom-delayed">
+            <h3 className={`font-semibold text-gray-800 text-sm sm:text-base ${hasOutstanding ? 'animate-zoom-delayed' : ''}`}>
               <ScrollingText
                 className="font-semibold text-gray-800 text-sm sm:text-base text-center"
                 pauseDuration={1}
