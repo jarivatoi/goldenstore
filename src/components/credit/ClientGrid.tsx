@@ -181,19 +181,28 @@ const ClientGrid: React.FC<ClientGridProps> = ({
       return result;
     };
 
-    const phoneticInput = applyPhoneticRules(input);
-    if (phoneticInput !== input) {
-      console.log(`🔤 Phonetic: "${input}" → "${phoneticInput}"`);
-      // Recursively try with phonetic version
-      const phoneticResult = getClientNameById(phoneticInput, clients);
-      if (phoneticResult) return phoneticResult;
-    }
-
     // Exact name match
     const exactNameMatch = clients.find(c => c.name.toLowerCase() === input);
     if (exactNameMatch) {
       console.log('✅ Exact name match:', exactNameMatch.name);
       return exactNameMatch.name;
+    }
+
+    // Try phonetic substitution - but only if it leads to a match
+    const phoneticInput = applyPhoneticRules(input);
+    if (phoneticInput !== input) {
+      console.log(`🔤 Phonetic: "${input}" → "${phoneticInput}"`);
+      const phoneticExactMatch = clients.find(c => c.name.toLowerCase() === phoneticInput);
+      if (phoneticExactMatch) {
+        console.log('✅ Phonetic exact match:', phoneticExactMatch.name);
+        return phoneticExactMatch.name;
+      }
+      const phoneticStartsMatch = clients.find(c => c.name.toLowerCase().startsWith(phoneticInput));
+      if (phoneticStartsMatch) {
+        console.log('✅ Phonetic starts with match:', phoneticStartsMatch.name);
+        return phoneticStartsMatch.name;
+      }
+      console.log('  ✗ Phonetic version found no match, falling back to original');
     }
 
     // Name starts with input (strict)
