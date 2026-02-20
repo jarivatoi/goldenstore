@@ -125,24 +125,41 @@ const ClientGrid: React.FC<ClientGridProps> = ({
     const input = convertedInput.toLowerCase().trim();
     const inputNoSpaces = input.replace(/\s+/g, '');
 
+    console.log('🎤 Voice search - Transcript:', transcript, '→ Processed:', input);
+
     // Skip very short inputs (less than 2 characters)
-    if (input.length < 2) return null;
+    if (input.length < 2) {
+      console.log('❌ Input too short (<2 chars)');
+      return null;
+    }
 
     // Direct ID match (exact)
     const exactIdMatch = clients.find(c => c.id.toLowerCase() === input);
-    if (exactIdMatch) return exactIdMatch.id;
+    if (exactIdMatch) {
+      console.log('✅ Exact ID match:', exactIdMatch.id);
+      return exactIdMatch.id;
+    }
 
     // Partial ID match (ID starts with input)
     const idStartsMatch = clients.find(c => c.id.toLowerCase().startsWith(input));
-    if (idStartsMatch) return idStartsMatch.id;
+    if (idStartsMatch) {
+      console.log('✅ Partial ID match:', idStartsMatch.id);
+      return idStartsMatch.id;
+    }
 
     // Exact name match
     const exactNameMatch = clients.find(c => c.name.toLowerCase() === input);
-    if (exactNameMatch) return exactNameMatch.name;
+    if (exactNameMatch) {
+      console.log('✅ Exact name match:', exactNameMatch.name);
+      return exactNameMatch.name;
+    }
 
     // Name starts with input (strict)
     const nameStartsMatch = clients.find(c => c.name.toLowerCase().startsWith(input));
-    if (nameStartsMatch) return nameStartsMatch.name;
+    if (nameStartsMatch) {
+      console.log('✅ Name starts with match:', nameStartsMatch.name);
+      return nameStartsMatch.name;
+    }
 
     // Check if input contains/starts with any client name (handles "vasan" containing "vas")
     // Sort clients by name length (longer first) to match longer names first
@@ -212,14 +229,17 @@ const ClientGrid: React.FC<ClientGridProps> = ({
         // Try to find a client whose name starts with this substring
         const prefixMatch = clients.find(c => c.name.toLowerCase().startsWith(substring));
         if (prefixMatch) {
+          console.log(`✅ Progressive match (len=${len}): "${substring}" → ${prefixMatch.name}`);
           return prefixMatch.name;
         }
 
         // Try to find a client whose ID starts with this substring
         const idPrefixMatch = clients.find(c => c.id.toLowerCase().startsWith(substring));
         if (idPrefixMatch) {
+          console.log(`✅ Progressive ID match (len=${len}): "${substring}" → ${idPrefixMatch.id}`);
           return idPrefixMatch.id;
         }
+        console.log(`⏩ No match for substring "${substring}" (len=${len})`);
       } else {
         // For 2-character substrings, only match at word boundaries to avoid too many matches
         // Match: start of name, after "/", or after space
@@ -300,9 +320,12 @@ const ClientGrid: React.FC<ClientGridProps> = ({
     });
 
     if (bestMatch) {
-      return bestMatch.matchType === 'id' ? bestMatch.client.id : bestMatch.client.name;
+      const result = bestMatch.matchType === 'id' ? bestMatch.client.id : bestMatch.client.name;
+      console.log(`✅ Fuzzy match: ${bestMatch.matchType} with score ${bestMatch.score.toFixed(2)} → ${result}`);
+      return result;
     }
 
+    console.log('❌ No match found for:', input);
     return null;
   };
 
