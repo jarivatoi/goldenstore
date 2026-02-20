@@ -235,25 +235,45 @@ const ClientGrid: React.FC<ClientGridProps> = ({
     for (let len = input.length; len >= 2; len--) {
       const substring = input.substring(0, len);
 
-      // For substrings of 3+ characters, use simple prefix matching
+      // For substrings of 3+ characters, use fuzzy prefix matching
       if (len >= 3) {
-        // Try to find a client whose name starts with this substring
         console.log(`🔍 Checking len=${len}, substring="${substring}"`);
-        const matchingClients = clients.filter(c => {
-          const matches = c.name.toLowerCase().startsWith(substring);
-          console.log(`  ${matches ? '✓' : '✗'} "${c.name}".toLowerCase()="${c.name.toLowerCase()}" startsWith("${substring}") = ${matches}`);
-          return matches;
-        });
 
-        if (matchingClients.length > 0) {
-          console.log(`✅ Progressive match (len=${len}): "${substring}" → ${matchingClients[0].name}`);
-          return matchingClients[0].name;
+        // Try exact prefix match first
+        const exactMatch = clients.find(c => c.name.toLowerCase().startsWith(substring));
+        if (exactMatch) {
+          console.log(`✅ Exact match (len=${len}): "${substring}" → ${exactMatch.name}`);
+          return exactMatch.name;
+        }
+
+        // Try fuzzy match: allow 1 character difference for len >= 4
+        if (len >= 4) {
+          const fuzzyMatch = clients.find(c => {
+            const nameLower = c.name.toLowerCase();
+            // Check if the name starts with substring but with 1 char difference
+            if (nameLower.length >= len) {
+              let differences = 0;
+              for (let i = 0; i < len; i++) {
+                if (substring[i] !== nameLower[i]) {
+                  differences++;
+                  if (differences > 1) return false;
+                }
+              }
+              return differences <= 1;
+            }
+            return false;
+          });
+
+          if (fuzzyMatch) {
+            console.log(`✅ Fuzzy match (len=${len}): "${substring}" → ${fuzzyMatch.name}`);
+            return fuzzyMatch.name;
+          }
         }
 
         // Try to find a client whose ID starts with this substring
         const idPrefixMatch = clients.find(c => c.id.toLowerCase().startsWith(substring));
         if (idPrefixMatch) {
-          console.log(`✅ Progressive ID match (len=${len}): "${substring}" → ${idPrefixMatch.id}`);
+          console.log(`✅ ID match (len=${len}): "${substring}" → ${idPrefixMatch.id}`);
           return idPrefixMatch.id;
         }
         console.log(`⏩ No match for substring "${substring}" (len=${len})`);
