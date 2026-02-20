@@ -254,17 +254,24 @@ const ClientGrid: React.FC<ClientGridProps> = ({
       } else {
         // For 2-character substrings, only match at word boundaries to avoid too many matches
         // Match: start of name, after "/", or after space
+        console.log(`🔍 Word boundary check for "${substring}" (len=${len})...`);
         const wordBoundaryMatch = clients.find(c => {
           const nameLower = c.name.toLowerCase();
 
           // Check if name starts with substring
-          if (nameLower.startsWith(substring)) return true;
+          if (nameLower.startsWith(substring)) {
+            console.log(`  ✓ "${c.name}" starts with "${substring}"`);
+            return true;
+          }
 
           // Check if any word after "/" starts with substring
           const slashParts = nameLower.split('/');
           if (slashParts.length > 1) {
             for (let i = 1; i < slashParts.length; i++) {
-              if (slashParts[i].trim().startsWith(substring)) return true;
+              if (slashParts[i].trim().startsWith(substring)) {
+                console.log(`  ✓ "${c.name}" has word after "/" that starts with "${substring}"`);
+                return true;
+              }
             }
           }
 
@@ -272,7 +279,10 @@ const ClientGrid: React.FC<ClientGridProps> = ({
           const spaceParts = nameLower.split(/\s+/);
           if (spaceParts.length > 1) {
             for (let i = 1; i < spaceParts.length; i++) {
-              if (spaceParts[i].startsWith(substring)) return true;
+              if (spaceParts[i].startsWith(substring)) {
+                console.log(`  ✓ "${c.name}" has word after space that starts with "${substring}"`);
+                return true;
+              }
             }
           }
 
@@ -280,12 +290,16 @@ const ClientGrid: React.FC<ClientGridProps> = ({
         });
 
         if (wordBoundaryMatch) {
+          console.log(`✅ Word boundary match (len=${len}): "${substring}" → ${wordBoundaryMatch.name}`);
           return wordBoundaryMatch.name;
         }
+
+        console.log(`  ✗ No word boundary match for "${substring}"`);
 
         // Try ID match for 2-char substrings
         const idPrefixMatch = clients.find(c => c.id.toLowerCase().startsWith(substring));
         if (idPrefixMatch) {
+          console.log(`✅ ID boundary match (len=${len}): "${substring}" → ${idPrefixMatch.id}`);
           return idPrefixMatch.id;
         }
       }
