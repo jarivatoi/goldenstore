@@ -161,7 +161,6 @@ const ClientCard: React.FC<ClientCardProps> = ({ client, onLongPress, onQuickAdd
 
   // Zoom handlers for profile picture
   const handleImagePressStart = (e: React.MouseEvent | React.TouchEvent) => {
-    e.preventDefault();
     e.stopPropagation();
     if (!client.profilePictureUrl) return;
 
@@ -187,12 +186,10 @@ const ClientCard: React.FC<ClientCardProps> = ({ client, onLongPress, onQuickAdd
   const handleImagePressEnd = (e: React.MouseEvent | React.TouchEvent) => {
     // If zoom is already showing, don't process this event
     if (showZoomedImage) {
-      e.preventDefault();
       e.stopPropagation();
       return;
     }
 
-    e.preventDefault();
     e.stopPropagation();
     if (zoomPressTimer.current) {
       clearTimeout(zoomPressTimer.current);
