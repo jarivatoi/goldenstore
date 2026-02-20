@@ -746,16 +746,13 @@ const ClientDetailModal: React.FC<ClientDetailModalProps> = ({ client, onClose }
       {showZoomedImage && profilePicture && createPortal(
         <div
           className="fixed inset-0 flex items-center justify-center z-[10000] overflow-hidden"
-          onClick={(e) => {
-            e.preventDefault();
-            handleCloseZoom();
-          }}
-          onTouchEnd={(e) => {
+          onMouseDown={(e) => {
             e.preventDefault();
             handleCloseZoom();
           }}
           onTouchStart={(e) => {
             e.preventDefault();
+            handleCloseZoom();
           }}
           onTouchMove={(e) => {
             e.preventDefault();
