@@ -415,54 +415,89 @@ export const CreditProvider: React.FC<CreditProviderProps> = ({ children }) => {
         return idNumeric === queryNum;
       });
     } else {
-      // For text queries, use flexible matching
+      // For text queries, use precise matching with better fuzzy logic
       const normalizedQuery = normalize(query);
+      const queryLower = query.toLowerCase();
 
-      // Calculate similarity score for fuzzy matching
-      const calculateSimilarity = (str1: string, str2: string): number => {
-        const longer = str1.length > str2.length ? str1 : str2;
-        const shorter = str1.length > str2.length ? str2 : str1;
+      // Calculate Levenshtein distance for more accurate fuzzy matching
+      const levenshteinDistance = (str1: string, str2: string): number => {
+        const len1 = str1.length;
+        const len2 = str2.length;
+        const matrix: number[][] = [];
 
-        if (longer.length === 0) return 1.0;
+        for (let i = 0; i <= len1; i++) {
+          matrix[i] = [i];
+        }
+        for (let j = 0; j <= len2; j++) {
+          matrix[0][j] = j;
+        }
 
-        // Count matching characters in order
-        let matches = 0;
-        let longerIndex = 0;
-
-        for (let i = 0; i < shorter.length; i++) {
-          const found = longer.indexOf(shorter[i], longerIndex);
-          if (found >= longerIndex) {
-            matches++;
-            longerIndex = found + 1;
+        for (let i = 1; i <= len1; i++) {
+          for (let j = 1; j <= len2; j++) {
+            if (str1[i - 1] === str2[j - 1]) {
+              matrix[i][j] = matrix[i - 1][j - 1];
+            } else {
+              matrix[i][j] = Math.min(
+                matrix[i - 1][j - 1] + 1,
+                matrix[i][j - 1] + 1,
+                matrix[i - 1][j] + 1
+              );
+            }
           }
         }
 
-        return matches / longer.length;
+        return matrix[len1][len2];
       };
 
       return clients.filter(client => {
         const normalizedName = normalize(client.name);
         const normalizedId = client.id.toLowerCase();
-        const queryLower = query.toLowerCase();
 
-        // Exact match or contains
-        if (normalizedName.includes(normalizedQuery) ||
-            normalizedId === queryLower ||
-            client.id.includes(query.trim())) {
+        // Priority 1: Exact match
+        if (normalizedName === normalizedQuery || normalizedId === queryLower) {
           return true;
         }
 
-        // Fuzzy match - check if similarity is above threshold (60%)
-        const nameSimilarity = calculateSimilarity(normalizedQuery, normalizedName);
+        // Priority 2: Starts with query (prefix match)
+        if (normalizedName.startsWith(normalizedQuery)) {
+          return true;
+        }
 
-        // Also check word-by-word similarity
+        // Priority 3: Contains query
+        if (normalizedName.includes(normalizedQuery)) {
+          return true;
+        }
+
+        // Priority 4: Word-based matching (any word starts with query)
         const nameWords = normalizedName.split(' ');
-        const wordSimilarities = nameWords.map(word =>
-          calculateSimilarity(normalizedQuery, word)
-        );
-        const maxWordSimilarity = Math.max(...wordSimilarities, 0);
+        for (const word of nameWords) {
+          if (word.startsWith(normalizedQuery)) {
+            return true;
+          }
+        }
 
-        return nameSimilarity >= 0.6 || maxWordSimilarity >= 0.6;
+        // Priority 5: Fuzzy match only for queries with 4+ characters
+        if (normalizedQuery.length >= 4) {
+          // Check full name fuzzy match
+          const distance = levenshteinDistance(normalizedQuery, normalizedName);
+          const similarity = 1 - (distance / Math.max(normalizedQuery.length, normalizedName.length));
+
+          if (similarity >= 0.75) {
+            return true;
+          }
+
+          // Check word-by-word fuzzy match
+          for (const word of nameWords) {
+            const wordDistance = levenshteinDistance(normalizedQuery, word);
+            const wordSimilarity = 1 - (wordDistance / Math.max(normalizedQuery.length, word.length));
+
+            if (wordSimilarity >= 0.75) {
+              return true;
+            }
+          }
+        }
+
+        return false;
       });
     }
   };
