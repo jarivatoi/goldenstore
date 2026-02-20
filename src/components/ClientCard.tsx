@@ -211,7 +211,7 @@ const ClientCard: React.FC<ClientCardProps> = ({ client, onLongPress, onQuickAdd
           <div className="flex justify-center mb-2">
             {client.profilePictureUrl ? (
               <div
-                className="w-24 h-24 rounded-full overflow-hidden border-4 border-white shadow-lg relative flex-shrink-0 cursor-zoom-in"
+                className="w-24 h-24 rounded-full overflow-hidden border-4 border-white shadow-lg relative flex-shrink-0 cursor-zoom-in animate-zoom"
                 style={{
                   background: `url(${client.profilePictureUrl})`,
                   backgroundSize: 'cover',
@@ -234,7 +234,7 @@ const ClientCard: React.FC<ClientCardProps> = ({ client, onLongPress, onQuickAdd
                 }}></div>
               </div>
             ) : (
-              <div className="w-24 h-24 bg-blue-100 rounded-full flex items-center justify-center flex-shrink-0 border-4 border-white shadow-lg">
+              <div className="w-24 h-24 bg-blue-100 rounded-full flex items-center justify-center flex-shrink-0 border-4 border-white shadow-lg animate-zoom">
                 <User size={40} className="text-blue-600" />
               </div>
             )}
@@ -242,7 +242,7 @@ const ClientCard: React.FC<ClientCardProps> = ({ client, onLongPress, onQuickAdd
 
           {/* Name and ID - Centered */}
           <div className="w-full">
-            <h3 className="font-semibold text-gray-800 text-sm sm:text-base">
+            <h3 className="font-semibold text-gray-800 text-sm sm:text-base animate-zoom-delayed">
               <ScrollingText
                 className="font-semibold text-gray-800 text-sm sm:text-base text-center"
                 pauseDuration={1}

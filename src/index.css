@@ -417,3 +417,22 @@ input[type=number] {
 .animate-slide-in-right {
   animation: slideInRight 0.3s ease-out;
 }
+
+/* Alternating zoom animation for client card elements */
+@keyframes zoomInOut {
+  0%, 100% {
+    transform: scale(1);
+  }
+  50% {
+    transform: scale(1.15);
+  }
+}
+
+.animate-zoom {
+  animation: zoomInOut 3s ease-in-out infinite;
+}
+
+.animate-zoom-delayed {
+  animation: zoomInOut 3s ease-in-out infinite;
+  animation-delay: 1.5s;
+}
