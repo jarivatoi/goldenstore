@@ -643,21 +643,6 @@ This will REPLACE ALL your current data. This action cannot be undone.`,
                     <p className="text-sm text-gray-600 select-none">Load from local file or server backup</p>
                   </div>
                 </button>
-
-                {/* Fix Duplicates Button */}
-                <button
-                  onClick={handleFixDuplicates}
-                  className="w-full flex items-center gap-4 p-4 border-2 border-orange-300 rounded-lg hover:bg-orange-50 transition-colors select-none"
-                  disabled={isProcessing}
-                >
-                  <div className="bg-orange-500 p-2 rounded-full select-none">
-                    <AlertTriangle size={20} className="text-white" />
-                  </div>
-                  <div className="text-left flex-1 select-none">
-                    <h4 className="font-medium text-gray-800 select-none">Fix Duplicate Clients</h4>
-                    <p className="text-sm text-gray-600 select-none">Remove duplicate clients from migration</p>
-                  </div>
-                </button>
               </div>
 
               {/* Auto Backup Settings */}
