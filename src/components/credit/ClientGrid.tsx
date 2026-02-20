@@ -55,6 +55,28 @@ const ClientGrid: React.FC<ClientGridProps> = ({
   const [voiceError, setVoiceError] = useState<string | null>(null);
   const recognitionRef = useRef<any>(null);
 
+  // Function to calculate similarity between two strings (character overlap)
+  const calculateSimilarity = (str1: string, str2: string): number => {
+    const longer = str1.length > str2.length ? str1 : str2;
+    const shorter = str1.length > str2.length ? str2 : str1;
+
+    if (longer.length === 0) return 1.0;
+
+    // Count matching characters in order
+    let matches = 0;
+    let longerIndex = 0;
+
+    for (let i = 0; i < shorter.length; i++) {
+      const found = longer.indexOf(shorter[i], longerIndex);
+      if (found >= longerIndex) {
+        matches++;
+        longerIndex = found + 1;
+      }
+    }
+
+    return matches / longer.length;
+  };
+
   // Function to find best matching client from voice input
   const findBestClientMatch = (transcript: string): string | null => {
     const input = transcript.toLowerCase().trim();
@@ -75,19 +97,55 @@ const ClientGrid: React.FC<ClientGridProps> = ({
     const startsWithMatch = clients.find(c => c.name.toLowerCase().startsWith(input));
     if (startsWithMatch) return startsWithMatch.name;
 
-    // Contains match (name contains input)
-    const containsMatch = clients.find(c => c.name.toLowerCase().includes(input));
+    // Contains match (name contains input OR input contains name)
+    const containsMatch = clients.find(c => {
+      const nameLower = c.name.toLowerCase();
+      return nameLower.includes(input) || input.includes(nameLower);
+    });
     if (containsMatch) return containsMatch.name;
 
     // Check if any word in the name matches
     const words = input.split(' ');
     for (const word of words) {
+      if (word.length < 2) continue; // Skip single letters
+
       const wordMatch = clients.find(c =>
         c.name.toLowerCase().split(' ').some(namePart =>
-          namePart.startsWith(word) || namePart.includes(word)
+          namePart.startsWith(word) || word.startsWith(namePart) ||
+          namePart.includes(word) || word.includes(namePart)
         )
       );
       if (wordMatch) return wordMatch.name;
+    }
+
+    // Fuzzy match - find client with highest similarity (minimum 50% match)
+    let bestMatch: { client: Client; score: number } | null = null;
+
+    clients.forEach(client => {
+      const nameLower = client.name.toLowerCase();
+      const idLower = client.id.toLowerCase();
+
+      // Check similarity with full name
+      const nameScore = calculateSimilarity(input, nameLower);
+
+      // Check similarity with each word in the name
+      const nameWords = nameLower.split(' ');
+      const wordScores = nameWords.map(word => calculateSimilarity(input, word));
+      const maxWordScore = Math.max(...wordScores, 0);
+
+      // Check similarity with ID
+      const idScore = calculateSimilarity(input, idLower);
+
+      // Take the best score
+      const score = Math.max(nameScore, maxWordScore, idScore);
+
+      if (score >= 0.5 && (!bestMatch || score > bestMatch.score)) {
+        bestMatch = { client, score };
+      }
+    });
+
+    if (bestMatch) {
+      return bestMatch.client.name;
     }
 
     return null;
