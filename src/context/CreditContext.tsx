@@ -760,12 +760,12 @@ export const CreditProvider: React.FC<CreditProviderProps> = ({ children }) => {
   const settleClientWithFullClear = async (clientId: string) => {
     try {
       const currentDebt = getClientTotalDebt(clientId);
-      
-      // Always remove all previous full settlements for this client, regardless of debt amount
-      const filteredPayments = payments.filter(payment => 
-        !(payment.clientId === clientId && payment.type === 'full')
+
+      // Remove ALL previous payments for this client (both full and partial)
+      const filteredPayments = payments.filter(payment =>
+        payment.clientId !== clientId
       );
-      
+
       // Add new settlement record (even if debt is 0)
       const newPayment: PaymentRecord = {
         id: crypto.randomUUID(),
@@ -774,7 +774,7 @@ export const CreditProvider: React.FC<CreditProviderProps> = ({ children }) => {
         date: new Date(),
         type: 'full'
       };
-      
+
       const updatedPayments = [...filteredPayments, newPayment];
       setPayments(updatedPayments);
       
