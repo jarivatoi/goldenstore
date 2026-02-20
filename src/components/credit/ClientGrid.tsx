@@ -238,10 +238,16 @@ const ClientGrid: React.FC<ClientGridProps> = ({
       // For substrings of 3+ characters, use simple prefix matching
       if (len >= 3) {
         // Try to find a client whose name starts with this substring
-        const prefixMatch = clients.find(c => c.name.toLowerCase().startsWith(substring));
-        if (prefixMatch) {
-          console.log(`✅ Progressive match (len=${len}): "${substring}" → ${prefixMatch.name}`);
-          return prefixMatch.name;
+        console.log(`🔍 Checking len=${len}, substring="${substring}"`);
+        const matchingClients = clients.filter(c => {
+          const matches = c.name.toLowerCase().startsWith(substring);
+          console.log(`  ${matches ? '✓' : '✗'} "${c.name}".toLowerCase()="${c.name.toLowerCase()}" startsWith("${substring}") = ${matches}`);
+          return matches;
+        });
+
+        if (matchingClients.length > 0) {
+          console.log(`✅ Progressive match (len=${len}): "${substring}" → ${matchingClients[0].name}`);
+          return matchingClients[0].name;
         }
 
         // Try to find a client whose ID starts with this substring
