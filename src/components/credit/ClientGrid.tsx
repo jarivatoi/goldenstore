@@ -1,9 +1,9 @@
 import React from 'react';
-import { useEffect, useRef } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import { gsap } from 'gsap';
 import { InertiaPlugin } from 'gsap/InertiaPlugin';
 import { Draggable, DraggableInstance } from '../../lib/draggable';
-import { Search, X, Users, UserCheck } from 'lucide-react';
+import { Search, X, Users, UserCheck, Mic, MicOff } from 'lucide-react';
 import { Client } from '../../types';
 import ClientCard from '../ClientCard';
 
@@ -48,6 +48,64 @@ const ClientGrid: React.FC<ClientGridProps> = ({
   const draggableRef = useRef<DraggableInstance[] | null>(null);
   const dragStartXRef = useRef(0);
   const dragDirectionRef = useRef<'left' | 'right' | null>(null);
+
+  // Voice recognition state
+  const [isListening, setIsListening] = useState(false);
+  const [voiceSupported, setVoiceSupported] = useState(false);
+  const recognitionRef = useRef<any>(null);
+
+  // Check if voice recognition is supported
+  useEffect(() => {
+    const SpeechRecognition = (window as any).SpeechRecognition || (window as any).webkitSpeechRecognition;
+    if (SpeechRecognition) {
+      setVoiceSupported(true);
+      recognitionRef.current = new SpeechRecognition();
+      recognitionRef.current.continuous = false;
+      recognitionRef.current.interimResults = false;
+      recognitionRef.current.lang = 'en-US';
+
+      recognitionRef.current.onresult = (event: any) => {
+        const transcript = event.results[0][0].transcript;
+        onSearchChange(transcript);
+        setIsListening(false);
+        // Auto-switch to show all clients when voice input is used
+        if (transcript.trim() && !showAllClients) {
+          onToggleAllClients();
+        }
+      };
+
+      recognitionRef.current.onerror = (event: any) => {
+        console.error('Voice recognition error:', event.error);
+        setIsListening(false);
+      };
+
+      recognitionRef.current.onend = () => {
+        setIsListening(false);
+      };
+    }
+
+    return () => {
+      if (recognitionRef.current) {
+        recognitionRef.current.stop();
+      }
+    };
+  }, [onSearchChange, onToggleAllClients, showAllClients]);
+
+  const handleVoiceSearch = () => {
+    if (!recognitionRef.current) return;
+
+    if (isListening) {
+      recognitionRef.current.stop();
+      setIsListening(false);
+    } else {
+      try {
+        recognitionRef.current.start();
+        setIsListening(true);
+      } catch (error) {
+        console.error('Error starting voice recognition:', error);
+      }
+    }
+  };
 
   // GSAP Draggable setup
   useEffect(() => {
@@ -235,35 +293,54 @@ const ClientGrid: React.FC<ClientGridProps> = ({
       {/* Search Bar */}
       <div className="px-4 pb-4">
         <div className="relative w-full max-w-md mx-auto">
-          <div className="relative">
-            <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
-              <Search size={20} className="text-gray-400" />
-            </div>
-            <input
-              type="text"
-              value={searchQuery}
-              onChange={(e) => {
-                const newQuery = e.target.value;
-                onSearchChange(newQuery);
-                // Auto-switch to show all clients when user starts typing
-                if (newQuery.trim() && !showAllClients) {
-                  onToggleAllClients();
-                }
-              }}
-              placeholder="Search by client name or ID..."
-              className={`block w-full pl-10 ${searchQuery ? 'pr-12' : 'pr-4'} py-3 lg:py-4 text-lg lg:text-xl border-2 border-gray-300 rounded-xl focus:outline-none focus:ring-3 focus:ring-blue-500 focus:border-blue-500 shadow-sm transition-all duration-200`}
-            />
-            
-            {/* Clear Button - Only visible when there's text */}
-            {searchQuery && (
+          <div className="flex items-center gap-2">
+            {/* Voice Search Button */}
+            {voiceSupported && (
               <button
-                onClick={() => onSearchChange('')}
-                className="absolute inset-y-0 right-3 my-auto px-3 h-8 bg-red-500 hover:bg-red-600 text-white rounded-md flex items-center justify-center shadow-md border border-red-600 transition-all duration-200 text-sm font-medium"
-                title="Clear search"
+                onClick={handleVoiceSearch}
+                className={`flex-shrink-0 w-12 h-12 lg:w-14 lg:h-14 rounded-xl flex items-center justify-center shadow-md border-2 transition-all duration-200 ${
+                  isListening
+                    ? 'bg-red-500 hover:bg-red-600 border-red-600 text-white animate-pulse'
+                    : 'bg-blue-500 hover:bg-blue-600 border-blue-600 text-white'
+                }`}
+                title={isListening ? 'Stop listening' : 'Voice search'}
               >
-                Clear
+                {isListening ? <MicOff size={24} /> : <Mic size={24} />}
               </button>
             )}
+
+            <div className="relative flex-1">
+              <div className="relative">
+                <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
+                  <Search size={20} className="text-gray-400" />
+                </div>
+                <input
+                  type="text"
+                  value={searchQuery}
+                  onChange={(e) => {
+                    const newQuery = e.target.value;
+                    onSearchChange(newQuery);
+                    // Auto-switch to show all clients when user starts typing
+                    if (newQuery.trim() && !showAllClients) {
+                      onToggleAllClients();
+                    }
+                  }}
+                  placeholder="Search by client name or ID..."
+                  className={`block w-full pl-10 ${searchQuery ? 'pr-20' : 'pr-4'} py-3 lg:py-4 text-lg lg:text-xl border-2 border-gray-300 rounded-xl focus:outline-none focus:ring-3 focus:ring-blue-500 focus:border-blue-500 shadow-sm transition-all duration-200`}
+                />
+
+                {/* Clear Button - Only visible when there's text */}
+                {searchQuery && (
+                  <button
+                    onClick={() => onSearchChange('')}
+                    className="absolute inset-y-0 right-3 my-auto px-3 h-8 bg-red-500 hover:bg-red-600 text-white rounded-md flex items-center justify-center shadow-md border border-red-600 transition-all duration-200 text-sm font-medium"
+                    title="Clear search"
+                  >
+                    Clear
+                  </button>
+                )}
+              </div>
+            </div>
           </div>
         </div>
       </div>
