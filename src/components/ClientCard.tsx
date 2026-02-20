@@ -69,6 +69,21 @@ const ClientCard: React.FC<ClientCardProps> = ({ client, onLongPress, onQuickAdd
 
   // Determine if client has any outstanding debt or returnables
   const hasOutstanding = totalDebt > 0 || returnableItemsText.length > 0;
+  const hasDebt = totalDebt > 0;
+  const hasReturnables = returnableItemsText.length > 0;
+
+  // Determine border glow style based on status
+  const getBorderGlowClass = () => {
+    if (hasDebt && hasReturnables) {
+      return 'border-red-orange-glow'; // Alternating red-orange
+    } else if (hasDebt) {
+      return 'border-red-glow'; // Red glow for debt only
+    } else if (hasReturnables) {
+      return 'border-orange-glow'; // Orange glow for returnables only
+    } else {
+      return 'border-green-glow'; // Green glow for no outstanding
+    }
+  };
 
   // Determine card background color based on debt amount
   const getCardBackgroundColor = () => {
@@ -214,7 +229,7 @@ const ClientCard: React.FC<ClientCardProps> = ({ client, onLongPress, onQuickAdd
           <div className="flex justify-center mb-2">
             {client.profilePictureUrl ? (
               <div
-                className={`w-24 h-24 rounded-full overflow-hidden border-4 border-white shadow-lg relative flex-shrink-0 cursor-zoom-in ${hasOutstanding ? 'animate-zoom' : ''}`}
+                className={`w-24 h-24 rounded-full overflow-hidden border-4 shadow-lg relative flex-shrink-0 cursor-zoom-in ${hasOutstanding ? 'animate-zoom' : ''} ${getBorderGlowClass()}`}
                 style={{
                   background: `url(${client.profilePictureUrl})`,
                   backgroundSize: 'cover',
@@ -237,7 +252,7 @@ const ClientCard: React.FC<ClientCardProps> = ({ client, onLongPress, onQuickAdd
                 }}></div>
               </div>
             ) : (
-              <div className={`w-24 h-24 bg-blue-100 rounded-full flex items-center justify-center flex-shrink-0 border-4 border-white shadow-lg ${hasOutstanding ? 'animate-zoom' : ''}`}>
+              <div className={`w-24 h-24 bg-blue-100 rounded-full flex items-center justify-center flex-shrink-0 border-4 shadow-lg ${hasOutstanding ? 'animate-zoom' : ''} ${getBorderGlowClass()}`}>
                 <User size={40} className="text-blue-600" />
               </div>
             )}
@@ -311,8 +326,8 @@ const ClientCard: React.FC<ClientCardProps> = ({ client, onLongPress, onQuickAdd
         <div className="text-xs sm:text-sm text-gray-500 min-h-[3.5rem] flex flex-col justify-end">
           {returnableItemsText.length > 0 ? (
             <div className="mb-2 flex items-center">
-              <ScrollingText 
-                className="text-orange-600 font-medium text-sm text-center"
+              <ScrollingText
+                className={`font-medium text-sm text-center ${hasDebt ? 'alternating-orange-text' : 'text-orange-600'}`}
                 pauseDuration={0.5}
                 scrollDuration={2.5}
                 easing="power1.inOut"
