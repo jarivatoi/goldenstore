@@ -215,8 +215,8 @@ const ClientCard: React.FC<ClientCardProps> = ({ client, onLongPress, onQuickAdd
                 }}></div>
               </div>
             ) : (
-              <div className="bg-blue-100 p-3 rounded-full flex-shrink-0">
-                <User size={24} className="text-blue-600" />
+              <div className="w-24 h-24 bg-blue-100 rounded-full flex items-center justify-center flex-shrink-0 border-4 border-white shadow-lg">
+                <User size={40} className="text-blue-600" />
               </div>
             )}
           </div>
