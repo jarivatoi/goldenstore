@@ -30,12 +30,16 @@ export class SupabaseBackupManager {
     try {
       const jsonString = JSON.stringify(databaseJson);
       const fileSize = new Blob([jsonString]).size;
-      
+
+      const now = new Date();
+      const dateStr = now.toLocaleDateString('en-GB');
+      const timeStr = now.toLocaleTimeString('en-GB', { hour: '2-digit', minute: '2-digit' });
+
       const backupData = {
         backup_data: databaseJson,
-        backup_name: backupName || `Golden Store Backup ${new Date().toLocaleDateString('en-GB')}`,
+        backup_name: backupName || `Golden Store Backup ${dateStr} ${timeStr}`,
         file_size: fileSize,
-        created_at: new Date().toISOString()
+        created_at: now.toISOString()
       };
 
       // First, delete any existing backups to save space (keep only 1 backup)
