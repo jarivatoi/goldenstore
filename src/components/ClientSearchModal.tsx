@@ -457,7 +457,7 @@ const ClientSearchModal: React.FC<ClientSearchModalProps> = ({
             <>
               {/* Search Bar */}
               {!linkedClient && (
-              <div className="flex items-stretch gap-2 mb-4">
+              <div className="flex items-start gap-2 mb-4">
                 <div className="relative flex-1">
                   <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
                     <Search size={20} className="text-gray-400" />
@@ -473,7 +473,7 @@ const ClientSearchModal: React.FC<ClientSearchModalProps> = ({
                 {searchQuery && (
                   <button
                     onClick={() => setSearchQuery('')}
-                    className="w-14 flex-shrink-0 bg-red-500 hover:bg-red-600 text-white rounded-xl flex items-center justify-center shadow-lg border-2 border-red-600"
+                    className="w-14 py-4 flex-shrink-0 bg-red-500 hover:bg-red-600 text-white rounded-xl flex items-center justify-center shadow-lg border-2 border-red-600"
                   >
                     <X size={24} />
                   </button>
