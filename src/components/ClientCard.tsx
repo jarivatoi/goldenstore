@@ -62,6 +62,7 @@ const ClientCard: React.FC<ClientCardProps> = ({ client, onLongPress, onQuickAdd
   const [showZoomedImage, setShowZoomedImage] = useState(false);
   const zoomPressTimer = useRef<NodeJS.Timeout | null>(null);
   const isLongPressActive = useRef<boolean>(false);
+  const zoomJustOpened = useRef<boolean>(false);
 
   const totalDebt = getClientTotalDebt(client.id);
   const bottlesOwed = getClientBottlesOwed(client.id);
@@ -145,15 +146,24 @@ const ClientCard: React.FC<ClientCardProps> = ({ client, onLongPress, onQuickAdd
     }
 
     zoomPressTimer.current = setTimeout(() => {
+      console.log('[ClientCard] Opening zoom image');
       setShowZoomedImage(true);
+      zoomJustOpened.current = true;
       // Prevent scrolling when zoomed image is shown
       document.body.style.overflow = 'hidden';
+
+      // Reset the flag after a delay
+      setTimeout(() => {
+        console.log('[ClientCard] Zoom ready to close');
+        zoomJustOpened.current = false;
+      }, 300);
     }, 500);
   };
 
   const handleImagePressEnd = (e: React.MouseEvent | React.TouchEvent) => {
     e.preventDefault();
     e.stopPropagation();
+    console.log('[ClientCard] Image press end, zoomJustOpened:', zoomJustOpened.current);
     if (zoomPressTimer.current) {
       clearTimeout(zoomPressTimer.current);
       zoomPressTimer.current = null;
@@ -161,8 +171,10 @@ const ClientCard: React.FC<ClientCardProps> = ({ client, onLongPress, onQuickAdd
   };
 
   const handleCloseZoom = () => {
+    console.log('[ClientCard] Closing zoom');
     setShowZoomedImage(false);
     isLongPressActive.current = false;
+    zoomJustOpened.current = false;
     // Re-enable scrolling
     document.body.style.overflow = '';
   };
@@ -372,14 +384,21 @@ const ClientCard: React.FC<ClientCardProps> = ({ client, onLongPress, onQuickAdd
           className="fixed inset-0 flex items-center justify-center z-[10000] overflow-hidden"
           onClick={(e) => {
             e.preventDefault();
-            handleCloseZoom();
+            console.log('[ClientCard] Zoom overlay clicked, zoomJustOpened:', zoomJustOpened.current);
+            if (!zoomJustOpened.current) {
+              handleCloseZoom();
+            }
           }}
           onTouchEnd={(e) => {
             e.preventDefault();
-            handleCloseZoom();
+            console.log('[ClientCard] Zoom overlay touch end, zoomJustOpened:', zoomJustOpened.current);
+            if (!zoomJustOpened.current) {
+              handleCloseZoom();
+            }
           }}
           onTouchStart={(e) => {
             e.preventDefault();
+            console.log('[ClientCard] Zoom overlay touch start');
           }}
           onTouchMove={(e) => {
             e.preventDefault();
