@@ -61,6 +61,7 @@ const ClientCard: React.FC<ClientCardProps> = ({ client, onLongPress, onQuickAdd
   const tapCountRef = useRef<number>(0);
   const [showZoomedImage, setShowZoomedImage] = useState(false);
   const zoomPressTimer = useRef<NodeJS.Timeout | null>(null);
+  const isLongPressActive = useRef<boolean>(false);
 
   const totalDebt = getClientTotalDebt(client.id);
   const bottlesOwed = getClientBottlesOwed(client.id);
@@ -144,6 +145,7 @@ const ClientCard: React.FC<ClientCardProps> = ({ client, onLongPress, onQuickAdd
 
     zoomPressTimer.current = setTimeout(() => {
       setShowZoomedImage(true);
+      isLongPressActive.current = true;
       // Prevent scrolling when zoomed image is shown
       document.body.style.overflow = 'hidden';
     }, 500);
@@ -155,10 +157,19 @@ const ClientCard: React.FC<ClientCardProps> = ({ client, onLongPress, onQuickAdd
       clearTimeout(zoomPressTimer.current);
       zoomPressTimer.current = null;
     }
+
+    // If long press was active and zoom is showing, dismiss on this touch end
+    if (isLongPressActive.current && showZoomedImage) {
+      setTimeout(() => {
+        handleCloseZoom();
+        isLongPressActive.current = false;
+      }, 100);
+    }
   };
 
   const handleCloseZoom = () => {
     setShowZoomedImage(false);
+    isLongPressActive.current = false;
     // Re-enable scrolling
     document.body.style.overflow = '';
   };
