@@ -367,18 +367,10 @@ const ClientCard: React.FC<ClientCardProps> = ({ client, onLongPress, onQuickAdd
         <div
           className="fixed inset-0 flex items-center justify-center z-[10000] overflow-hidden"
           onClick={(e) => {
-            e.preventDefault();
             handleCloseZoom();
           }}
           onTouchEnd={(e) => {
-            e.preventDefault();
             handleCloseZoom();
-          }}
-          onTouchStart={(e) => {
-            e.preventDefault();
-          }}
-          onTouchMove={(e) => {
-            e.preventDefault();
           }}
           onContextMenu={(e) => {
             e.preventDefault();
@@ -402,7 +394,7 @@ const ClientCard: React.FC<ClientCardProps> = ({ client, onLongPress, onQuickAdd
             alt={client.name}
             className="max-w-full max-h-screen object-contain"
             style={{
-              pointerEvents: 'none',
+              pointerEvents: 'auto',
               userSelect: 'none',
               WebkitUserSelect: 'none',
               WebkitTouchCallout: 'none',
@@ -410,13 +402,17 @@ const ClientCard: React.FC<ClientCardProps> = ({ client, onLongPress, onQuickAdd
               msUserSelect: 'none'
             }}
             draggable={false}
+            onClick={(e) => {
+              e.stopPropagation();
+            }}
+            onTouchEnd={(e) => {
+              e.stopPropagation();
+            }}
             onContextMenu={(e) => {
               e.preventDefault();
               e.stopPropagation();
               return false;
             }}
-            onTouchStart={(e) => e.preventDefault()}
-            onTouchEnd={(e) => e.preventDefault()}
           />
         </div>,
         document.body
