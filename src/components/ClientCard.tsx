@@ -269,20 +269,21 @@ const ClientCard: React.FC<ClientCardProps> = ({ client, onLongPress, onQuickAdd
               {/* Bottle Count Badge at 2pm position */}
               {hasReturnables && totalReturnablesCount > 0 && (
                 <div
-                  className={`absolute flex items-center gap-1 px-2 py-1 rounded-full shadow-lg pointer-events-none ${
-                    hasDebt ? 'bottle-badge-alternating' : 'bottle-badge-orange'
+                  className={`absolute flex flex-col items-center gap-0.5 pointer-events-none ${
+                    hasDebt ? 'bottle-badge-fade-alternating' : 'bottle-badge-fade-orange'
                   }`}
                   style={{
-                    top: '8px',
-                    right: '-8px',
-                    backgroundColor: 'white',
+                    top: '-4px',
+                    right: '-32px',
                     zIndex: 10
                   }}
                 >
-                  <Milk size={14} className={hasDebt ? 'bottle-icon-alternating' : 'text-orange-600'} />
-                  <span className={`text-xs font-bold ${hasDebt ? 'bottle-text-alternating' : 'text-orange-600'}`}>
+                  <span className={`text-sm font-bold ${hasDebt ? 'bottle-text-alternating' : 'text-orange-600'}`}>
                     {totalReturnablesCount}
                   </span>
+                  <div className="bottle-3d">
+                    <Milk size={28} className={hasDebt ? 'bottle-icon-alternating' : 'text-orange-600'} strokeWidth={2.5} />
+                  </div>
                 </div>
               )}
             </div>
