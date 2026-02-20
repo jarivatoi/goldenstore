@@ -394,7 +394,7 @@ const ClientCard: React.FC<ClientCardProps> = ({ client, onLongPress, onQuickAdd
             alt={client.name}
             className="max-w-full max-h-screen object-contain"
             style={{
-              pointerEvents: 'auto',
+              pointerEvents: 'none',
               userSelect: 'none',
               WebkitUserSelect: 'none',
               WebkitTouchCallout: 'none',
@@ -402,12 +402,6 @@ const ClientCard: React.FC<ClientCardProps> = ({ client, onLongPress, onQuickAdd
               msUserSelect: 'none'
             }}
             draggable={false}
-            onClick={(e) => {
-              e.stopPropagation();
-            }}
-            onTouchEnd={(e) => {
-              e.stopPropagation();
-            }}
             onContextMenu={(e) => {
               e.preventDefault();
               e.stopPropagation();
