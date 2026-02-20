@@ -187,9 +187,13 @@ export class SupabaseBackupManager {
       }
 
       const backupRecord = data[0];
+      const createdDate = new Date(backupRecord.created_at);
+      const dateStr = createdDate.toLocaleDateString('en-GB');
+      const timeStr = createdDate.toLocaleTimeString('en-GB', { hour: '2-digit', minute: '2-digit' });
+
       return {
-        name: backupRecord.backup_name,
-        date: new Date(backupRecord.created_at).toLocaleDateString('en-GB'),
+        name: 'Supabase',
+        date: `${dateStr} ${timeStr}`,
         size: backupRecord.file_size
       };
     } catch (error) {
