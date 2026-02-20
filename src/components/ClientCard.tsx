@@ -274,16 +274,16 @@ const ClientCard: React.FC<ClientCardProps> = ({ client, onLongPress, onQuickAdd
                   }`}
                   style={{
                     top: '-4px',
-                    right: '-40px',
+                    right: '-68px',
                     zIndex: 10
                   }}
                 >
-                  <span className={`text-xl sm:text-2xl font-bold ${hasDebt ? 'bottle-text-alternating' : 'text-orange-600'}`}>
-                    {totalReturnablesCount}
-                  </span>
                   <div className="bottle-3d">
                     <Milk size={32} className={hasDebt ? 'bottle-icon-alternating' : 'text-orange-600'} strokeWidth={2.5} />
                   </div>
+                  <span className={`text-xl sm:text-2xl font-bold ${hasDebt ? 'bottle-text-alternating' : 'text-orange-600'}`}>
+                    {totalReturnablesCount}
+                  </span>
                 </div>
               )}
             </div>
