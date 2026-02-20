@@ -158,12 +158,10 @@ const ClientCard: React.FC<ClientCardProps> = ({ client, onLongPress, onQuickAdd
       zoomPressTimer.current = null;
     }
 
-    // If long press was active and zoom is showing, dismiss on this touch end
-    if (isLongPressActive.current && showZoomedImage) {
-      setTimeout(() => {
-        handleCloseZoom();
-        isLongPressActive.current = false;
-      }, 100);
+    // If zoom was just triggered by long press, consume this release event
+    if (isLongPressActive.current) {
+      isLongPressActive.current = false;
+      return;
     }
   };
 
@@ -378,9 +376,11 @@ const ClientCard: React.FC<ClientCardProps> = ({ client, onLongPress, onQuickAdd
         <div
           className="fixed inset-0 flex items-center justify-center z-[10000] overflow-hidden"
           onClick={(e) => {
+            e.stopPropagation();
             handleCloseZoom();
           }}
           onTouchEnd={(e) => {
+            e.stopPropagation();
             handleCloseZoom();
           }}
           onContextMenu={(e) => {
