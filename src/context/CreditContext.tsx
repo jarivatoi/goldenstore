@@ -390,7 +390,14 @@ export const CreditProvider: React.FC<CreditProviderProps> = ({ children }) => {
 
   // Search clients
   const searchClients = (query: string): Client[] => {
-    if (!query.trim()) return clients;
+    if (!query.trim()) {
+      // Sort numerically by ID when no search query
+      return [...clients].sort((a, b) => {
+        const aNum = parseInt(a.id.replace(/\D/g, ''), 10);
+        const bNum = parseInt(b.id.replace(/\D/g, ''), 10);
+        return aNum - bNum;
+      });
+    }
 
     // Normalize function to remove accents and special characters
     const normalize = (str: string): string => {
