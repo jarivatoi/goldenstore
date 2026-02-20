@@ -59,7 +59,10 @@ const CreditModals: React.FC<CreditModalsProps> = ({
   const sortedClients = React.useMemo(() => {
     return [...clients].sort((a, b) => {
       if (clientSortOption === 'id') {
-        return a.id.localeCompare(b.id);
+        // Extract numeric part for proper numeric sorting (G1, G2, G10, G100...)
+        const aNum = parseInt(a.id.replace(/\D/g, ''), 10);
+        const bNum = parseInt(b.id.replace(/\D/g, ''), 10);
+        return aNum - bNum;
       } else {
         return a.name.localeCompare(b.name);
       }
@@ -123,7 +126,7 @@ const CreditModals: React.FC<CreditModalsProps> = ({
                     onChange={(e) => setClientSortOption(e.target.value as 'id' | 'name')}
                     className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
                   >
-                    <option value="id">Client ID (G001, G002...)</option>
+                    <option value="id">Client ID (G1, G2...)</option>
                     <option value="name">Client Name (A-Z)</option>
                   </select>
                 </div>

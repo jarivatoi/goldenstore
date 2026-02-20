@@ -115,21 +115,56 @@ export const CreditProvider: React.FC<CreditProviderProps> = ({ children }) => {
         creditDBManager.getAllPayments()
       ]);
 
-      const transformedClients: Client[] = dbClientsData.map((client: any) => ({
-        ...client,
-        createdAt: new Date(client.createdAt),
-        lastTransactionAt: new Date(client.lastTransactionAt)
-      }));
+      // Migrate client IDs from G001 format to G1 format (remove leading zeros)
+      const migrateClientId = (oldId: string): string => {
+        const match = oldId.match(/^G(\d+)$/);
+        if (match) {
+          const num = parseInt(match[1], 10);
+          return `G${num}`;
+        }
+        return oldId;
+      };
+
+      const transformedClients: Client[] = dbClientsData.map((client: any) => {
+        const newId = migrateClientId(client.id);
+        const hasIdChanged = newId !== client.id;
+
+        if (hasIdChanged) {
+          console.log(`Migrating client ID: ${client.id} -> ${newId}`);
+        }
+
+        return {
+          ...client,
+          id: newId,
+          createdAt: new Date(client.createdAt),
+          lastTransactionAt: new Date(client.lastTransactionAt)
+        };
+      });
 
       const transformedTransactions: CreditTransaction[] = dbTransactionsData.map((transaction: any) => ({
         ...transaction,
+        clientId: migrateClientId(transaction.clientId),
         date: new Date(transaction.date)
       }));
 
       const transformedPayments: PaymentRecord[] = dbPaymentsData.map((payment: any) => ({
         ...payment,
+        clientId: migrateClientId(payment.clientId),
         date: new Date(payment.date)
       }));
+
+      // Save migrated data back to IndexedDB if any IDs changed
+      const hasAnyIdChanged = dbClientsData.some((client: any) =>
+        migrateClientId(client.id) !== client.id
+      );
+
+      if (hasAnyIdChanged) {
+        console.log('Saving migrated client IDs to IndexedDB...');
+        await creditDBManager.saveAllClients(transformedClients);
+        await creditDBManager.saveAllTransactions(transformedTransactions);
+        await creditDBManager.saveAllPayments(transformedPayments);
+        console.log('Client ID migration complete!');
+      }
 
       setClients(transformedClients);
       setTransactions(transformedTransactions);
@@ -167,10 +202,10 @@ export const CreditProvider: React.FC<CreditProviderProps> = ({ children }) => {
         throw error;
       }
       
-      // Generate ID in format G001, G002, G003... reusing deleted IDs
-      const existingIds = clients.map(c => c.id).filter(id => id.match(/^G\d{3}$/));
+      // Generate ID in format G1, G2, G3... (no leading zeros) reusing deleted IDs
+      const existingIds = clients.map(c => c.id).filter(id => id.match(/^G\d+$/));
       const existingNumbers = existingIds.map(id => parseInt(id.substring(1))).sort((a, b) => a - b);
-      
+
       // Find the first missing number in the sequence
       let nextNumber = 1;
       for (const num of existingNumbers) {
@@ -180,8 +215,8 @@ export const CreditProvider: React.FC<CreditProviderProps> = ({ children }) => {
           break; // Found a gap, use this number
         }
       }
-      
-      const id = `G${nextNumber.toString().padStart(3, '0')}`;
+
+      const id = `G${nextNumber}`;
       
       // Check if client ID already exists
       const existingClientWithId = clients.find(c => c.id === id);
@@ -341,16 +376,14 @@ export const CreditProvider: React.FC<CreditProviderProps> = ({ children }) => {
     const isNumericQuery = /^\d+$/.test(query.trim());
 
     if (isNumericQuery) {
-      // For numeric queries, search in ID (exact match after padding)
-      const queryStr = query.trim();
-      // Pad the query to 3 digits with leading zeros (e.g., "1" -> "001", "11" -> "011")
-      const paddedQuery = queryStr.padStart(3, '0');
+      // For numeric queries, search in ID (exact match)
+      const queryNum = parseInt(query.trim(), 10);
 
       return clients.filter(client => {
-        // Extract just the numeric part from the ID (e.g., "G001" -> "001")
-        const idNumeric = client.id.replace(/\D/g, '');
-        // Match if the padded numeric part equals the query
-        return idNumeric === paddedQuery;
+        // Extract just the numeric part from the ID (e.g., "G1" -> 1, "G100" -> 100)
+        const idNumeric = parseInt(client.id.replace(/\D/g, ''), 10);
+        // Match if the numeric part equals the query
+        return idNumeric === queryNum;
       });
     } else {
       // For text queries, use flexible matching
