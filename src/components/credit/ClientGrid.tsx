@@ -188,19 +188,14 @@ const ClientGrid: React.FC<ClientGridProps> = ({
 
       recognitionRef.current.onresult = (event: any) => {
         const transcript = event.results[0][0].transcript;
-        const bestMatch = findBestClientMatch(transcript);
+        // Convert spoken numbers to digits and use that as the search query
+        const convertedInput = convertSpokenToDigit(transcript);
 
-        if (bestMatch) {
-          onSearchChange(bestMatch);
-          setVoiceError(null);
-          // Auto-switch to show all clients when voice input is used
-          if (!showAllClients) {
-            onToggleAllClients();
-          }
-        } else {
-          setVoiceError(`No client found matching "${transcript}"`);
-          // Clear error after 3 seconds
-          setTimeout(() => setVoiceError(null), 3000);
+        onSearchChange(convertedInput);
+        setVoiceError(null);
+        // Auto-switch to show all clients when voice input is used
+        if (!showAllClients) {
+          onToggleAllClients();
         }
 
         setIsListening(false);
