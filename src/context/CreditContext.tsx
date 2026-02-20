@@ -1,4 +1,5 @@
 import React, { createContext, useContext, useState, useEffect, ReactNode } from 'react';
+import { flushSync } from 'react-dom';
 import { supabase } from '../lib/supabase';
 import { Client, CreditTransaction, PaymentRecord } from '../types';
 import { creditDBManager } from '../utils/creditIndexedDB';
@@ -264,8 +265,10 @@ export const CreditProvider: React.FC<CreditProviderProps> = ({ children }) => {
         bottlesOwed: { beer: 0, guinness: 0, malta: 0, coca: 0, chopines: 0 }
       };
 
-      // Update state first to trigger re-render
-      setClients(prevClients => [...prevClients, newClient]);
+      // Update state synchronously using flushSync to ensure immediate availability
+      flushSync(() => {
+        setClients(prevClients => [...prevClients, newClient]);
+      });
 
       // Save to IndexedDB
       await creditDBManager.saveClient({
@@ -503,34 +506,37 @@ export const CreditProvider: React.FC<CreditProviderProps> = ({ children }) => {
         ...newTransaction,
         date: newTransaction.date.toISOString()
       });
-      
-      // Update client's total debt and last transaction time
-      const updatedClients = clients.map(c => {
-        if (c.id === client.id) {
-          return {
+
+      // Update client's total debt and last transaction time using flushSync
+      flushSync(() => {
+        setClients(prevClients => {
+          const updatedClients = prevClients.map(c => {
+            if (c.id === client.id) {
+              return {
+                ...c,
+                totalDebt: c.totalDebt + amount,
+                lastTransactionAt: new Date()
+              };
+            }
+            return c;
+          });
+
+          // Move the updated client to the end of the array (most recent)
+          const updatedClient = updatedClients.find(c => c.id === client.id);
+          const otherClients = updatedClients.filter(c => c.id !== client.id);
+          const reorderedClients = updatedClient ? [...otherClients, updatedClient] : updatedClients;
+
+          // Save to IndexedDB asynchronously
+          creditDBManager.saveAllClients(reorderedClients.map(c => ({
             ...c,
-            totalDebt: c.totalDebt + amount,
-            lastTransactionAt: new Date()
-          };
-        }
-        return c;
+            createdAt: c.createdAt.toISOString(),
+            lastTransactionAt: c.lastTransactionAt.toISOString()
+          }))).catch(err => console.error('Error saving clients:', err));
+
+          return reorderedClients;
+        });
       });
 
-      // Move the updated client to the end of the array (most recent)
-      const updatedClient = updatedClients.find(c => c.id === client.id);
-      const otherClients = updatedClients.filter(c => c.id !== client.id);
-      const reorderedClients = updatedClient ? [...otherClients, updatedClient] : updatedClients;
-
-      setClients(reorderedClients);
-
-      // Save to IndexedDB
-      await creditDBManager.saveAllClients(reorderedClients.map(c => ({
-        ...c,
-        createdAt: c.createdAt.toISOString(),
-        lastTransactionAt: c.lastTransactionAt.toISOString()
-      })));
-      
-      
       // Dispatch creditDataChanged event to notify all listeners
       window.dispatchEvent(new CustomEvent('creditDataChanged', {
         detail: {
