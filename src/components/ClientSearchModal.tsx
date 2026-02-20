@@ -472,7 +472,15 @@ const ClientSearchModal: React.FC<ClientSearchModalProps> = ({
                 </div>
                 {searchQuery && (
                   <button
-                    onClick={() => setSearchQuery('')}
+                    onClick={(e) => {
+                      e.preventDefault();
+                      setSearchQuery('');
+                      // Force immediate blur to dismiss keyboard
+                      const searchInput = document.querySelector('.search-client-input');
+                      if (searchInput) {
+                        (searchInput as HTMLInputElement).blur();
+                      }
+                    }}
                     className="w-14 py-4 flex-shrink-0 bg-red-500 hover:bg-red-600 text-white rounded-xl flex items-center justify-center shadow-lg border-2 border-red-600"
                   >
                     <X size={24} />
