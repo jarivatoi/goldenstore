@@ -327,7 +327,7 @@ export const CreditProvider: React.FC<CreditProviderProps> = ({ children }) => {
   // Search clients
   const searchClients = (query: string): Client[] => {
     if (!query.trim()) return clients;
-    
+
     // Normalize function to remove accents and special characters
     const normalize = (str: string): string => {
       return str
@@ -336,25 +336,65 @@ export const CreditProvider: React.FC<CreditProviderProps> = ({ children }) => {
         .replace(/[\u0300-\u036f]/g, '') // Remove accent marks
         .replace(/[^\w\s]/g, ''); // Remove other special characters except word chars and spaces
     };
-    
+
     // Check if query is numeric (for ID search)
     const isNumericQuery = /^\d+$/.test(query.trim());
-    
+
     if (isNumericQuery) {
-      // For numeric queries, format as G-prefix ID and do exact match
-      const paddedNumber = query.trim().padStart(3, '0');
-      const formattedId = `G${paddedNumber}`;
-      
-      return clients.filter(client => 
-        client.id === formattedId
+      // For numeric queries, search in ID (partial match)
+      return clients.filter(client =>
+        client.id.includes(query.trim())
       );
     } else {
-      // For text queries, search by name or exact ID match
+      // For text queries, use flexible matching
       const normalizedQuery = normalize(query);
-      return clients.filter(client => 
-        normalize(client.name).includes(normalizedQuery) ||
-        client.id.toLowerCase() === query.toLowerCase()
-      );
+
+      // Calculate similarity score for fuzzy matching
+      const calculateSimilarity = (str1: string, str2: string): number => {
+        const longer = str1.length > str2.length ? str1 : str2;
+        const shorter = str1.length > str2.length ? str2 : str1;
+
+        if (longer.length === 0) return 1.0;
+
+        // Count matching characters in order
+        let matches = 0;
+        let longerIndex = 0;
+
+        for (let i = 0; i < shorter.length; i++) {
+          const found = longer.indexOf(shorter[i], longerIndex);
+          if (found >= longerIndex) {
+            matches++;
+            longerIndex = found + 1;
+          }
+        }
+
+        return matches / longer.length;
+      };
+
+      return clients.filter(client => {
+        const normalizedName = normalize(client.name);
+        const normalizedId = client.id.toLowerCase();
+        const queryLower = query.toLowerCase();
+
+        // Exact match or contains
+        if (normalizedName.includes(normalizedQuery) ||
+            normalizedId === queryLower ||
+            client.id.includes(query.trim())) {
+          return true;
+        }
+
+        // Fuzzy match - check if similarity is above threshold (60%)
+        const nameSimilarity = calculateSimilarity(normalizedQuery, normalizedName);
+
+        // Also check word-by-word similarity
+        const nameWords = normalizedName.split(' ');
+        const wordSimilarities = nameWords.map(word =>
+          calculateSimilarity(normalizedQuery, word)
+        );
+        const maxWordSimilarity = Math.max(...wordSimilarities, 0);
+
+        return nameSimilarity >= 0.6 || maxWordSimilarity >= 0.6;
+      });
     }
   };
 
