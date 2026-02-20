@@ -164,7 +164,7 @@ const ClientCard: React.FC<ClientCardProps> = ({ client, onLongPress, onQuickAdd
     // Reset the flag after a delay to prevent immediate close
     setTimeout(() => {
       justOpenedZoom.current = false;
-    }, 100);
+    }, 300);
   };
 
   const handleCloseZoom = () => {
