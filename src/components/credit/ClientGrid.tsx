@@ -236,31 +236,42 @@ const ClientGrid: React.FC<ClientGridProps> = ({
     );
     if (wordStartsMatch) return wordStartsMatch.name;
 
-    // Progressive substring matching: If no match found, try progressively shorter substrings
-    // "vasant" -> "vasan" -> "vasa" -> "vas" -> find "vas" -> show "vassen"
-    // For very short substrings (2 chars), match word boundaries to avoid too many matches
+    // Smart matching: collect all possible matches with scores, then pick the best
+    type MatchCandidate = {
+      client: Client;
+      score: number; // higher is better
+      matchLength: number;
+      matchType: 'exact' | 'fuzzy' | 'word-boundary' | 'id';
+    };
+
+    const candidates: MatchCandidate[] = [];
+
+    // Try all substring lengths and collect matches
     for (let len = input.length; len >= 2; len--) {
       const substring = input.substring(0, len);
 
-      // For substrings of 3+ characters, use fuzzy prefix matching
       if (len >= 3) {
         console.log(`🔍 Checking len=${len}, substring="${substring}"`);
 
-        // Try exact prefix match first
-        const exactMatch = clients.find(c => c.name.toLowerCase().startsWith(substring));
-        if (exactMatch) {
-          console.log(`✅ Exact match (len=${len}): "${substring}" → ${exactMatch.name}`);
-          return exactMatch.name;
-        }
+        // Exact prefix matches get highest score
+        clients.forEach(c => {
+          const nameLower = c.name.toLowerCase();
+          if (nameLower.startsWith(substring)) {
+            const score = len * 100; // Longer matches score higher
+            candidates.push({
+              client: c,
+              score,
+              matchLength: len,
+              matchType: 'exact'
+            });
+            console.log(`  📌 Exact: "${substring}" → ${c.name} (score: ${score})`);
+          }
+        });
 
-        // Try fuzzy match: allow 1 character difference only for len >= 5
-        // This prevents false positives like "vina" matching "veno"
+        // Fuzzy matches (1 char difference) for len >= 5
         if (len >= 5) {
-          console.log(`🔍 Trying fuzzy match for "${substring}"...`);
-
-          const fuzzyMatch = clients.find(c => {
+          clients.forEach(c => {
             const nameLower = c.name.toLowerCase();
-            // Check if the name starts with substring but with 1 char difference
             if (nameLower.length >= len) {
               let differences = 0;
               const compareStr = nameLower.substring(0, len);
@@ -268,86 +279,116 @@ const ClientGrid: React.FC<ClientGridProps> = ({
               for (let i = 0; i < len; i++) {
                 if (substring[i] !== compareStr[i]) {
                   differences++;
-                  if (differences > 1) return false;
+                  if (differences > 1) return;
                 }
               }
 
-              const match = differences <= 1;
-              if (match || differences === 1) {
-                console.log(`  ${match ? '✅' : '❌'} "${substring}" vs "${compareStr}" (${c.name}): ${differences} diff`);
+              if (differences === 1) {
+                const score = len * 80; // Slightly lower than exact
+                candidates.push({
+                  client: c,
+                  score,
+                  matchLength: len,
+                  matchType: 'fuzzy'
+                });
+                console.log(`  📌 Fuzzy: "${substring}" vs "${compareStr}" (${c.name}, score: ${score})`);
               }
-              return match;
             }
-            return false;
           });
+        }
 
-          if (fuzzyMatch) {
-            console.log(`✅ Fuzzy match (len=${len}): "${substring}" → ${fuzzyMatch.name}`);
-            return fuzzyMatch.name;
-          } else {
-            console.log(`❌ No fuzzy match for "${substring}"`);
+        // ID matches
+        clients.forEach(c => {
+          if (c.id.toLowerCase().startsWith(substring)) {
+            const score = len * 50; // Lower priority than name matches
+            candidates.push({
+              client: c,
+              score,
+              matchLength: len,
+              matchType: 'id'
+            });
+            console.log(`  📌 ID: "${substring}" → ${c.id} (score: ${score})`);
           }
-        }
-
-        // Try to find a client whose ID starts with this substring
-        const idPrefixMatch = clients.find(c => c.id.toLowerCase().startsWith(substring));
-        if (idPrefixMatch) {
-          console.log(`✅ ID match (len=${len}): "${substring}" → ${idPrefixMatch.id}`);
-          return idPrefixMatch.id;
-        }
-        console.log(`⏩ No match for substring "${substring}" (len=${len})`);
+        });
       } else {
-        // For 2-character substrings, only match at word boundaries to avoid too many matches
-        // Match: start of name, after "/", or after space
+        // For 2-character substrings, collect word boundary matches
         console.log(`🔍 Word boundary check for "${substring}" (len=${len})...`);
-        const wordBoundaryMatch = clients.find(c => {
+
+        clients.forEach(c => {
           const nameLower = c.name.toLowerCase();
+          let isMatch = false;
 
           // Check if name starts with substring
           if (nameLower.startsWith(substring)) {
-            console.log(`  ✓ "${c.name}" starts with "${substring}"`);
-            return true;
+            isMatch = true;
           }
 
           // Check if any word after "/" starts with substring
-          const slashParts = nameLower.split('/');
-          if (slashParts.length > 1) {
-            for (let i = 1; i < slashParts.length; i++) {
-              if (slashParts[i].trim().startsWith(substring)) {
-                console.log(`  ✓ "${c.name}" has word after "/" that starts with "${substring}"`);
-                return true;
+          if (!isMatch) {
+            const slashParts = nameLower.split('/');
+            if (slashParts.length > 1) {
+              for (let i = 1; i < slashParts.length; i++) {
+                if (slashParts[i].trim().startsWith(substring)) {
+                  isMatch = true;
+                  break;
+                }
               }
             }
           }
 
           // Check if any word after space starts with substring
-          const spaceParts = nameLower.split(/\s+/);
-          if (spaceParts.length > 1) {
-            for (let i = 1; i < spaceParts.length; i++) {
-              if (spaceParts[i].startsWith(substring)) {
-                console.log(`  ✓ "${c.name}" has word after space that starts with "${substring}"`);
-                return true;
+          if (!isMatch) {
+            const spaceParts = nameLower.split(/\s+/);
+            if (spaceParts.length > 1) {
+              for (let i = 1; i < spaceParts.length; i++) {
+                if (spaceParts[i].startsWith(substring)) {
+                  isMatch = true;
+                  break;
+                }
               }
             }
           }
 
-          return false;
+          if (isMatch) {
+            const score = len * 30; // Lower than 3+ char matches
+            candidates.push({
+              client: c,
+              score,
+              matchLength: len,
+              matchType: 'word-boundary'
+            });
+            console.log(`  📌 Word boundary: "${substring}" → ${c.name} (score: ${score})`);
+          }
         });
 
-        if (wordBoundaryMatch) {
-          console.log(`✅ Word boundary match (len=${len}): "${substring}" → ${wordBoundaryMatch.name}`);
-          return wordBoundaryMatch.name;
-        }
-
-        console.log(`  ✗ No word boundary match for "${substring}"`);
-
-        // Try ID match for 2-char substrings
-        const idPrefixMatch = clients.find(c => c.id.toLowerCase().startsWith(substring));
-        if (idPrefixMatch) {
-          console.log(`✅ ID boundary match (len=${len}): "${substring}" → ${idPrefixMatch.id}`);
-          return idPrefixMatch.id;
-        }
+        // ID matches for 2-char
+        clients.forEach(c => {
+          if (c.id.toLowerCase().startsWith(substring)) {
+            const score = len * 20;
+            candidates.push({
+              client: c,
+              score,
+              matchLength: len,
+              matchType: 'id'
+            });
+            console.log(`  📌 ID boundary: "${substring}" → ${c.id} (score: ${score})`);
+          }
+        });
       }
+    }
+
+    // Pick the best candidate (highest score, and if tied, longest match)
+    if (candidates.length > 0) {
+      candidates.sort((a, b) => {
+        if (b.score !== a.score) return b.score - a.score;
+        return b.matchLength - a.matchLength;
+      });
+
+      const winner = candidates[0];
+      console.log(`🏆 Winner: ${winner.client.name} (score: ${winner.score}, len: ${winner.matchLength}, type: ${winner.matchType})`);
+      console.log(`   All candidates:`, candidates.map(c => `${c.client.name}(${c.score})`).join(', '));
+
+      return winner.matchType === 'id' ? winner.client.id : winner.client.name;
     }
 
     // Fuzzy match - STRICTER: minimum 70% similarity and length must be close
