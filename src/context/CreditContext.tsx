@@ -125,6 +125,39 @@ export const CreditProvider: React.FC<CreditProviderProps> = ({ children }) => {
         return oldId;
       };
 
+      // Check if migration is needed
+      const clientsNeedingMigration = dbClientsData.filter((client: any) =>
+        migrateClientId(client.id) !== client.id
+      );
+
+      if (clientsNeedingMigration.length > 0) {
+        console.log(`Migrating ${clientsNeedingMigration.length} clients from old ID format...`);
+
+        // Delete all old format clients first
+        for (const client of clientsNeedingMigration) {
+          await creditDBManager.deleteClient(client.id);
+          console.log(`Deleted old client ID: ${client.id}`);
+        }
+
+        // Delete old format transactions
+        const transactionsNeedingMigration = dbTransactionsData.filter((trans: any) =>
+          migrateClientId(trans.clientId) !== trans.clientId
+        );
+        for (const trans of transactionsNeedingMigration) {
+          await creditDBManager.deleteTransaction(trans.id);
+        }
+
+        // Delete old format payments
+        const paymentsNeedingMigration = dbPaymentsData.filter((payment: any) =>
+          migrateClientId(payment.clientId) !== payment.clientId
+        );
+        for (const payment of paymentsNeedingMigration) {
+          await creditDBManager.deletePayment(payment.id);
+        }
+
+        console.log('Deleted all old format records');
+      }
+
       const transformedClients: Client[] = dbClientsData.map((client: any) => {
         const newId = migrateClientId(client.id);
         const hasIdChanged = newId !== client.id;
@@ -154,11 +187,7 @@ export const CreditProvider: React.FC<CreditProviderProps> = ({ children }) => {
       }));
 
       // Save migrated data back to IndexedDB if any IDs changed
-      const hasAnyIdChanged = dbClientsData.some((client: any) =>
-        migrateClientId(client.id) !== client.id
-      );
-
-      if (hasAnyIdChanged) {
+      if (clientsNeedingMigration.length > 0) {
         console.log('Saving migrated client IDs to IndexedDB...');
         await creditDBManager.saveAllClients(transformedClients);
         await creditDBManager.saveAllTransactions(transformedTransactions);
