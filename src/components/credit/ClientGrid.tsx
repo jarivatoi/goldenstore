@@ -237,13 +237,6 @@ const ClientGrid: React.FC<ClientGridProps> = ({
       {/* Search Bar */}
       <div className="px-4 pb-4">
         <div className="relative w-full max-w-md mx-auto">
-          {/* Voice Error Message */}
-          {voiceError && (
-            <div className="mb-2 p-2 bg-red-50 border border-red-200 rounded-lg text-red-700 text-sm text-center animate-fade-in">
-              {voiceError}
-            </div>
-          )}
-
           <div className="flex items-center gap-2">
 
             <div className="relative flex-1">
