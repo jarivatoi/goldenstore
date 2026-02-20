@@ -219,7 +219,7 @@ const ClientGrid: React.FC<ClientGridProps> = ({
             ) : (
               clients.map((client) => (
                 <ClientCard
-                  key={client.id}
+                  key={`${client.id}-${client.createdAt.getTime()}`}
                   client={client}
                   onLongPress={() => onClientLongPress(client)}
                   onQuickAdd={handleQuickAdd}
