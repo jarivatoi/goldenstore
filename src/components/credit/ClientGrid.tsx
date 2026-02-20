@@ -253,8 +253,9 @@ const ClientGrid: React.FC<ClientGridProps> = ({
           return exactMatch.name;
         }
 
-        // Try fuzzy match: allow 1 character difference for len >= 4
-        if (len >= 4) {
+        // Try fuzzy match: allow 1 character difference only for len >= 5
+        // This prevents false positives like "vina" matching "veno"
+        if (len >= 5) {
           const fuzzyMatch = clients.find(c => {
             const nameLower = c.name.toLowerCase();
             // Check if the name starts with substring but with 1 char difference
