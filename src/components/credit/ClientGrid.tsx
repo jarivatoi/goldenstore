@@ -234,10 +234,11 @@ const ClientGrid: React.FC<ClientGridProps> = ({
       recognitionRef.current.onresult = (event: any) => {
         const transcript = event.results[0][0].transcript;
 
-        // First, try to find the best matching client
+        // Try to find the best matching client
         const bestMatch = findBestClientMatch(transcript);
 
-        // If we found a match, use it; otherwise use the converted input
+        // If we found a match, use the matched name/ID for better UX
+        // Otherwise use the converted transcript
         const searchQuery = bestMatch || convertSpokenToDigit(transcript);
 
         onSearchChange(searchQuery);
