@@ -256,18 +256,27 @@ const ClientGrid: React.FC<ClientGridProps> = ({
         // Try fuzzy match: allow 1 character difference only for len >= 5
         // This prevents false positives like "vina" matching "veno"
         if (len >= 5) {
+          console.log(`🔍 Trying fuzzy match for "${substring}"...`);
+
           const fuzzyMatch = clients.find(c => {
             const nameLower = c.name.toLowerCase();
             // Check if the name starts with substring but with 1 char difference
             if (nameLower.length >= len) {
               let differences = 0;
+              const compareStr = nameLower.substring(0, len);
+
               for (let i = 0; i < len; i++) {
-                if (substring[i] !== nameLower[i]) {
+                if (substring[i] !== compareStr[i]) {
                   differences++;
                   if (differences > 1) return false;
                 }
               }
-              return differences <= 1;
+
+              const match = differences <= 1;
+              if (match || differences === 1) {
+                console.log(`  ${match ? '✅' : '❌'} "${substring}" vs "${compareStr}" (${c.name}): ${differences} diff`);
+              }
+              return match;
             }
             return false;
           });
@@ -275,6 +284,8 @@ const ClientGrid: React.FC<ClientGridProps> = ({
           if (fuzzyMatch) {
             console.log(`✅ Fuzzy match (len=${len}): "${substring}" → ${fuzzyMatch.name}`);
             return fuzzyMatch.name;
+          } else {
+            console.log(`❌ No fuzzy match for "${substring}"`);
           }
         }
 
