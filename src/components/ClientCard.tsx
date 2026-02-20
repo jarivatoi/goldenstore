@@ -274,7 +274,7 @@ const ClientCard: React.FC<ClientCardProps> = ({ client, onLongPress, onQuickAdd
                   }`}
                   style={{
                     top: '-4px',
-                    right: '-48px',
+                    right: '-64px',
                     zIndex: 10
                   }}
                 >
