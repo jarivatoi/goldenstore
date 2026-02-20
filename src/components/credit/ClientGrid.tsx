@@ -52,7 +52,46 @@ const ClientGrid: React.FC<ClientGridProps> = ({
   // Voice recognition state
   const [isListening, setIsListening] = useState(false);
   const [voiceSupported, setVoiceSupported] = useState(false);
+  const [voiceError, setVoiceError] = useState<string | null>(null);
   const recognitionRef = useRef<any>(null);
+
+  // Function to find best matching client from voice input
+  const findBestClientMatch = (transcript: string): string | null => {
+    const input = transcript.toLowerCase().trim();
+
+    // Direct ID match (exact)
+    const exactIdMatch = clients.find(c => c.id.toLowerCase() === input);
+    if (exactIdMatch) return exactIdMatch.id;
+
+    // Partial ID match
+    const partialIdMatch = clients.find(c => c.id.toLowerCase().includes(input));
+    if (partialIdMatch) return partialIdMatch.id;
+
+    // Exact name match
+    const exactNameMatch = clients.find(c => c.name.toLowerCase() === input);
+    if (exactNameMatch) return exactNameMatch.name;
+
+    // Partial name match (name starts with input)
+    const startsWithMatch = clients.find(c => c.name.toLowerCase().startsWith(input));
+    if (startsWithMatch) return startsWithMatch.name;
+
+    // Contains match (name contains input)
+    const containsMatch = clients.find(c => c.name.toLowerCase().includes(input));
+    if (containsMatch) return containsMatch.name;
+
+    // Check if any word in the name matches
+    const words = input.split(' ');
+    for (const word of words) {
+      const wordMatch = clients.find(c =>
+        c.name.toLowerCase().split(' ').some(namePart =>
+          namePart.startsWith(word) || namePart.includes(word)
+        )
+      );
+      if (wordMatch) return wordMatch.name;
+    }
+
+    return null;
+  };
 
   // Check if voice recognition is supported
   useEffect(() => {
@@ -66,16 +105,28 @@ const ClientGrid: React.FC<ClientGridProps> = ({
 
       recognitionRef.current.onresult = (event: any) => {
         const transcript = event.results[0][0].transcript;
-        onSearchChange(transcript);
-        setIsListening(false);
-        // Auto-switch to show all clients when voice input is used
-        if (transcript.trim() && !showAllClients) {
-          onToggleAllClients();
+        const bestMatch = findBestClientMatch(transcript);
+
+        if (bestMatch) {
+          onSearchChange(bestMatch);
+          setVoiceError(null);
+          // Auto-switch to show all clients when voice input is used
+          if (!showAllClients) {
+            onToggleAllClients();
+          }
+        } else {
+          setVoiceError(`No client found matching "${transcript}"`);
+          // Clear error after 3 seconds
+          setTimeout(() => setVoiceError(null), 3000);
         }
+
+        setIsListening(false);
       };
 
       recognitionRef.current.onerror = (event: any) => {
         console.error('Voice recognition error:', event.error);
+        setVoiceError('Voice recognition error. Please try again.');
+        setTimeout(() => setVoiceError(null), 3000);
         setIsListening(false);
       };
 
@@ -89,7 +140,7 @@ const ClientGrid: React.FC<ClientGridProps> = ({
         recognitionRef.current.stop();
       }
     };
-  }, [onSearchChange, onToggleAllClients, showAllClients]);
+  }, [clients, onSearchChange, onToggleAllClients, showAllClients]);
 
   const handleVoiceSearch = () => {
     if (!recognitionRef.current) return;
@@ -293,6 +344,13 @@ const ClientGrid: React.FC<ClientGridProps> = ({
       {/* Search Bar */}
       <div className="px-4 pb-4">
         <div className="relative w-full max-w-md mx-auto">
+          {/* Voice Error Message */}
+          {voiceError && (
+            <div className="mb-2 p-2 bg-red-50 border border-red-200 rounded-lg text-red-700 text-sm text-center animate-fade-in">
+              {voiceError}
+            </div>
+          )}
+
           <div className="flex items-center gap-2">
             {/* Voice Search Button */}
             {voiceSupported && (
@@ -303,7 +361,7 @@ const ClientGrid: React.FC<ClientGridProps> = ({
                     ? 'bg-red-500 hover:bg-red-600 border-red-600 text-white animate-pulse'
                     : 'bg-blue-500 hover:bg-blue-600 border-blue-600 text-white'
                 }`}
-                title={isListening ? 'Stop listening' : 'Voice search'}
+                title={isListening ? 'Stop listening' : 'Voice search by client name or ID'}
               >
                 {isListening ? <MicOff size={24} /> : <Mic size={24} />}
               </button>
