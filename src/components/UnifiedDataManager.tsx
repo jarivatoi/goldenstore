@@ -501,8 +501,8 @@ Please check the file format and try again.`,
       setModal({
         type: 'confirm',
         title: 'Import from Server Backup',
-        message: `Found server backup: ${backupInfo?.backup_name || 'Unknown'}
-Created: ${backupInfo?.created_at ? new Date(backupInfo.created_at).toLocaleString() : 'Unknown'}
+        message: `Found server backup: ${backupInfo?.name || 'Supabase'}
+Created: ${backupInfo?.date || 'Unknown'}
 
 This will import ${totalItems} total records across all modules:
 
