@@ -203,20 +203,60 @@ const ClientGrid: React.FC<ClientGridProps> = ({
 
     // Progressive substring matching: If no match found, try progressively shorter substrings
     // "vasant" -> "vasan" -> "vasa" -> "vas" -> find "vas" -> show "vassen"
-    // This handles speech-to-text errors by trying to find the closest matching prefix
-    for (let len = input.length; len >= 3; len--) {
+    // For very short substrings (2 chars), match word boundaries to avoid too many matches
+    for (let len = input.length; len >= 2; len--) {
       const substring = input.substring(0, len);
 
-      // Try to find a client whose name starts with this substring
-      const prefixMatch = clients.find(c => c.name.toLowerCase().startsWith(substring));
-      if (prefixMatch) {
-        return prefixMatch.name;
-      }
+      // For substrings of 3+ characters, use simple prefix matching
+      if (len >= 3) {
+        // Try to find a client whose name starts with this substring
+        const prefixMatch = clients.find(c => c.name.toLowerCase().startsWith(substring));
+        if (prefixMatch) {
+          return prefixMatch.name;
+        }
 
-      // Try to find a client whose ID starts with this substring
-      const idPrefixMatch = clients.find(c => c.id.toLowerCase().startsWith(substring));
-      if (idPrefixMatch) {
-        return idPrefixMatch.id;
+        // Try to find a client whose ID starts with this substring
+        const idPrefixMatch = clients.find(c => c.id.toLowerCase().startsWith(substring));
+        if (idPrefixMatch) {
+          return idPrefixMatch.id;
+        }
+      } else {
+        // For 2-character substrings, only match at word boundaries to avoid too many matches
+        // Match: start of name, after "/", or after space
+        const wordBoundaryMatch = clients.find(c => {
+          const nameLower = c.name.toLowerCase();
+
+          // Check if name starts with substring
+          if (nameLower.startsWith(substring)) return true;
+
+          // Check if any word after "/" starts with substring
+          const slashParts = nameLower.split('/');
+          if (slashParts.length > 1) {
+            for (let i = 1; i < slashParts.length; i++) {
+              if (slashParts[i].trim().startsWith(substring)) return true;
+            }
+          }
+
+          // Check if any word after space starts with substring
+          const spaceParts = nameLower.split(/\s+/);
+          if (spaceParts.length > 1) {
+            for (let i = 1; i < spaceParts.length; i++) {
+              if (spaceParts[i].startsWith(substring)) return true;
+            }
+          }
+
+          return false;
+        });
+
+        if (wordBoundaryMatch) {
+          return wordBoundaryMatch.name;
+        }
+
+        // Try ID match for 2-char substrings
+        const idPrefixMatch = clients.find(c => c.id.toLowerCase().startsWith(substring));
+        if (idPrefixMatch) {
+          return idPrefixMatch.id;
+        }
       }
     }
 
