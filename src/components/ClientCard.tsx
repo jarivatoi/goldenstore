@@ -161,9 +161,18 @@ const ClientCard: React.FC<ClientCardProps> = ({ client, onLongPress, onQuickAdd
   };
 
   const handleImagePressEnd = (e: React.MouseEvent | React.TouchEvent) => {
+    console.log('[ClientCard] Image press end, showZoomedImage:', showZoomedImage, 'zoomJustOpened:', zoomJustOpened.current);
+
+    // If zoom is already showing, don't process this event
+    if (showZoomedImage) {
+      console.log('[ClientCard] Ignoring image press end - zoom already showing');
+      e.preventDefault();
+      e.stopPropagation();
+      return;
+    }
+
     e.preventDefault();
     e.stopPropagation();
-    console.log('[ClientCard] Image press end, zoomJustOpened:', zoomJustOpened.current);
     if (zoomPressTimer.current) {
       clearTimeout(zoomPressTimer.current);
       zoomPressTimer.current = null;
@@ -391,6 +400,7 @@ const ClientCard: React.FC<ClientCardProps> = ({ client, onLongPress, onQuickAdd
           }}
           onTouchEnd={(e) => {
             e.preventDefault();
+            e.stopPropagation();
             console.log('[ClientCard] Zoom overlay touch end, zoomJustOpened:', zoomJustOpened.current);
             if (!zoomJustOpened.current) {
               handleCloseZoom();
@@ -398,6 +408,7 @@ const ClientCard: React.FC<ClientCardProps> = ({ client, onLongPress, onQuickAdd
           }}
           onTouchStart={(e) => {
             e.preventDefault();
+            e.stopPropagation();
             console.log('[ClientCard] Zoom overlay touch start');
           }}
           onTouchMove={(e) => {
