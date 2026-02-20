@@ -55,6 +55,29 @@ const ClientGrid: React.FC<ClientGridProps> = ({
   const [voiceError, setVoiceError] = useState<string | null>(null);
   const recognitionRef = useRef<any>(null);
 
+  // Convert spoken numbers to digits
+  const convertSpokenToDigit = (input: string): string => {
+    const numberMap: { [key: string]: string } = {
+      'zero': '0', 'one': '1', 'two': '2', 'three': '3', 'four': '4',
+      'five': '5', 'six': '6', 'seven': '7', 'eight': '8', 'nine': '9',
+      'ten': '10', 'eleven': '11', 'twelve': '12', 'thirteen': '13',
+      'fourteen': '14', 'fifteen': '15', 'sixteen': '16', 'seventeen': '17',
+      'eighteen': '18', 'nineteen': '19', 'twenty': '20', 'thirty': '30',
+      'forty': '40', 'fifty': '50', 'sixty': '60', 'seventy': '70',
+      'eighty': '80', 'ninety': '90', 'hundred': '100'
+    };
+
+    let result = input.toLowerCase();
+
+    // Replace spoken numbers with digits
+    Object.entries(numberMap).forEach(([word, digit]) => {
+      const regex = new RegExp(`\\b${word}\\b`, 'gi');
+      result = result.replace(regex, digit);
+    });
+
+    return result;
+  };
+
   // Function to calculate similarity between two strings (character overlap)
   const calculateSimilarity = (str1: string, str2: string): number => {
     const longer = str1.length > str2.length ? str1 : str2;
@@ -79,7 +102,9 @@ const ClientGrid: React.FC<ClientGridProps> = ({
 
   // Function to find best matching client from voice input
   const findBestClientMatch = (transcript: string): string | null => {
-    const input = transcript.toLowerCase().trim();
+    // Convert spoken numbers to digits (e.g., "one" -> "1")
+    const convertedInput = convertSpokenToDigit(transcript);
+    const input = convertedInput.toLowerCase().trim();
 
     // Direct ID match (exact)
     const exactIdMatch = clients.find(c => c.id.toLowerCase() === input);
