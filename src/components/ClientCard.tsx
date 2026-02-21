@@ -275,25 +275,32 @@ const ClientCard: React.FC<ClientCardProps> = ({ client, onLongPress, onQuickAdd
               {/* Bottle and Crate Badge at 2pm position */}
               {hasReturnables && totalReturnablesCount > 0 && (
                 <div
-                  className="absolute flex flex-col items-center gap-0 pointer-events-none"
+                  className="absolute pointer-events-none"
                   style={{
                     top: '-4px',
                     right: '-64px',
                     zIndex: 10
                   }}
                 >
-                  <span className="text-sm font-bold text-orange-600">
-                    {totalReturnablesCount}
-                  </span>
-                  <div className="bottle-3d">
-                    <Milk size={28} className="text-orange-600" strokeWidth={2.5} />
-                  </div>
-                  {/* Crate positioned directly below bottle */}
+                  {/* Crate positioned first (background layer) */}
                   {totalCratesCount > 0 && (
-                    <div style={{ marginTop: '-8px' }}>
+                    <div className="absolute" style={{
+                      top: '26px',
+                      left: '50%',
+                      transform: 'translateX(-50%)'
+                    }}>
                       <CrateLogo count={totalCratesCount} size={40} />
                     </div>
                   )}
+                  {/* Bottle and count positioned above crate */}
+                  <div className="flex flex-col items-center gap-0.5 relative" style={{ zIndex: 11 }}>
+                    <span className="text-sm font-bold text-orange-600">
+                      {totalReturnablesCount}
+                    </span>
+                    <div className="bottle-3d">
+                      <Milk size={28} className="text-orange-600" strokeWidth={2.5} />
+                    </div>
+                  </div>
                 </div>
               )}
 
