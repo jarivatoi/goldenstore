@@ -314,12 +314,20 @@ const ClientCard: React.FC<ClientCardProps> = ({ client, onLongPress, onQuickAdd
                     zIndex: 10
                   }}
                 >
+                  {/* Crate positioned (background layer) */}
                   <div className="absolute" style={{
                     top: '18px',
                     left: '50%',
                     transform: 'translateX(-50%)'
                   }}>
                     <CrateLogo count={totalCratesCount} size={40} />
+                  </div>
+                  {/* Invisible placeholder to maintain same DOM structure as when bottles are present */}
+                  <div className="flex flex-col items-center gap-0.5 relative invisible" style={{ zIndex: 11 }}>
+                    <span className="text-sm font-bold">0</span>
+                    <div className="bottle-3d">
+                      <Milk size={28} strokeWidth={2.5} />
+                    </div>
                   </div>
                 </div>
               )}
