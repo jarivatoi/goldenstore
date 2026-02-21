@@ -51,6 +51,8 @@ const ScrollingTabs: React.FC<ScrollingTabsProps> = ({
   const longPressTriggeredRef = useRef(false);
   const lastTapTimeRef = useRef(0);
   const tapTimeoutRef = useRef<number | null>(null);
+  const touchStartPosRef = useRef<{ x: number; y: number } | null>(null);
+  const hasDraggedRef = useRef(false);
 
   // Add a custom hook to compare array contents
   const useArrayComparison = (array: any[]) => {
@@ -457,12 +459,35 @@ const ScrollingTabs: React.FC<ScrollingTabsProps> = ({
   };
 
   // Handle long press start
-  const handleLongPressStart = () => {
+  const handleLongPressStart = (e: React.TouchEvent | React.MouseEvent) => {
     longPressTriggeredRef.current = false;
+    hasDraggedRef.current = false;
+
+    if ('touches' in e) {
+      touchStartPosRef.current = {
+        x: e.touches[0].clientX,
+        y: e.touches[0].clientY
+      };
+    }
+
     longPressTimeoutRef.current = window.setTimeout(() => {
       longPressTriggeredRef.current = true;
       // Trigger long press action here if needed
     }, 500);
+  };
+
+  // Handle touch move to detect dragging
+  const handleTouchMoveDetect = (e: React.TouchEvent) => {
+    if (touchStartPosRef.current && 'touches' in e) {
+      const deltaX = Math.abs(e.touches[0].clientX - touchStartPosRef.current.x);
+      const deltaY = Math.abs(e.touches[0].clientY - touchStartPosRef.current.y);
+
+      // If moved more than 10px, consider it a drag
+      if (deltaX > 10 || deltaY > 10) {
+        hasDraggedRef.current = true;
+        handleLongPressEnd();
+      }
+    }
   };
 
   // Handle long press end
@@ -475,12 +500,15 @@ const ScrollingTabs: React.FC<ScrollingTabsProps> = ({
 
   // Handle touch end with double tap detection
   const handleTouchEndWithDoubleTap = (client: Client, e: React.TouchEvent) => {
-    // Don't process if long press was triggered
-    if (longPressTriggeredRef.current) {
+    // Don't process if long press was triggered or if user dragged
+    if (longPressTriggeredRef.current || hasDraggedRef.current) {
       longPressTriggeredRef.current = false;
+      hasDraggedRef.current = false;
+      touchStartPosRef.current = null;
       return;
     }
 
+    touchStartPosRef.current = null;
     const currentTime = Date.now();
     const timeSinceLastTap = currentTime - lastTapTimeRef.current;
 
@@ -687,7 +715,9 @@ const ScrollingTabs: React.FC<ScrollingTabsProps> = ({
                     handleLongPressEnd();
                     handleTouchEndWithDoubleTap(client, e);
                   }}
-                  onTouchMove={handleLongPressEnd}
+                  onTouchMove={(e) => {
+                    handleTouchMoveDetect(e);
+                  }}
                   onMouseDown={handleLongPressStart}
                   onMouseUp={handleLongPressEnd}
                   onMouseLeave={handleLongPressEnd}
