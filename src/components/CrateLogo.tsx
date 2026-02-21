@@ -1,5 +1,4 @@
 import React from 'react';
-import { Milk } from 'lucide-react';
 
 interface CrateLogoProps {
   count: number;
@@ -11,28 +10,14 @@ interface CrateLogoProps {
  * CRATE LOGO COMPONENT
  * ====================
  *
- * Displays a crate (U shape) with an orange milk bottle icon positioned
- * to appear inside the crate, with a count indicator below
+ * Displays an empty crate (U shape) in orange with a count indicator below
  */
 const CrateLogo: React.FC<CrateLogoProps> = ({ count, size = 32, className = '' }) => {
   return (
     <div className={`relative inline-flex flex-col items-center ${className}`} style={{ width: size }}>
-      {/* Container for bottle and crate */}
+      {/* Container for crate */}
       <div className="relative" style={{ width: size, height: size }}>
-        {/* Orange milk bottle icon - positioned to be centered in crate */}
-        <div
-          className="absolute flex items-center justify-center"
-          style={{
-            top: '8%',
-            left: '50%',
-            transform: 'translateX(-50%)',
-            zIndex: 1
-          }}
-        >
-          <Milk size={size * 0.6} className="text-orange-600" strokeWidth={2.5} />
-        </div>
-
-        {/* Crate overlay - U shape using SVG positioned to contain the bottle */}
+        {/* Crate - U shape using SVG */}
         <svg
           width={size}
           height={size}
@@ -41,11 +26,10 @@ const CrateLogo: React.FC<CrateLogoProps> = ({ count, size = 32, className = '' 
           style={{
             pointerEvents: 'none',
             top: 0,
-            left: 0,
-            zIndex: 2
+            left: 0
           }}
         >
-          {/* U-shaped crate frame - orange color to match bottle */}
+          {/* U-shaped crate frame - orange color */}
           <path
             d="M 4 6 L 4 28 L 28 28 L 28 6"
             fill="none"
