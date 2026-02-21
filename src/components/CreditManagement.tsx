@@ -833,7 +833,18 @@ const CreditManagement: React.FC = () => {
               </button>
             </div>
             <div className="justify-self-center">
-              <img src="./golden-logo.gif" alt="Golden Logo" className="w-72 h-36 object-contain" style={{ maxWidth: '100%', height: 'auto' }} />
+              <img
+                src="./golden-logo.gif"
+                alt="Golden Logo"
+                className="w-72 h-36 object-contain"
+                style={{
+                  maxWidth: '100%',
+                  height: 'auto',
+                  filter: 'none',
+                  boxShadow: 'none',
+                  imageRendering: 'crisp-edges'
+                }}
+              />
             </div>
             <div className="justify-self-end">
               {linkedClient ? (
