@@ -80,19 +80,6 @@ const ClientCard: React.FC<ClientCardProps> = ({ client, onLongPress, onQuickAdd
   const hasDebt = totalDebt > 0;
   const hasReturnables = returnableItemsText.length > 0;
 
-  // Determine border glow style based on status
-  const getBorderGlowClass = () => {
-    if (hasDebt && hasReturnables) {
-      return 'border-red-orange-glow'; // Alternating red-orange
-    } else if (hasDebt) {
-      return 'border-red-glow'; // Red glow for debt only
-    } else if (hasReturnables) {
-      return 'border-orange-glow'; // Orange glow for returnables only
-    } else {
-      return 'border-green-glow'; // Green glow for no outstanding
-    }
-  };
-
   // Determine card background color based on debt amount
   const getCardBackgroundColor = () => {
     if (totalDebt <= 300) return 'bg-green-100 border-green-200';
@@ -209,7 +196,7 @@ const ClientCard: React.FC<ClientCardProps> = ({ client, onLongPress, onQuickAdd
     <>
       <div
         ref={cardRef}
-        className={`flex-shrink-0 w-56 sm:w-64 mx-auto rounded-lg shadow-md p-3 sm:p-4 border hover:shadow-lg transition-all duration-300 cursor-pointer select-none transform hover:scale-105 min-h-[320px] relative ${getCardBackgroundColor()} ${showWobble ? 'animate-wobble' : ''}`}
+        className={`flex-shrink-0 w-56 sm:w-64 mx-auto rounded-lg shadow-md p-3 sm:p-4 border hover:shadow-lg transition-all duration-300 cursor-pointer select-none transform hover:scale-105 min-h-[320px] relative ${getCardBackgroundColor()}`}
         onTouchStart={handleTouchStart}
         onTouchEnd={handleTouchEnd}
         onMouseDown={handleMouseDown}
@@ -235,7 +222,7 @@ const ClientCard: React.FC<ClientCardProps> = ({ client, onLongPress, onQuickAdd
             <div className="relative">
               {client.profilePictureUrl ? (
                 <div
-                  className={`w-24 h-24 rounded-full overflow-hidden border-4 shadow-lg relative flex-shrink-0 cursor-zoom-in animate-zoom ${getBorderGlowClass()}`}
+                  className="w-24 h-24 rounded-full overflow-hidden border-4 border-gray-300 shadow-lg relative flex-shrink-0 cursor-zoom-in"
                   style={{
                     background: `url(${client.profilePictureUrl})`,
                     backgroundSize: 'cover',
@@ -260,7 +247,7 @@ const ClientCard: React.FC<ClientCardProps> = ({ client, onLongPress, onQuickAdd
                   }}></div>
                 </div>
               ) : (
-                <div className={`w-24 h-24 bg-blue-100 rounded-full flex items-center justify-center flex-shrink-0 border-4 shadow-lg animate-zoom ${getBorderGlowClass()}`}>
+                <div className="w-24 h-24 bg-blue-100 rounded-full flex items-center justify-center flex-shrink-0 border-4 border-gray-300 shadow-lg">
                   <User size={40} className="text-blue-600" />
                 </div>
               )}
@@ -268,20 +255,18 @@ const ClientCard: React.FC<ClientCardProps> = ({ client, onLongPress, onQuickAdd
               {/* Bottle Count Badge at 2pm position */}
               {hasReturnables && totalReturnablesCount > 0 && (
                 <div
-                  className={`absolute flex flex-col items-center gap-0.5 pointer-events-none ${
-                    hasDebt ? 'bottle-badge-fade-alternating' : 'bottle-badge-fade-orange'
-                  }`}
+                  className="absolute flex flex-col items-center gap-0.5 pointer-events-none"
                   style={{
                     top: '-4px',
                     right: '-64px',
                     zIndex: 10
                   }}
                 >
-                  <span className={`text-sm font-bold ${hasDebt ? 'bottle-text-alternating' : 'text-orange-600'}`}>
+                  <span className="text-sm font-bold text-orange-600">
                     {totalReturnablesCount}
                   </span>
                   <div className="bottle-3d">
-                    <Milk size={28} className={hasDebt ? 'bottle-icon-alternating' : 'text-orange-600'} strokeWidth={2.5} />
+                    <Milk size={28} className="text-orange-600" strokeWidth={2.5} />
                   </div>
                 </div>
               )}
@@ -290,7 +275,7 @@ const ClientCard: React.FC<ClientCardProps> = ({ client, onLongPress, onQuickAdd
 
           {/* Name and ID - Centered */}
           <div className="w-full">
-            <h3 className={`font-semibold text-gray-800 text-sm sm:text-base ${hasOutstanding ? 'animate-zoom-delayed' : ''}`}>
+            <h3 className="font-semibold text-gray-800 text-sm sm:text-base">
               <ScrollingText
                 className="font-semibold text-gray-800 text-sm sm:text-base text-center"
                 pauseDuration={1}
@@ -310,7 +295,7 @@ const ClientCard: React.FC<ClientCardProps> = ({ client, onLongPress, onQuickAdd
             <TrendingUp size={14} className="text-red-500 sm:w-4 sm:h-4" />
             <span className="text-xs sm:text-sm text-gray-600">Outstanding</span>
           </div>
-          <p className={`text-xl sm:text-2xl font-bold text-red-600 text-center ${totalDebt > 0 ? 'animate-zoom' : ''}`}>
+          <p className="text-xl sm:text-2xl font-bold text-red-600 text-center">
             Rs {totalDebt.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
           </p>
           {(bottlesOwed.beer > 0 || bottlesOwed.guinness > 0 || bottlesOwed.malta > 0 || bottlesOwed.coca > 0 || bottlesOwed.chopines > 0) && (
