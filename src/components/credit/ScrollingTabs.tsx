@@ -45,7 +45,13 @@ const ScrollingTabs: React.FC<ScrollingTabsProps> = ({
   const { getClientTransactions } = useCredit();
   const [forceUpdate, setForceUpdate] = React.useState(0);
   const [recentlyUpdatedClient, setRecentlyUpdatedClient] = React.useState<string | null>(null);
-  
+
+  // Long press and double tap refs
+  const longPressTimeoutRef = useRef<number | null>(null);
+  const longPressTriggeredRef = useRef(false);
+  const lastTapTimeRef = useRef(0);
+  const tapTimeoutRef = useRef<number | null>(null);
+
   // Add a custom hook to compare array contents
   const useArrayComparison = (array: any[]) => {
     const ref = useRef(array);
@@ -447,6 +453,23 @@ const ScrollingTabs: React.FC<ScrollingTabsProps> = ({
       case 'overdue': return 'Overdue Clients';
       case 'overlimit': return 'Over Limit';
       default: return 'Active Clients';
+    }
+  };
+
+  // Handle long press start
+  const handleLongPressStart = () => {
+    longPressTriggeredRef.current = false;
+    longPressTimeoutRef.current = window.setTimeout(() => {
+      longPressTriggeredRef.current = true;
+      // Trigger long press action here if needed
+    }, 500);
+  };
+
+  // Handle long press end
+  const handleLongPressEnd = () => {
+    if (longPressTimeoutRef.current) {
+      clearTimeout(longPressTimeoutRef.current);
+      longPressTimeoutRef.current = null;
     }
   };
 
