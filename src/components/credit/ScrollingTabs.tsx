@@ -729,6 +729,22 @@ const ScrollingTabs: React.FC<ScrollingTabsProps> = ({
                   onMouseDown={handleLongPressStart}
                   onMouseUp={handleLongPressEnd}
                   onMouseLeave={handleLongPressEnd}
+                  onDoubleClick={(e) => {
+                    e.preventDefault();
+                    e.stopPropagation();
+
+                    setClickedTabId(client.id);
+
+                    if (timelineRef.current && timelineRef.current.isActive()) {
+                      const currentX = gsap.getProperty(contentRef.current, "x") as number;
+                      pausedPositionRef.current = currentX;
+
+                      timelineRef.current.kill();
+                      timelineRef.current = null;
+                    }
+
+                    setSelectedClientForAction(client);
+                  }}
                   onContextMenu={(e) => e.preventDefault()} // Prevent right-click menu
                 >
                   <div className="text-center relative h-full flex flex-col justify-center w-full">
