@@ -7,6 +7,7 @@ import ClientDetailModal from './ClientDetailModal';
 import ClientActionModal from './ClientActionModal';
 import { ScrollingText } from './ScrollingText';
 import FlipCard from './credit/FlipCard';
+import CrateLogo from './CrateLogo';
 import { calculateReturnableItemsWithDates } from '../utils/returnableItemsUtils';
 import CrateLogo from './CrateLogo';
 

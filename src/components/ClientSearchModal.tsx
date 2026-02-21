@@ -448,21 +448,21 @@ const ClientSearchModal: React.FC<ClientSearchModalProps> = ({
               <button
                 type="button"
                 onClick={() => handleQuickAction('Caisse')}
-                className="px-3 py-2 text-sm bg-orange-100 hover:bg-orange-200 text-orange-800 rounded-lg transition-colors select-none"
+                className="px-3 py-2 text-sm bg-blue-100 hover:bg-blue-200 text-blue-800 rounded-lg transition-colors select-none"
               >
                 Caisse
               </button>
               <button
                 type="button"
                 onClick={() => handleQuickAction('Caisse (Bt)')}
-                className="px-3 py-2 text-sm bg-orange-100 hover:bg-orange-200 text-orange-800 rounded-lg transition-colors select-none"
+                className="px-3 py-2 text-sm bg-blue-100 hover:bg-blue-200 text-blue-800 rounded-lg transition-colors select-none"
               >
                 Caisse (Bt)
               </button>
               <button
                 type="button"
                 onClick={() => handleQuickAction('Caisse (Ch)')}
-                className="px-3 py-2 text-sm bg-orange-100 hover:bg-orange-200 text-orange-800 rounded-lg transition-colors select-none"
+                className="px-3 py-2 text-sm bg-blue-100 hover:bg-blue-200 text-blue-800 rounded-lg transition-colors select-none"
               >
                 Caisse (Ch)
               </button>
