@@ -307,14 +307,20 @@ const ClientCard: React.FC<ClientCardProps> = ({ client, onLongPress, onQuickAdd
               {/* Crate only (when no bottles) */}
               {hasReturnables && totalReturnablesCount === 0 && totalCratesCount > 0 && (
                 <div
-                  className="absolute flex items-center justify-center pointer-events-none"
+                  className="absolute pointer-events-none"
                   style={{
-                    top: '32px',
-                    right: '-68px',
+                    top: '-4px',
+                    right: '-64px',
                     zIndex: 10
                   }}
                 >
-                  <CrateLogo count={totalCratesCount} size={40} />
+                  <div className="absolute" style={{
+                    top: '18px',
+                    left: '50%',
+                    transform: 'translateX(-50%)'
+                  }}>
+                    <CrateLogo count={totalCratesCount} size={40} />
+                  </div>
                 </div>
               )}
             </div>
