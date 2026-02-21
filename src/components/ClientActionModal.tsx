@@ -270,6 +270,18 @@ const ClientActionModal: React.FC<ClientActionModalProps> = ({ client, onClose, 
               const needsPlural = quantity > 1;
               return `${quantity} Chopine${needsPlural ? 's' : ''}`;
             }
+          } else if (itemType.includes('Caisse')) {
+            // For Caisse items
+            const brand = itemType.replace(/^(Caisses?)/i, '').trim();
+            if (brand) {
+              // Always pluralize Caisse when quantity > 1
+              const needsPlural = quantity > 1;
+              return `${quantity} Caisse${needsPlural ? 's' : ''} ${brand}`;
+            } else {
+              // For generic Caisse, always pluralize when quantity > 1
+              const needsPlural = quantity > 1;
+              return `${quantity} Caisse${needsPlural ? 's' : ''}`;
+            }
           }
           // Fallback for other formats
           return `${quantity} ${itemType}${quantity > 1 ? 's' : ''}`;
@@ -285,6 +297,9 @@ const ClientActionModal: React.FC<ClientActionModalProps> = ({ client, onClose, 
         if (itemType.includes('Chopine')) {
           const brand = itemType.replace(/^(Chopines?)/i, '').trim();
           returnDescription += `Chopine${quantity > 1 ? 's' : ''}${brand ? ` ${brand}` : ''}`;
+        } else if (itemType.includes('Caisse')) {
+          const brand = itemType.replace(/^(Caisses?)/i, '').trim();
+          returnDescription += `Caisse${quantity > 1 ? 's' : ''}${brand ? ` ${brand}` : ''}`;
         } else if (itemType.includes('Bouteille')) {
           let brand = itemType.replace(/^(Bouteilles?)/i, '').trim();
           if (quantity === 1 && brand.endsWith('s') && !brand.match(/^\d/)) {
@@ -347,6 +362,11 @@ const processItemReturn = async (itemType: string, returnQuantity: number) => {
       // Handle both singular and plural forms
       const brand = itemType.replace(/^(Chopines?)/i, '').trim();
       returnDescription += `Chopine${returnQuantity > 1 ? 's' : ''}${brand ? ` ${brand}` : ''}`;
+    } else if (itemType.includes('Caisse')) {
+      // For Caisse items: "Returned: 2 Caisses Marlin" (pluralize Caisse, not brand)
+      // Handle both singular and plural forms
+      const brand = itemType.replace(/^(Caisses?)/i, '').trim();
+      returnDescription += `Caisse${returnQuantity > 1 ? 's' : ''}${brand ? ` ${brand}` : ''}`;
     } else if (itemType.includes('Bouteille')) {
       // For Bouteille items: "Returned: 2 Bouteilles Green" (pluralize Bouteille, not brand)
       // Use the same logic as Chopine
@@ -604,7 +624,7 @@ const processItemReturn = async (itemType: string, returnQuantity: number) => {
                 >
                   <ArrowLeft size={20} />
                 </button>
-                <h3 className="text-lg font-medium text-gray-800 select-none">Return Chopine & Bouteille</h3>
+                <h3 className="text-lg font-medium text-gray-800 select-none">Return Items</h3>
                 <div className="flex-1"></div>
                 <button
                   onClick={async () => {
@@ -622,7 +642,7 @@ const processItemReturn = async (itemType: string, returnQuantity: number) => {
               
               {Object.keys(availableItems).length === 0 ? (
                 <div className="text-center py-8 text-gray-500 select-none">
-                  <p className="select-none">No Chopine or Bouteille items found in transaction history</p>
+                  <p className="select-none">No returnable items found in transaction history</p>
                 </div>
               ) : (
                 <div className="space-y-4 mb-6">
@@ -635,18 +655,18 @@ const processItemReturn = async (itemType: string, returnQuantity: number) => {
                           <h4 className="font-medium text-gray-800 select-none">
                             {(() => {
                               // Properly format the item type for display
-                              if (itemType.includes('Bouteille') || itemType.includes('Chopine')) {
+                              if (itemType.includes('Bouteille') || itemType.includes('Chopine') || itemType.includes('Caisse')) {
                                 // Already in correct format like "Bouteille 1.5L Pepsi" or "Chopine Beer"
                                 // But ensure proper capitalization of brand names
-                                if (itemType.includes('Bouteille')) {
+                                if (itemType.includes('Bouteille') || itemType.includes('Caisse')) {
                                   // Split by spaces and capitalize each word after the first occurrence of a size pattern
                                   const parts = itemType.split(' ');
                                   const capitalizedParts = [];
                                   let foundSize = false;
-                                  
+
                                   for (let i = 0; i < parts.length; i++) {
                                     const part = parts[i];
-                                    if (/\d+[Ll]$/.test(part) || part === 'Bouteille') {
+                                    if (/\d+[Ll]$/.test(part) || part === 'Bouteille' || part === 'Caisse') {
                                       capitalizedParts.push(part);
                                       if (/\d+[Ll]$/.test(part)) foundSize = true;
                                     } else if (foundSize) {
@@ -752,10 +772,11 @@ const processItemReturn = async (itemType: string, returnQuantity: number) => {
                           
                           // Get the original total from the original transactions before returns were applied
                           // For display purposes, we'll calculate based on transaction analysis
-                          const originalTransactions = clientTransactions.filter(t => 
+                          const originalTransactions = clientTransactions.filter(t =>
                             !t.description.toLowerCase().includes('returned') &&
-                            (t.description.toLowerCase().includes('bouteille') || 
-                             t.description.toLowerCase().includes('chopine'))
+                            (t.description.toLowerCase().includes('bouteille') ||
+                             t.description.toLowerCase().includes('chopine') ||
+                             t.description.toLowerCase().includes('caisse'))
                           );
                           
                           // Find transactions that match this item type

@@ -8,6 +8,7 @@ import ClientActionModal from './ClientActionModal';
 import { ScrollingText } from './ScrollingText';
 import FlipCard from './credit/FlipCard';
 import { calculateReturnableItemsWithDates } from '../utils/returnableItemsUtils';
+import CrateLogo from './CrateLogo';
 
 interface ClientCardProps {
   client: Client;
@@ -67,10 +68,18 @@ const ClientCard: React.FC<ClientCardProps> = ({ client, onLongPress, onQuickAdd
   const totalDebt = getClientTotalDebt(client.id);
   const bottlesOwed = getClientBottlesOwed(client.id);
 
-  // Calculate total returnables count
+  // Calculate total returnables count (bottles only, excluding caisses)
   const totalReturnablesCount = React.useMemo(() => {
     return returnableItemsText.reduce((total, item) => {
       const match = item.text.match(/(\d+)\s*(?:chopine|bouteille|verre)/i);
+      return total + (match ? parseInt(match[1]) : 0);
+    }, 0);
+  }, [returnableItemsText]);
+
+  // Calculate total crates (caisses) count separately
+  const totalCratesCount = React.useMemo(() => {
+    return returnableItemsText.reduce((total, item) => {
+      const match = item.text.match(/(\d+)\s*caisse/i);
       return total + (match ? parseInt(match[1]) : 0);
     }, 0);
   }, [returnableItemsText]);
@@ -279,6 +288,20 @@ const ClientCard: React.FC<ClientCardProps> = ({ client, onLongPress, onQuickAdd
                   <div className="bottle-3d">
                     <Milk size={28} className="text-orange-600" strokeWidth={2.5} />
                   </div>
+                </div>
+              )}
+
+              {/* Crate Count Badge at 3pm position (below bottles) */}
+              {hasReturnables && totalCratesCount > 0 && (
+                <div
+                  className="absolute flex items-center justify-center pointer-events-none"
+                  style={{
+                    top: '32px',
+                    right: '-68px',
+                    zIndex: 10
+                  }}
+                >
+                  <CrateLogo count={totalCratesCount} size={40} />
                 </div>
               )}
             </div>

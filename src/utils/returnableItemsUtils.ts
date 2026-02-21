@@ -6,15 +6,15 @@ import { CreditTransaction } from '../types';
  *
  * Rules:
  * 1. Split description by comma
- * 2. For each segment, look for "Chopine" or "Bouteille"
+ * 2. For each segment, look for "Chopine", "Bouteille", or "Caisse"
  * 3. Everything BEFORE = quantity (default 1 if no number)
  * 4. Everything AFTER = brand
- * 5. Format: [quantity] Chopine/Bouteille [brand]
+ * 5. Format: [quantity] Chopine/Bouteille/Caisse [brand]
  */
 
 interface ReturnableItem {
   quantity: number;
-  type: 'Chopine' | 'Bouteille';
+  type: 'Chopine' | 'Bouteille' | 'Caisse';
   brand: string;
   displayBrand: string; // Preserve original case for display
 }
@@ -25,16 +25,17 @@ interface ReturnableItem {
 function parseReturnableSegment(segment: string): ReturnableItem | null {
   const cleaned = segment.trim();
 
-  // Check if contains Chopine or Bouteille
+  // Check if contains Chopine, Bouteille, or Caisse
   const hasChopine = /chopine/i.test(cleaned);
   const hasBouteille = /bouteille/i.test(cleaned);
+  const hasCaisse = /caisse/i.test(cleaned);
 
-  if (!hasChopine && !hasBouteille) {
+  if (!hasChopine && !hasBouteille && !hasCaisse) {
     return null;
   }
 
-  const type = hasChopine ? 'Chopine' : 'Bouteille';
-  const keyword = hasChopine ? 'chopine' : 'bouteille';
+  const type = hasChopine ? 'Chopine' : hasCaisse ? 'Caisse' : 'Bouteille';
+  const keyword = hasChopine ? 'chopine' : hasCaisse ? 'caisse' : 'bouteille';
 
   // Split by the keyword (case insensitive)
   const regex = new RegExp(keyword, 'i');
@@ -165,9 +166,10 @@ export const calculateReturnableItemsWithDates = (clientTransactions: CreditTran
 
     const description = transaction.description;
 
-    // Only process if contains Chopine or Bouteille
+    // Only process if contains Chopine, Bouteille, or Caisse
     if (!description.toLowerCase().includes('chopine') &&
-        !description.toLowerCase().includes('bouteille')) {
+        !description.toLowerCase().includes('bouteille') &&
+        !description.toLowerCase().includes('caisse')) {
       return;
     }
 

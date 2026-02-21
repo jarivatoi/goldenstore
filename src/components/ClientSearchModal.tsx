@@ -197,11 +197,11 @@ const ClientSearchModal: React.FC<ClientSearchModalProps> = ({
     setDescriptionHistory(prev => [...prev, localDescription]);
 
     // Automatically insert pending number if it exists
-    // For Chopine and Bouteille (including sized bottles) without a pending number, default to "1"
+    // For Chopine, Bouteille, and Caisse (including sized bottles) without a pending number, default to "1"
     let newItem: string;
     if (pendingNumber) {
       newItem = `${pendingNumber} ${action}`;
-    } else if (action === 'Chopine' || action === 'Bouteille' || action.startsWith('Bouteille ')) {
+    } else if (action === 'Chopine' || action === 'Bouteille' || action === 'Caisse' || action.startsWith('Bouteille ') || action.startsWith('Caisse ')) {
       newItem = `1 ${action}`;
     } else {
       newItem = action;
@@ -444,13 +444,29 @@ const ClientSearchModal: React.FC<ClientSearchModalProps> = ({
                 </button>
               ))}
             </div>
-            <button
-              type="button"
-              onClick={() => handleQuickAction('Others')}
-              className="w-full px-3 py-2 text-sm bg-gray-100 hover:bg-gray-200 text-gray-800 rounded-lg transition-colors select-none"
-            >
-              Others
-            </button>
+            <div className="grid grid-cols-3 gap-2 select-none">
+              <button
+                type="button"
+                onClick={() => handleQuickAction('Caisse')}
+                className="px-3 py-2 text-sm bg-orange-100 hover:bg-orange-200 text-orange-800 rounded-lg transition-colors select-none"
+              >
+                Caisse
+              </button>
+              <button
+                type="button"
+                onClick={() => handleQuickAction('Caisse (Bt)')}
+                className="px-3 py-2 text-sm bg-orange-100 hover:bg-orange-200 text-orange-800 rounded-lg transition-colors select-none"
+              >
+                Caisse (Bt)
+              </button>
+              <button
+                type="button"
+                onClick={() => handleQuickAction('Caisse (Ch)')}
+                className="px-3 py-2 text-sm bg-orange-100 hover:bg-orange-200 text-orange-800 rounded-lg transition-colors select-none"
+              >
+                Caisse (Ch)
+              </button>
+            </div>
           </div>
 
           {!showAddClient ? (

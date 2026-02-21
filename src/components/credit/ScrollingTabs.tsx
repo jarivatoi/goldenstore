@@ -231,7 +231,7 @@ const ScrollingTabs: React.FC<ScrollingTabsProps> = ({
       }
       
       const description = transaction.description.toLowerCase();
-      const hasReturnableItems = description.includes('chopine') || description.includes('bouteille');
+      const hasReturnableItems = description.includes('chopine') || description.includes('bouteille') || description.includes('caisse');
       const isOlderThan3Weeks = transaction.date.getTime() < threeWeeksAgo;
       
       return hasReturnableItems && isOlderThan3Weeks;
@@ -611,6 +611,14 @@ const ScrollingTabs: React.FC<ScrollingTabsProps> = ({
                     const quantityMatch = itemText.match(/^(\d+)/);
                     if (quantityMatch) {
                       truncated = `${quantityMatch[1]} (Ch)`;
+                    } else {
+                      truncated = itemText.substring(0, 10); // Fallback
+                    }
+                  } else if (itemText.includes('Caisse')) {
+                    // For Caisse items: "5 Caisses Marlin" -> "5 (Cs)"
+                    const quantityMatch = itemText.match(/^(\d+)/);
+                    if (quantityMatch) {
+                      truncated = `${quantityMatch[1]} (Cs)`;
                     } else {
                       truncated = itemText.substring(0, 10); // Fallback
                     }
