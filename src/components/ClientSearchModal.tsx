@@ -339,6 +339,41 @@ const ClientSearchModal: React.FC<ClientSearchModalProps> = ({
                 // Auto-capitalize first letter of each word and add space after comma
                 // Also capitalize after "/" for items like "Petit/Gros"
                 let formatted = value.replace(/(^|\s|\/)\w/g, (char) => char.toUpperCase());
+
+                // Validate: Prevent two returnable items from being side by side without a comma
+                // Check if the last word before the current position is a returnable item keyword
+                // and if the user is trying to type another returnable item
+                const returnableKeywords = ['Caisse', 'Bouteille', 'Chopine'];
+                const words = formatted.split(/[\s,]+/).filter(word => word.trim());
+
+                // Get the last two words
+                if (words.length >= 2) {
+                  const lastWord = words[words.length - 1];
+                  const secondLastWord = words[words.length - 2];
+
+                  // Check if both are returnable keywords
+                  const lastIsReturnable = returnableKeywords.some(keyword => lastWord.includes(keyword));
+                  const secondLastIsReturnable = returnableKeywords.some(keyword => secondLastWord.includes(keyword));
+
+                  // If both are returnable items and there's no comma between them
+                  if (lastIsReturnable && secondLastIsReturnable) {
+                    // Check if there's a comma in the original formatted string between these words
+                    const lastCommaIndex = formatted.lastIndexOf(',');
+                    const secondLastWordIndex = formatted.indexOf(secondLastWord);
+
+                    // If no comma exists after the second-last word, prevent the input
+                    if (lastCommaIndex < secondLastWordIndex) {
+                      setError('Please separate returnable items with a comma (e.g., "1 Caisse, 2 Bouteille")');
+                      return; // Don't update the description
+                    }
+                  }
+                }
+
+                // Clear error if input is valid
+                if (error) {
+                  setError('');
+                }
+
                 // Add space after comma if not already present
                 updateDescription(formatted);
               }}
