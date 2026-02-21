@@ -309,12 +309,18 @@ const ClientCard: React.FC<ClientCardProps> = ({ client, onLongPress, onQuickAdd
                 <div
                   className="absolute pointer-events-none"
                   style={{
-                    top: '14px',
-                    right: '-50px',
+                    top: '-4px',
+                    right: '-64px',
                     zIndex: 10
                   }}
                 >
-                  <CrateLogo count={totalCratesCount} size={40} />
+                  <div className="absolute" style={{
+                    top: '18px',
+                    left: '50%',
+                    transform: 'translateX(-50%)'
+                  }}>
+                    <CrateLogo count={totalCratesCount} size={40} />
+                  </div>
                 </div>
               )}
             </div>
