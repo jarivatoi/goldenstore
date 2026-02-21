@@ -285,7 +285,7 @@ const ClientCard: React.FC<ClientCardProps> = ({ client, onLongPress, onQuickAdd
                   {/* Crate positioned first (background layer) */}
                   {totalCratesCount > 0 && (
                     <div className="absolute" style={{
-                      top: '26px',
+                      top: '18px',
                       left: '50%',
                       transform: 'translateX(-50%)'
                     }}>
