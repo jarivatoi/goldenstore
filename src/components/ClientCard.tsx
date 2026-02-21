@@ -80,6 +80,14 @@ const ClientCard: React.FC<ClientCardProps> = ({ client, onLongPress, onQuickAdd
   const hasDebt = totalDebt > 0;
   const hasReturnables = returnableItemsText.length > 0;
 
+  // Determine profile picture border color
+  const getProfileBorderColor = () => {
+    if (hasReturnables) {
+      return 'border-orange-500';
+    }
+    return 'border-green-500';
+  };
+
   // Determine card background color based on debt amount
   const getCardBackgroundColor = () => {
     if (totalDebt <= 300) return 'bg-green-100 border-green-200';
@@ -222,7 +230,7 @@ const ClientCard: React.FC<ClientCardProps> = ({ client, onLongPress, onQuickAdd
             <div className="relative">
               {client.profilePictureUrl ? (
                 <div
-                  className="w-24 h-24 rounded-full overflow-hidden border-4 border-gray-300 shadow-lg relative flex-shrink-0 cursor-zoom-in"
+                  className={`w-24 h-24 rounded-full overflow-hidden border-4 shadow-lg relative flex-shrink-0 cursor-zoom-in ${getProfileBorderColor()}`}
                   style={{
                     background: `url(${client.profilePictureUrl})`,
                     backgroundSize: 'cover',
@@ -247,7 +255,7 @@ const ClientCard: React.FC<ClientCardProps> = ({ client, onLongPress, onQuickAdd
                   }}></div>
                 </div>
               ) : (
-                <div className="w-24 h-24 bg-blue-100 rounded-full flex items-center justify-center flex-shrink-0 border-4 border-gray-300 shadow-lg">
+                <div className={`w-24 h-24 bg-blue-100 rounded-full flex items-center justify-center flex-shrink-0 border-4 shadow-lg ${getProfileBorderColor()}`}>
                   <User size={40} className="text-blue-600" />
                 </div>
               )}
