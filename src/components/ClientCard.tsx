@@ -111,8 +111,12 @@ const ClientCard: React.FC<ClientCardProps> = ({ client, onLongPress, onQuickAdd
   // Touch event handlers
   const handleTouchStart = (e: React.TouchEvent) => {
     const touch = e.touches[0];
-    
+
     longPressTimer.current = setTimeout(() => {
+      // Dismiss keyboard before opening modal
+      if (document.activeElement instanceof HTMLElement) {
+        document.activeElement.blur();
+      }
       setShowDetails(true);
     }, 2000); // 2000ms for long press
   };
@@ -147,11 +151,15 @@ const ClientCard: React.FC<ClientCardProps> = ({ client, onLongPress, onQuickAdd
   // Mouse event handlers for desktop
   const handleMouseDown = (e: React.MouseEvent) => {
     if (e.button !== 0) return; // Only left mouse button
-    
+
     longPressTimer.current = setTimeout(() => {
+      // Dismiss keyboard before opening modal
+      if (document.activeElement instanceof HTMLElement) {
+        document.activeElement.blur();
+      }
       setShowDetails(true);
     }, 2000);
-    
+
     e.preventDefault(); // Prevent text selection
   };
 
