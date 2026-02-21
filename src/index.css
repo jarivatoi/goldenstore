@@ -234,6 +234,10 @@ body {
 
 .animate-subtle-shake {
   animation: subtle-shake 1.5s ease-in-out infinite;
+  will-change: transform;
+  contain: layout style paint;
+  backface-visibility: hidden;
+  -webkit-backface-visibility: hidden;
 }
 
 /* Enhanced shake animation for returnables */
@@ -250,6 +254,10 @@ body {
 
 .animate-returnables-shake {
   animation: returnables-shake 2s ease-in-out infinite;
+  will-change: transform;
+  contain: layout style paint;
+  backface-visibility: hidden;
+  -webkit-backface-visibility: hidden;
 }
 
 /* Enhanced bounce animation for high debt */
@@ -431,11 +439,19 @@ input[type=number] {
 .animate-zoom {
   animation: zoomInOut 3s ease-in-out infinite;
   transform-origin: center center;
+  will-change: transform;
+  contain: layout style paint;
+  backface-visibility: hidden;
+  -webkit-backface-visibility: hidden;
 }
 
 .animate-zoom-delayed {
   animation: zoomInOut 3s ease-in-out infinite;
   animation-delay: 1.5s;
+  will-change: transform;
+  contain: layout style paint;
+  backface-visibility: hidden;
+  -webkit-backface-visibility: hidden;
 }
 
 /* Border glow animations for client profile pictures with zoom effect */
@@ -558,6 +574,16 @@ input[type=number] {
 
 .alternating-orange-text {
   animation: alternatingOrangeText 2s ease-in-out infinite;
+}
+
+/* Scrolling tabs performance optimization */
+.scrolling-tabs-component {
+  contain: layout style;
+  isolation: isolate;
+}
+
+.scrolling-tabs-component * {
+  -webkit-overflow-scrolling: touch;
 }
 
 /* Bottle badge fade animations - synced with orange glow */
