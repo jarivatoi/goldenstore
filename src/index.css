@@ -509,21 +509,41 @@ input[type=number] {
 .border-green-glow {
   animation: greenGlow 3s ease-in-out infinite;
   transform-origin: center center;
+  will-change: transform;
+  backface-visibility: hidden;
+  -webkit-backface-visibility: hidden;
+  contain: layout style paint;
+  isolation: isolate;
 }
 
 .border-red-glow {
   animation: redGlow 3s ease-in-out infinite;
   transform-origin: center center;
+  will-change: transform;
+  backface-visibility: hidden;
+  -webkit-backface-visibility: hidden;
+  contain: layout style paint;
+  isolation: isolate;
 }
 
 .border-orange-glow {
   animation: orangeGlow 3s ease-in-out infinite;
   transform-origin: center center;
+  will-change: transform;
+  backface-visibility: hidden;
+  -webkit-backface-visibility: hidden;
+  contain: layout style paint;
+  isolation: isolate;
 }
 
 .border-red-orange-glow {
   animation: redOrangeGlow 6s ease-in-out infinite;
   transform-origin: center center;
+  will-change: transform;
+  backface-visibility: hidden;
+  -webkit-backface-visibility: hidden;
+  contain: layout style paint;
+  isolation: isolate;
 }
 
 /* Alternating text color for returnables when there's also debt */
