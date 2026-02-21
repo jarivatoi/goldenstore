@@ -85,6 +85,9 @@ const ClientCard: React.FC<ClientCardProps> = ({ client, onLongPress, onQuickAdd
     if (hasReturnables) {
       return 'border-orange-500';
     }
+    if (hasDebt) {
+      return 'border-red-500';
+    }
     return 'border-green-500';
   };
 
