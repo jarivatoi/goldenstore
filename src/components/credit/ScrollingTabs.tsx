@@ -450,22 +450,53 @@ const ScrollingTabs: React.FC<ScrollingTabsProps> = ({
     }
   };
 
-  // Handle tab click - pause timeline and show modal
-  const handleTabClick = (client: Client) => {
-    // Add click animation immediately
-    setClickedTabId(client.id);
-    
-    // Store current position before opening modal (if timeline is active)
-    if (timelineRef.current && timelineRef.current.isActive()) {
-      const currentX = gsap.getProperty(contentRef.current, "x") as number;
-      pausedPositionRef.current = currentX;
-      
-      // Kill timeline when opening modal
-      timelineRef.current.kill();
-      timelineRef.current = null;
+  // Handle touch end with double tap detection
+  const handleTouchEndWithDoubleTap = (client: Client, e: React.TouchEvent) => {
+    // Don't process if long press was triggered
+    if (longPressTriggeredRef.current) {
+      longPressTriggeredRef.current = false;
+      return;
     }
-    
-    setSelectedClientForAction(client);
+
+    const currentTime = Date.now();
+    const timeSinceLastTap = currentTime - lastTapTimeRef.current;
+
+    // Double tap detected (within 300ms)
+    if (timeSinceLastTap < 300 && timeSinceLastTap > 0) {
+      e.preventDefault();
+      e.stopPropagation();
+
+      // Clear any pending single tap timeout
+      if (tapTimeoutRef.current) {
+        clearTimeout(tapTimeoutRef.current);
+        tapTimeoutRef.current = null;
+      }
+
+      // Add click animation immediately
+      setClickedTabId(client.id);
+
+      // Store current position before opening modal (if timeline is active)
+      if (timelineRef.current && timelineRef.current.isActive()) {
+        const currentX = gsap.getProperty(contentRef.current, "x") as number;
+        pausedPositionRef.current = currentX;
+
+        // Kill timeline when opening modal
+        timelineRef.current.kill();
+        timelineRef.current = null;
+      }
+
+      setSelectedClientForAction(client);
+      lastTapTimeRef.current = 0; // Reset to prevent triple tap issues
+    } else {
+      // Single tap - wait to see if double tap follows
+      lastTapTimeRef.current = currentTime;
+
+      // Set timeout for single tap action (do nothing for single tap on scrolling tabs)
+      tapTimeoutRef.current = window.setTimeout(() => {
+        tapTimeoutRef.current = null;
+        // Single tap does nothing - user needs to double tap
+      }, 300);
+    }
   };
 
   return (
@@ -628,8 +659,15 @@ const ScrollingTabs: React.FC<ScrollingTabsProps> = ({
                       scrollSnapAlign: 'none'
                     })
                   }}
-                  onClick={() => handleTabClick(client)}
-                  onDoubleClick={() => onQuickAdd(client)}
+                  onTouchStart={handleLongPressStart}
+                  onTouchEnd={(e) => {
+                    handleLongPressEnd();
+                    handleTouchEndWithDoubleTap(client, e);
+                  }}
+                  onTouchMove={handleLongPressEnd}
+                  onMouseDown={handleLongPressStart}
+                  onMouseUp={handleLongPressEnd}
+                  onMouseLeave={handleLongPressEnd}
                   onContextMenu={(e) => e.preventDefault()} // Prevent right-click menu
                 >
                   <div className="text-center relative h-full flex flex-col justify-center w-full">
