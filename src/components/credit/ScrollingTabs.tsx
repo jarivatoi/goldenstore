@@ -468,8 +468,6 @@ const ScrollingTabs: React.FC<ScrollingTabsProps> = ({
     setSelectedClientForAction(client);
   };
 
-  // Handle long press to show client details
-
   return (
     <>
     <div ref={scrollingTabsRef} className="bg-white rounded-lg shadow-sm border border-gray-200 scrolling-tabs-component w-full" style={{ flexShrink: 0 }}>
