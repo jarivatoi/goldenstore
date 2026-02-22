@@ -407,23 +407,37 @@ export const CreditProvider: React.FC<CreditProviderProps> = ({ children }) => {
       // Parse the date query
       const dateParts = query.split('/').map(p => p.trim());
 
-      return clients.filter(client => {
+      const matchingClients = clients.filter(client => {
         // Get all transactions for this client
         const clientTransactions = transactions.filter(t => t.clientId === client.id);
 
         // Check if any transaction date matches the query
         return clientTransactions.some(transaction => {
+          // Parse the date correctly - handle both ISO strings and timestamps
           const transactionDate = new Date(transaction.createdAt);
+
+          // Get local date components (not UTC)
           const day = transactionDate.getDate();
           const month = transactionDate.getMonth() + 1; // 0-indexed
           const year = transactionDate.getFullYear();
+
+          // Debug: Log date info for the first few transactions
+          if (client.id === 'G1' || client.id === 'G2') {
+            console.log(`Transaction for ${client.name}: ${transaction.createdAt} -> Day: ${day}, Month: ${month}, Year: ${year}`);
+          }
 
           // Check if date matches the query pattern
           // Support formats: DD/MM or DD/MM/YY or DD/MM/YYYY (day-month format only)
           if (dateParts.length === 2) {
             // Format: DD/MM
             const [queryDay, queryMonth] = dateParts.map(p => parseInt(p, 10));
-            return day === queryDay && month === queryMonth;
+            const matches = day === queryDay && month === queryMonth;
+
+            if (matches) {
+              console.log(`✓ Match found: ${client.name} on ${day}/${month}/${year}`);
+            }
+
+            return matches;
           } else if (dateParts.length === 3) {
             // Format: DD/MM/YY or DD/MM/YYYY
             const [queryDay, queryMonth, queryYear] = dateParts.map(p => parseInt(p, 10));
@@ -436,6 +450,9 @@ export const CreditProvider: React.FC<CreditProviderProps> = ({ children }) => {
           return false;
         });
       });
+
+      console.log(`Date search for "${query}": Found ${matchingClients.length} clients`);
+      return matchingClients;
     }
 
     // Normalize function to remove accents and special characters
