@@ -402,18 +402,65 @@ export const CreditProvider: React.FC<CreditProviderProps> = ({ children }) => {
       });
     }
 
-    // Check if query contains "/" (search in transaction descriptions)
+    // Check if query contains "/" (date search)
     if (query.includes('/')) {
-      // Search for the query string in transaction descriptions
-      return clients.filter(client => {
-        // Get all transactions for this client
-        const clientTransactions = transactions.filter(t => t.clientId === client.id);
+      // Parse the date query
+      const dateParts = query.split('/').map(p => p.trim());
 
-        // Check if any transaction description contains the query
-        return clientTransactions.some(transaction => {
-          return transaction.description.toLowerCase().includes(query.toLowerCase());
+      // Check if it looks like a date (all parts are numeric)
+      const isDateQuery = dateParts.every(part => /^\d+$/.test(part));
+
+      if (isDateQuery) {
+        return clients.filter(client => {
+          // Get all transactions for this client
+          const clientTransactions = transactions.filter(t => t.clientId === client.id);
+
+          // Check if any transaction date matches the query
+          return clientTransactions.some(transaction => {
+            const transactionDate = new Date(transaction.createdAt);
+
+            // Get date parts in local timezone (as displayed to user)
+            const day = transactionDate.getDate();
+            const month = transactionDate.getMonth() + 1; // 0-indexed
+            const year = transactionDate.getFullYear();
+
+            // Support formats: DD/MM or DD/MM/YY or DD/MM/YYYY (day-month format only)
+            if (dateParts.length === 2) {
+              // Format: DD/MM or DD/M
+              const queryDay = parseInt(dateParts[0], 10);
+              const queryMonth = parseInt(dateParts[1], 10);
+
+              // Validate parsed values
+              if (isNaN(queryDay) || isNaN(queryMonth)) return false;
+
+              return day === queryDay && month === queryMonth;
+            } else if (dateParts.length === 3) {
+              // Format: DD/MM/YY or DD/MM/YYYY
+              const queryDay = parseInt(dateParts[0], 10);
+              const queryMonth = parseInt(dateParts[1], 10);
+              const queryYear = parseInt(dateParts[2], 10);
+
+              // Validate parsed values
+              if (isNaN(queryDay) || isNaN(queryMonth) || isNaN(queryYear)) return false;
+
+              const yearShort = year % 100; // Get last 2 digits
+              const yearMatch = queryYear === year || queryYear === yearShort;
+
+              return day === queryDay && month === queryMonth && yearMatch;
+            }
+
+            return false;
+          });
         });
-      });
+      } else {
+        // Not a date query, search in transaction descriptions
+        return clients.filter(client => {
+          const clientTransactions = transactions.filter(t => t.clientId === client.id);
+          return clientTransactions.some(transaction => {
+            return transaction.description.toLowerCase().includes(query.toLowerCase());
+          });
+        });
+      }
     }
 
     // Normalize function to remove accents and special characters
