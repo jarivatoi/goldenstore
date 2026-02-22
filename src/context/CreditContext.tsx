@@ -410,16 +410,14 @@ export const CreditProvider: React.FC<CreditProviderProps> = ({ children }) => {
       // Check if it looks like a date (all parts are numeric)
       const isDateQuery = dateParts.every(part => /^\d+$/.test(part));
 
-      console.log('Date search query:', query, 'Parts:', dateParts, 'isDateQuery:', isDateQuery);
-
       if (isDateQuery) {
-        const matchingClients = clients.filter(client => {
+        return clients.filter(client => {
           // Get all transactions for this client
           const clientTransactions = transactions.filter(t => t.clientId === client.id);
 
           // Check if any transaction date matches the query
-          const hasMatch = clientTransactions.some(transaction => {
-            const transactionDate = new Date(transaction.createdAt);
+          return clientTransactions.some(transaction => {
+            const transactionDate = new Date(transaction.date);
 
             // Get date parts in local timezone (as displayed to user)
             const day = transactionDate.getDate();
@@ -435,18 +433,7 @@ export const CreditProvider: React.FC<CreditProviderProps> = ({ children }) => {
               // Validate parsed values
               if (isNaN(queryDay) || isNaN(queryMonth)) return false;
 
-              const matches = day === queryDay && month === queryMonth;
-
-              if (client.id === 'G1') {
-                console.log('Checking transaction for G1:', {
-                  transactionDate: transaction.createdAt,
-                  day, month, year,
-                  queryDay, queryMonth,
-                  matches
-                });
-              }
-
-              return matches;
+              return day === queryDay && month === queryMonth;
             } else if (dateParts.length === 3) {
               // Format: DD/MM/YY or DD/MM/YYYY
               const queryDay = parseInt(dateParts[0], 10);
@@ -464,16 +451,7 @@ export const CreditProvider: React.FC<CreditProviderProps> = ({ children }) => {
 
             return false;
           });
-
-          if (hasMatch) {
-            console.log('Client matched:', client.id, client.name);
-          }
-
-          return hasMatch;
         });
-
-        console.log('Total matching clients:', matchingClients.length);
-        return matchingClients;
       } else {
         // Not a date query, search in transaction descriptions
         return clients.filter(client => {
