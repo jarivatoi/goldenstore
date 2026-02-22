@@ -311,7 +311,7 @@ const ClientCard: React.FC<ClientCardProps> = ({ client, onLongPress, onQuickAdd
                   )}
                   {/* Bottle and count positioned above crate */}
                   <div className="flex flex-col items-center gap-0.5 relative" style={{ zIndex: 11 }}>
-                    <span className="text-sm font-bold text-orange-600">
+                    <span className="font-bold text-orange-600" style={{ fontSize: '14px' }}>
                       {totalReturnablesCount}
                     </span>
                     <div className="bottle-3d">
@@ -342,7 +342,7 @@ const ClientCard: React.FC<ClientCardProps> = ({ client, onLongPress, onQuickAdd
                   </div>
                   {/* Invisible placeholder to maintain same DOM structure as when bottles are present */}
                   <div className="flex flex-col items-center gap-0.5 relative invisible" style={{ zIndex: 11 }}>
-                    <span className="text-sm font-bold">0</span>
+                    <span className="font-bold" style={{ fontSize: '14px' }}>0</span>
                     <div className="bottle-3d">
                       <Milk size={28} strokeWidth={2.5} />
                     </div>
