@@ -984,6 +984,9 @@ const processItemReturn = async (itemType: string, returnQuantity: number) => {
                   if (itemType.includes('Chopine')) {
                     const brand = itemType.replace(/^(Chopines?)/i, '').trim();
                     returnDescription += `Chopine${quantity > 1 ? 's' : ''}${brand ? ` ${brand}` : ''}`;
+                  } else if (itemType.includes('Caisse')) {
+                    const brand = itemType.replace(/^(Caisses?)/i, '').trim();
+                    returnDescription += `Caisse${quantity > 1 ? 's' : ''}${brand ? ` ${brand}` : ''}`;
                   } else if (itemType.includes('Bouteille')) {
                     let brand = itemType.replace(/^(Bouteilles?)/i, '').trim();
                     if (quantity === 1 && brand.endsWith('s') && !brand.match(/^\d/)) {
