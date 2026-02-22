@@ -273,14 +273,19 @@ const ScrollingTabs: React.FC<ScrollingTabsProps> = ({
     
     // Calculate total distance for full cycle
     const totalDistance = contentWidth + containerWidth;
-    const fullCycleDuration = totalDistance / 60; // 60px per second
-    
+
+    // Use same duration calculation as setupContinuousScroll
+    const pixelsPerSecond = 60;
+    const calculatedDuration = totalDistance / pixelsPerSecond;
+    const minDuration = 8;
+    const fullCycleDuration = Math.max(calculatedDuration, minDuration);
+
     // Create new infinite timeline that matches setupContinuousScroll
     timelineRef.current = gsap.timeline({ repeat: -1, ease: "none" });
-    
+
     // Set initial position
     gsap.set(content, { x: adjustedPosition });
-    
+
     // Calculate remaining distance from current position to end
     const remainingDistance = Math.abs(adjustedPosition - (-contentWidth));
     const remainingDuration = (remainingDistance / (contentWidth + containerWidth)) * fullCycleDuration; // Proportional to full cycle
@@ -345,7 +350,15 @@ const ScrollingTabs: React.FC<ScrollingTabsProps> = ({
 
       // Calculate total distance including container width gap
       const totalDistance = contentWidth + containerWidth;
-      const duration = totalDistance / 60; // 60px per second for faster speed
+
+      // Use a fixed speed in pixels per second, but ensure minimum duration
+      // This prevents jerky animations when there are few clients
+      const pixelsPerSecond = 60;
+      const calculatedDuration = totalDistance / pixelsPerSecond;
+
+      // Set minimum duration to ensure smooth animation even with few clients
+      const minDuration = 8; // Minimum 8 seconds for full cycle
+      const duration = Math.max(calculatedDuration, minDuration);
 
       // Create seamless infinite timeline with protection against external interference
       timelineRef.current = gsap.timeline({
