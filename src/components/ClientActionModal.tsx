@@ -677,10 +677,15 @@ const processItemReturn = async (itemType: string, returnQuantity: number) => {
                                         capitalizedParts.push(part.charAt(0).toUpperCase() + part.slice(1).toLowerCase());
                                       }
                                     } else {
-                                      // This is a brand name before the size, capitalize it (preserve alphanumeric brands like "7les")
-                                      if (/^\d/.test(part)) {
+                                      // Check if this is a parenthesized abbreviation like "(Bt)" or "(Ch)" or "(Lt)"
+                                      if (/^\([A-Z][a-z]\)$/.test(part)) {
+                                        // Keep the abbreviation as-is with proper capitalization
+                                        capitalizedParts.push(part);
+                                      } else if (/^\d/.test(part)) {
+                                        // This is a brand name before the size, keep alphanumeric brands lowercase
                                         capitalizedParts.push(part.toLowerCase());
                                       } else {
+                                        // This is a brand name before the size, capitalize it
                                         capitalizedParts.push(part.charAt(0).toUpperCase() + part.slice(1).toLowerCase());
                                       }
                                     }

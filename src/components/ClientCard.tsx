@@ -293,9 +293,9 @@ const ClientCard: React.FC<ClientCardProps> = ({ client, onLongPress, onQuickAdd
                 <div
                   className="absolute pointer-events-none"
                   style={{
-                    top: '0',
+                    top: '-4px',
                     left: '50%',
-                    transform: 'translateX(32px)',
+                    transform: 'translateX(68px)',
                     zIndex: 10
                   }}
                 >
@@ -326,9 +326,9 @@ const ClientCard: React.FC<ClientCardProps> = ({ client, onLongPress, onQuickAdd
                 <div
                   className="absolute pointer-events-none"
                   style={{
-                    top: '0',
+                    top: '-4px',
                     left: '50%',
-                    transform: 'translateX(32px)',
+                    transform: 'translateX(68px)',
                     zIndex: 10
                   }}
                 >
