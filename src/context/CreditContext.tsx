@@ -419,18 +419,18 @@ export const CreditProvider: React.FC<CreditProviderProps> = ({ children }) => {
           const year = transactionDate.getFullYear();
 
           // Check if date matches the query pattern
-          // Support formats like: 12/6, 12/6/25, 12/6/2025
+          // Support formats: DD/MM or DD/MM/YY or DD/MM/YYYY (day-month format only)
           if (dateParts.length === 2) {
-            // Format: DD/MM or MM/DD (check both)
-            const [part1, part2] = dateParts.map(p => parseInt(p, 10));
-            return (day === part1 && month === part2) || (day === part2 && month === part1);
+            // Format: DD/MM
+            const [queryDay, queryMonth] = dateParts.map(p => parseInt(p, 10));
+            return day === queryDay && month === queryMonth;
           } else if (dateParts.length === 3) {
-            // Format: DD/MM/YY or MM/DD/YY
-            const [part1, part2, part3] = dateParts.map(p => parseInt(p, 10));
+            // Format: DD/MM/YY or DD/MM/YYYY
+            const [queryDay, queryMonth, queryYear] = dateParts.map(p => parseInt(p, 10));
             const yearShort = year % 100; // Get last 2 digits
-            const yearMatch = part3 === year || part3 === yearShort;
+            const yearMatch = queryYear === year || queryYear === yearShort;
 
-            return yearMatch && ((day === part1 && month === part2) || (day === part2 && month === part1));
+            return day === queryDay && month === queryMonth && yearMatch;
           }
 
           return false;
