@@ -129,11 +129,15 @@ const ClientCard: React.FC<ClientCardProps> = ({ client, onLongPress, onQuickAdd
     // Handle double tap for iPhone
     const now = Date.now();
     const timeSinceLastTap = now - lastTapRef.current;
-    
+
     if (timeSinceLastTap < 300 && timeSinceLastTap > 0) {
       // Double tap detected
       tapCountRef.current += 1;
       if (tapCountRef.current === 2) {
+        // Dismiss keyboard before opening modal
+        if (document.activeElement instanceof HTMLElement) {
+          document.activeElement.blur();
+        }
         setShowActions(true);
         tapCountRef.current = 0;
       }
@@ -144,7 +148,7 @@ const ClientCard: React.FC<ClientCardProps> = ({ client, onLongPress, onQuickAdd
         tapCountRef.current = 0;
       }, 300);
     }
-    
+
     lastTapRef.current = now;
   };
 
@@ -171,6 +175,10 @@ const ClientCard: React.FC<ClientCardProps> = ({ client, onLongPress, onQuickAdd
 
   // Handle double click to show actions
   const handleDoubleClick = () => {
+    // Dismiss keyboard before opening modal
+    if (document.activeElement instanceof HTMLElement) {
+      document.activeElement.blur();
+    }
     setShowActions(true);
   };
 
@@ -285,8 +293,9 @@ const ClientCard: React.FC<ClientCardProps> = ({ client, onLongPress, onQuickAdd
                 <div
                   className="absolute pointer-events-none"
                   style={{
-                    top: '-4px',
-                    right: '-64px',
+                    top: '0',
+                    left: '50%',
+                    transform: 'translateX(32px)',
                     zIndex: 10
                   }}
                 >
@@ -317,8 +326,9 @@ const ClientCard: React.FC<ClientCardProps> = ({ client, onLongPress, onQuickAdd
                 <div
                   className="absolute pointer-events-none"
                   style={{
-                    top: '-4px',
-                    right: '-64px',
+                    top: '0',
+                    left: '50%',
+                    transform: 'translateX(32px)',
                     zIndex: 10
                   }}
                 >

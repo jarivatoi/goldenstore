@@ -468,7 +468,7 @@ const ClientSearchModal: React.FC<ClientSearchModalProps> = ({
               Quick Actions
             </label>
             <div className="grid grid-cols-3 gap-2 mb-3 select-none">
-              {['Foodstuffs', 'Cig', 'Rum', 'Can', 'Soft Drinks', 'Cakes', 'Chopine', 'Bouteille', 'Bouteille 1L', 'Bouteille 1.5L', 'Bouteille 2L', 'Juice Payment'].map((action) => (
+              {['Foodstuffs', 'Cig', 'Rum', 'Can', 'Soft Drinks', 'Cakes', 'Chopine', 'Bouteille', 'Bouteille 1L', 'Bouteille 1.5L', 'Caisse', 'Juice Payment'].map((action) => (
                 <button
                   key={action}
                   type="button"
@@ -482,10 +482,10 @@ const ClientSearchModal: React.FC<ClientSearchModalProps> = ({
             <div className="grid grid-cols-3 gap-2 select-none">
               <button
                 type="button"
-                onClick={() => handleQuickAction('Caisse')}
+                onClick={() => handleQuickAction('Caisse (Ch)')}
                 className="px-3 py-2 text-sm bg-blue-100 hover:bg-blue-200 text-blue-800 rounded-lg transition-colors select-none"
               >
-                Caisse
+                Caisse (Ch)
               </button>
               <button
                 type="button"
@@ -496,10 +496,10 @@ const ClientSearchModal: React.FC<ClientSearchModalProps> = ({
               </button>
               <button
                 type="button"
-                onClick={() => handleQuickAction('Caisse (Ch)')}
+                onClick={() => handleQuickAction('Caisse (Lt)')}
                 className="px-3 py-2 text-sm bg-blue-100 hover:bg-blue-200 text-blue-800 rounded-lg transition-colors select-none"
               >
-                Caisse (Ch)
+                Caisse (Lt)
               </button>
             </div>
           </div>
