@@ -402,6 +402,42 @@ export const CreditProvider: React.FC<CreditProviderProps> = ({ children }) => {
       });
     }
 
+    // Check if query contains "/" (date search)
+    if (query.includes('/')) {
+      // Parse the date query
+      const dateParts = query.split('/').map(p => p.trim());
+
+      return clients.filter(client => {
+        // Get all transactions for this client
+        const clientTransactions = transactions.filter(t => t.clientId === client.id);
+
+        // Check if any transaction date matches the query
+        return clientTransactions.some(transaction => {
+          const transactionDate = new Date(transaction.createdAt);
+          const day = transactionDate.getDate();
+          const month = transactionDate.getMonth() + 1; // 0-indexed
+          const year = transactionDate.getFullYear();
+
+          // Check if date matches the query pattern
+          // Support formats like: 12/6, 12/6/25, 12/6/2025
+          if (dateParts.length === 2) {
+            // Format: DD/MM or MM/DD (check both)
+            const [part1, part2] = dateParts.map(p => parseInt(p, 10));
+            return (day === part1 && month === part2) || (day === part2 && month === part1);
+          } else if (dateParts.length === 3) {
+            // Format: DD/MM/YY or MM/DD/YY
+            const [part1, part2, part3] = dateParts.map(p => parseInt(p, 10));
+            const yearShort = year % 100; // Get last 2 digits
+            const yearMatch = part3 === year || part3 === yearShort;
+
+            return yearMatch && ((day === part1 && month === part2) || (day === part2 && month === part1));
+          }
+
+          return false;
+        });
+      });
+    }
+
     // Normalize function to remove accents and special characters
     const normalize = (str: string): string => {
       return str
