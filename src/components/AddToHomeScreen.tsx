@@ -7,7 +7,7 @@ class AddToHomescreenUtility {
   constructor(options: any = {}) {
     this.options = {
       appName: 'Golden Store',
-      appIconUrl: 'https://jarivatoi.github.io/goldenstore/icon-192.png',
+      appIconUrl: 'https://jarivatoi.github.io/goldenstore/icon-512.png',
       ...options
     };
   }
