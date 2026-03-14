@@ -2091,9 +2091,9 @@ const CreateOrderModal: React.FC<CreateOrderModalProps> = ({ category, itemTempl
                 <table className="w-full border-collapse select-none" style={{ tableLayout: 'fixed' }}>
                   <thead className="select-none">
                     <tr className="bg-gray-50 select-none">
-                      <th className="border border-gray-300 px-4 py-2 text-center select-none" style={{ width: '60%' }}>Item</th>
+                      <th className="border border-gray-300 px-4 py-2 text-center select-none" style={{ width: '45%' }}>Item</th>
                       <th className="border border-gray-300 px-4 py-2 text-center select-none" style={{ width: '25%' }}>Quantity</th>
-                      <th className="border border-gray-300 px-4 py-2 text-center select-none" style={{ width: '15%' }}>Total Price</th>
+                      <th className="border border-gray-300 px-4 py-2 text-center select-none" style={{ width: '30%' }}>Total Price</th>
                     </tr>
                   </thead>
                   <tbody className="select-none">
@@ -2150,7 +2150,9 @@ const CreateOrderModal: React.FC<CreateOrderModalProps> = ({ category, itemTempl
                             )}
                             <div className="font-medium text-gray-800 select-none">{formatOrderItemName(template.name)}</div>
                           </td>
-                          <td className="border border-gray-300 px-4 py-2 text-center select-none">
+                          <td className="border border-gray-300 px-4 py-2 text-center select-none relative">
+                            <div className="absolute left-0 top-0 bottom-0 w-1 bg-gradient-to-b from-blue-500 via-blue-400 to-blue-500"></div>
+                            <div className="absolute right-0 top-0 bottom-0 w-1 bg-gradient-to-b from-blue-500 via-blue-400 to-blue-500"></div>
                             <div className="flex items-center gap-1 justify-center">
                               <button
                                 type="button"
