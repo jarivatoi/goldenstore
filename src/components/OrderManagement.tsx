@@ -2139,20 +2139,27 @@ const CreateOrderModal: React.FC<CreateOrderModalProps> = ({ category, itemTempl
                         return (
                         <tr key={template.id} className="hover:bg-gray-50 select-none relative">
                           <td className="border border-gray-300 px-4 py-2 text-left select-none pr-2 relative">
-                            {isVatIncluded && (
-                              <div className="absolute right-0 top-0 bottom-0 w-1 bg-blue-500"></div>
-                            )}
-                            {!isVatIncluded && !isVatNil && (
-                              <div className="absolute right-0 top-0 bottom-0 w-1 bg-red-500"></div>
-                            )}
-                            {isVatNil && (
-                              <div className="absolute right-0 top-0 bottom-0 w-1 bg-green-500"></div>
-                            )}
                             <div className="font-medium text-gray-800 select-none">{formatOrderItemName(template.name)}</div>
                           </td>
                           <td className="border border-gray-300 px-4 py-2 text-center select-none relative">
-                            <div className="absolute left-0 top-0 bottom-0 w-1 bg-gradient-to-b from-blue-500 via-blue-400 to-blue-500"></div>
-                            <div className="absolute right-0 top-0 bottom-0 w-1 bg-gradient-to-b from-blue-500 via-blue-400 to-blue-500"></div>
+                            {isVatIncluded && (
+                              <>
+                                <div className="absolute left-0 top-0 bottom-0 w-1 bg-blue-500"></div>
+                                <div className="absolute right-0 top-0 bottom-0 w-1 bg-blue-500"></div>
+                              </>
+                            )}
+                            {!isVatIncluded && !isVatNil && (
+                              <>
+                                <div className="absolute left-0 top-0 bottom-0 w-1 bg-red-500"></div>
+                                <div className="absolute right-0 top-0 bottom-0 w-1 bg-red-500"></div>
+                              </>
+                            )}
+                            {isVatNil && (
+                              <>
+                                <div className="absolute left-0 top-0 bottom-0 w-1 bg-green-500"></div>
+                                <div className="absolute right-0 top-0 bottom-0 w-1 bg-green-500"></div>
+                              </>
+                            )}
                             <div className="flex items-center gap-1 justify-center">
                               <button
                                 type="button"
