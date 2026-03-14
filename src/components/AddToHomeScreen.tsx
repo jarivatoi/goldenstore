@@ -3,6 +3,7 @@ import React, { useEffect } from 'react';
 // Utility class for Add to Home Screen functionality
 class AddToHomescreenUtility {
   private options: any;
+  private deferredPrompt: any = null;
 
   constructor(options: any = {}) {
     this.options = {
@@ -10,6 +11,13 @@ class AddToHomescreenUtility {
       appIconUrl: 'https://jarivatoi.github.io/goldenstore/icon-512.png',
       ...options
     };
+    
+    // Listen for the beforeinstallprompt event
+    window.addEventListener('beforeinstallprompt', (e) => {
+      console.log('📲 beforeinstallprompt event fired');
+      e.preventDefault();
+      this.deferredPrompt = e;
+    });
   }
 
   show(): void {
@@ -20,6 +28,7 @@ class AddToHomescreenUtility {
                          window.matchMedia('(display-mode: minimal-ui)').matches;
     
     if (isStandalone) {
+      console.log('✅ App running in standalone mode - not showing prompt');
       return;
     }
     
@@ -29,11 +38,29 @@ class AddToHomescreenUtility {
     const dayInMs = 24 * 60 * 60 * 1000;
     
     if (lastShown && (now - parseInt(lastShown)) < dayInMs) {
+      console.log('⏰ Already shown in last 24 hours - not showing prompt');
       return;
     }
 
     // Mark as shown
     localStorage.setItem('addToHomescreen-lastShown', now.toString());
+
+    // Try native install prompt first (Android Chrome)
+    if (this.deferredPrompt) {
+      console.log('🚀 Showing native install prompt');
+      this.deferredPrompt.prompt();
+      this.deferredPrompt.userChoice.then((choiceResult: any) => {
+        if (choiceResult.outcome === 'accepted') {
+          console.log('✅ User accepted the install prompt');
+        } else {
+          console.log('❌ User dismissed the install prompt');
+        }
+        this.deferredPrompt = null;
+      });
+      return;
+    } else {
+      console.log('ℹ️ No native prompt available - showing custom modal');
+    }
 
     this.showModal();
   }
@@ -192,7 +219,11 @@ const AddToHomescreen: React.FC = () => {
     const delay = checkTablet() ? 2000 : 3000;
     const timer = setTimeout(() => {
       const addToHomescreen = new AddToHomescreenUtility();
-      addToHomescreen.show();
+      
+      // Wait a bit for the beforeinstallprompt event to fire
+      setTimeout(() => {
+        addToHomescreen.show();
+      }, 500);
     }, delay);
 
     return () => clearTimeout(timer);
