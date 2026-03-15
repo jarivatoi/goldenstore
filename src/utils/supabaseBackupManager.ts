@@ -59,7 +59,18 @@ export class SupabaseBackupManager {
         .insert(backupData);
 
       if (insertError) {
-        throw new Error(`Failed to save backup to server: ${insertError.message}`);
+        // Provide more specific error message
+        let errorMessage = `Failed to save backup to server: ${insertError.message}`;
+        
+        if (insertError.message.includes('timeout') || insertError.message.includes('abort')) {
+          errorMessage = 'Server backup failed: Connection timeout. The request took too long to complete. Please check your internet connection and try again.';
+        } else if (insertError.message.includes('network') || insertError.message.includes('fetch')) {
+          errorMessage = 'Server backup failed: No internet connection. Please check your network settings and try again.';
+        } else if (insertError.message.includes('JWT') || insertError.message.includes('auth')) {
+          errorMessage = 'Server backup failed: Authentication error. Please try logging in again.';
+        }
+        
+        throw new Error(errorMessage);
       }
 
       
