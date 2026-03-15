@@ -256,21 +256,14 @@ const UnifiedDataManager: React.FC<UnifiedDataManagerProps> = ({ isOpen, onClose
   const handleExportToServer = async () => {
     try {
       setIsProcessing(true);
-      // Don't close the modal - show loading state instead
-      setModal({ 
-        type: 'loading',
-        title: 'Uploading Backup...',
-        message: 'Please wait while your backup is being uploaded to the server. This may take a few minutes for large backups. Do not close or navigate away from this page.'
-      });
+      setModal({ type: null, title: '', message: '' });
       
       // Prepare export data if not already prepared
       const exportData = pendingExportData || prepareExportData();
       
       const backupName = `Golden Store Backup ${new Date().toLocaleDateString('en-GB')} ${new Date().toLocaleTimeString('en-GB', { hour: '2-digit', minute: '2-digit' })}`;
       
-      console.log('🚀 Starting server backup...');
       await SupabaseBackupManager.saveToSupabase(exportData, backupName);
-      console.log('✅ Server backup completed');
       
       // Update manual backup timestamp
       automaticBackupManager.setLastManualBackupDate(new Date());
@@ -290,7 +283,6 @@ const UnifiedDataManager: React.FC<UnifiedDataManagerProps> = ({ isOpen, onClose
         }
       });
     } catch (error) {
-      console.error('❌ Server backup failed:', error);
       setModal({
         type: 'error',
         title: 'Server Backup Failed',
