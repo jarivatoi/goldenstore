@@ -32,12 +32,6 @@ export class SupabaseBackupManager {
       const fileSize = new Blob([jsonString]).size;
 
       console.log('📊 Backup size:', (fileSize / 1024).toFixed(2), 'KB');
-      console.log('📦 Backup size in MB:', (fileSize / (1024 * 1024)).toFixed(2), 'MB');
-      
-      if (fileSize > 5 * 1024 * 1024) {
-        console.warn('⚠️ Large backup detected (>5MB). This may take longer on mobile networks.');
-      }
-      
       console.log('📡 Starting backup to Supabase...');
 
       const now = new Date();
@@ -76,12 +70,7 @@ export class SupabaseBackupManager {
             .insert(backupData);
 
           if (insertError) {
-            // Log detailed error information
-            console.error('❌ Insert error details:');
-            console.error('  - Message:', insertError.message);
-            console.error('  - Code:', insertError.code);
-            console.error('  - Details:', insertError.details);
-            console.error('  - Hint:', insertError.hint);
+            console.error('❌ Insert error:', insertError);
             
             // Provide more specific error message
             let errorMessage = `Failed to save backup to server: ${insertError.message}`;
@@ -92,8 +81,6 @@ export class SupabaseBackupManager {
               errorMessage = 'Server backup failed: No internet connection. Please check your network settings and try again.';
             } else if (insertError.message.includes('JWT') || insertError.message.includes('auth')) {
               errorMessage = 'Server backup failed: Authentication error. Please try logging in again.';
-            } else if (insertError.message.includes('size') || insertError.message.includes('limit')) {
-              errorMessage = 'Server backup failed: Backup file is too large. Consider archiving old data or using WiFi for backups.';
             }
             
             lastError = new Error(errorMessage);
@@ -120,7 +107,6 @@ export class SupabaseBackupManager {
           
           // If we've exhausted retries, throw the error
           if (attempt >= maxRetries) {
-            console.error('❌ All retry attempts failed');
             throw lastError;
           }
           
@@ -256,6 +242,37 @@ export class SupabaseBackupManager {
       };
     } catch (error) {
       return null;
+    }
+  }
+
+  /**
+   * Check network quality before backup
+   */
+  static async checkNetworkQuality(): Promise<{ good: boolean; message: string }> {
+    // Check if online
+    if (!navigator.onLine) {
+      return { good: false, message: 'No internet connection detected' };
+    }
+    
+    // Try a quick ping to Supabase
+    try {
+      const controller = new AbortController();
+      const timeoutId = setTimeout(() => controller.abort(), 5000); // 5 second timeout
+      
+      const response = await fetch('https://nmlroqlmtelytoghuyos.supabase.co/rest/v1/', {
+        method: 'HEAD',
+        signal: controller.signal
+      });
+      
+      clearTimeout(timeoutId);
+      
+      if (response.ok) {
+        return { good: true, message: 'Network connection is good' };
+      } else {
+        return { good: false, message: 'Supabase server is not responding properly' };
+      }
+    } catch (error) {
+      return { good: false, message: 'Cannot reach Supabase server. Please check your internet connection.' };
     }
   }
 }
