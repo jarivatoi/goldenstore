@@ -200,11 +200,14 @@ const ClientDetailModal: React.FC<ClientDetailModalProps> = ({ client, onClose }
     setIsSaving(true);
     try {
       // Improved capitalization that handles special characters like / and (
+      // Only capitalize after whitespace or specific separators, not after letters
       const capitalizeWords = (str: string): string => {
         return str
           .trim()
           .toLowerCase()
-          .replace(/(^|[\s\/\(\)\-\[\]\{\}])\w/g, (match) => match.toUpperCase());
+          .replace(/(^|\s|\/|\(|\)|-|\[|\]|\{|\})([a-zA-Z])/g, (match, separator, letter) => {
+            return separator + letter.toUpperCase();
+          });
       };
       
       const updatedClient = {
