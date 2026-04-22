@@ -180,8 +180,20 @@ const ClientSearchModal: React.FC<ClientSearchModalProps> = ({
       return;
     }
 
-    setError('');
+    // Check if either amount > 0 or returnables have been added
     const amount = parseFloat(calculatorValue);
+    const hasValidAmount = !isNaN(amount) && isFinite(amount) && amount > 0;
+    const hasReturnables = /chopines?|bouteilles?|caisses?/i.test(localDescription);
+
+    if (!hasValidAmount && !hasReturnables) {
+      showAlert({ 
+        type: 'warning', 
+        message: 'Please enter an amount greater than 0 or add returnable items (Chopine, Bouteille, or Caisse)' 
+      });
+      return;
+    }
+
+    setError('');
     if (isNaN(amount) || !isFinite(amount) || amount < 0) {
       setError('Invalid amount');
       return;
@@ -741,7 +753,7 @@ const ClientSearchModal: React.FC<ClientSearchModalProps> = ({
                 </button>
                 <button
                   onClick={handleAddNewClient}
-                  disabled={isProcessing || !newClientName.trim() || !localDescription.trim()}
+                  disabled={isProcessing || !newClientName.trim() || !localDescription.trim() || (parseFloat(calculatorValue) <= 0 && !/chopines?|bouteilles?|caisses?/i.test(localDescription))}
                   className="flex-1 px-4 py-2 bg-green-500 text-white rounded-lg hover:bg-green-600 transition-colors disabled:opacity-50 select-none"
                 >
                   {isProcessing ? 'Adding...' : 'Add Client'}
