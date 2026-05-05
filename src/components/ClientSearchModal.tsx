@@ -187,13 +187,6 @@ const ClientSearchModal: React.FC<ClientSearchModalProps> = ({
       return;
     }
 
-    // Validate that amount is greater than 0 OR description contains returnable items
-    const hasReturnableItems = /chopine|bouteille|caisse/i.test(localDescription);
-    if (amount === 0 && !hasReturnableItems) {
-      setError('Amount must be greater than 0, or description must include returnable items (Chopine, Bouteille, or Caisse)');
-      return;
-    }
-
     try {
       const newClient = await addClient(newClientName);
       onAddToClient(newClient, localDescription.trim());
@@ -749,8 +742,8 @@ const ClientSearchModal: React.FC<ClientSearchModalProps> = ({
                 </button>
                 <button
                   onClick={handleAddNewClient}
-                  disabled={isProcessing || !newClientName.trim() || !localDescription.trim()}
-                  className="flex-1 px-4 py-2 bg-green-500 text-white rounded-lg hover:bg-green-600 transition-colors disabled:opacity-50 select-none"
+                  disabled={isProcessing || !newClientName.trim() || !localDescription.trim() || (parseFloat(calculatorValue) === 0 && !/chopine|bouteille|caisse/i.test(localDescription))}
+                  className="flex-1 px-4 py-2 bg-green-500 text-white rounded-lg hover:bg-green-600 transition-colors disabled:opacity-50 disabled:cursor-not-allowed select-none"
                 >
                   {isProcessing ? 'Adding...' : 'Add Client'}
                 </button>
