@@ -683,6 +683,27 @@ const CreditManagement: React.FC = () => {
     });
   };
 
+  // Handle scroll to bottom, unlink calculator, clear search, and focus on search
+  const handleScrollToBottomAndSearch = () => {
+    // Unlink calculator from client
+    setLinkedClient(null);
+    
+    // Clear main grid search
+    setMainGridSearchQuery('');
+    
+    // Scroll to bottom smoothly
+    setTimeout(() => {
+      // Find the search input in ClientGrid and focus it
+      const searchInput = document.querySelector('.client-grid-search input') as HTMLInputElement;
+      if (searchInput) {
+        searchInput.scrollIntoView({ behavior: 'smooth', block: 'center' });
+        setTimeout(() => {
+          searchInput.focus();
+        }, 300);
+      }
+    }, 100);
+  };
+
   // Database operations
 
   return (
@@ -712,6 +733,7 @@ const CreditManagement: React.FC = () => {
             showSortDropdown={showSortDropdown}
             onToggleSortDropdown={() => setShowSortDropdown(!showSortDropdown)}
             onRefreshTimeline={handleRefreshTimeline}
+            onScrollToBottomAndSearch={handleScrollToBottomAndSearch}
           />
 
           {/* Auto-scrolling Client Tabs */}
