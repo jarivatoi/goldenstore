@@ -1,5 +1,5 @@
 import React from 'react';
-import { Users, UserCheck, Database, Settings, ArrowUpDown, Calculator, RotateCcw } from 'lucide-react';
+import { Users, UserCheck, Database, Settings, ArrowUpDown, Calculator, RotateCcw, ArrowDown, Search } from 'lucide-react';
 import MiniCalculatorManager from './MiniCalculatorManager';
 
 interface CreditHeaderProps {
@@ -18,6 +18,7 @@ interface CreditHeaderProps {
   onToggleSortDropdown: () => void;
   onAddToClientFromMini: (client: any, description: string) => Promise<void>;
   onRefreshTimeline?: () => void;
+  onScrollToBottomAndSearch?: () => void; // New prop for scroll to bottom button
 }
 
 /**
@@ -41,7 +42,8 @@ const CreditHeader: React.FC<CreditHeaderProps> = ({
   showSortDropdown,
   onToggleSortDropdown,
   onAddToClientFromMini,
-  onRefreshTimeline
+  onRefreshTimeline,
+  onScrollToBottomAndSearch
 }) => {
   return (
     <div className="mb-4">
@@ -70,7 +72,7 @@ const CreditHeader: React.FC<CreditHeaderProps> = ({
       </div>
       
       {/* Left-aligned Filter Dropdown Row */}
-      <div className="flex justify-start gap-3">
+      <div className="flex justify-start items-center gap-3">
         <div className="relative">
           <button
             onClick={onToggleFilterDropdown}
@@ -213,6 +215,24 @@ const CreditHeader: React.FC<CreditHeaderProps> = ({
             <RotateCcw size={16} />
             <span className="text-sm font-medium">Refresh</span>
           </button>
+        )}
+        
+        {/* Scroll to Bottom & Search Button */}
+        {onScrollToBottomAndSearch && (
+          <div className="ml-6">
+            <button
+              onClick={onScrollToBottomAndSearch}
+              className="relative w-10 h-10 rounded-full bg-blue-500 text-white shadow-lg hover:shadow-xl transition-all duration-300 hover:scale-110 flex items-center justify-center"
+              title="Scroll to search"
+            >
+              {/* Animated down arrow with bounce */}
+              <ArrowDown 
+                size={24} 
+                className="text-white animate-bounce" 
+                strokeWidth={2}
+              />
+            </button>
+          </div>
         )}
         
         {/* Invisible overlay to close dropdown when clicking outside */}
