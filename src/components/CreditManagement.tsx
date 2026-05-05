@@ -539,6 +539,12 @@ const CreditManagement: React.FC = () => {
         throw new Error('Please enter a valid amount');
       }
       
+      // Validate that amount is greater than 0 OR description contains returnable items
+      const hasReturnableItems = /chopine|bouteille|caisse/i.test(description);
+      if (amount === 0 && !hasReturnableItems) {
+        throw new Error('Amount must be greater than 0, or description must include returnable items (Chopine, Bouteille, or Caisse)');
+      }
+      
       // Show centered wobble effect
       setCenteredWobbleClient(client);
       setShowCenteredWobble(true);
