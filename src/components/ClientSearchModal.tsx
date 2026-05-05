@@ -186,6 +186,14 @@ const ClientSearchModal: React.FC<ClientSearchModalProps> = ({
       setError('Invalid amount');
       return;
     }
+
+    // Validate that amount is greater than 0 OR description contains returnable items
+    const hasReturnableItems = /chopine|bouteille|caisse/i.test(localDescription);
+    if (amount === 0 && !hasReturnableItems) {
+      setError('Amount must be greater than 0, or description must include returnable items (Chopine, Bouteille, or Caisse)');
+      return;
+    }
+
     try {
       const newClient = await addClient(newClientName);
       onAddToClient(newClient, localDescription.trim());
