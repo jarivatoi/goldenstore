@@ -225,12 +225,35 @@ const CreditHeader: React.FC<CreditHeaderProps> = ({
               className="relative w-10 h-10 rounded-full bg-blue-500 text-white shadow-lg hover:shadow-xl transition-all duration-300 hover:scale-110 flex items-center justify-center"
               title="Scroll to search"
             >
-              {/* Animated down arrow with bounce */}
-              <ArrowDown 
-                size={24} 
-                className="text-white animate-bounce" 
-                strokeWidth={2}
-              />
+              {/* 3D static magnifying glass SVG */}
+              <svg 
+                width="24" 
+                height="24" 
+                viewBox="0 0 24 24" 
+                fill="none" 
+                xmlns="http://www.w3.org/2000/svg"
+              >
+                {/* Magnifying glass circle with 3D effect */}
+                <circle cx="11" cy="11" r="7" fill="white" fillOpacity="0.3" stroke="white" strokeWidth="2"/>
+                <circle cx="11" cy="11" r="7" fill="url(#magGlass)" />
+                {/* Handle with 3D gradient */}
+                <path d="M16 16L21 21" stroke="white" strokeWidth="2.5" strokeLinecap="round"/>
+                <path d="M16 16L21 21" stroke="url(#handleGrad)" strokeWidth="2.5" strokeLinecap="round" opacity="0.6"/>
+                {/* 3D shadow/highlight */}
+                <circle cx="11" cy="11" r="7" stroke="white" strokeWidth="0.5" opacity="0.8"/>
+                
+                {/* Gradients for 3D effect */}
+                <defs>
+                  <radialGradient id="magGlass" cx="0.4" cy="0.4" r="0.6">
+                    <stop offset="0%" stopColor="white" stopOpacity="0.9"/>
+                    <stop offset="100%" stopColor="white" stopOpacity="0.2"/>
+                  </radialGradient>
+                  <linearGradient id="handleGrad" x1="16" y1="16" x2="21" y2="21">
+                    <stop offset="0%" stopColor="white" stopOpacity="1"/>
+                    <stop offset="100%" stopColor="white" stopOpacity="0.5"/>
+                  </linearGradient>
+                </defs>
+              </svg>
             </button>
           </div>
         )}
