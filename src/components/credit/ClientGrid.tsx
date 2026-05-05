@@ -248,7 +248,7 @@ const ClientGrid: React.FC<ClientGridProps> = ({
       </div>
 
       {/* Search Bar */}
-      <div className="px-4 pb-4">
+      <div className="px-4 pb-4 client-grid-search">
         <div className="relative w-full max-w-md mx-auto">
           <div className="flex items-center gap-2">
 
