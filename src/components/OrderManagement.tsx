@@ -1126,6 +1126,11 @@ const OrderCard: React.FC<OrderCardProps> = ({ order, itemTemplates, onDelete, o
     .filter(item => item.isAvailable)
     .reduce((sum, item) => sum + item.totalPrice, 0);
 
+  // Calculate total item count
+  const totalItemCount = orderItems
+    .filter(item => item.quantity > 0)
+    .reduce((sum, item) => sum + item.quantity, 0);
+
   // Calculate VAT breakdown
   const subtotalWithoutVat = orderItems
     .filter(item => item.isAvailable)
@@ -1161,6 +1166,11 @@ const OrderCard: React.FC<OrderCardProps> = ({ order, itemTemplates, onDelete, o
           <span className="text-sm text-gray-600 select-none">
             {formatOrderDate(order.orderDate)}
           </span>
+          {totalItemCount > 0 && (
+            <span className="inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium bg-blue-100 text-blue-800">
+              {totalItemCount} {totalItemCount === 1 ? 'item' : 'items'}
+            </span>
+          )}
           {isUpdating && (
             <span className="text-xs text-blue-500 select-none">Saving...</span>
           )}
@@ -1986,6 +1996,11 @@ const CreateOrderModal: React.FC<CreateOrderModalProps> = ({ category, itemTempl
     .filter(item => item.isAvailable)
     .reduce((sum, item) => sum + item.totalPrice, 0);
 
+  // Calculate total item count
+  const totalItemCount = orderItems
+    .filter(item => item.quantity > 0)
+    .reduce((sum, item) => sum + item.quantity, 0);
+
   // Calculate VAT breakdown - ONLY for selected items with quantity > 0 (CreateOrderModal)
   const subtotalWithoutVat = orderItems
     .filter(item => item.isAvailable && item.quantity > 0)
@@ -2031,6 +2046,11 @@ const CreateOrderModal: React.FC<CreateOrderModalProps> = ({ category, itemTempl
                   Order Date{orderDate && (
                     <span className="text-gray-600 ml-1 select-none">
                       ({new Date(orderDate + 'T12:00:00').toLocaleDateString('en-US', { weekday: 'long' })})
+                    </span>
+                  )}
+                  {totalItemCount > 0 && (
+                    <span className="ml-2 inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium bg-blue-100 text-blue-800">
+                      {totalItemCount} {totalItemCount === 1 ? 'item' : 'items'}
                     </span>
                   )}
                 </label>
@@ -2431,6 +2451,11 @@ const EditOrderModal: React.FC<EditOrderModalProps> = ({ order, itemTemplates, o
     .filter(item => item.isAvailable)
     .reduce((sum, item) => sum + item.totalPrice, 0);
 
+  // Calculate total item count
+  const totalItemCount = orderItems
+    .filter(item => item.quantity > 0)
+    .reduce((sum, item) => sum + item.quantity, 0);
+
   // Calculate VAT breakdown - ONLY for selected items with quantity > 0 (EditOrderModal)
   const subtotalWithoutVat = orderItems
     .filter(item => item.isAvailable && item.quantity > 0)
@@ -2472,6 +2497,11 @@ const EditOrderModal: React.FC<EditOrderModalProps> = ({ order, itemTemplates, o
           <div className="p-6 border-b select-none">
             <label className="block text-sm font-medium text-gray-700 mb-2 select-none">
               Order Date
+              {totalItemCount > 0 && (
+                <span className="ml-2 inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium bg-blue-100 text-blue-800">
+                  {totalItemCount} {totalItemCount === 1 ? 'item' : 'items'}
+                </span>
+              )}
             </label>
             <input
               type="date"
