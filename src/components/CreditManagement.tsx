@@ -47,6 +47,7 @@ const CreditManagement: React.FC = () => {
   const [sortOption, setSortOption] = useState<'name' | 'date' | 'date-oldest' | 'debt'>('date');
   const [showSortDropdown, setShowSortDropdown] = useState(false);
   const [clientSearchDescription, setClientSearchDescription] = useState(''); // Add state to preserve description
+  const [showPaymentHistory, setShowPaymentHistory] = useState(false);
 
   // Ref for tracking scrolling tabs timeline state
   const scrollingTabsTimelineRef = useRef<any>(null);
@@ -762,6 +763,8 @@ const CreditManagement: React.FC = () => {
             linkedClient={linkedClient}
             recentTransactionClient={recentTransactionClient}
             onCloseWobble={onCloseWobble}
+            showPaymentHistory={showPaymentHistory}
+            onTogglePaymentHistory={() => setShowPaymentHistory(!showPaymentHistory)}
           />
         </div>
 
