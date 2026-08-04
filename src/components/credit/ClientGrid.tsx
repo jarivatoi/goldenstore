@@ -210,12 +210,14 @@ const ClientGrid: React.FC<ClientGridProps> = ({
     // Sort by latest payment date descending
     rows.sort((a, b) => new Date(b.latestPayment.date).getTime() - new Date(a.latestPayment.date).getTime());
 
-    // Apply search filter
+    // Apply search filter (accent-insensitive)
     const query = searchQuery.trim().toLowerCase();
     if (query) {
+      const normalize = (s: string) => s.normalize('NFD').replace(/[\u0300-\u036f]/g, '').toLowerCase();
+      const normalizedQuery = normalize(query);
       return rows.filter(r =>
-        r.client.name.toLowerCase().includes(query) ||
-        r.client.id.toLowerCase().includes(query)
+        normalize(r.client.name).includes(normalizedQuery) ||
+        normalize(r.client.id).includes(normalizedQuery)
       );
     }
 
@@ -223,24 +225,17 @@ const ClientGrid: React.FC<ClientGridProps> = ({
   }, [showPaymentHistory, clients, getClientPayments, getClientTotalDebt, searchQuery]);
 
   return (
-    <div className="bg-white rounded-lg shadow-sm border border-gray-200 mb-4">
+    <div className="bg-white rounded-lg shadow-sm border border-gray-200 mb-4 mx-auto w-full max-w-4xl">
       {/* Header */}
       <div className="px-4 py-3 border-b border-gray-100">
-        <div className="flex items-center justify-between">
+        <div className="grid grid-cols-3 items-center">
           <h3 className="text-sm font-medium text-gray-700">
             {showPaymentHistory ? 'Payment History' : (showAllClients ? 'All Clients' : 'Active Clients')}
           </h3>
-          <div className="flex items-center gap-2">
-            <span className="text-xs text-gray-500 bg-gray-100 px-2 py-1 rounded-full">
-              {showPaymentHistory
-                ? `${paymentHistoryData.length} record${paymentHistoryData.length !== 1 ? 's' : ''}`
-                : `${clients.length} client${clients.length !== 1 ? 's' : ''}`
-              }
-            </span>
-            {/* Payment History Toggle */}
+          <div className="flex justify-center">
             <button
               onClick={onTogglePaymentHistory}
-              className={`text-xs px-2 py-1 rounded-full transition-colors flex items-center gap-1 ${
+              className={`text-xs px-3 py-1.5 rounded-full transition-colors flex items-center gap-1 ${
                 showPaymentHistory
                   ? 'bg-green-100 text-green-700 font-medium'
                   : 'bg-gray-100 text-gray-600 hover:bg-gray-200'
@@ -250,6 +245,14 @@ const ClientGrid: React.FC<ClientGridProps> = ({
               {showPaymentHistory ? <LayoutGrid size={12} /> : <CreditCard size={12} />}
               <span>{showPaymentHistory ? 'Grid' : 'Payments'}</span>
             </button>
+          </div>
+          <div className="flex items-center justify-end gap-2">
+            <span className="text-xs text-gray-500 bg-gray-100 px-2 py-1 rounded-full">
+              {showPaymentHistory
+                ? `${paymentHistoryData.length} record${paymentHistoryData.length !== 1 ? 's' : ''}`
+                : `${clients.length} client${clients.length !== 1 ? 's' : ''}`
+              }
+            </span>
             <button
               onClick={onToggleAllClients}
               className={`text-xs px-2 py-1 rounded-full transition-colors ${
@@ -266,6 +269,37 @@ const ClientGrid: React.FC<ClientGridProps> = ({
           </div>
         </div>
       </div>
+
+      {/* Search Bar - Always at top */}
+      <div className="px-4 pt-3 pb-2 client-grid-search">
+          <div className="relative w-full max-w-md mx-auto">
+            <div className="flex items-center gap-2">
+              <div className="relative flex-1">
+                <div className="relative">
+                  <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
+                    <Search size={20} className="text-gray-400" />
+                  </div>
+                  <input
+                    type="text"
+                    value={searchQuery}
+                    onChange={handleSearchChange}
+                    placeholder="Search"
+                    className={`block w-full pl-10 ${searchQuery ? 'pr-20' : 'pr-4'} py-3 lg:py-4 text-lg lg:text-xl border-2 border-gray-300 rounded-xl focus:outline-none focus:ring-3 focus:ring-blue-500 focus:border-blue-500 shadow-sm transition-all duration-200`}
+                  />
+                  {searchQuery && (
+                    <button
+                      onClick={handleClearSearch}
+                      className="absolute right-2 top-1/2 -translate-y-1/2 px-4 h-12 bg-red-500 hover:bg-red-600 text-white rounded-lg flex items-center justify-center shadow-md border border-red-600 transition-all duration-200 text-base font-medium"
+                      title="Clear search"
+                    >
+                      Clear
+                    </button>
+                  )}
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
 
       {/* Content Area */}
       {showPaymentHistory ? (
@@ -297,7 +331,17 @@ const ClientGrid: React.FC<ClientGridProps> = ({
                 {paymentHistoryData.map((row) => (
                   <tr key={row.key} className="border-b border-gray-100 hover:bg-gray-50 transition-colors">
                     <td className="py-3 px-2 text-center text-gray-600 font-medium whitespace-nowrap">{row.client.id}</td>
-                    <td className="py-3 px-2 text-center text-gray-800 font-medium whitespace-nowrap">{row.client.name}</td>
+                    <td className="py-3 px-2 text-center text-gray-800 font-medium whitespace-nowrap">
+                      <button
+                        onClick={() => {
+                          onTogglePaymentHistory();
+                          onSearchChange(row.client.name);
+                        }}
+                        className="text-gray-800 hover:text-gray-600 hover:underline cursor-pointer transition-colors"
+                      >
+                        {row.client.name}
+                      </button>
+                    </td>
                     <td className="py-3 px-2 text-center whitespace-nowrap">
                       {row.latestPayment.type === 'partial' ? (
                         <span className="text-green-600 font-medium">Rs {row.latestPayment.amount.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</span>
@@ -381,39 +425,6 @@ const ClientGrid: React.FC<ClientGridProps> = ({
         </div>
       )}
 
-      {/* Search Bar */}
-      <div className="px-4 pb-4 client-grid-search">
-        <div className="relative w-full max-w-md mx-auto">
-          <div className="flex items-center gap-2">
-
-            <div className="relative flex-1">
-              <div className="relative">
-                <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
-                  <Search size={20} className="text-gray-400" />
-                </div>
-                <input
-                  type="text"
-                  value={searchQuery}
-                  onChange={handleSearchChange}
-                  placeholder="Search"
-                  className={`block w-full pl-10 ${searchQuery ? 'pr-20' : 'pr-4'} py-3 lg:py-4 text-lg lg:text-xl border-2 border-gray-300 rounded-xl focus:outline-none focus:ring-3 focus:ring-blue-500 focus:border-blue-500 shadow-sm transition-all duration-200`}
-                />
-
-                {/* Clear Button - Only visible when there's text */}
-                {searchQuery && (
-                  <button
-                    onClick={handleClearSearch}
-                    className="absolute right-2 top-1/2 -translate-y-1/2 px-4 h-12 bg-red-500 hover:bg-red-600 text-white rounded-lg flex items-center justify-center shadow-md border border-red-600 transition-all duration-200 text-base font-medium"
-                    title="Clear search"
-                  >
-                    Clear
-                  </button>
-                )}
-              </div>
-            </div>
-          </div>
-        </div>
-      </div>
     </div>
   );
 };
