@@ -107,6 +107,23 @@ export const setServerBackupEnabled = (enabled: boolean): void => {
 };
 
 /**
+ * Whether the app is running as the installed PWA rather than a browser tab.
+ * A plain site visit must never pull the server snapshot on its own.
+ */
+export const isInstalledApp = (): boolean => {
+  try {
+    return (
+      window.matchMedia('(display-mode: standalone)').matches ||
+      (window.navigator as any).standalone === true ||
+      window.matchMedia('(display-mode: fullscreen)').matches ||
+      window.matchMedia('(display-mode: minimal-ui)').matches
+    );
+  } catch {
+    return false;
+  }
+};
+
+/**
  * Message used whenever a blocked backup attempt is reported
  */
 export const getServerBackupDisabledMessage = (): string => {

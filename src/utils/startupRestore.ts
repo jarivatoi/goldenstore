@@ -10,6 +10,7 @@
 import { SupabaseBackupManager } from './supabaseBackupManager';
 import { countSnapshotRecords, hasLocalData, restoreDatabase } from './databaseRestore';
 import { AutomaticBackupManager } from './automaticBackupManager';
+import { isInstalledApp } from './deviceIdentity';
 
 export interface StartupRestoreProgress {
   percent: number;
@@ -28,6 +29,14 @@ export const maybeRestoreFromServer = async (
     onProgress({ percent: Math.max(0, Math.min(100, Math.round(percent))), message });
 
   report(2, 'Checking this device...');
+
+  // Only the installed app restores: a browser tab must not download the
+  // snapshot and fill its own storage just because the site was opened.
+  // "?restore=1" forces the check so the flow can be tested in a browser.
+  const forceRestore = new URLSearchParams(window.location.search).get('restore') === '1';
+  if (!forceRestore && !isInstalledApp()) {
+    return { restored: false, message: 'Not running as an installed app.' };
+  }
 
   // Never restore over existing data - only an empty device is filled in
   const hasData = await hasLocalData();
