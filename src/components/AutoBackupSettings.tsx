@@ -133,19 +133,19 @@ const AutoBackupSettings: React.FC = () => {
           <div
             className={`rounded-lg border p-3 transition-colors ${
               deviceBackupsEnabled
-                ? 'bg-green-50 border-green-200'
-                : 'bg-red-50 border-red-200'
+                ? 'bg-green-500/50 border-green-600/50'
+                : 'bg-red-500/50 border-red-600/50'
             }`}
           >
             <div className="flex items-start justify-between gap-3">
               <div>
-                <p className="text-sm font-medium text-gray-700">Backup device</p>
-                <p className="text-xs text-gray-600 mt-1">
+                <p className="text-sm font-medium text-gray-800">Backup device</p>
+                <p className="text-xs text-gray-700 mt-1">
                   {deviceBackupsEnabled
                     ? 'This device uploads the server backup.'
                     : 'Server backups are disabled on this device.'}
                 </p>
-                <p className="text-xs text-gray-500 mt-1">
+                <p className="text-xs text-gray-600 mt-1">
                   This device: {device.label} · {device.id.slice(0, 8)}
                 </p>
               </div>
@@ -160,7 +160,7 @@ const AutoBackupSettings: React.FC = () => {
                 {deviceBackupsEnabled ? 'Disable on this device' : 'Enable on this device'}
               </button>
             </div>
-            <p className="text-xs text-gray-500 mt-2">
+            <p className="text-xs text-gray-700 mt-2">
               Enable this only on the device that should own the server backup (for example the shop tablet). New devices start disabled.
             </p>
           </div>
