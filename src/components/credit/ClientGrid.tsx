@@ -48,7 +48,7 @@ const ClientGrid: React.FC<ClientGridProps> = ({
   showPaymentHistory,
   onTogglePaymentHistory
 }) => {
-  const { getClientPayments, getClientTotalDebt } = useCredit();
+  const { getClientPayments, getClientTotalDebt, getClientTransactions } = useCredit();
   const contentRef = useRef<HTMLDivElement>(null);
   const containerRef = useRef<HTMLDivElement>(null);
   const draggableRef = useRef<DraggableInstance[] | null>(null);
@@ -202,6 +202,8 @@ const ClientGrid: React.FC<ClientGridProps> = ({
       key: string;
       client: Client;
       latestPayment: PaymentRecord | null;
+      // Latest real transaction date - used when the client has no payment yet
+      latestTransactionDate: Date | null;
       outstanding: number;
     }
 
@@ -219,12 +221,31 @@ const ClientGrid: React.FC<ClientGridProps> = ({
       if (clientPayments.length === 0 && !hasSearchQuery) return;
 
       const latestPayment = clientPayments.length > 0 ? clientPayments[0] : null;
+
+      // Fall back to the latest real transaction date so the Date column still shows
+      // a date for clients who have not made a payment yet. Both the stored
+      // transactions and the client's lastTransactionAt are considered, and the
+      // newest valid one wins
+      let latestTransactionDate: Date | null = null;
+      if (!latestPayment) {
+        const candidateTimes = getClientTransactions(client.id)
+          .map(t => new Date(t.date).getTime());
+        if (client.lastTransactionAt) {
+          candidateTimes.push(new Date(client.lastTransactionAt).getTime());
+        }
+        const validTimes = candidateTimes.filter(time => !isNaN(time));
+        if (validTimes.length > 0) {
+          latestTransactionDate = new Date(Math.max(...validTimes));
+        }
+      }
+
       const outstanding = getClientTotalDebt(client.id);
 
       rows.push({
         key: latestPayment ? `${client.id}-${latestPayment.id}` : `${client.id}-no-payment`,
         client,
         latestPayment,
+        latestTransactionDate,
         outstanding
       });
     });
@@ -253,8 +274,8 @@ const ClientGrid: React.FC<ClientGridProps> = ({
           break;
         case 'date':
           comparison =
-            (a.latestPayment ? new Date(a.latestPayment.date).getTime() : 0) -
-            (b.latestPayment ? new Date(b.latestPayment.date).getTime() : 0);
+            (a.latestPayment ? new Date(a.latestPayment.date).getTime() : (a.latestTransactionDate ? a.latestTransactionDate.getTime() : 0)) -
+            (b.latestPayment ? new Date(b.latestPayment.date).getTime() : (b.latestTransactionDate ? b.latestTransactionDate.getTime() : 0));
           break;
         case 'outstanding':
           comparison = a.outstanding - b.outstanding;
@@ -267,7 +288,7 @@ const ClientGrid: React.FC<ClientGridProps> = ({
     // No extra search filtering here: `clients` is already filtered by the shared
     // search logic (same rules the grid uses), so both views show identical matches
     return rows;
-  }, [showPaymentHistory, clients, getClientPayments, getClientTotalDebt, searchQuery, sortColumn, sortDirection]);
+  }, [showPaymentHistory, clients, getClientPayments, getClientTotalDebt, getClientTransactions, searchQuery, sortColumn, sortDirection]);
 
   return (
     <div className="bg-white rounded-lg shadow-sm border border-gray-200 mb-4 mx-auto w-full max-w-4xl">
@@ -475,6 +496,10 @@ const ClientGrid: React.FC<ClientGridProps> = ({
                     </td>
                     <td className="py-3 px-2 text-center text-gray-600 whitespace-nowrap">
                       {row.latestPayment ? row.latestPayment.date.toLocaleDateString('en-GB', {
+                        day: '2-digit',
+                        month: 'short',
+                        year: 'numeric'
+                      }).replace(/\s/g, '-') : row.latestTransactionDate ? row.latestTransactionDate.toLocaleDateString('en-GB', {
                         day: '2-digit',
                         month: 'short',
                         year: 'numeric'
