@@ -51,6 +51,7 @@ import LoadingSpinner from './components/LoadingSpinner';
 import OnDeviceConsole from './components/OnDeviceConsole';
 import SupabaseStatusIndicator from './components/SupabaseStatusIndicator';
 import AutoBackupStatusIndicator from './components/AutoBackupStatusIndicator';
+import StartupRestoreGate from './components/StartupRestoreGate';
 import { automaticBackupManager } from './utils/automaticBackupManager';
 import { NotificationProvider, useNotification } from './context/NotificationContext';
 
@@ -67,17 +68,19 @@ function App() {
 
   // Always show the main app content, no authentication required
   return (
-    <NotificationProvider>
-      <PriceListProvider>
-        <OverProvider>
-          <OrderProvider>
-            <CreditProvider>
-              <MainAppContent />
-            </CreditProvider>
-          </OrderProvider>
-        </OverProvider>
-      </PriceListProvider>
-    </NotificationProvider>
+    <StartupRestoreGate>
+      <NotificationProvider>
+        <PriceListProvider>
+          <OverProvider>
+            <OrderProvider>
+              <CreditProvider>
+                <MainAppContent />
+              </CreditProvider>
+            </OrderProvider>
+          </OverProvider>
+        </PriceListProvider>
+      </NotificationProvider>
+    </StartupRestoreGate>
   );
 }
 

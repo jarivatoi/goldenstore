@@ -6,7 +6,8 @@
  * Provides fast backup/restore without individual table operations
  */
 
-import { supabase } from '../lib/supabase';
+import { supabase, supabaseUrl, supabaseAnonKey } from '../lib/supabase';
+import { countSnapshotRecords } from './databaseRestore';
 
 export interface DatabaseBackup {
   id: string;
@@ -30,6 +31,18 @@ export class SupabaseBackupManager {
     try {
       const jsonString = JSON.stringify(databaseJson);
       const fileSize = new Blob([jsonString]).size;
+
+      // Safety valve: an empty database must never overwrite a real snapshot
+      // (typical after a reinstall, before the server restore has run)
+      if (countSnapshotRecords(databaseJson).total === 0) {
+        const existing = await SupabaseBackupManager.getServerSnapshotMeta();
+        if (existing && (existing.fileSize || 0) > 0) {
+          throw new Error(
+            `Refusing to upload an empty database over the server backup "${existing.name}" ` +
+            `(${(existing.fileSize / 1024 / 1024).toFixed(1)} MB). Restore that backup first.`
+          );
+        }
+      }
 
       console.log('📊 Backup size:', (fileSize / 1024).toFixed(2), 'KB');
       console.log('📡 Starting backup to Supabase...');
@@ -148,40 +161,147 @@ export class SupabaseBackupManager {
       }
 
       const backupRecord = data[0];
-      if (!backupRecord || !backupRecord.backup_data) {
-        throw new Error('No valid backup found on server. Please create a backup first by using "Export Database" â†’ "Server Backup".');
-      }
-
-      // Parse the JSON string back to object
-      let parsedBackupData;
-      try {
-        // Handle both string and object formats
-        if (typeof backupRecord.backup_data === 'string') {
-          parsedBackupData = JSON.parse(backupRecord.backup_data);
-        } else if (typeof backupRecord.backup_data === 'object' && backupRecord.backup_data !== null) {
-          parsedBackupData = backupRecord.backup_data;
-        } else {
-          throw new Error('Invalid backup data format');
-        }
-        
-        // Validate that the parsed data has the expected structure
-        if (!parsedBackupData || typeof parsedBackupData !== 'object') {
-          throw new Error('Backup data is not a valid object');
-        }
-        
-        // Check for required fields
-        if (!parsedBackupData.version && !parsedBackupData.appName && !parsedBackupData.priceList && !parsedBackupData.creditManagement) {
-          throw new Error('Backup data does not contain valid Golden Store data');
-        }
-      } catch (parseError) {
-        throw new Error(`Failed to parse backup data: ${parseError instanceof Error ? parseError.message : 'Unknown parsing error'}`);
-      }
-
-      
-      return parsedBackupData;
+      return SupabaseBackupManager.parseBackupPayload(backupRecord);
     } catch (error) {
       
       throw error;
+    }
+  }
+
+  /**
+   * Validate a database_backups row and return its payload
+   */
+  private static parseBackupPayload(backupRecord: any): any {
+    if (!backupRecord || !backupRecord.backup_data) {
+      throw new Error('No valid backup found on server. Please create a backup first by using "Export Database" → "Server Backup".');
+    }
+
+    try {
+      let parsedBackupData;
+
+      // Handle both string and object formats
+      if (typeof backupRecord.backup_data === 'string') {
+        parsedBackupData = JSON.parse(backupRecord.backup_data);
+      } else if (typeof backupRecord.backup_data === 'object' && backupRecord.backup_data !== null) {
+        parsedBackupData = backupRecord.backup_data;
+      } else {
+        throw new Error('Invalid backup data format');
+      }
+
+      if (!parsedBackupData || typeof parsedBackupData !== 'object') {
+        throw new Error('Backup data is not a valid object');
+      }
+
+      if (!parsedBackupData.version && !parsedBackupData.appName && !parsedBackupData.priceList && !parsedBackupData.creditManagement) {
+        throw new Error('Backup data does not contain valid Golden Store data');
+      }
+
+      return parsedBackupData;
+    } catch (parseError) {
+      throw new Error(`Failed to parse backup data: ${parseError instanceof Error ? parseError.message : 'Unknown parsing error'}`);
+    }
+  }
+
+  /**
+   * Load the latest backup while reporting real download progress (0-100).
+   * Streams the response so the caller can show a percentage instead of a spinner.
+   */
+  static async loadFromSupabaseWithProgress(
+    onProgress?: (percent: number) => void
+  ): Promise<{ data: any; name: string | null; createdAt: string | null; fileSize: number | null }> {
+    const url = `${supabaseUrl}/rest/v1/database_backups?select=backup_data,backup_name,created_at,file_size&order=created_at.desc&limit=1`;
+    const controller = new AbortController();
+    const timeoutId = setTimeout(() => controller.abort(), 300000);
+
+    try {
+      // PostgREST usually answers without content-length (compressed/chunked),
+      // so the stored file size is used as the expected download total
+      const meta = await SupabaseBackupManager.getServerSnapshotMeta();
+      const expectedTotal = meta?.fileSize ? Math.round(meta.fileSize * 1.05) : 0;
+
+      const response = await fetch(url, {
+        headers: {
+          apikey: supabaseAnonKey,
+          Authorization: `Bearer ${supabaseAnonKey}`,
+          Accept: 'application/json'
+        },
+        credentials: 'omit',
+        signal: controller.signal
+      });
+
+      if (!response.ok) {
+        throw new Error(`Failed to load backup from server: ${response.status} ${response.statusText}`);
+      }
+
+      const total = Number(response.headers.get('content-length') || 0) || expectedTotal;
+      let text = '';
+
+      if (response.body && typeof response.body.getReader === 'function') {
+        const reader = response.body.getReader();
+        const decoder = new TextDecoder();
+        let received = 0;
+
+        while (true) {
+          const { done, value } = await reader.read();
+          if (done || !value) break;
+
+          received += value.byteLength;
+          text += decoder.decode(value, { stream: true });
+
+          if (onProgress && total > 0) {
+            onProgress(Math.min(99, Math.round((received / total) * 100)));
+          }
+        }
+        text += decoder.decode();
+      } else {
+        text = await response.text();
+        onProgress?.(99);
+      }
+
+      const rows = JSON.parse(text);
+      if (!Array.isArray(rows) || rows.length === 0) {
+        throw new Error('No backup found on server. Please create a backup first by using "Export Database" → "Server Backup".');
+      }
+
+      const row = rows[0];
+      return {
+        data: SupabaseBackupManager.parseBackupPayload(row),
+        name: row.backup_name || null,
+        createdAt: row.created_at || null,
+        fileSize: row.file_size || null
+      };
+    } finally {
+      clearTimeout(timeoutId);
+    }
+  }
+
+  /**
+   * Metadata of the current server snapshot (used to detect an empty upload)
+   */
+  static async getServerSnapshotMeta(): Promise<{ name: string; createdAt: string; fileSize: number } | null> {
+    if (!supabase) {
+      return null;
+    }
+
+    try {
+      const { data, error } = await supabase
+        .from('database_backups')
+        .select('backup_name, created_at, file_size')
+        .order('created_at', { ascending: false })
+        .limit(1);
+
+      if (error || !data || data.length === 0) {
+        return null;
+      }
+
+      const row = data[0];
+      return {
+        name: row.backup_name || 'Server backup',
+        createdAt: row.created_at,
+        fileSize: row.file_size || 0
+      };
+    } catch (error) {
+      return null;
     }
   }
 

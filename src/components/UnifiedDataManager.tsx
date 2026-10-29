@@ -8,9 +8,8 @@ import { useOrder } from '../context/OrderContext';
 import { SupabaseBackupManager } from '../utils/supabaseBackupManager';
 import AutoBackupSettings from './AutoBackupSettings';
 import { automaticBackupManager } from '../utils/automaticBackupManager';
-import { creditDBManager } from '../utils/creditIndexedDB';
-import { appDBManager } from '../utils/appIndexedDB';
 import { isServerBackupEnabled, getServerBackupDisabledMessage } from '../utils/deviceIdentity';
+import { restoreDatabase } from '../utils/databaseRestore';
 
 interface UnifiedDataManagerProps {
   isOpen: boolean;
@@ -315,41 +314,9 @@ const UnifiedDataManager: React.FC<UnifiedDataManagerProps> = ({ isOpen, onClose
       setIsProcessing(true);
       setModal({ type: null, title: '', message: '' });
 
-      // Initialize both IndexedDB databases
-      await creditDBManager.initDB();
-      await appDBManager.initDB();
-
-      // Import Price List data to IndexedDB ONLY
-      if (data.priceList?.items) {
-        await appDBManager.savePriceListItems(data.priceList.items);
-      }
-
-      // Import Credit Management data to IndexedDB
-      if (data.creditManagement?.clients) {
-        await creditDBManager.saveAllClients(data.creditManagement.clients);
-      }
-      if (data.creditManagement?.transactions) {
-        await creditDBManager.saveAllTransactions(data.creditManagement.transactions);
-      }
-      if (data.creditManagement?.payments) {
-        await creditDBManager.saveAllPayments(data.creditManagement.payments);
-      }
-
-      // Import Over Management data to IndexedDB ONLY
-      if (data.overManagement?.items) {
-        await appDBManager.saveOverItems(data.overManagement.items);
-      }
-
-      // Import Order Management data to IndexedDB ONLY
-      if (data.orderManagement?.categories) {
-        await appDBManager.saveOrderCategories(data.orderManagement.categories);
-      }
-      if (data.orderManagement?.itemTemplates) {
-        await appDBManager.saveOrderTemplates(data.orderManagement.itemTemplates);
-      }
-      if (data.orderManagement?.orders) {
-        await appDBManager.saveOrders(data.orderManagement.orders);
-      }
+      // Restore every module through the shared restore path
+      const counts = await restoreDatabase(data);
+      console.log(`✅ Imported ${counts.total} records`);
 
       setModal({
         type: 'success',

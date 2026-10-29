@@ -33,6 +33,9 @@ export class AutomaticBackupManager {
   private static readonly MIN_BACKUP_GAP_MS = 6 * 60 * 60 * 1000; // 6 hours
 
   private static instance: AutomaticBackupManager | null = null;
+  // Set while a first-launch server restore writes to IndexedDB, so a scheduled
+  // backup can never upload a half-restored database
+  private static suspended = false;
   private checkInterval: number | null = null;  // Changed from NodeJS.Timeout to number
   private isRunning = false;
   private hasWarnedAboutDisabledBackup = false;
@@ -48,6 +51,13 @@ export class AutomaticBackupManager {
       AutomaticBackupManager.instance = new AutomaticBackupManager();
     }
     return AutomaticBackupManager.instance;
+  }
+
+  /**
+   * Pause uploads while a restore is writing to the local database
+   */
+  static setBackupSuspended(suspended: boolean): void {
+    AutomaticBackupManager.suspended = suspended;
   }
 
   /**
@@ -107,6 +117,10 @@ export class AutomaticBackupManager {
   private async performAutomaticBackup(): Promise<BackupRunResult> {
     if (this.isRunning) {
       return { status: 'skipped', message: 'A backup is already running' };
+    }
+
+    if (AutomaticBackupManager.suspended) {
+      return { status: 'skipped', message: 'Database restore in progress' };
     }
 
     // Only a device that is allowed to upload may write the server snapshot
