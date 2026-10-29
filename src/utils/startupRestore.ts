@@ -5,6 +5,9 @@
  * On a device that holds no data (fresh install, cleared storage) the app pulls
  * the latest server snapshot back automatically. A device that already has data
  * is never touched, so this can never overwrite real local work.
+ *
+ * Every check is recorded, so the reason for a skipped restore can be read from
+ * the Backup settings instead of a console that is not available on a tablet.
  */
 
 import { SupabaseBackupManager } from './supabaseBackupManager';
@@ -22,31 +25,41 @@ export interface StartupRestoreOutcome {
   message: string;
 }
 
-export const maybeRestoreFromServer = async (
-  onProgress: (progress: StartupRestoreProgress) => void
+export interface StartupCheckRecord {
+  at: string;
+  installed: boolean;
+  forceRestore: boolean;
+  outcome: 'restored' | 'skipped' | 'failed';
+  message: string;
+}
+
+const LAST_CHECK_KEY = 'gsLastStartupCheck';
+
+const recordStartupCheck = (record: StartupCheckRecord): void => {
+  try {
+    localStorage.setItem(LAST_CHECK_KEY, JSON.stringify(record));
+  } catch {
+    // Diagnostics only - never block the app because of storage
+  }
+};
+
+export const getLastStartupCheck = (): StartupCheckRecord | null => {
+  try {
+    const raw = localStorage.getItem(LAST_CHECK_KEY);
+    return raw ? (JSON.parse(raw) as StartupCheckRecord) : null;
+  } catch {
+    return null;
+  }
+};
+
+const runRestoreCheck = async (
+  installed: boolean,
+  forceRestore: boolean,
+  report: (percent: number, message: string) => void
 ): Promise<StartupRestoreOutcome> => {
-  const report = (percent: number, message: string) =>
-    onProgress({ percent: Math.max(0, Math.min(100, Math.round(percent))), message });
-
-  report(2, 'Checking this device...');
-
   // Only the installed app restores: a browser tab must not download the
   // snapshot and fill its own storage just because the site was opened.
   // "?restore=1" forces the check so the flow can be tested in a browser.
-  const forceRestore = new URLSearchParams(window.location.search).get('restore') === '1';
-  const installed = isInstalledApp();
-
-  // Visible in the on-device console, so a skipped restore can be explained
-  console.log('🔄 Startup restore check', {
-    installed,
-    forceRestore,
-    displayMode: ['standalone', 'fullscreen', 'minimal-ui', 'browser'].filter((mode) =>
-      window.matchMedia(`(display-mode: ${mode})`).matches
-    ),
-    iosStandalone: (window.navigator as any).standalone,
-    referrer: document.referrer
-  });
-
   if (!forceRestore && !installed) {
     return { restored: false, message: 'Not running as an installed app.' };
   }
@@ -97,5 +110,49 @@ export const maybeRestoreFromServer = async (
     return { restored: true, message: `Restored ${counts.total} records` };
   } finally {
     AutomaticBackupManager.setBackupSuspended(false);
+  }
+};
+
+export const maybeRestoreFromServer = async (
+  onProgress: (progress: StartupRestoreProgress) => void
+): Promise<StartupRestoreOutcome> => {
+  const report = (percent: number, message: string) =>
+    onProgress({ percent: Math.max(0, Math.min(100, Math.round(percent))), message });
+
+  const installed = isInstalledApp();
+  const forceRestore = new URLSearchParams(window.location.search).get('restore') === '1';
+
+  console.log('🔄 Startup restore check', {
+    installed,
+    forceRestore,
+    displayMode: ['standalone', 'fullscreen', 'minimal-ui', 'browser'].filter((mode) =>
+      window.matchMedia(`(display-mode: ${mode})`).matches
+    ),
+    iosStandalone: (window.navigator as any).standalone,
+    referrer: document.referrer
+  });
+
+  report(2, 'Checking this device...');
+
+  try {
+    const outcome = await runRestoreCheck(installed, forceRestore, report);
+    recordStartupCheck({
+      at: new Date().toISOString(),
+      installed,
+      forceRestore,
+      outcome: outcome.restored ? 'restored' : 'skipped',
+      message: outcome.message
+    });
+    return outcome;
+  } catch (error) {
+    const message = error instanceof Error ? error.message : 'Unknown error';
+    recordStartupCheck({
+      at: new Date().toISOString(),
+      installed,
+      forceRestore,
+      outcome: 'failed',
+      message
+    });
+    throw error;
   }
 };

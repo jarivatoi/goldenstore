@@ -1,14 +1,19 @@
 import React, { useState } from 'react';
 import { createPortal } from 'react-dom';
-import { Clock, TestTube, CheckCircle, AlertTriangle, X, ChevronDown, ChevronUp } from 'lucide-react';
+import { Clock, TestTube, CheckCircle, AlertTriangle, X, ChevronDown, ChevronUp, DownloadCloud } from 'lucide-react';
 import { automaticBackupManager } from '../utils/automaticBackupManager';
 import { getDeviceIdentity, isServerBackupEnabled, setServerBackupEnabled } from '../utils/deviceIdentity';
+import { SupabaseBackupManager } from '../utils/supabaseBackupManager';
+import { restoreDatabase } from '../utils/databaseRestore';
+import { getLastStartupCheck } from '../utils/startupRestore';
 
 interface ModalState {
   isOpen: boolean;
-  type: 'success' | 'error';
+  type: 'success' | 'error' | 'warning';
   title: string;
   message: string;
+  confirmLabel?: string;
+  onConfirm?: () => void;
 }
 
 /**
@@ -24,6 +29,8 @@ const AutoBackupSettings: React.FC = () => {
   const [isTesting, setIsTesting] = useState(false);
   const [device] = useState(() => getDeviceIdentity());
   const [deviceBackupsEnabled, setDeviceBackupsEnabled] = useState<boolean>(() => isServerBackupEnabled());
+  const [isRestoring, setIsRestoring] = useState(false);
+  const [lastCheck] = useState(() => getLastStartupCheck());
   const [modal, setModal] = useState<ModalState>({
     isOpen: false,
     type: 'success',
@@ -85,8 +92,60 @@ const AutoBackupSettings: React.FC = () => {
     }
   };
 
+  const handleRestoreFromServer = () => {
+    setModal({
+      isOpen: true,
+      type: 'warning',
+      title: 'Restore From Server?',
+      message: 'This replaces all data on this device with the newest server snapshot.\n\nAny change made since the last upload will be lost.',
+      confirmLabel: 'Restore',
+      onConfirm: () => {
+        closeModal();
+        runRestore();
+      }
+    });
+  };
+
+  const runRestore = async () => {
+    setIsRestoring(true);
+    try {
+      const data = await SupabaseBackupManager.loadFromSupabase();
+      const counts = await restoreDatabase(data);
+
+      setModal({
+        isOpen: true,
+        type: 'success',
+        title: 'Restore Complete',
+        message: `${counts.total} records were restored from the server.\n\nThe app will reload now.`,
+        confirmLabel: 'Reload',
+        onConfirm: () => window.location.reload()
+      });
+    } catch (error) {
+      setModal({
+        isOpen: true,
+        type: 'error',
+        title: 'Restore Failed',
+        message: `Could not restore from the server: ${error instanceof Error ? error.message : 'Unknown error'}`
+      });
+    } finally {
+      setIsRestoring(false);
+    }
+  };
+
+  const describeLastCheck = (): string => {
+    if (!lastCheck) {
+      return 'not run yet on this device';
+    }
+
+    const when = new Date(lastCheck.at);
+    const time = `${when.toLocaleDateString('en-GB')} ${when.toLocaleTimeString('en-GB', { hour: '2-digit', minute: '2-digit' })}`;
+    const mode = lastCheck.installed ? 'installed app' : 'browser tab';
+
+    return `${lastCheck.message} (${time}, ${mode})`;
+  };
+
   const closeModal = () => {
-    setModal(prev => ({ ...prev, isOpen: false }));
+    setModal(prev => ({ ...prev, isOpen: false, onConfirm: undefined, confirmLabel: undefined }));
   };
 
   return (
@@ -110,7 +169,7 @@ const AutoBackupSettings: React.FC = () => {
 
         <div 
           className={`space-y-4 overflow-hidden transition-all duration-300 ease-in-out ${
-            isMinimized ? 'max-h-0 opacity-0' : 'max-h-[40rem] opacity-100'
+            isMinimized ? 'max-h-0 opacity-0' : 'max-h-[48rem] opacity-100'
           }`}
         >
           {/* Info */}
@@ -157,6 +216,22 @@ const AutoBackupSettings: React.FC = () => {
             </p>
           </div>
 
+          {/* Startup restore */}
+          <div className="border-t border-gray-200 pt-3">
+            <p className="text-sm font-medium text-gray-700">Restore from server</p>
+            <p className="text-xs text-gray-600 mt-1">
+              Runs automatically on a fresh install. Last check: {describeLastCheck()}
+            </p>
+            <button
+              onClick={handleRestoreFromServer}
+              disabled={isRestoring}
+              className="mt-2 w-full flex items-center justify-center gap-2 px-3 py-2 text-xs font-medium rounded-lg bg-gray-100 text-gray-700 hover:bg-gray-200 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+            >
+              <DownloadCloud size={14} />
+              {isRestoring ? 'Restoring...' : 'Restore from server'}
+            </button>
+          </div>
+
           {/* Action Buttons */}
           <div className="flex gap-3">
             <button
@@ -180,10 +255,16 @@ const AutoBackupSettings: React.FC = () => {
             <div className="flex items-center justify-between p-6 border-b border-gray-200 select-none">
               <div className="flex items-center gap-3 select-none">
                 <div className={`p-2 rounded-full select-none ${
-                  modal.type === 'success' ? 'bg-green-100' : 'bg-red-100'
+                  modal.type === 'success'
+                    ? 'bg-green-100'
+                    : modal.type === 'warning'
+                      ? 'bg-yellow-100'
+                      : 'bg-red-100'
                 }`}>
                   {modal.type === 'success' ? (
                     <CheckCircle size={20} className="text-green-600" />
+                  ) : modal.type === 'warning' ? (
+                    <AlertTriangle size={20} className="text-yellow-600" />
                   ) : (
                     <AlertTriangle size={20} className="text-red-600" />
                   )}
@@ -202,16 +283,32 @@ const AutoBackupSettings: React.FC = () => {
             <div className="p-6 select-none">
               <p className="text-gray-700 whitespace-pre-line select-none">{modal.message}</p>
               
-              <div className="flex justify-end mt-6 select-none">
+              <div className="flex justify-end gap-2 mt-6 select-none">
+                {modal.onConfirm && (
+                  <button
+                    onClick={closeModal}
+                    className="px-6 py-2 rounded-lg bg-gray-100 text-gray-700 hover:bg-gray-200 transition-colors select-none"
+                  >
+                    Cancel
+                  </button>
+                )}
                 <button
-                  onClick={closeModal}
-                  className={`px-6 py-2 rounded-lg transition-colors select-none ${
-                    modal.type === 'success' 
-                      ? 'bg-green-500 hover:bg-green-600 text-white' 
+                  onClick={() => {
+                    if (modal.onConfirm) {
+                      const confirm = modal.onConfirm;
+                      confirm();
+                    } else {
+                      closeModal();
+                    }
+                  }}
+                  className={`px-6 py-2 rounded-lg transition-colors select-none ${modal.type === 'success'
+                    ? 'bg-green-500 hover:bg-green-600 text-white'
+                    : modal.type === 'warning'
+                      ? 'bg-yellow-500 hover:bg-yellow-600 text-white'
                       : 'bg-red-500 hover:bg-red-600 text-white'
                   }`}
                 >
-                  OK
+                  {modal.confirmLabel || 'OK'}
                 </button>
               </div>
             </div>
