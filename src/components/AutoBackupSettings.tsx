@@ -3,7 +3,6 @@ import { createPortal } from 'react-dom';
 import { Clock, TestTube, CheckCircle, AlertTriangle, X, ChevronDown, ChevronUp } from 'lucide-react';
 import { automaticBackupManager } from '../utils/automaticBackupManager';
 import { getDeviceIdentity, isServerBackupEnabled, setServerBackupEnabled } from '../utils/deviceIdentity';
-import { getLastStartupCheck } from '../utils/startupRestore';
 
 interface ModalState {
   isOpen: boolean;
@@ -27,7 +26,6 @@ const AutoBackupSettings: React.FC = () => {
   const [isTesting, setIsTesting] = useState(false);
   const [device] = useState(() => getDeviceIdentity());
   const [deviceBackupsEnabled, setDeviceBackupsEnabled] = useState<boolean>(() => isServerBackupEnabled());
-  const [lastCheck] = useState(() => getLastStartupCheck());
   const [modal, setModal] = useState<ModalState>({
     isOpen: false,
     type: 'success',
@@ -89,18 +87,6 @@ const AutoBackupSettings: React.FC = () => {
     }
   };
 
-  const describeLastCheck = (): string => {
-    if (!lastCheck) {
-      return 'not run yet on this device';
-    }
-
-    const when = new Date(lastCheck.at);
-    const time = `${when.toLocaleDateString('en-GB')} ${when.toLocaleTimeString('en-GB', { hour: '2-digit', minute: '2-digit' })}`;
-    const mode = lastCheck.installed ? 'installed app' : 'browser tab';
-
-    return `${lastCheck.message} (${time}, ${mode})`;
-  };
-
   const closeModal = () => {
     setModal(prev => ({ ...prev, isOpen: false, onConfirm: undefined, confirmLabel: undefined }));
   };
@@ -144,7 +130,13 @@ const AutoBackupSettings: React.FC = () => {
           </div>
 
           {/* Device specific backup switch */}
-          <div className="border-t border-gray-200 pt-3">
+          <div
+            className={`rounded-lg border p-3 transition-colors ${
+              deviceBackupsEnabled
+                ? 'bg-green-50 border-green-200'
+                : 'bg-red-50 border-red-200'
+            }`}
+          >
             <div className="flex items-start justify-between gap-3">
               <div>
                 <p className="text-sm font-medium text-gray-700">Backup device</p>
@@ -153,7 +145,7 @@ const AutoBackupSettings: React.FC = () => {
                     ? 'This device uploads the server backup.'
                     : 'Server backups are disabled on this device.'}
                 </p>
-                <p className="text-xs text-gray-400 mt-1">
+                <p className="text-xs text-gray-500 mt-1">
                   This device: {device.label} · {device.id.slice(0, 8)}
                 </p>
               </div>
@@ -168,17 +160,8 @@ const AutoBackupSettings: React.FC = () => {
                 {deviceBackupsEnabled ? 'Disable on this device' : 'Enable on this device'}
               </button>
             </div>
-            <p className="text-xs text-gray-400 mt-2">
+            <p className="text-xs text-gray-500 mt-2">
               Enable this only on the device that should own the server backup (for example the shop tablet). New devices start disabled.
-            </p>
-          </div>
-
-          {/* Startup restore (automatic, no button) */}
-          <div className="border-t border-gray-200 pt-3">
-            <p className="text-sm font-medium text-gray-700">First-launch restore</p>
-            <p className="text-xs text-gray-600 mt-1">
-              A fresh install pulls the newest server snapshot automatically.
-              Last check: {describeLastCheck()}
             </p>
           </div>
 
