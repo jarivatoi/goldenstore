@@ -11,7 +11,7 @@
  */
 
 import { SupabaseBackupManager } from './supabaseBackupManager';
-import { countSnapshotRecords, hasLocalData, restoreDatabase } from './databaseRestore';
+import { countSnapshotRecords, describeLocalData, describeLocalDataSummary, restoreDatabase } from './databaseRestore';
 import { AutomaticBackupManager } from './automaticBackupManager';
 import { isInstalledApp } from './deviceIdentity';
 
@@ -65,13 +65,14 @@ const runRestoreCheck = async (
   }
 
   // Never restore over existing data - only an empty device is filled in
-  const hasData = await hasLocalData();
-  if (hasData === null) {
+  const localData = await describeLocalData();
+  if (localData === null) {
     return { restored: false, message: 'Local database could not be read.' };
   }
-  if (hasData) {
-    console.log('📦 Local data found - server restore skipped');
-    return { restored: false, message: 'Local data found.' };
+  if (localData.total > 0) {
+    const detail = describeLocalDataSummary(localData);
+    console.log('📦 Local data found - server restore skipped:', detail);
+    return { restored: false, message: `Local data found: ${detail}.` };
   }
 
   console.log('📭 Local database is empty - looking for a server backup');

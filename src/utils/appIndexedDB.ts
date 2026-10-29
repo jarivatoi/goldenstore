@@ -211,6 +211,23 @@ class AppIndexedDBManager {
     });
   }
 
+  /**
+   * Number of records in a store. Uses count(), so the records themselves are
+   * never loaded - safe to call on every launch.
+   */
+  async countRecords(storeName: string): Promise<number> {
+    if (!this.db) throw new Error('Database not initialized');
+
+    return new Promise((resolve, reject) => {
+      const transaction = this.db!.transaction([storeName], 'readonly');
+      const store = transaction.objectStore(storeName);
+      const request = store.count();
+
+      request.onsuccess = () => resolve(request.result || 0);
+      request.onerror = () => reject(request.error);
+    });
+  }
+
   // Price List operations
   async savePriceListItems(items: any[]): Promise<void> {
     return this.saveAll(PRICE_LIST_STORE, items);

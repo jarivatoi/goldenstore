@@ -54,40 +54,97 @@ export const countSnapshotRecords = (data: any): SnapshotCounts => {
 };
 
 /**
- * Does this device hold any business record at all?
- * Checks the small modules first and stops at the first hit, so a normal launch
- * never reads the whole database. Returns null when the database cannot be read,
- * so callers can decide to do nothing instead of risking a wrong answer.
+ * Records held by each store on this device
  */
-export const hasLocalData = async (): Promise<boolean | null> => {
+export interface LocalDataSummary {
+  priceList: number;
+  clients: number;
+  transactions: number;
+  payments: number;
+  overItems: number;
+  orders: number;
+  returns: number;
+  orderCategories: number;
+  orderTemplates: number;
+  total: number;
+}
+
+const STORE_LABELS: Array<[keyof Omit<LocalDataSummary, 'total'>, string, string]> = [
+  ['clients', 'client', 'clients'],
+  ['transactions', 'transaction', 'transactions'],
+  ['payments', 'payment', 'payments'],
+  ['priceList', 'price item', 'price items'],
+  ['orders', 'order', 'orders'],
+  ['overItems', 'over item', 'over items'],
+  ['returns', 'return', 'returns'],
+  ['orderCategories', 'order category', 'order categories'],
+  ['orderTemplates', 'order template', 'order templates']
+];
+
+/**
+ * Short human summary such as "256 clients, 1193 transactions, 99 price items"
+ */
+export const describeLocalDataSummary = (summary: LocalDataSummary): string => {
+  const parts = STORE_LABELS.filter(([key]) => summary[key] > 0)
+    .sort((a, b) => summary[b[0]] - summary[a[0]])
+    .slice(0, 3)
+    .map(([key, singular, plural]) => `${summary[key]} ${summary[key] === 1 ? singular : plural}`);
+
+  return parts.length > 0 ? parts.join(', ') : 'no records';
+};
+
+/**
+ * What does this device already hold? Counts only, so nothing large is read.
+ * Returns null when the database cannot be read, so callers can decide to do
+ * nothing instead of risking a wrong answer.
+ */
+export const describeLocalData = async (): Promise<LocalDataSummary | null> => {
   try {
     await appDBManager.initDB();
     await creditDBManager.initDB();
 
-    const checks = [
-      () => appDBManager.getPriceListItems(),
-      () => creditDBManager.getAllClients(),
-      () => appDBManager.getOrders(),
-      () => appDBManager.getOverItems(),
-      () => creditDBManager.getAllPayments(),
-      () => creditDBManager.getAllTransactions(),
-      () => appDBManager.getAllReturns(),
-      () => appDBManager.getOrderCategories(),
-      () => appDBManager.getOrderTemplates()
-    ];
+    const [priceList, clients, transactions, payments, overItems, orders, returns, orderCategories, orderTemplates] =
+      await Promise.all([
+        appDBManager.countRecords('priceList'),
+        creditDBManager.countRecords('clients'),
+        creditDBManager.countRecords('transactions'),
+        creditDBManager.countRecords('payments'),
+        appDBManager.countRecords('overItems'),
+        appDBManager.countRecords('orders'),
+        appDBManager.countRecords('orderReturns'),
+        appDBManager.countRecords('orderCategories'),
+        appDBManager.countRecords('orderTemplates')
+      ]);
 
-    for (const check of checks) {
-      const rows = await check();
-      if (Array.isArray(rows) && rows.length > 0) {
-        return true;
-      }
-    }
+    const summary: LocalDataSummary = {
+      priceList,
+      clients,
+      transactions,
+      payments,
+      overItems,
+      orders,
+      returns,
+      orderCategories,
+      orderTemplates,
+      total: 0
+    };
 
-    return false;
+    summary.total =
+      priceList + clients + transactions + payments + overItems + orders + returns + orderCategories + orderTemplates;
+
+    return summary;
   } catch (error) {
     console.error('❌ Could not read local database:', error);
     return null;
   }
+};
+
+/**
+ * Does this device hold any business record at all?
+ */
+export const hasLocalData = async (): Promise<boolean | null> => {
+  const summary = await describeLocalData();
+  return summary === null ? null : summary.total > 0;
 };
 
 /**

@@ -167,6 +167,23 @@ class CreditIndexedDBManager {
     });
   }
 
+  /**
+   * Number of records in a store. Uses count(), so the records themselves are
+   * never loaded - safe to call on every launch.
+   */
+  async countRecords(storeName: string): Promise<number> {
+    if (!this.db) throw new Error('Database not initialized');
+
+    return new Promise((resolve, reject) => {
+      const transaction = this.db!.transaction([storeName], 'readonly');
+      const store = transaction.objectStore(storeName);
+      const request = store.count();
+
+      request.onsuccess = () => resolve(request.result || 0);
+      request.onerror = () => reject(request.error);
+    });
+  }
+
   async saveClient(client: DBClient): Promise<void> {
     if (!this.db) throw new Error('Database not initialized');
 
