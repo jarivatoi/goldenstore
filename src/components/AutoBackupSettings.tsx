@@ -1,7 +1,7 @@
 import React, { useState } from 'react';
 import { createPortal } from 'react-dom';
 import { Clock, TestTube, CheckCircle, AlertTriangle, X, ChevronDown, ChevronUp, DownloadCloud } from 'lucide-react';
-import { automaticBackupManager } from '../utils/automaticBackupManager';
+import { automaticBackupManager, AutomaticBackupManager } from '../utils/automaticBackupManager';
 import { getDeviceIdentity, isServerBackupEnabled, setServerBackupEnabled } from '../utils/deviceIdentity';
 import { SupabaseBackupManager } from '../utils/supabaseBackupManager';
 import { restoreDatabase } from '../utils/databaseRestore';
@@ -108,6 +108,9 @@ const AutoBackupSettings: React.FC = () => {
 
   const runRestore = async () => {
     setIsRestoring(true);
+    // A scheduled upload halfway through the restore would push a half-filled
+    // database to the server
+    AutomaticBackupManager.setBackupSuspended(true);
     try {
       const data = await SupabaseBackupManager.loadFromSupabase();
       const counts = await restoreDatabase(data);
@@ -116,7 +119,10 @@ const AutoBackupSettings: React.FC = () => {
         isOpen: true,
         type: 'success',
         title: 'Restore Complete',
-        message: `${counts.total} records were restored from the server.\n\nThe app will reload now.`,
+        message:
+          `${counts.total} records were restored from the server.\n\n` +
+          `Clients: ${counts.clients}, transactions: ${counts.transactions}, payments: ${counts.payments}, ` +
+          `price items: ${counts.priceList}, orders: ${counts.orders}.\n\nThe app will reload now.`,
         confirmLabel: 'Reload',
         onConfirm: () => window.location.reload()
       });
@@ -128,6 +134,7 @@ const AutoBackupSettings: React.FC = () => {
         message: `Could not restore from the server: ${error instanceof Error ? error.message : 'Unknown error'}`
       });
     } finally {
+      AutomaticBackupManager.setBackupSuspended(false);
       setIsRestoring(false);
     }
   };

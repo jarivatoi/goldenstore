@@ -34,14 +34,31 @@ export class SupabaseBackupManager {
 
       // Safety valve: an empty database must never overwrite a real snapshot
       // (typical after a reinstall, before the server restore has run)
-      if (countSnapshotRecords(databaseJson).total === 0) {
-        const existing = await SupabaseBackupManager.getServerSnapshotMeta();
-        if (existing && (existing.fileSize || 0) > 0) {
-          throw new Error(
-            `Refusing to upload an empty database over the server backup "${existing.name}" ` +
-            `(${(existing.fileSize / 1024 / 1024).toFixed(1)} MB). Restore that backup first.`
-          );
-        }
+      const snapshotCounts = countSnapshotRecords(databaseJson);
+      const existing = await SupabaseBackupManager.getServerSnapshotMeta();
+      const serverHasRealData = !!existing && (existing.fileSize || 0) > 100 * 1024;
+
+      if (snapshotCounts.total === 0 && serverHasRealData) {
+        throw new Error(
+          `Refusing to upload an empty database over the server backup "${existing!.name}" ` +
+          `(${(existing!.fileSize / 1024 / 1024).toFixed(1)} MB). Restore that backup first.`
+        );
+      }
+
+      // The credit module lives in its own IndexedDB and can be lost on its own
+      // (a reinstall or a partial restore). Such a snapshot would wipe every
+      // client, transaction and payment on the server.
+      if (
+        serverHasRealData &&
+        snapshotCounts.clients === 0 &&
+        snapshotCounts.transactions === 0 &&
+        snapshotCounts.payments === 0
+      ) {
+        throw new Error(
+          `Refusing to upload: this device has no credit data (clients, transactions, payments) ` +
+          `but the server backup "${existing!.name}" is ${(existing!.fileSize / 1024 / 1024).toFixed(1)} MB. ` +
+          `Restore that backup before backing up.`
+        );
       }
 
       console.log('📊 Backup size:', (fileSize / 1024).toFixed(2), 'KB');
