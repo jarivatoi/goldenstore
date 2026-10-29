@@ -46,11 +46,15 @@ const detectLabel = (): string => {
     ? 'Android'
     : isIOS
       ? 'iOS'
-      : /mac/i.test(ua)
-        ? 'macOS'
-        : /win/i.test(ua)
-          ? 'Windows'
-          : 'Unknown OS';
+      : /cros/i.test(ua)
+        ? 'ChromeOS'
+        : /mac/i.test(ua)
+          ? 'macOS'
+          : /win/i.test(ua)
+            ? 'Windows'
+            : /linux|x11/i.test(ua)
+              ? 'Linux'
+              : 'Unknown OS';
 
   if (isTablet) return `${os} tablet`;
   if (/iphone|ipod/i.test(ua) || isMobileAndroid) return `${os} phone`;
@@ -80,6 +84,16 @@ export const getDeviceIdentity = (): DeviceIdentity => {
 
   cachedIdentity = { id, label: detectLabel() };
   return cachedIdentity;
+};
+
+/**
+ * Label plus a short stable id, e.g. "Android tablet · 7d3f91a2".
+ * Devices that look identical in the user agent still end up with different
+ * names in the backup list, so an upload can be traced to the device that sent it.
+ */
+export const getDeviceDisplayName = (): string => {
+  const { id, label } = getDeviceIdentity();
+  return `${label} · ${id.slice(0, 8)}`;
 };
 
 /**

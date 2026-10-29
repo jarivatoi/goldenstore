@@ -11,7 +11,7 @@
 import { SupabaseBackupManager } from './supabaseBackupManager';
 import { creditDBManager } from './creditIndexedDB';
 import { appDBManager } from './appIndexedDB';
-import { getDeviceIdentity, isServerBackupEnabled, getServerBackupDisabledMessage } from './deviceIdentity';
+import { getDeviceIdentity, getDeviceDisplayName, isServerBackupEnabled, getServerBackupDisabledMessage } from './deviceIdentity';
 
 export type BackupRunStatus = 'success' | 'skipped' | 'offline' | 'blocked' | 'failed';
 
@@ -155,8 +155,7 @@ export class AutomaticBackupManager {
       this.createLocalBackup(exportData);
 
       // Create backup name with timestamp and device label
-      const deviceIdentity = getDeviceIdentity();
-      const backupName = `Auto Backup (${deviceIdentity.label}) ${new Date().toLocaleDateString('en-GB')} ${new Date().toLocaleTimeString('en-GB', { hour: '2-digit', minute: '2-digit' })}`;
+      const backupName = `Auto Backup (${getDeviceDisplayName()}) ${new Date().toLocaleDateString('en-GB')} ${new Date().toLocaleTimeString('en-GB', { hour: '2-digit', minute: '2-digit' })}`;
 
       // Perform backup to Supabase
       await SupabaseBackupManager.saveToSupabase(exportData, backupName);
@@ -418,8 +417,7 @@ export class AutomaticBackupManager {
       this.createLocalBackup(exportData);
 
       // Create backup name indicating it was delayed
-      const deviceIdentity = getDeviceIdentity();
-      const backupName = `Delayed Backup (${deviceIdentity.label}) ${new Date().toLocaleDateString('en-GB')} ${new Date().toLocaleTimeString('en-GB', { hour: '2-digit', minute: '2-digit' })}`;
+      const backupName = `Delayed Backup (${getDeviceDisplayName()}) ${new Date().toLocaleDateString('en-GB')} ${new Date().toLocaleTimeString('en-GB', { hour: '2-digit', minute: '2-digit' })}`;
 
       // Perform backup to Supabase
       await SupabaseBackupManager.saveToSupabase(exportData, backupName);
