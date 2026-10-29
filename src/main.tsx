@@ -1,3 +1,4 @@
+import './utils/consoleBuffer' // capture logs from the first line, before React mounts
 import React from 'react'
 import ReactDOM from 'react-dom/client'
 import App from './App.tsx'

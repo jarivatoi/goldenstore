@@ -1,39 +1,26 @@
 import React, { useState, useEffect } from 'react';
 import { X, Minimize2, Maximize2 } from 'lucide-react';
-
-interface LogEntry {
-  id: number;
-  type: 'log' | 'error' | 'warn';
-  message: string;
-  timestamp: Date;
-}
+import {
+  BufferedLog,
+  clearBufferedLogs,
+  getBufferedLogs,
+  subscribeToLogs
+} from '../utils/consoleBuffer';
+import { getLastStartupCheck } from '../utils/startupRestore';
 
 const OnDeviceConsole: React.FC = () => {
-  const [logs, setLogs] = useState<LogEntry[]>([]);
+  const [logs, setLogs] = useState<BufferedLog[]>(() => getBufferedLogs());
   const [isVisible, setIsVisible] = useState(false);
   const [isMinimized, setIsMinimized] = useState(false);
-  let logId = 0;
 
   useEffect(() => {
-    // Override console methods
-    const originalLog = console.log;
-    const originalError = console.error;
-    const originalWarn = console.warn;
+    // Logs written before this component mounted (the startup restore runs
+    // first) are already in the buffer, so replay them from there.
+    setLogs([...getBufferedLogs()]);
 
-    console.log = (...args) => {
-      originalLog(...args);
-      addLog('log', args.join(' '));
-    };
-
-    console.error = (...args) => {
-      originalError(...args);
-      addLog('error', args.join(' '));
-    };
-
-    console.warn = (...args) => {
-      originalWarn(...args);
-      addLog('warn', args.join(' '));
-    };
+    const unsubscribe = subscribeToLogs((entry) => {
+      setLogs(prev => [entry, ...prev].slice(0, 300));
+    });
 
     // Show console on 3 finger tap
     let touchCount = 0;
@@ -44,6 +31,7 @@ const OnDeviceConsole: React.FC = () => {
           setTimeout(() => {
             if (touchCount === 1) {
               setIsVisible(true);
+              setLogs([...getBufferedLogs()]);
             }
             touchCount = 0;
           }, 300);
@@ -54,34 +42,24 @@ const OnDeviceConsole: React.FC = () => {
     document.addEventListener('touchstart', handleTouch);
 
     return () => {
-      console.log = originalLog;
-      console.error = originalError;
-      console.warn = originalWarn;
+      unsubscribe();
       document.removeEventListener('touchstart', handleTouch);
     };
   }, []);
 
-  const addLog = (type: 'log' | 'error' | 'warn', message: string) => {
-    const newLog: LogEntry = {
-      id: logId++,
-      type,
-      message,
-      timestamp: new Date()
-    };
-    
-    setLogs(prev => {
-      const updated = [newLog, ...prev];
-      return updated.slice(0, 100); // Keep only last 100 logs
-    });
-  };
-
   const clearLogs = () => {
+    clearBufferedLogs();
     setLogs([]);
   };
 
   if (!isVisible) {
     return null; // Hide the debug button completely
   }
+
+  const lastCheck = getLastStartupCheck();
+  const lastCheckText = lastCheck
+    ? `${lastCheck.message} - ${lastCheck.installed ? 'installed app' : 'browser tab'}, ${new Date(lastCheck.at).toLocaleString()}`
+    : 'no startup check recorded yet';
 
   return (
     <div className={`fixed inset-0 bg-black bg-opacity-90 z-50 flex flex-col ${isMinimized ? 'h-16' : ''}`}>
@@ -109,6 +87,13 @@ const OnDeviceConsole: React.FC = () => {
           </button>
         </div>
       </div>
+
+      {/* Startup restore decision - pinned so it survives log rotation */}
+      {!isMinimized && (
+        <div className="px-3 py-2 bg-amber-950 text-amber-200 font-mono text-[11px] border-b border-amber-900">
+          Startup restore: {lastCheckText}
+        </div>
+      )}
 
       {/* Logs */}
       {!isMinimized && (
