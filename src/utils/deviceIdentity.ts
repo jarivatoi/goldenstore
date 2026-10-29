@@ -116,7 +116,9 @@ export const isInstalledApp = (): boolean => {
       window.matchMedia('(display-mode: standalone)').matches ||
       (window.navigator as any).standalone === true ||
       window.matchMedia('(display-mode: fullscreen)').matches ||
-      window.matchMedia('(display-mode: minimal-ui)').matches
+      window.matchMedia('(display-mode: minimal-ui)').matches ||
+      // Android installs launched from the home screen open with this referrer
+      document.referrer.startsWith('android-app://')
     );
   } catch {
     return false;

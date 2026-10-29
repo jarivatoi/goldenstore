@@ -1,5 +1,5 @@
 // Enhanced service worker for PWA functionality
-const CACHE_NAME = 'golden-store-v7';
+const CACHE_NAME = 'golden-store-v8';
 const BASE_PATH = '.';
 
 // Sync tags for background sync
@@ -59,10 +59,36 @@ self.addEventListener('activate', (event) => {
   );
 });
 
-// Fetch event - serve from cache, fallback to network
+// Fetch event - navigations go network-first so a new deploy is picked up,
+// hashed assets stay cache-first
 self.addEventListener('fetch', (event) => {
   // Only handle requests for our domain
   if (!event.request.url.startsWith(self.location.origin)) {
+    return;
+  }
+
+  if (event.request.method !== 'GET') {
+    return;
+  }
+
+  const isNavigation =
+    event.request.mode === 'navigate' || event.request.destination === 'document';
+
+  if (isNavigation) {
+    event.respondWith(
+      fetch(event.request)
+        .then((response) => {
+          const responseToCache = response.clone();
+          caches.open(CACHE_NAME)
+            .then((cache) => cache.put(event.request, responseToCache))
+            .catch(() => {});
+          return response;
+        })
+        .catch(() =>
+          caches.match(event.request)
+            .then((response) => response || caches.match(`${BASE_PATH}/index.html`))
+        )
+    );
     return;
   }
 
@@ -71,27 +97,26 @@ self.addEventListener('fetch', (event) => {
       .then((response) => {
         // Return cached version if available
         if (response) {
-          console.log('Serving from cache:', event.request.url);
           return response;
         }
 
         // Otherwise fetch from network
-        console.log('Fetching from network:', event.request.url);
-        return fetch(event.request).then((response) => {
+        return fetch(event.request).then((networkResponse) => {
           // Don't cache non-successful responses
-          if (!response || response.status !== 200 || response.type !== 'basic') {
-            return response;
+          if (!networkResponse || networkResponse.status !== 200 || networkResponse.type !== 'basic') {
+            return networkResponse;
           }
 
           // Clone the response for caching
-          const responseToCache = response.clone();
+          const responseToCache = networkResponse.clone();
 
           caches.open(CACHE_NAME)
             .then((cache) => {
               cache.put(event.request, responseToCache);
-            });
+            })
+            .catch(() => {});
 
-          return response;
+          return networkResponse;
         });
       })
       .catch(() => {

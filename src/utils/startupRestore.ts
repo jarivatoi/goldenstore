@@ -34,7 +34,20 @@ export const maybeRestoreFromServer = async (
   // snapshot and fill its own storage just because the site was opened.
   // "?restore=1" forces the check so the flow can be tested in a browser.
   const forceRestore = new URLSearchParams(window.location.search).get('restore') === '1';
-  if (!forceRestore && !isInstalledApp()) {
+  const installed = isInstalledApp();
+
+  // Visible in the on-device console, so a skipped restore can be explained
+  console.log('🔄 Startup restore check', {
+    installed,
+    forceRestore,
+    displayMode: ['standalone', 'fullscreen', 'minimal-ui', 'browser'].filter((mode) =>
+      window.matchMedia(`(display-mode: ${mode})`).matches
+    ),
+    iosStandalone: (window.navigator as any).standalone,
+    referrer: document.referrer
+  });
+
+  if (!forceRestore && !installed) {
     return { restored: false, message: 'Not running as an installed app.' };
   }
 
@@ -44,8 +57,11 @@ export const maybeRestoreFromServer = async (
     return { restored: false, message: 'Local database could not be read.' };
   }
   if (hasData) {
+    console.log('📦 Local data found - server restore skipped');
     return { restored: false, message: 'Local data found.' };
   }
+
+  console.log('📭 Local database is empty - looking for a server backup');
 
   if (!navigator.onLine) {
     return { restored: false, message: 'Offline - server restore skipped.' };
@@ -54,6 +70,7 @@ export const maybeRestoreFromServer = async (
   report(6, 'Looking for a server backup...');
   const hasBackup = await SupabaseBackupManager.hasBackupOnSupabase();
   if (!hasBackup) {
+    console.log('ℹ️ No server backup found');
     return { restored: false, message: 'No server backup found.' };
   }
 
@@ -64,6 +81,7 @@ export const maybeRestoreFromServer = async (
 
   // A snapshot without records would leave the device empty - do not apply it
   if (countSnapshotRecords(backup.data).total === 0) {
+    console.log('ℹ️ Server backup is empty');
     return { restored: false, message: 'Server backup is empty.' };
   }
 
