@@ -32,7 +32,7 @@
  */
 
 import React from 'react';
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 import { useAuth } from './context/AuthContext';
 import Auth from './components/Auth';
 import AddItemForm from './components/AddItemForm';
@@ -53,6 +53,7 @@ import SupabaseStatusIndicator from './components/SupabaseStatusIndicator';
 import AutoBackupStatusIndicator from './components/AutoBackupStatusIndicator';
 import StartupRestoreGate from './components/StartupRestoreGate';
 import { automaticBackupManager } from './utils/automaticBackupManager';
+import { compactStoredClientPhotos } from './utils/profilePhoto';
 import { NotificationProvider, useNotification } from './context/NotificationContext';
 
 function App() {
@@ -100,6 +101,23 @@ function MainAppContent() {
 
   // Import/Export functionality moved from Header
   const { items, importItems } = usePriceList();
+
+  // One-off: pictures saved by older builds were stored at their raw crop size
+  useEffect(() => {
+    const timer = window.setTimeout(() => {
+      compactStoredClientPhotos()
+        .then(({ updated, savedBytes }) => {
+          if (updated > 0) {
+            console.log(`📸 Recompressed ${updated} profile photo(s), saved ${(savedBytes / 1024 / 1024).toFixed(1)} MB`);
+          }
+        })
+        .catch(() => {
+          // Best effort - never interrupt the app for a clean-up pass
+        });
+    }, 8000);
+
+    return () => window.clearTimeout(timer);
+  }, []);
 
   const handleExport = () => {
     try {

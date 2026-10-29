@@ -2,6 +2,7 @@ import React, { useState, useCallback } from 'react';
 import { createPortal } from 'react-dom';
 import Cropper from 'react-easy-crop';
 import { X, ZoomIn, ZoomOut, Check } from 'lucide-react';
+import { cropToProfilePhoto } from '../utils/profilePhoto';
 
 interface ImageCropperModalProps {
   image: string;
@@ -25,57 +26,12 @@ const ImageCropperModal: React.FC<ImageCropperModalProps> = ({ image, onComplete
     setCroppedAreaPixels(croppedAreaPixels);
   }, []);
 
-  const createImage = (url: string): Promise<HTMLImageElement> =>
-    new Promise((resolve, reject) => {
-      const image = new Image();
-      image.addEventListener('load', () => resolve(image));
-      image.addEventListener('error', error => reject(error));
-      image.src = url;
-    });
-
-  const getCroppedImg = async (imageSrc: string, pixelCrop: Area): Promise<string> => {
-    const image = await createImage(imageSrc);
-    const canvas = document.createElement('canvas');
-    const ctx = canvas.getContext('2d');
-
-    if (!ctx) {
-      throw new Error('No 2d context');
-    }
-
-    canvas.width = pixelCrop.width;
-    canvas.height = pixelCrop.height;
-
-    ctx.drawImage(
-      image,
-      pixelCrop.x,
-      pixelCrop.y,
-      pixelCrop.width,
-      pixelCrop.height,
-      0,
-      0,
-      pixelCrop.width,
-      pixelCrop.height
-    );
-
-    return new Promise((resolve) => {
-      canvas.toBlob((blob) => {
-        if (!blob) {
-          return;
-        }
-        const reader = new FileReader();
-        reader.readAsDataURL(blob);
-        reader.onloadend = () => {
-          resolve(reader.result as string);
-        };
-      }, 'image/jpeg', 0.95);
-    });
-  };
-
   const handleComplete = async () => {
     if (!croppedAreaPixels) return;
 
     try {
-      const croppedImage = await getCroppedImg(image, croppedAreaPixels);
+      // The cropped area is scaled down to the profile photo target size
+      const croppedImage = await cropToProfilePhoto(image, croppedAreaPixels);
       onComplete(croppedImage);
     } catch (error) {
       console.error('Error cropping image:', error);
