@@ -3,7 +3,7 @@ import { useEffect, useRef, useState } from 'react';
 import { gsap } from 'gsap';
 import { InertiaPlugin } from 'gsap/InertiaPlugin';
 import { Draggable, DraggableInstance } from '../../lib/draggable';
-import { Search, X, Users, UserCheck, CreditCard, LayoutGrid } from 'lucide-react';
+import { Search, X, Users, UserCheck, CreditCard, LayoutGrid, ArrowUp, ArrowDown, ArrowUpDown } from 'lucide-react';
 import { Client, PaymentRecord } from '../../types';
 import ClientCard from '../ClientCard';
 import { useCredit } from '../../context/CreditContext';
@@ -54,6 +54,23 @@ const ClientGrid: React.FC<ClientGridProps> = ({
   const draggableRef = useRef<DraggableInstance[] | null>(null);
   const dragStartXRef = useRef(0);
   const dragDirectionRef = useRef<'left' | 'right' | null>(null);
+
+  // Payment history sorting state
+  type SortColumn = 'id' | 'name' | 'partial' | 'full' | 'date' | 'outstanding';
+  type SortDirection = 'asc' | 'desc';
+  const [sortColumn, setSortColumn] = useState<SortColumn>('date');
+  const [sortDirection, setSortDirection] = useState<SortDirection>('desc');
+
+  const handleSort = (column: SortColumn) => {
+    if (sortColumn === column) {
+      // Toggle direction if same column
+      setSortDirection(prev => prev === 'asc' ? 'desc' : 'asc');
+    } else {
+      // New column - default to descending
+      setSortColumn(column);
+      setSortDirection('desc');
+    }
+  };
 
 
   // GSAP Draggable setup
@@ -207,8 +224,37 @@ const ClientGrid: React.FC<ClientGridProps> = ({
       });
     });
 
-    // Sort by latest payment date descending
-    rows.sort((a, b) => new Date(b.latestPayment.date).getTime() - new Date(a.latestPayment.date).getTime());
+    // Apply sorting based on selected column and direction
+    rows.sort((a, b) => {
+      let comparison = 0;
+      
+      switch (sortColumn) {
+        case 'id':
+          comparison = a.client.id.localeCompare(b.client.id);
+          break;
+        case 'name':
+          comparison = a.client.name.localeCompare(b.client.name);
+          break;
+        case 'partial':
+          const aPartial = a.latestPayment.type === 'partial' ? a.latestPayment.amount : 0;
+          const bPartial = b.latestPayment.type === 'partial' ? b.latestPayment.amount : 0;
+          comparison = aPartial - bPartial;
+          break;
+        case 'full':
+          const aFull = a.latestPayment.type === 'full' ? a.latestPayment.amount : 0;
+          const bFull = b.latestPayment.type === 'full' ? b.latestPayment.amount : 0;
+          comparison = aFull - bFull;
+          break;
+        case 'date':
+          comparison = new Date(a.latestPayment.date).getTime() - new Date(b.latestPayment.date).getTime();
+          break;
+        case 'outstanding':
+          comparison = a.outstanding - b.outstanding;
+          break;
+      }
+      
+      return sortDirection === 'asc' ? comparison : -comparison;
+    });
 
     // Apply search filter (accent-insensitive)
     const query = searchQuery.trim().toLowerCase();
@@ -222,7 +268,7 @@ const ClientGrid: React.FC<ClientGridProps> = ({
     }
 
     return rows;
-  }, [showPaymentHistory, clients, getClientPayments, getClientTotalDebt, searchQuery]);
+  }, [showPaymentHistory, clients, getClientPayments, getClientTotalDebt, searchQuery, sortColumn, sortDirection]);
 
   return (
     <div className="bg-white rounded-lg shadow-sm border border-gray-200 mb-4 mx-auto w-full max-w-4xl">
@@ -319,12 +365,84 @@ const ClientGrid: React.FC<ClientGridProps> = ({
             <table className="w-full text-sm">
               <thead>
                 <tr className="border-b border-gray-200 bg-gray-50 sticky top-0 z-10">
-                  <th className="text-center py-3 px-2 font-semibold text-gray-700 whitespace-nowrap">ID</th>
-                  <th className="text-center py-3 px-2 font-semibold text-gray-700 whitespace-nowrap">Name</th>
-                  <th className="text-center py-3 px-2 font-semibold text-gray-700 whitespace-nowrap">Partial</th>
-                  <th className="text-center py-3 px-2 font-semibold text-gray-700 whitespace-nowrap">Full</th>
-                  <th className="text-center py-3 px-2 font-semibold text-gray-700 whitespace-nowrap">Date</th>
-                  <th className="text-center py-3 px-2 font-semibold text-gray-700 whitespace-nowrap">Outstanding</th>
+                  <th 
+                    className="text-center py-3 px-2 font-semibold text-gray-700 whitespace-nowrap cursor-pointer hover:bg-gray-100 transition-colors select-none"
+                    onClick={() => handleSort('id')}
+                  >
+                    <div className="flex items-center justify-center gap-1">
+                      <span>ID</span>
+                      {sortColumn === 'id' ? (
+                        sortDirection === 'asc' ? <ArrowUp size={12} /> : <ArrowDown size={12} />
+                      ) : (
+                        <ArrowUpDown size={12} className="text-gray-400" />
+                      )}
+                    </div>
+                  </th>
+                  <th 
+                    className="text-center py-3 px-2 font-semibold text-gray-700 whitespace-nowrap cursor-pointer hover:bg-gray-100 transition-colors select-none"
+                    onClick={() => handleSort('name')}
+                  >
+                    <div className="flex items-center justify-center gap-1">
+                      <span>Name</span>
+                      {sortColumn === 'name' ? (
+                        sortDirection === 'asc' ? <ArrowUp size={12} /> : <ArrowDown size={12} />
+                      ) : (
+                        <ArrowUpDown size={12} className="text-gray-400" />
+                      )}
+                    </div>
+                  </th>
+                  <th 
+                    className="text-center py-3 px-2 font-semibold text-gray-700 whitespace-nowrap cursor-pointer hover:bg-gray-100 transition-colors select-none"
+                    onClick={() => handleSort('partial')}
+                  >
+                    <div className="flex items-center justify-center gap-1">
+                      <span>Partial</span>
+                      {sortColumn === 'partial' ? (
+                        sortDirection === 'asc' ? <ArrowUp size={12} /> : <ArrowDown size={12} />
+                      ) : (
+                        <ArrowUpDown size={12} className="text-gray-400" />
+                      )}
+                    </div>
+                  </th>
+                  <th 
+                    className="text-center py-3 px-2 font-semibold text-gray-700 whitespace-nowrap cursor-pointer hover:bg-gray-100 transition-colors select-none"
+                    onClick={() => handleSort('full')}
+                  >
+                    <div className="flex items-center justify-center gap-1">
+                      <span>Full</span>
+                      {sortColumn === 'full' ? (
+                        sortDirection === 'asc' ? <ArrowUp size={12} /> : <ArrowDown size={12} />
+                      ) : (
+                        <ArrowUpDown size={12} className="text-gray-400" />
+                      )}
+                    </div>
+                  </th>
+                  <th 
+                    className="text-center py-3 px-2 font-semibold text-gray-700 whitespace-nowrap cursor-pointer hover:bg-gray-100 transition-colors select-none"
+                    onClick={() => handleSort('date')}
+                  >
+                    <div className="flex items-center justify-center gap-1">
+                      <span>Date</span>
+                      {sortColumn === 'date' ? (
+                        sortDirection === 'asc' ? <ArrowUp size={12} /> : <ArrowDown size={12} />
+                      ) : (
+                        <ArrowUpDown size={12} className="text-gray-400" />
+                      )}
+                    </div>
+                  </th>
+                  <th 
+                    className="text-center py-3 px-2 font-semibold text-gray-700 whitespace-nowrap cursor-pointer hover:bg-gray-100 transition-colors select-none"
+                    onClick={() => handleSort('outstanding')}
+                  >
+                    <div className="flex items-center justify-center gap-1">
+                      <span>Outstanding</span>
+                      {sortColumn === 'outstanding' ? (
+                        sortDirection === 'asc' ? <ArrowUp size={12} /> : <ArrowDown size={12} />
+                      ) : (
+                        <ArrowUpDown size={12} className="text-gray-400" />
+                      )}
+                    </div>
+                  </th>
                 </tr>
               </thead>
               <tbody>
