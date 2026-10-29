@@ -2,6 +2,7 @@ import React, { useState, useEffect, useRef } from 'react';
 import { createPortal } from 'react-dom';
 import { X, Search, Plus, User, ArrowLeft, ArrowUp } from 'lucide-react';
 import { useCredit } from '../context/CreditContext';
+import { calculateReturnableItemsWithDates } from '../utils/returnableItemsUtils';
 import { Client } from '../types';
 import { useNotification } from '../context/NotificationContext';
 
@@ -30,7 +31,7 @@ const ClientSearchModal: React.FC<ClientSearchModalProps> = ({
   description = '', // Default to empty string
   onDescriptionChange
 }) => {
-  const { addClient, searchClients } = useCredit();
+  const { addClient, searchClients, getClientTransactions } = useCredit();
   const { showAlert } = useNotification();
   const [searchQuery, setSearchQuery] = useState('');
   const [localDescription, setLocalDescription] = useState(description); // Use local state initialized with prop
@@ -42,6 +43,8 @@ const ClientSearchModal: React.FC<ClientSearchModalProps> = ({
   const [error, setError] = useState('');
   const wasOpenedRef = useRef(false); // Track if modal was opened before
   const descriptionInputRef = useRef<HTMLInputElement>(null); // Reference to description input
+  const [returnableSuggestions, setReturnableSuggestions] = useState<Array<{brand: string, typeWithSize: string}>>([]);
+  const [isDescriptionFocused, setIsDescriptionFocused] = useState(false);
 
   // Sync local description with prop when it changes
   useEffect(() => {
@@ -49,6 +52,110 @@ const ClientSearchModal: React.FC<ClientSearchModalProps> = ({
       setLocalDescription(description);
     }
   }, [description, localDescription]);
+
+  // Calculate returnable suggestions based on client's existing returnables
+  useEffect(() => {
+    if (!linkedClient?.id || !localDescription.trim()) {
+      setReturnableSuggestions([]);
+      return;
+    }
+
+    // Debounce the calculation
+    const timeoutId = setTimeout(() => {
+      const clientTransactions = getClientTransactions(linkedClient.id);
+      const returnableItemsWithDates = calculateReturnableItemsWithDates(clientTransactions, linkedClient.name);
+      
+      // Detect if user is typing a returnable keyword ANYWHERE in the description
+      const lowerDesc = localDescription.toLowerCase();
+      
+      // Find the LAST occurrence of a returnable keyword in the description
+      const keywordRegex = /(chopines?|bouteilles?|caisses?)/gi;
+      let keywordMatch: RegExpExecArray | null;
+      let lastMatch: RegExpExecArray | null = null;
+      while ((keywordMatch = keywordRegex.exec(lowerDesc)) !== null) {
+        lastMatch = keywordMatch;
+      }
+      
+      if (lastMatch) {
+        const keyword = lastMatch[1];
+        let baseType = '';
+        if (/chopines?/i.test(keyword)) baseType = 'Chopine';
+        else if (/bouteilles?/i.test(keyword)) baseType = 'Bouteille';
+        else if (/caisses?/i.test(keyword)) baseType = 'Caisse';
+        
+        // Get text after the LAST keyword occurrence to detect subtype, size and brand filter
+        const afterKeyword = lowerDesc.substring(lastMatch.index + keyword.length).trim();
+        
+        // Extract parenthetical subtype (e.g., "(bt)", "(ch)", "(lt)")
+        const subtypeMatch = afterKeyword.match(/\(([^)]+)\)/);
+        const subtype = subtypeMatch ? subtypeMatch[1].trim() : '';
+        
+        // Remove subtype part from remaining text
+        const afterSubtype = subtypeMatch 
+          ? afterKeyword.substring(afterKeyword.indexOf(')') + 1).trim() 
+          : afterKeyword;
+        
+        // Separate size words (e.g., "1l", "1.5l") from brand filter
+        const sizeMatch = afterSubtype.match(/^(\d+\.?\d*[lL])\s*(.*)/i);
+        const size = sizeMatch ? sizeMatch[1].toUpperCase() : '';
+        const brandFilter = sizeMatch ? sizeMatch[2].trim() : afterSubtype.trim();
+        
+        // Build the full typed type (e.g., "Bouteille 1L", "Caisse (bt)", "Caisse (bt) 1L")
+        let typedTypeWithSize = baseType;
+        if (subtype) typedTypeWithSize += ` (${subtype})`;
+        if (size) typedTypeWithSize += ` ${size}`;
+        
+        // Filter returnables that match the EXACT full type
+        const suggestions = returnableItemsWithDates
+          .map(item => {
+            // Parse: "2 Bouteilles 1L Coca" or "1 Caisse (Bt) Coca" or "1 Caisse (Bt) 1L Coca"
+            const match = item.text.match(/^(\d+)\s+(Chopines?|Bouteilles?|Caisses?)(?:\s+\(([^)]+)\))?(?:\s+(\d+\.?\d*[lL]))?\s+(.+)$/i);
+            if (!match) return null;
+            
+            const itemTypeBase = match[2].replace(/s$/i, ''); // e.g., "Bouteille"
+            const itemSubtype = match[3] || ''; // e.g., "bt", "ch", ""
+            const itemTypeSize = match[4] ? match[4].toUpperCase() : ''; // e.g., "1L" or ""
+            let itemFullType = itemTypeBase;
+            if (itemSubtype) itemFullType += ` (${itemSubtype})`;
+            if (itemTypeSize) itemFullType += ` ${itemTypeSize}`;
+            const brand = match[5];
+            
+            // Check if the full type matches EXACTLY
+            if (itemFullType.toLowerCase() !== typedTypeWithSize.toLowerCase()) return null;
+            
+            // Check if brand matches the filter
+            if (brandFilter && !brand.toLowerCase().startsWith(brandFilter)) return null;
+            
+            // Check if this brand is already in the CURRENT segment (after last comma)
+            // This allows adding the same type multiple times (e.g., "1 Bouteille 1L Coca, 1 Bouteille 1L" → show helper for second entry)
+            const lastCommaIndex = localDescription.lastIndexOf(',');
+            const currentSegment = lastCommaIndex >= 0 
+              ? localDescription.substring(lastCommaIndex + 1).toLowerCase().trim()
+              : localDescription.toLowerCase().trim();
+            
+            // Check if brand already exists in current segment (at start or after whitespace)
+            const escapedBrand = brand.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+            const brandInSegmentRegex = new RegExp(`(?:^|\\s)${escapedBrand}`, 'i');
+            if (brandInSegmentRegex.test(currentSegment)) {
+              return null;
+            }
+            
+            return {
+              brand,
+              typeWithSize: typedTypeWithSize
+            };
+          })
+          .filter((item): item is {brand: string, typeWithSize: string} => item !== null)
+          .slice(0, 5); // Limit to 5 suggestions
+        
+        setReturnableSuggestions(suggestions);
+      } else {
+        setReturnableSuggestions([]);
+      }
+    }, 300); // 300ms debounce
+
+    return () => clearTimeout(timeoutId);
+  }, [localDescription, linkedClient, getClientTransactions]);
 
   // Update parent component when local description changes
   const updateDescription = (newDescription: string) => {
@@ -220,7 +327,7 @@ const ClientSearchModal: React.FC<ClientSearchModalProps> = ({
     if (localDescription.trim() === '') {
       updateDescription(newItem + ' ');
     } else {
-      updateDescription(prev => prev + ', ' + newItem + ' ');
+      updateDescription(localDescription + ', ' + newItem + ' ');
     }
 
     // Clear pending number after use
@@ -245,14 +352,12 @@ const ClientSearchModal: React.FC<ClientSearchModalProps> = ({
       setPendingNumber(prev => prev.slice(0, -1));
     } else if (value === 'backspace') {
       // Remove the last complete item (e.g., "5 Cig, 10 Can" becomes "5 Cig")
-      updateDescription(prev => {
-        const parts = prev.split(', ');
-        if (parts.length > 1) {
-          return parts.slice(0, -1).join(', ');
-        } else {
-          return '';
-        }
-      });
+      const parts = localDescription.split(', ');
+      if (parts.length > 1) {
+        updateDescription(parts.slice(0, -1).join(', '));
+      } else {
+        updateDescription('');
+      }
     } else {
       // Build up the pending number
       setPendingNumber(prev => prev + value);
@@ -346,6 +451,8 @@ const ClientSearchModal: React.FC<ClientSearchModalProps> = ({
               name="itemDescription"
               type="text"
               value={localDescription}
+              onFocus={() => setIsDescriptionFocused(true)}
+              onBlur={() => setIsDescriptionFocused(false)}
               onChange={(e) => {
                 // Auto-capitalize as user types while preserving spacing
                 const value = e.target.value;
@@ -461,6 +568,38 @@ const ClientSearchModal: React.FC<ClientSearchModalProps> = ({
               placeholder="Enter item or service description..."
               className="block w-full px-4 py-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
             />
+            
+            {/* Returnable Items Helper Popup */}
+            {returnableSuggestions.length > 0 && (
+              <div className="mt-2 bg-yellow-50 border-2 border-yellow-300 rounded-lg p-3 shadow-lg">
+                <div className="flex items-center justify-between mb-2">
+                  <p className="text-xs font-semibold text-yellow-800 uppercase">
+                    📦 Available Returnables
+                  </p>
+                  <span className="text-xs text-yellow-600">Click to add brand</span>
+                </div>
+                <div className="grid grid-cols-2 gap-1">
+                  {returnableSuggestions.map((suggestion, index) => (
+                    <button
+                      key={index}
+                      type="button"
+                      onMouseDown={(e) => {
+                        e.preventDefault();
+                        // Just append the brand name to the current description
+                        updateDescription(localDescription.trimEnd() + ' ' + suggestion.brand);
+                        
+                        setReturnableSuggestions([]);
+                        // Keep focus on input
+                        setTimeout(() => descriptionInputRef.current?.focus(), 0);
+                      }}
+                      className="px-3 py-2 bg-white hover:bg-yellow-100 border border-yellow-200 rounded-md transition-colors text-sm font-semibold text-gray-800 text-center"
+                    >
+                      {suggestion.brand}
+                    </button>
+                  ))}
+                </div>
+              </div>
+            )}
           </div>
 
           {/* Error Display */}
@@ -492,7 +631,7 @@ const ClientSearchModal: React.FC<ClientSearchModalProps> = ({
                     if (pendingNumber) {
                       // Insert pending number with space
                       const insertText = `${pendingNumber} `;
-                      updateDescription(prev => prev + insertText);
+                      updateDescription(localDescription + insertText);
                       setPendingNumber(''); // Clear pending number after insertion
                     }
                   }}
