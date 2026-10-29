@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { Clock, UploadCloud as CloudUpload, AlertCircle, CheckCircle, Wifi, WifiOff } from 'lucide-react';
 import { automaticBackupManager, BackupStatus } from '../utils/automaticBackupManager';
+import { isServerBackupEnabled } from '../utils/deviceIdentity';
 
 interface AutoBackupStatusIndicatorProps {
   className?: string;
@@ -15,8 +16,8 @@ interface AutoBackupStatusIndicatorProps {
 const AutoBackupStatusIndicator: React.FC<AutoBackupStatusIndicatorProps> = ({ className = '' }) => {
   const [status, setStatus] = useState<BackupStatus>({
     lastBackup: null,
-    nextScheduled: null,
-    isEnabled: true,
+    lastManualBackup: null,
+    lastAttempt: null,
     pendingBackups: 0,
     lastError: null
   });
@@ -58,7 +59,8 @@ const AutoBackupStatusIndicator: React.FC<AutoBackupStatusIndicatorProps> = ({ c
   }, []);
 
   const getStatusIcon = () => {
-    if (!status.isEnabled) {
+    // This device is not allowed to upload server backups
+    if (!isServerBackupEnabled()) {
       return <Clock size={16} className="text-gray-400" />;
     }
 
@@ -81,8 +83,9 @@ const AutoBackupStatusIndicator: React.FC<AutoBackupStatusIndicatorProps> = ({ c
   };
 
   const getStatusText = () => {
-    if (!status.isEnabled) {
-      return 'Auto backup disabled';
+    // This device is not allowed to upload server backups
+    if (!isServerBackupEnabled()) {
+      return 'Server backups disabled on this device';
     }
 
     if (status.lastError) {
@@ -107,22 +110,7 @@ const AutoBackupStatusIndicator: React.FC<AutoBackupStatusIndicatorProps> = ({ c
       }
     }
 
-    if (status.nextScheduled) {
-      const now = new Date();
-      const diffMs = status.nextScheduled.getTime() - now.getTime();
-      const diffHours = Math.floor(diffMs / (1000 * 60 * 60));
-      const diffMinutes = Math.floor((diffMs % (1000 * 60 * 60)) / (1000 * 60));
-      
-      if (diffHours > 0) {
-        return `Next backup in ${diffHours}h ${diffMinutes}m`;
-      } else if (diffMinutes > 0) {
-        return `Next backup in ${diffMinutes}m`;
-      } else {
-        return 'Backup due now';
-      }
-    }
-
-    return 'Auto backup ready';
+    return 'Backup runs on the next app start';
   };
 
   return (

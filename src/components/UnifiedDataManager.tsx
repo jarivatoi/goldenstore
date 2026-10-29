@@ -10,6 +10,7 @@ import AutoBackupSettings from './AutoBackupSettings';
 import { automaticBackupManager } from '../utils/automaticBackupManager';
 import { creditDBManager } from '../utils/creditIndexedDB';
 import { appDBManager } from '../utils/appIndexedDB';
+import { isServerBackupEnabled, getServerBackupDisabledMessage } from '../utils/deviceIdentity';
 
 interface UnifiedDataManagerProps {
   isOpen: boolean;
@@ -254,6 +255,17 @@ const UnifiedDataManager: React.FC<UnifiedDataManagerProps> = ({ isOpen, onClose
 
   // Export to Supabase server
   const handleExportToServer = async () => {
+    // Server backups can be turned off per device (e.g. only the shop tablet uploads)
+    if (!isServerBackupEnabled()) {
+      setModal({
+        type: 'error',
+        title: 'Backups Disabled on This Device',
+        message: getServerBackupDisabledMessage(),
+        onConfirm: () => setModal({ type: null, title: '', message: '' })
+      });
+      return;
+    }
+
     try {
       setIsProcessing(true);
       setModal({ type: null, title: '', message: '' });
@@ -267,6 +279,8 @@ const UnifiedDataManager: React.FC<UnifiedDataManagerProps> = ({ isOpen, onClose
       
       // Update manual backup timestamp
       automaticBackupManager.setLastManualBackupDate(new Date());
+      // Keep the scheduler in sync so it does not repeat the same backup
+      automaticBackupManager.markServerBackupCompleted();
       
       setModal({
         type: 'success',

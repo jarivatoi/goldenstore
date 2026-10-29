@@ -1,36 +1,43 @@
 /**
  * AUTOMATIC BACKUP MANAGER
  * ========================
- * 
- * Handles automatic daily backups to Supabase at 18:00
- * With offline queue and retry mechanisms
+ *
+ * Backs up the whole database to Supabase once per day, triggered on app start
+ * (plus a minute-level check so a session left open past midnight still backs up).
+ * Data is read from IndexedDB, failures are reported instead of swallowed, and
+ * offline attempts are queued until the connection returns.
  */
 
 import { SupabaseBackupManager } from './supabaseBackupManager';
+import { creditDBManager } from './creditIndexedDB';
+import { appDBManager } from './appIndexedDB';
+import { getDeviceIdentity, isServerBackupEnabled, getServerBackupDisabledMessage } from './deviceIdentity';
 
-export interface BackupSchedule {
-  hour: number; // 0-23
-  minute: number; // 0-59
-  enabled: boolean;
+export type BackupRunStatus = 'success' | 'skipped' | 'offline' | 'blocked' | 'failed';
+
+export interface BackupRunResult {
+  status: BackupRunStatus;
+  message: string;
 }
 
 export interface BackupStatus {
   lastBackup: Date | null;
   lastManualBackup: Date | null;
-  nextScheduled: Date | null;
-  isEnabled: boolean;
+  lastAttempt: Date | null;
   pendingBackups: number;
   lastError: string | null;
 }
 
 export class AutomaticBackupManager {
+  // Never run two backups closer together than this, even if several triggers fire
+  private static readonly MIN_BACKUP_GAP_MS = 6 * 60 * 60 * 1000; // 6 hours
+
   private static instance: AutomaticBackupManager | null = null;
-  private schedule: BackupSchedule = { hour: 18, minute: 0, enabled: true };
   private checkInterval: number | null = null;  // Changed from NodeJS.Timeout to number
   private isRunning = false;
+  private hasWarnedAboutDisabledBackup = false;
 
   private constructor() {
-    this.loadSettings();
     this.startScheduler();
     this.setupNetworkListeners();
     this.checkPendingBackupsOnStartup();
@@ -44,32 +51,6 @@ export class AutomaticBackupManager {
   }
 
   /**
-   * Load settings from localStorage
-   */
-  private loadSettings(): void {
-    try {
-      const saved = localStorage.getItem('autoBackupSettings');
-      if (saved) {
-        const settings = JSON.parse(saved);
-        this.schedule = { ...this.schedule, ...settings };
-      }
-    } catch (error) {
-      console.warn('Failed to load backup settings:', error);
-    }
-  }
-
-  /**
-   * Save settings to localStorage
-   */
-  private saveSettings(): void {
-    try {
-      localStorage.setItem('autoBackupSettings', JSON.stringify(this.schedule));
-    } catch (error) {
-      console.warn('Failed to save backup settings:', error);
-    }
-  }
-
-  /**
    * Start the backup scheduler
    */
   private startScheduler(): void {
@@ -77,199 +58,243 @@ export class AutomaticBackupManager {
       clearInterval(this.checkInterval);
     }
 
-    // Check every minute for scheduled backup
-    this.checkInterval = setInterval(() => {
-      this.checkForScheduledBackup();
+    // Check every minute: an app left open past midnight becomes due again,
+    // and missed ticks are harmless because the check is not time-of-day based
+    this.checkInterval = window.setInterval(() => {
+      this.runBackupIfDue();
     }, 60000); // Check every minute
 
     // Also check immediately
-    setTimeout(() => this.checkForScheduledBackup(), 5000);
+    setTimeout(() => this.runBackupIfDue(), 5000);
   }
 
   /**
-   * Check if it's time for a scheduled backup
+   * A backup is due on the first app start of each day, and whenever a full day
+   * has passed without a successful backup.
    */
-  private async checkForScheduledBackup(): Promise<void> {
-    if (!this.schedule.enabled || this.isRunning) {
+  private isBackupDue(): boolean {
+    const now = new Date();
+    const lastBackup = this.getLastBackupDate();
+
+    if (!lastBackup) {
+      return true;
+    }
+
+    const sinceLastBackup = now.getTime() - lastBackup.getTime();
+    if (sinceLastBackup < AutomaticBackupManager.MIN_BACKUP_GAP_MS) {
+      return false;
+    }
+
+    // New calendar day since the last successful backup
+    return lastBackup.toDateString() !== now.toDateString();
+  }
+
+  /**
+   * Run an automatic backup only when one is due
+   */
+  private async runBackupIfDue(): Promise<void> {
+    if (this.isRunning || !this.isBackupDue()) {
       return;
     }
 
-    const now = new Date();
-    const currentHour = now.getHours();
-    const currentMinute = now.getMinutes();
-
-    // Check if it's the scheduled time (within 1 minute window)
-    if (currentHour === this.schedule.hour && currentMinute === this.schedule.minute) {
-      // Check if we already backed up today
-      const lastBackup = this.getLastBackupDate();
-      const today = new Date().toDateString();
-      
-      if (!lastBackup || lastBackup.toDateString() !== today) {
-        console.log('🕕 Scheduled backup time reached, starting automatic backup...');
-        await this.performAutomaticBackup();
-      }
-    }
+    console.log('🕕 Automatic backup is due, starting...');
+    await this.performAutomaticBackup();
   }
 
   /**
    * Perform automatic backup
    */
-  private async performAutomaticBackup(): Promise<void> {
+  private async performAutomaticBackup(): Promise<BackupRunResult> {
     if (this.isRunning) {
-      return;
+      return { status: 'skipped', message: 'A backup is already running' };
+    }
+
+    // Only a device that is allowed to upload may write the server snapshot
+    if (!isServerBackupEnabled()) {
+      if (!this.hasWarnedAboutDisabledBackup) {
+        console.log(`🔒 ${getServerBackupDisabledMessage()}`);
+        this.hasWarnedAboutDisabledBackup = true;
+      }
+      return { status: 'blocked', message: getServerBackupDisabledMessage() };
     }
 
     this.isRunning = true;
+    this.setLastAttempt(new Date());
 
     try {
       // Check if online
       if (!navigator.onLine) {
         console.log('📱 Offline - queuing backup for when connection is restored');
         this.queueOfflineBackup();
-        return;
+        return { status: 'offline', message: 'You are offline. The backup was queued and will run when the connection is restored.' };
       }
 
-      // Collect all data from localStorage
-      const exportData = this.collectAllData();
-      
-      if (!exportData || this.isDataEmpty(exportData)) {
+      // Collect all data from IndexedDB (the app's real storage)
+      const exportData = await this.collectAllData();
+
+      if (this.isDataEmpty(exportData)) {
         console.log('📭 No data to backup, skipping automatic backup');
-        return;
+        return { status: 'skipped', message: 'No data found on this device to back up.' };
       }
 
-      // Create backup name with timestamp
-      const backupName = `Auto Backup ${new Date().toLocaleDateString('en-GB')} ${new Date().toLocaleTimeString('en-GB', { hour: '2-digit', minute: '2-digit' })}`;
-      
+      // Keep a local JSON copy of every snapshot that is uploaded
+      this.createLocalBackup(exportData);
+
+      // Create backup name with timestamp and device label
+      const deviceIdentity = getDeviceIdentity();
+      const backupName = `Auto Backup (${deviceIdentity.label}) ${new Date().toLocaleDateString('en-GB')} ${new Date().toLocaleTimeString('en-GB', { hour: '2-digit', minute: '2-digit' })}`;
+
       // Perform backup to Supabase
       await SupabaseBackupManager.saveToSupabase(exportData, backupName);
-      
-      // Create local backup with fixed filename that gets overwritten daily
-      this.createLocalBackup(exportData);
-      
+
       // Update last backup timestamp
       this.setLastBackupDate(new Date());
-      
+
       // Clear any pending offline backups
       this.clearOfflineBackupQueue();
-      
+
       // Clear any previous errors since backup was successful
       this.clearLastError();
-      
+
       console.log('✅ Automatic backup completed successfully');
-      
+
+      return { status: 'success', message: backupName };
+
     } catch (error) {
       console.error('❌ Automatic backup failed:', error);
-      
+
       // Queue for retry if it was a network error
       if (this.isNetworkError(error)) {
         this.queueOfflineBackup();
       }
-      
+
       // Store error for status reporting
-      this.setLastError(error instanceof Error ? error.message : 'Unknown error');
+      const message = error instanceof Error ? error.message : 'Unknown error';
+      this.setLastError(message);
+
+      return { status: 'failed', message };
     } finally {
       this.isRunning = false;
     }
   }
 
   /**
-   * Create local backup file with timestamped filename
+   * Save the snapshot as a local JSON file on this device.
+   * Browser downloads may be blocked on some platforms; this never fails the upload.
    */
   private createLocalBackup(databaseJson: any): void {
     try {
       const jsonString = JSON.stringify(databaseJson, null, 2);
       const dataBlob = new Blob([jsonString], { type: 'application/json' });
-      
-      // Create timestamp for filename
+
       const now = new Date();
       const dateStr = now.toLocaleDateString('en-GB').replace(/\//g, '-');
       const timeStr = now.toLocaleTimeString('en-GB', { hour: '2-digit', minute: '2-digit' }).replace(/:/g, '-');
-      const filename = `GoldenStore_${dateStr}_${timeStr}.json`;
-      
-      // Create download link
+      const filename = `GoldenStore_Complete_${dateStr}_${timeStr}.json`;
+
       const url = URL.createObjectURL(dataBlob);
       const link = document.createElement('a');
       link.href = url;
       link.download = filename;
-      
+
       // Temporarily add to DOM, click, and remove
       document.body.appendChild(link);
       link.click();
       document.body.removeChild(link);
-      
-      // Clean up blob URL to prevent memory leaks
-      URL.revokeObjectURL(url);
-      
-      console.log(`✅ Local backup created successfully: ${filename}`);
+
+      // Give the browser time to start the download before releasing the blob
+      setTimeout(() => URL.revokeObjectURL(url), 10000);
+
+      console.log(`💾 Local backup file created: ${filename}`);
     } catch (error) {
-      console.error('❌ Local backup creation failed:', error);
-      // Don't throw error as this is supplementary to the main backup
+      // Supplementary copy only - never fail the upload because of this
+      console.error('❌ Local backup file failed:', error);
     }
   }
 
   /**
-   * Collect all data from localStorage
+   * Collect all data from IndexedDB
+   * Credit data lives in creditDBManager, everything else in appDBManager -
+   * localStorage only ever held legacy copies that are gone after migration.
    */
-  private collectAllData(): any {
-    try {
-      const priceListData = localStorage.getItem('priceListItems');
-      const creditClientsData = localStorage.getItem('creditClients');
-      const creditTransactionsData = localStorage.getItem('creditTransactions');
-      const creditPaymentsData = localStorage.getItem('creditPayments');
-      const overItemsData = localStorage.getItem('overItems');
-      const orderCategoriesData = localStorage.getItem('orderCategories');
-      const orderTemplatesData = localStorage.getItem('orderItemTemplates');
-      const ordersData = localStorage.getItem('orders');
-      
-      return {
-        version: '2.0',
-        appName: 'Golden Store',
-        exportDate: new Date().toISOString(),
-        
-        // Price List data
-        priceList: {
-          items: priceListData ? JSON.parse(priceListData) : []
-        },
-        
-        // Credit Management data
-        creditManagement: {
-          clients: creditClientsData ? JSON.parse(creditClientsData) : [],
-          transactions: creditTransactionsData ? JSON.parse(creditTransactionsData) : [],
-          payments: creditPaymentsData ? JSON.parse(creditPaymentsData) : []
-        },
-        
-        // Over Management data
-        overManagement: {
-          items: overItemsData ? JSON.parse(overItemsData) : []
-        },
-        
-        // Order Management data
-        orderManagement: {
-          categories: orderCategoriesData ? JSON.parse(orderCategoriesData) : [],
-          itemTemplates: orderTemplatesData ? JSON.parse(orderTemplatesData) : [],
-          orders: ordersData ? JSON.parse(ordersData) : []
-        }
-      };
-    } catch (error) {
-      console.error('Error collecting data for backup:', error);
-      return null;
-    }
+  private async collectAllData(): Promise<any> {
+    await creditDBManager.initDB();
+    await appDBManager.initDB();
+
+    const [
+      clients,
+      transactions,
+      payments,
+      priceItems,
+      overItems,
+      orderCategories,
+      orderTemplates,
+      orders,
+      returns
+    ] = await Promise.all([
+      creditDBManager.getAllClients(),
+      creditDBManager.getAllTransactions(),
+      creditDBManager.getAllPayments(),
+      appDBManager.getPriceListItems(),
+      appDBManager.getOverItems(),
+      appDBManager.getOrderCategories(),
+      appDBManager.getOrderTemplates(),
+      appDBManager.getOrders(),
+      appDBManager.getAllReturns()
+    ]);
+
+    return {
+      version: '2.0',
+      appName: 'Golden Store',
+      exportDate: new Date().toISOString(),
+
+      // Which installation produced this snapshot
+      device: getDeviceIdentity(),
+
+      // Price List data
+      priceList: {
+        items: priceItems || []
+      },
+
+      // Credit Management data
+      creditManagement: {
+        clients: clients || [],
+        transactions: transactions || [],
+        payments: payments || []
+      },
+
+      // Over Management data
+      overManagement: {
+        items: overItems || []
+      },
+
+      // Order Management data
+      orderManagement: {
+        categories: orderCategories || [],
+        itemTemplates: orderTemplates || [],
+        orders: orders || []
+      },
+
+      // Returns data
+      returns: returns || []
+    };
   }
 
   /**
    * Check if data is empty (no point backing up empty database)
    */
   private isDataEmpty(data: any): boolean {
-    const totalItems = 
-      (data.priceList?.items?.length || 0) +
-      (data.creditManagement?.clients?.length || 0) +
-      (data.creditManagement?.transactions?.length || 0) +
-      (data.creditManagement?.payments?.length || 0) +
-      (data.overManagement?.items?.length || 0) +
-      (data.orderManagement?.categories?.length || 0) +
-      (data.orderManagement?.itemTemplates?.length || 0) +
-      (data.orderManagement?.orders?.length || 0);
-    
+    const totalItems =
+      (data?.priceList?.items?.length || 0) +
+      (data?.creditManagement?.clients?.length || 0) +
+      (data?.creditManagement?.transactions?.length || 0) +
+      (data?.creditManagement?.payments?.length || 0) +
+      (data?.overManagement?.items?.length || 0) +
+      (data?.orderManagement?.categories?.length || 0) +
+      (data?.orderManagement?.itemTemplates?.length || 0) +
+      (data?.orderManagement?.orders?.length || 0) +
+      (data?.returns?.length || 0);
+
     return totalItems === 0;
   }
 
@@ -279,7 +304,7 @@ export class AutomaticBackupManager {
   private queueOfflineBackup(): void {
     const pendingBackups = this.getPendingBackups();
     const today = new Date().toDateString();
-    
+
     // Only queue one backup per day
     if (!pendingBackups.includes(today)) {
       pendingBackups.push(today);
@@ -308,58 +333,36 @@ export class AutomaticBackupManager {
   }
 
   /**
-   * Check for pending backups on app startup
+   * Check for pending backups and run the daily backup on app startup
    */
   private checkPendingBackupsOnStartup(): void {
     if (navigator.onLine) {
       console.log('🚀 App started online, checking for pending backups...');
       setTimeout(() => this.processPendingBackups(), 3000);
-      setTimeout(() => this.checkForMissedBackup(), 3000);
     } else {
-      console.log('🚀 App started offline, will queue missed backup if detected');
-      setTimeout(() => this.checkForMissedBackup(), 3000);
+      console.log('🚀 App started offline, will queue the backup when the connection is restored');
     }
+
+    // Backups run on every app start, at most once per day
+    setTimeout(() => this.runBackupIfDue(), 5000);
   }
 
   /**
-   * Check if we missed today's scheduled backup
-   */
-  private async checkForMissedBackup(): Promise<void> {
-    if (!this.schedule.enabled || this.isRunning) {
-      return;
-    }
-
-    const now = new Date();
-    const scheduledTime = new Date();
-    scheduledTime.setHours(this.schedule.hour, this.schedule.minute, 0, 0);
-
-    if (now < scheduledTime) {
-      return;
-    }
-
-    const lastBackup = this.getLastBackupDate();
-    const today = new Date().toDateString();
-
-    if (!lastBackup || lastBackup.toDateString() !== today) {
-      console.log('📅 Missed scheduled backup detected');
-
-      if (navigator.onLine) {
-        console.log('🌐 Online - performing backup now...');
-        await this.performAutomaticBackup();
-      } else {
-        console.log('📱 Offline - queuing backup for when connection is restored');
-        this.queueOfflineBackup();
-      }
-    }
-  }
-
-  /**
-   * Setup network event listeners
+   * Setup network and visibility listeners
    */
   private setupNetworkListeners(): void {
     window.addEventListener('online', () => {
       console.log('🌐 Connection restored, checking for pending backups...');
       setTimeout(() => this.processPendingBackups(), 2000);
+      setTimeout(() => this.runBackupIfDue(), 4000);
+    });
+
+    // Mobile/PWA timers are paused in the background, so re-check whenever
+    // the app becomes visible again
+    document.addEventListener('visibilitychange', () => {
+      if (document.visibilityState === 'visible') {
+        setTimeout(() => this.runBackupIfDue(), 2000);
+      }
     });
   }
 
@@ -376,39 +379,51 @@ export class AutomaticBackupManager {
       return;
     }
 
+    // Only a device that is allowed to upload may write the server snapshot
+    if (!isServerBackupEnabled()) {
+      return;
+    }
+
     console.log(`📤 Processing ${pendingBackups.length} pending backup(s)...`);
 
+    this.isRunning = true;
+
     try {
-      this.isRunning = true;
-      
+      this.setLastAttempt(new Date());
+
       // Collect current data
-      const exportData = this.collectAllData();
-      
-      if (!exportData || this.isDataEmpty(exportData)) {
+      const exportData = await this.collectAllData();
+
+      if (this.isDataEmpty(exportData)) {
         console.log('📭 No data to backup, clearing pending queue');
         this.clearOfflineBackupQueue();
         return;
       }
 
+      // Keep a local JSON copy of every snapshot that is uploaded
+      this.createLocalBackup(exportData);
+
       // Create backup name indicating it was delayed
-      const backupName = `Delayed Backup ${new Date().toLocaleDateString('en-GB')} ${new Date().toLocaleTimeString('en-GB', { hour: '2-digit', minute: '2-digit' })}`;
-      
+      const deviceIdentity = getDeviceIdentity();
+      const backupName = `Delayed Backup (${deviceIdentity.label}) ${new Date().toLocaleDateString('en-GB')} ${new Date().toLocaleTimeString('en-GB', { hour: '2-digit', minute: '2-digit' })}`;
+
       // Perform backup to Supabase
       await SupabaseBackupManager.saveToSupabase(exportData, backupName);
-      
-      // Create local backup with fixed filename
-      this.createLocalBackup(exportData);
-      
+
       // Update last backup timestamp
       this.setLastBackupDate(new Date());
-      
+
       // Clear pending backups
       this.clearOfflineBackupQueue();
-      
+
+      // Clear any previous errors since backup was successful
+      this.clearLastError();
+
       console.log('✅ Pending backup completed successfully');
-      
+
     } catch (error) {
       console.error('❌ Pending backup failed:', error);
+      this.setLastError(error instanceof Error ? error.message : 'Unknown error');
       // Keep in queue for next connection attempt
     } finally {
       this.isRunning = false;
@@ -420,9 +435,9 @@ export class AutomaticBackupManager {
    */
   private isNetworkError(error: any): boolean {
     const message = error?.message?.toLowerCase() || '';
-    return message.includes('network') || 
-           message.includes('fetch') || 
-           message.includes('timeout') || 
+    return message.includes('network') ||
+           message.includes('fetch') ||
+           message.includes('timeout') ||
            message.includes('connection');
   }
 
@@ -446,6 +461,29 @@ export class AutomaticBackupManager {
       localStorage.setItem('lastAutoBackup', date.toISOString());
     } catch (error) {
       console.warn('Failed to save last backup date:', error);
+    }
+  }
+
+  /**
+   * Get last backup attempt time
+   */
+  private getLastAttemptDate(): Date | null {
+    try {
+      const saved = localStorage.getItem('lastAutoBackupAttempt');
+      return saved ? new Date(saved) : null;
+    } catch {
+      return null;
+    }
+  }
+
+  /**
+   * Set last backup attempt time
+   */
+  private setLastAttempt(date: Date): void {
+    try {
+      localStorage.setItem('lastAutoBackupAttempt', date.toISOString());
+    } catch (error) {
+      console.warn('Failed to save last backup attempt:', error);
     }
   }
 
@@ -509,51 +547,30 @@ export class AutomaticBackupManager {
    * Get backup status for UI
    */
   public getBackupStatus(): BackupStatus {
-    const lastBackup = this.getLastBackupDate();
-    const lastManualBackup = this.getLastManualBackupDate();
-    const pendingBackups = this.getPendingBackups();
-    const lastError = this.getLastError();
-    
-    // Calculate next scheduled backup
-    const now = new Date();
-    const nextScheduled = new Date();
-    nextScheduled.setHours(this.schedule.hour, this.schedule.minute, 0, 0);
-    
-    // If today's time has passed, schedule for tomorrow
-    if (nextScheduled <= now) {
-      nextScheduled.setDate(nextScheduled.getDate() + 1);
-    }
-
     return {
-      lastBackup,
-      lastManualBackup,
-      nextScheduled: this.schedule.enabled ? nextScheduled : null,
-      isEnabled: this.schedule.enabled,
-      pendingBackups: pendingBackups.length,
-      lastError
+      lastBackup: this.getLastBackupDate(),
+      lastManualBackup: this.getLastManualBackupDate(),
+      lastAttempt: this.getLastAttemptDate(),
+      pendingBackups: this.getPendingBackups().length,
+      lastError: this.getLastError()
     };
   }
 
   /**
-   * Update backup schedule
+   * Record a successful server backup (manual or automatic) so the scheduler
+   * does not duplicate it on the next check
    */
-  public updateSchedule(hour: number, minute: number, enabled: boolean): void {
-    this.schedule = { hour, minute, enabled };
-    this.saveSettings();
-    
-    if (enabled) {
-      console.log(`📅 Automatic backup scheduled for ${hour.toString().padStart(2, '0')}:${minute.toString().padStart(2, '0')} daily`);
-    } else {
-      console.log('📅 Automatic backup disabled');
-    }
+  public markServerBackupCompleted(): void {
+    this.setLastBackupDate(new Date());
+    this.clearLastError();
   }
 
   /**
-   * Force backup now (for testing)
+   * Force backup now (manual trigger / testing)
    */
-  public async forceBackupNow(): Promise<void> {
+  public async forceBackupNow(): Promise<BackupRunResult> {
     console.log('🔄 Forcing backup now...');
-    await this.performAutomaticBackup();
+    return this.performAutomaticBackup();
   }
 
   /**

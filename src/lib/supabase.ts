@@ -19,6 +19,30 @@ const isMobileDevice = () => {
   return /iphone|ipad|ipod|android|mobile/.test(userAgent);
 };
 
+// Request timeouts scale with payload size: small sync calls get a short window,
+// the ~8 MB backup snapshot gets several minutes on a weak connection.
+const REQUEST_TIMEOUT_BASE_MS = 60000; // floor for tiny requests
+const REQUEST_TIMEOUT_MAX_MS = 300000; // ceiling (5 minutes)
+const ASSUMED_UPLOAD_BYTES_PER_MS = 60; // ~60 KB/s worst case
+
+// Rough payload size, used only to pick a timeout
+const estimateBodySize = (body: any): number => {
+  if (!body) return 0;
+  if (typeof body === 'string') return body.length;
+  if (typeof Blob !== 'undefined' && body instanceof Blob) return body.size;
+  if (body instanceof ArrayBuffer) return body.byteLength;
+  if (ArrayBuffer.isView(body)) return (body as ArrayBufferView).byteLength;
+  return 0;
+};
+
+const getRequestTimeout = (body: any): number => {
+  const size = estimateBodySize(body);
+  return Math.min(
+    REQUEST_TIMEOUT_BASE_MS + Math.ceil(size / ASSUMED_UPLOAD_BYTES_PER_MS),
+    REQUEST_TIMEOUT_MAX_MS
+  );
+};
+
 // Initialize Supabase client with error handling
 let supabase: any = null;
 
@@ -51,9 +75,10 @@ try {
       heartbeatIntervalMs: isMobile ? 300000 : 30000, // 5 minutes for mobile
     },
     global: {
-      fetch: (url, options = {}) => {
+      fetch: (url: RequestInfo | URL, options: RequestInit = {}) => {
+        const timeoutMs = getRequestTimeout(options.body);
         const controller = new AbortController();
-        const timeoutId = setTimeout(() => controller.abort(), isMobile ? 180000 : 15000);
+        const timeoutId = setTimeout(() => controller.abort(), timeoutMs);
         
         // Create headers with mobile-specific handling
         const headers = new Headers();
@@ -104,6 +129,10 @@ try {
           return response;
         }).catch(error => {
           clearTimeout(timeoutId);
+          if (error?.name === 'AbortError') {
+            // Surfaced in Test Now / backup status; "timeout" marks it as retryable
+            throw new Error(`Request timeout after ${Math.round(timeoutMs / 1000)}s`);
+          }
           throw error;
         });
       },
