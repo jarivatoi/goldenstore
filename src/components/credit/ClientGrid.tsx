@@ -3,7 +3,7 @@ import { useEffect, useRef, useState } from 'react';
 import { gsap } from 'gsap';
 import { InertiaPlugin } from 'gsap/InertiaPlugin';
 import { Draggable, DraggableInstance } from '../../lib/draggable';
-import { Search, X, Users, UserCheck, CreditCard, LayoutGrid, ArrowUp, ArrowDown, ArrowUpDown } from 'lucide-react';
+import { Search, Users, UserCheck, CreditCard, LayoutGrid, ArrowUp, ArrowDown, ArrowUpDown } from 'lucide-react';
 import { Client, PaymentRecord } from '../../types';
 import ClientCard from '../ClientCard';
 import { useCredit } from '../../context/CreditContext';
@@ -201,23 +201,28 @@ const ClientGrid: React.FC<ClientGridProps> = ({
     interface PaymentRow {
       key: string;
       client: Client;
-      latestPayment: PaymentRecord;
+      latestPayment: PaymentRecord | null;
       outstanding: number;
     }
 
+    // While a search is active, every matching client is listed (even without payments)
+    // so results stay identical to the client grid search
+    const hasSearchQuery = searchQuery.trim().length > 0;
     const rows: PaymentRow[] = [];
 
     clients.forEach(client => {
       const clientPayments = [...getClientPayments(client.id)].sort(
         (a, b) => new Date(b.date).getTime() - new Date(a.date).getTime()
       );
-      if (clientPayments.length === 0) return;
 
-      const latestPayment = clientPayments[0];
+      // Clients without payments are only listed during an active search
+      if (clientPayments.length === 0 && !hasSearchQuery) return;
+
+      const latestPayment = clientPayments.length > 0 ? clientPayments[0] : null;
       const outstanding = getClientTotalDebt(client.id);
 
       rows.push({
-        key: `${client.id}-${latestPayment.id}`,
+        key: latestPayment ? `${client.id}-${latestPayment.id}` : `${client.id}-no-payment`,
         client,
         latestPayment,
         outstanding
@@ -230,23 +235,26 @@ const ClientGrid: React.FC<ClientGridProps> = ({
       
       switch (sortColumn) {
         case 'id':
-          comparison = a.client.id.localeCompare(b.client.id);
+          // Natural numeric ordering: G1, G2, G9, G10, G100 (not G1, G10, G100, G2)
+          comparison = a.client.id.localeCompare(b.client.id, undefined, { numeric: true });
           break;
         case 'name':
           comparison = a.client.name.localeCompare(b.client.name);
           break;
         case 'partial':
-          const aPartial = a.latestPayment.type === 'partial' ? a.latestPayment.amount : 0;
-          const bPartial = b.latestPayment.type === 'partial' ? b.latestPayment.amount : 0;
+          const aPartial = a.latestPayment && a.latestPayment.type === 'partial' ? a.latestPayment.amount : 0;
+          const bPartial = b.latestPayment && b.latestPayment.type === 'partial' ? b.latestPayment.amount : 0;
           comparison = aPartial - bPartial;
           break;
         case 'full':
-          const aFull = a.latestPayment.type === 'full' ? a.latestPayment.amount : 0;
-          const bFull = b.latestPayment.type === 'full' ? b.latestPayment.amount : 0;
+          const aFull = a.latestPayment && a.latestPayment.type === 'full' ? a.latestPayment.amount : 0;
+          const bFull = b.latestPayment && b.latestPayment.type === 'full' ? b.latestPayment.amount : 0;
           comparison = aFull - bFull;
           break;
         case 'date':
-          comparison = new Date(a.latestPayment.date).getTime() - new Date(b.latestPayment.date).getTime();
+          comparison =
+            (a.latestPayment ? new Date(a.latestPayment.date).getTime() : 0) -
+            (b.latestPayment ? new Date(b.latestPayment.date).getTime() : 0);
           break;
         case 'outstanding':
           comparison = a.outstanding - b.outstanding;
@@ -256,17 +264,8 @@ const ClientGrid: React.FC<ClientGridProps> = ({
       return sortDirection === 'asc' ? comparison : -comparison;
     });
 
-    // Apply search filter (accent-insensitive)
-    const query = searchQuery.trim().toLowerCase();
-    if (query) {
-      const normalize = (s: string) => s.normalize('NFD').replace(/[\u0300-\u036f]/g, '').toLowerCase();
-      const normalizedQuery = normalize(query);
-      return rows.filter(r =>
-        normalize(r.client.name).includes(normalizedQuery) ||
-        normalize(r.client.id).includes(normalizedQuery)
-      );
-    }
-
+    // No extra search filtering here: `clients` is already filtered by the shared
+    // search logic (same rules the grid uses), so both views show identical matches
     return rows;
   }, [showPaymentHistory, clients, getClientPayments, getClientTotalDebt, searchQuery, sortColumn, sortDirection]);
 
@@ -461,25 +460,27 @@ const ClientGrid: React.FC<ClientGridProps> = ({
                       </button>
                     </td>
                     <td className="py-3 px-2 text-center whitespace-nowrap">
-                      {row.latestPayment.type === 'partial' ? (
+                      {row.latestPayment && row.latestPayment.type === 'partial' ? (
                         <span className="text-green-600 font-medium">Rs {row.latestPayment.amount.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</span>
                       ) : (
                         <span className="text-gray-400">-</span>
                       )}
                     </td>
                     <td className="py-3 px-2 text-center whitespace-nowrap">
-                      {row.latestPayment.type === 'full' ? (
+                      {row.latestPayment && row.latestPayment.type === 'full' ? (
                         <span className="text-green-600 font-medium">Rs {row.latestPayment.amount.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</span>
                       ) : (
                         <span className="text-gray-400">-</span>
                       )}
                     </td>
                     <td className="py-3 px-2 text-center text-gray-600 whitespace-nowrap">
-                      {row.latestPayment.date.toLocaleDateString('en-GB', {
+                      {row.latestPayment ? row.latestPayment.date.toLocaleDateString('en-GB', {
                         day: '2-digit',
                         month: 'short',
                         year: 'numeric'
-                      }).replace(/\s/g, '-')}
+                      }).replace(/\s/g, '-') : (
+                        <span className="text-gray-400">-</span>
+                      )}
                     </td>
                     <td className="py-3 px-2 text-center whitespace-nowrap">
                       {row.outstanding > 0 ? (
