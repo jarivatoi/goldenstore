@@ -17,7 +17,7 @@ const SupabaseStatusIndicator: React.FC<SupabaseStatusIndicatorProps> = ({ class
 
   useEffect(() => {
     let mounted = true;
-    let checkInterval: NodeJS.Timeout;
+    let checkInterval: number;
 
     const checkSupabaseStatus = async () => {
       if (!mounted) return;
@@ -32,7 +32,7 @@ const SupabaseStatusIndicator: React.FC<SupabaseStatusIndicatorProps> = ({ class
         setStatus('connecting');
         
         // Test connection with a simple query
-        const { data, error } = await Promise.race([
+        const { error } = await Promise.race([
           supabase.from('price_items').select('id').limit(1),
           new Promise<any>((_, reject) => 
             setTimeout(() => reject(new Error('Connection timeout')), 5000)
@@ -64,8 +64,9 @@ const SupabaseStatusIndicator: React.FC<SupabaseStatusIndicatorProps> = ({ class
     // Initial check
     checkSupabaseStatus();
 
-    // Check every 30 seconds
-    checkInterval = setInterval(checkSupabaseStatus, 30000);
+    // A probe keeps the radio awake, so it runs rarely: a slow interval plus an
+    // immediate check whenever the app returns to the foreground
+    checkInterval = window.setInterval(checkSupabaseStatus, 5 * 60 * 1000);
 
     // Also check when coming back online
     const handleOnline = () => {
@@ -81,14 +82,22 @@ const SupabaseStatusIndicator: React.FC<SupabaseStatusIndicatorProps> = ({ class
       }
     };
 
+    const handleVisibilityChange = () => {
+      if (mounted && document.visibilityState === 'visible') {
+        checkSupabaseStatus();
+      }
+    };
+
     window.addEventListener('online', handleOnline);
     window.addEventListener('offline', handleOffline);
+    document.addEventListener('visibilitychange', handleVisibilityChange);
 
     return () => {
       mounted = false;
       clearInterval(checkInterval);
       window.removeEventListener('online', handleOnline);
       window.removeEventListener('offline', handleOffline);
+      document.removeEventListener('visibilitychange', handleVisibilityChange);
     };
   }, []);
 
