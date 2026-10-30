@@ -272,6 +272,8 @@ export class KeypadHandler {
    */
   private static handleOperatorInput(state: KeypadState, input: string): KeypadState {
     const currentNumber = this.getCurrentNumber(state.display);
+    // Keep the operand as typed so "3.60" does not collapse to "3.6" in the steps
+    const typedNumber = this.getTypedOperand(state.display, currentNumber);
 
     // Format display to show 2 decimal places if it has 1 decimal place
     const formattedDisplay = this.formatDisplayForOperator(state.display);
@@ -335,12 +337,12 @@ export class KeypadHandler {
     if (!isCompoundOperation && newCalculationSteps.length === 0 && currentNumber !== 0) {
         // Only create a step for the first number if it's non-zero
       const firstStep = {
-        expression: currentNumber.toString(),
+        expression: typedNumber,
         result: currentNumber,
         timestamp: Date.now(),
         stepNumber: 1,
         operationType: 'number' as const,
-        displayValue: currentNumber.toString(), // This will be "10" not "1"
+        displayValue: typedNumber, // This will be "10" not "1"
         isComplete: true
       };
       newCalculationSteps.push(firstStep);
@@ -393,7 +395,7 @@ export class KeypadHandler {
           timestamp: Date.now(),
           stepNumber: newCalculationSteps.length + 1,
           operationType: 'operation',
-          displayValue: `(${percentValue}% of ${currentNumber})=${result}`,
+          displayValue: `(${percentValue}% of ${typedNumber})=${result}`,
           isComplete: true,
           operator: '*'
         };
@@ -597,12 +599,12 @@ export class KeypadHandler {
           // Add step for the previous operation
           // Always add a step, even if currentNumber is zero
           const addSubStep: CalculationStep = {
-            expression: `${state.lastOperation}${currentNumber}`,
+            expression: `${state.lastOperation}${typedNumber}`,
             result: currentNumber,
             timestamp: Date.now(),
             stepNumber: newCalculationSteps.length + 1,
             operationType: 'number',
-            displayValue: `${state.lastOperation}${currentNumber}`,
+            displayValue: `${state.lastOperation}${typedNumber}`,
             isComplete: true,
             operator: state.lastOperation
           };
@@ -663,19 +665,19 @@ export class KeypadHandler {
           // Add compound step like "(5×3)=15" for standalone or "+(5×3)=15" when part of a sequence
           // Always add the step, even if the compound result is zero
           const compoundStep: CalculationStep = {
-            expression: `${operatorContext}(${state.lastOperand}${this.getOperatorSymbol(state.lastOperation)}${currentNumber})`,
+            expression: `${operatorContext}(${state.lastOperand}${this.getOperatorSymbol(state.lastOperation)}${typedNumber})`,
             result: compoundResult,
             timestamp: Date.now(),
             stepNumber: newCalculationSteps.length + 1,
             operationType: 'operation',
-            displayValue: `${operatorContext}(${state.lastOperand}${this.getOperatorSymbol(state.lastOperation)}${currentNumber})=${compoundResult}`,
+            displayValue: `${operatorContext}(${state.lastOperand}${this.getOperatorSymbol(state.lastOperation)}${typedNumber})=${compoundResult}`,
             isComplete: true,
             operator: state.lastOperation // Use the actual operator instead of hardcoding '+'
           };
 
           // For standalone operations, don't include the operator sign in the display
           if (!operatorContext) {
-            compoundStep.displayValue = `(${state.lastOperand}${this.getOperatorSymbol(state.lastOperation)}${currentNumber})=${compoundResult}`;
+            compoundStep.displayValue = `(${state.lastOperand}${this.getOperatorSymbol(state.lastOperation)}${typedNumber})=${compoundResult}`;
           }
 
           newCalculationSteps.push(compoundStep);
@@ -717,12 +719,12 @@ export class KeypadHandler {
             newCalculationSteps[newCalculationSteps.length - 1].operationType === 'operation') {
           // Create a step for the current operation
           const addSubStep: CalculationStep = {
-            expression: `${normalizedOperator}${currentNumber}`,
+            expression: `${normalizedOperator}${typedNumber}`,
             result: currentNumber,
             timestamp: Date.now(),
             stepNumber: newCalculationSteps.length + 1,
             operationType: 'number',
-            displayValue: `${normalizedOperator}${currentNumber}`,
+            displayValue: `${normalizedOperator}${typedNumber}`,
             isComplete: true,
             operator: normalizedOperator
           };
@@ -845,6 +847,8 @@ export class KeypadHandler {
    */
   private static handleEqualsInput(state: KeypadState): KeypadState {
     const currentNumber = this.getCurrentNumber(state.display);
+    // Keep the operand as typed so "3.60" does not collapse to "3.6" in the steps
+    const typedNumber = this.getTypedOperand(state.display, currentNumber);
     let newCalculationSteps = [...state.calculationSteps];
     let newArticleCount = state.articleCount;
 
@@ -1068,6 +1072,8 @@ export class KeypadHandler {
       } else {
         // We have a second operand, so perform the operation normally
         const secondOperand = currentNumber;
+        // Display the operand as typed ("3.60", not "3.6") in the compound step
+        const secondOperandText = typedNumber;
         
         // Final compound operation - check if we have a previous addition/subtraction step
         if (newCalculationSteps.length > 0 && 
@@ -1079,6 +1085,12 @@ export class KeypadHandler {
           const operatorSign = previousStep.operator === '*' ? '×' : 
                               previousStep.operator === '/' ? '÷' : 
                               previousStep.operator || '+';
+
+          // Reuse the operand the way it was typed in the step being replaced ("+3.60" -> "3.60")
+          const strippedOperand = previousStep.displayValue.replace(/^[+\-×÷*/]/, '');
+          const previousOperandText = /^-?\d+(\.\d+)?$/.test(strippedOperand)
+            ? strippedOperand
+            : state.lastOperand.toString();
           
           const compoundResult = this.performBasicOperation(
             state.lastOperand,
@@ -1088,12 +1100,12 @@ export class KeypadHandler {
           
           // Replace the previous step with the compound operation
           const finalCompoundStep: CalculationStep = {
-            expression: `${operatorSign}(${state.lastOperand}${this.getOperatorSymbol(state.lastOperation)}${secondOperand})`,
+            expression: `${operatorSign}(${previousOperandText}${this.getOperatorSymbol(state.lastOperation)}${secondOperandText})`,
             result: compoundResult,
             timestamp: Date.now(),
             stepNumber: newCalculationSteps.length,
             operationType: 'operation',
-            displayValue: `${operatorSign}(${state.lastOperand}${this.getOperatorSymbol(state.lastOperation)}${secondOperand})=${compoundResult}`,
+            displayValue: `${operatorSign}(${previousOperandText}${this.getOperatorSymbol(state.lastOperation)}${secondOperandText})=${compoundResult}`,
             isComplete: true,
             operator: state.lastOperation
           };
@@ -1112,12 +1124,12 @@ export class KeypadHandler {
           
           // Add final compound step like "+(2×3)=6" when part of a sequence
           const finalCompoundStep: CalculationStep = {
-            expression: `${operatorSign}(${state.lastOperand}${this.getOperatorSymbol(state.lastOperation)}${secondOperand})`,
+            expression: `${operatorSign}(${state.lastOperand}${this.getOperatorSymbol(state.lastOperation)}${secondOperandText})`,
             result: compoundResult,
             timestamp: Date.now(),
             stepNumber: newCalculationSteps.length + 1,
             operationType: 'operation',
-            displayValue: `${operatorSign}(${state.lastOperand}${this.getOperatorSymbol(state.lastOperation)}${secondOperand})=${compoundResult}`,
+            displayValue: `${operatorSign}(${state.lastOperand}${this.getOperatorSymbol(state.lastOperation)}${secondOperandText})=${compoundResult}`,
             isComplete: true,
             operator: state.lastOperation
           };
@@ -1135,12 +1147,12 @@ export class KeypadHandler {
           
           // Add final compound step like "(2×3)=6" for standalone
           const finalCompoundStep: CalculationStep = {
-            expression: `(${state.lastOperand}${this.getOperatorSymbol(state.lastOperation)}${secondOperand})`,
+            expression: `(${state.lastOperand}${this.getOperatorSymbol(state.lastOperation)}${secondOperandText})`,
             result: compoundResult,
             timestamp: Date.now(),
             stepNumber: newCalculationSteps.length + 1,
             operationType: 'operation',
-            displayValue: `(${state.lastOperand}${this.getOperatorSymbol(state.lastOperation)}${secondOperand})=${compoundResult}`,
+            displayValue: `(${state.lastOperand}${this.getOperatorSymbol(state.lastOperation)}${secondOperandText})=${compoundResult}`,
             isComplete: true,
             operator: state.lastOperation
           };
@@ -1157,12 +1169,12 @@ export class KeypadHandler {
       // Only create a step if we have a non-zero result or existing steps
       if (currentNumber !== 0 || newCalculationSteps.length > 0) {
         const finalStep: CalculationStep = {
-          expression: `${state.lastOperation}${currentNumber}`,
+          expression: `${state.lastOperation}${typedNumber}`,
           result: currentNumber,
           timestamp: Date.now(),
           stepNumber: newCalculationSteps.length + 1,
           operationType: 'number',
-          displayValue: `${state.lastOperation}${currentNumber}`,
+          displayValue: `${state.lastOperation}${typedNumber}`,
           isComplete: true,
           operator: state.lastOperation
         };
@@ -1624,6 +1636,17 @@ export class KeypadHandler {
   private static getCurrentNumber(display: string): number {
     const num = parseFloat(display);
     return isNaN(num) ? 0 : num;
+  }
+
+  /**
+   * Keep the operand exactly as typed, so "3.60" stays "3.60" in the step list
+   * instead of collapsing to the parsed value "3.6". A single decimal is padded
+   * to two, matching how the main display shows the same operand
+   */
+  private static getTypedOperand(display: string, fallback: number): string {
+    const trimmed = display.trim();
+    if (!/^-?\d+(\.\d+)?$/.test(trimmed)) return fallback.toString();
+    return trimmed.includes('.') ? this.formatDisplayForOperator(trimmed) : trimmed;
   }
 
   /**
