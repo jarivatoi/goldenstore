@@ -162,7 +162,7 @@ export class SupabaseBackupManager {
     }
 
     try {
-      const { data, error, count } = await supabase
+      const { data, error } = await supabase
         .from('database_backups')
         .select('*', { count: 'exact' })
         .order('created_at', { ascending: false })

@@ -4,10 +4,9 @@ import { X, CreditCard, CheckCircle, DollarSign, RotateCcw, Minus, Plus, Calcula
 import { Client } from '../types';
 import { useCredit } from '../context/CreditContext';
 import SettleConfirmationModal from './SettleConfirmationModal';
-import ClientDetailModal from './ClientDetailModal';
 import { ScrollingText } from './ScrollingText';
 import { useNotification } from '../context/NotificationContext';
-import { calculateReturnableItemsWithDates, calculateReturnableItems } from '../utils/returnableItemsUtils';
+import { calculateReturnableItems } from '../utils/returnableItemsUtils';
 
 interface ClientActionModalProps {
   client: Client;
@@ -24,7 +23,7 @@ interface ClientActionModalProps {
  * Shows partial payment and settle options when swiping up on client card
  */
 const ClientActionModal: React.FC<ClientActionModalProps> = ({ client, onClose, onQuickAdd, onResetCalculator, onViewDetails }) => {
-  const { addPartialPayment, settleClient, settleClientWithFullClear, getClientTotalDebt, returnBottles, getClientBottlesOwed, getClientTransactions, addTransaction, addBatchTransactions } = useCredit();
+  const { addPartialPayment, settleClient, settleClientWithFullClear, getClientTotalDebt, getClientBottlesOwed, getClientTransactions, addTransaction, addBatchTransactions } = useCredit();
   const { showAlert } = useNotification();
   const [showPartialPayment, setShowPartialPayment] = useState(false);
   const [showReturnTab, setShowReturnTab] = useState(false);
@@ -164,7 +163,7 @@ const ClientActionModal: React.FC<ClientActionModalProps> = ({ client, onClose, 
   // Get returnable items using the same logic as ClientCard and ClientDetailModal
   const getReturnableItems = () => {
     // Use the utility function to get returnable items as strings (same as ClientDetailModal)
-    const returnableItemsStrings = calculateReturnableItems(clientTransactions, client.name);
+    const returnableItemsStrings = calculateReturnableItems(clientTransactions);
 
     // Convert the string format back to the object format used by the modal
     const returnableItems: {[key: string]: {total: number, transactions: Array<{id: string, description: string, amount: number, quantity: number, date: Date}>}} = {};
@@ -361,7 +360,7 @@ const processItemReturn = async (itemType: string, returnQuantity: number) => {
 
 
   // Memoize returnable items to recalculate when transactions change
-  const { returnableItems, availableItems } = useMemo(() => {
+  const { availableItems } = useMemo(() => {
     console.log('🔄 useMemo RECALCULATING availableItems...');
     console.log('📊 clientTransactions.length:', clientTransactions.length);
 
@@ -425,7 +424,7 @@ const processItemReturn = async (itemType: string, returnQuantity: number) => {
               {Object.values(bottlesOwed).some(count => count > 0) && (
                 <p className="text-sm select-none">
                   Bottles owed: {Object.entries(bottlesOwed)
-                    .filter(([type, count]) => count > 0)
+                    .filter(([, count]) => count > 0)
                     .map(([type, count]) => `${count} ${type.charAt(0).toUpperCase() + type.slice(1)}${count > 1 ? 's' : ''}`)
                     .join(', ')}
                 </p>
@@ -832,8 +831,6 @@ const processItemReturn = async (itemType: string, returnQuantity: number) => {
                               returnedTotal += parseInt(quantityMatch[1]);
                             }
                           });
-                          
-                          const totalOriginal = originalTotal; // Use original total calculated from transactions
                           
                           // Get unique transactions for this item type
                           const uniqueTransactions = data.transactions.reduce((unique: any[], transaction) => {

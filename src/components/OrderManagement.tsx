@@ -4,7 +4,7 @@ import { useOrder } from '../context/OrderContext';
 import { OrderCategory, OrderItemTemplate, Order, OrderItem } from '../types';
 import ConfirmationModal from './ConfirmationModal';
 import { useNotification } from '../context/NotificationContext';
-import { addReturn, getReturnsForOrder, getTotalReturnAmount, deleteReturn, getAllReturns, ReturnData } from '../utils/returnsManager';
+import { addReturn, getReturnsForOrder, getTotalReturnAmount, deleteReturn, ReturnData } from '../utils/returnsManager';
 
 /**
  * Format item name to ensure consistent display (e.g., "2l Sprite" -> "2L Sprite")
@@ -57,25 +57,22 @@ const OrderManagement: React.FC = () => {
     addCategory, 
     updateCategory, 
     deleteCategory,
-    itemTemplates,
     getItemTemplatesByCategory,
     addItemTemplate,
     updateItemTemplate,
     deleteItemTemplate,
-    orders,
     getOrdersByCategory,
     addOrder,
     updateOrder,
     deleteOrder,
     searchCategories,
-    isLoading,
-    error 
+    isLoading
   } = useOrder();
 
   const { showAlert } = useNotification();
 
   // State management
-  const [searchQuery, setSearchQuery] = useState('');
+  const [searchQuery] = useState('');
   const [selectedCategory, setSelectedCategory] = useState<OrderCategory | null>(null);
   const [activeSection, setActiveSection] = useState<'manage' | 'order'>('manage');
   const [showAddCategory, setShowAddCategory] = useState(false);
@@ -86,7 +83,6 @@ const OrderManagement: React.FC = () => {
   const [newCategoryVat, setNewCategoryVat] = useState('15');
   const [newItemName, setNewItemName] = useState('');
   const [newItemPrice, setNewItemPrice] = useState('');
-  const [newItemVatNil, setNewItemVatNil] = useState(false);
   const [newItemVatPercentage, setNewItemVatPercentage] = useState('15');
   const [editingCategory, setEditingCategory] = useState<OrderCategory | null>(null);
   const [editingItem, setEditingItem] = useState<OrderItemTemplate | null>(null);
@@ -795,7 +791,6 @@ const CategoryCard: React.FC<CategoryCardProps> = ({
   category,
   itemsCount,
   ordersCount,
-  vatPercentage,
   onManage,
   onOrder,
   onEdit,
@@ -932,11 +927,6 @@ const ItemTemplateCard: React.FC<ItemTemplateCardProps> = ({
   onEdit,
   onDelete
 }) => {
-  const [editName, setEditName] = useState(item.name);
-  const [editPrice, setEditPrice] = useState(item.unitPrice.toString());
-  const [editVatNil, setEditVatNil] = useState(item.isVatNil);
-
-
   return (
     <div className="bg-blue-50 rounded-lg p-4 border border-blue-200 select-none">
       <div className="flex justify-between items-center select-none">
@@ -1659,7 +1649,7 @@ const AddItemModal: React.FC<AddItemModalProps> = ({
     return { price, vatPercent, isVatNil: vatNil, vatAmount, totalPrice };
   };
   
-  const { price, vatPercent, isVatNil: vatNil, vatAmount, totalPrice } = calculateVatAndTotal();
+  const { price, vatPercent, vatAmount, totalPrice } = calculateVatAndTotal();
 
   // Handle VAT toggle changes
   const handleVatIncludedChange = (checked: boolean) => {
@@ -1720,7 +1710,7 @@ const AddItemModal: React.FC<AddItemModalProps> = ({
                 onChange={(e) => {
                   // Auto-capitalize with unit preservation and parentheses support
                   const formatted = e.target.value
-                    .replace(/(^|\s|\/|\()([a-z])/g, (match, separator, letter) => {
+                    .replace(/(^|\s|\/|\()([a-z])/g, (_match, separator, letter) => {
                       return separator + letter.toUpperCase();
                     })
                     .split(' ')
@@ -1883,15 +1873,10 @@ const CreateOrderModal: React.FC<CreateOrderModalProps> = ({ category, itemTempl
   const dateInputRef = React.useRef<HTMLInputElement>(null);
   
   // Returns state
-  const [returnAmount, setReturnAmount] = useState<string>('');
-  const [isReturnVatIncluded, setIsReturnVatIncluded] = useState<boolean>(false);
+  const [returnAmount] = useState<string>('');
+  const [isReturnVatIncluded] = useState<boolean>(false);
   
-  // Delete confirmation modal state
-  const [showDeleteConfirm, setShowDeleteConfirm] = useState(false);
-  const [orderToDelete, setOrderToDelete] = useState<{ id: string; categoryName: string; date: string } | null>(null);
-  const [isDeleting, setIsDeleting] = useState(false);
   const [isSubmitting, setIsSubmitting] = useState(false);
-  const { getOrdersByCategory } = useOrder();
 
   // Initialize order items from templates
   React.useEffect(() => {
@@ -1909,27 +1894,6 @@ const CreateOrderModal: React.FC<CreateOrderModalProps> = ({ category, itemTempl
     }));
     setOrderItems(initialItems);
   }, [itemTemplates]);
-
-  const updateOrderItem = (id: string, field: keyof OrderItem, value: number | boolean) => {
-    setOrderItems(prev => prev.map(item => {
-      if (item.id === id) {
-        const updated = { ...item, [field]: value };
-        
-        // Recalculate totals when quantity or unit price changes
-        if (field === 'quantity' || field === 'unitPrice') {
-          const subtotal = updated.quantity * updated.unitPrice;
-          // Check if the item template has VAT included
-          const template = itemTemplates.find(t => t.id === updated.templateId);
-          const isVatIncluded = template && template.isVatIncluded;
-          updated.vatAmount = updated.isVatNil || isVatIncluded ? 0 : subtotal * 0.15; // 15% VAT
-          updated.totalPrice = isVatIncluded ? subtotal : subtotal + updated.vatAmount;
-        }
-        
-        return updated;
-      }
-      return item;
-    }));
-  };
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -2018,11 +1982,6 @@ const CreateOrderModal: React.FC<CreateOrderModalProps> = ({ category, itemTempl
     ? (returnBaseAmount * 0.15) 
     : 0;
   const totalReturnAmount = returnBaseAmount + returnVatAmount;
-
-  const getItemTemplateName = (templateId: string) => {
-    const template = itemTemplates.find(t => t.id === templateId);
-    return formatOrderItemName(template?.name || 'Unknown Item');
-  };
 
   return (
     <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center p-4 z-50 select-none overflow-y-auto">
@@ -2151,7 +2110,6 @@ const CreateOrderModal: React.FC<CreateOrderModalProps> = ({ category, itemTempl
                         return alphaCompare;
                       })
                       .map((template) => {
-                        const orderItem = orderItems.find(oi => oi.templateId === template.id);
                         // Blue for VAT Included, Red for Taxable (VAT added), Green for VAT Nil
                         const isVatIncluded = template.isVatIncluded || false;
                         const isVatNil = template.isVatNil || false;
@@ -2382,8 +2340,8 @@ const EditOrderModal: React.FC<EditOrderModalProps> = ({ order, itemTemplates, o
   const [orderItems, setOrderItems] = useState<OrderItem[]>(order.items);
   
   // Returns state
-  const [returnAmount, setReturnAmount] = useState<string>('');
-  const [isReturnVatIncluded, setIsReturnVatIncluded] = useState<boolean>(false);
+  const [returnAmount] = useState<string>('');
+  const [isReturnVatIncluded] = useState<boolean>(false);
   const [isSubmitting, setIsSubmitting] = useState(false);
 
   const updateOrderItem = (id: string, field: keyof OrderItem, value: number | boolean) => {
@@ -2672,10 +2630,6 @@ const EditItemModal: React.FC<EditItemModalProps> = ({
   setItemPrice,
   itemVatPercentage,
   setItemVatPercentage,
-   itemVatIncluded,
-   setItemVatIncluded,
-   itemVatNil,
-   setItemVatNil,
   isSubmitting,
   showAlert
 }) => {
@@ -2694,7 +2648,7 @@ const EditItemModal: React.FC<EditItemModalProps> = ({
     return { price, vatPercent, isVatNil: vatNil, vatAmount, totalPrice };
   };
   
-  const { price, vatPercent, isVatNil: vatNil, vatAmount, totalPrice } = calculateVatAndTotal();
+  const { price, vatPercent, vatAmount, totalPrice } = calculateVatAndTotal();
 
   // Handle VAT toggle changes
   const handleVatIncludedChange = (checked: boolean) => {
@@ -2758,7 +2712,7 @@ const EditItemModal: React.FC<EditItemModalProps> = ({
                 onChange={(e) => {
                   // Auto-capitalize with unit preservation and parentheses support
                   const formatted = e.target.value
-                    .replace(/(^|\s|\/|\()([a-z])/g, (match, separator, letter) => {
+                    .replace(/(^|\s|\/|\()([a-z])/g, (_match, separator, letter) => {
                       return separator + letter.toUpperCase();
                     })
                     .split(' ')

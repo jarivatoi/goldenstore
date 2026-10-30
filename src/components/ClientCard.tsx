@@ -26,7 +26,7 @@ interface ClientCardProps {
  * 
  * Displays individual client information with swipe and long press interactions
  */
-const ClientCard: React.FC<ClientCardProps> = ({ client, onLongPress, onQuickAdd, onResetCalculator, isLinked = false, showWobble = false, onCloseWobble }) => {
+const ClientCard: React.FC<ClientCardProps> = ({ client, onQuickAdd, onResetCalculator, isLinked = false }) => {
   const { getClientTotalDebt, getClientBottlesOwed, getClientTransactions } = useCredit();
   const [showDetails, setShowDetails] = useState(false);
   const [showActions, setShowActions] = useState(false);
@@ -52,10 +52,6 @@ const ClientCard: React.FC<ClientCardProps> = ({ client, onLongPress, onQuickAdd
   }, [client.id, client.name, getClientTransactions, forceUpdate]);
   
   const returnableItemsText = getReturnableItemsText;
-  const [startY, setStartY] = useState(0);
-  const [startX, setStartX] = useState(0);
-  const [currentY, setCurrentY] = useState(0);
-  const [currentX, setCurrentX] = useState(0);
   const longPressTimer = useRef<NodeJS.Timeout | null>(null);
   const cardRef = useRef<HTMLDivElement>(null);
   const lastTapRef = useRef<number>(0);
@@ -85,7 +81,6 @@ const ClientCard: React.FC<ClientCardProps> = ({ client, onLongPress, onQuickAdd
   }, [returnableItemsText]);
 
   // Determine if client has any outstanding debt or returnables
-  const hasOutstanding = totalDebt > 0 || returnableItemsText.length > 0;
   const hasDebt = totalDebt > 0;
   const hasReturnables = returnableItemsText.length > 0;
 
@@ -109,8 +104,7 @@ const ClientCard: React.FC<ClientCardProps> = ({ client, onLongPress, onQuickAdd
   };
 
   // Touch event handlers
-  const handleTouchStart = (e: React.TouchEvent) => {
-    const touch = e.touches[0];
+  const handleTouchStart = (_e: React.TouchEvent) => {
 
     longPressTimer.current = setTimeout(() => {
       // Dismiss keyboard before opening modal
@@ -492,7 +486,6 @@ const ClientCard: React.FC<ClientCardProps> = ({ client, onLongPress, onQuickAdd
         <ClientDetailModal
           client={client}
           onClose={() => setShowDetails(false)}
-          onQuickAdd={onQuickAdd}
         />
       )}
 

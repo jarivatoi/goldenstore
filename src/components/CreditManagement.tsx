@@ -9,8 +9,7 @@ import CreditHeader from './credit/CreditHeader';
 import ClientGrid from './credit/ClientGrid';
 import CreditModals from './credit/CreditModals';
 import MiniCalculator from './credit/MiniCalculator';
-import { Client, CalculationStep, DuplicateCard } from '../types';
-import { CalculatorEngine } from '../calculator/CalculatorEngine';
+import { Client, DuplicateCard } from '../types';
 import { evaluateExpression } from '../utils/creditCalculatorUtils';
 import { useIndependentCalculator } from '../hooks/useIndependentCalculator';
 import { calculateReturnableItems } from '../utils/returnableItemsUtils';
@@ -31,11 +30,10 @@ const CreditManagement: React.FC = () => {
   } = useCredit();
   
   // State management
-  const [searchQuery, setSearchQuery] = useState('');
   const [showAllClients, setShowAllClients] = useState(false);
   const [selectedClient, setSelectedClient] = useState<Client | null>(null);
   const [showClientSearch, setShowClientSearch] = useState(false);
-  const [isCalculatorActive, setIsCalculatorActive] = useState(false);
+  const [, setIsCalculatorActive] = useState(false);
   const [linkedClient, setLinkedClient] = useState<Client | null>(null);
   const [showSettings, setShowSettings] = useState(false);
   const [showDeleteConfirm, setShowDeleteConfirm] = useState(false);
@@ -64,10 +62,9 @@ const CreditManagement: React.FC = () => {
   const [deleteAllPasscode, setDeleteAllPasscode] = useState('');
   
   // Transaction success state
-  const [showCenteredWobble, setShowCenteredWobble] = useState(false);
-  const [centeredWobbleClient, setCenteredWobbleClient] = useState<Client | null>(null);
+  const [, setShowCenteredWobble] = useState(false);
+  const [, setCenteredWobbleClient] = useState<Client | null>(null);
   const [recentTransactionClient, setRecentTransactionClient] = useState<Client | null>(null);
-  const [recentlySettledClient, setRecentlySettledClient] = useState<Client | null>(null);
   
   // Mini calculator state
   const [miniCalculators, setMiniCalculators] = useState<Array<{
@@ -88,22 +85,14 @@ const CreditManagement: React.FC = () => {
   const {
     calculatorValue,
     calculatorMemory,
-    lastOperation,
-    lastOperand,
-    isNewNumber,
     calculationSteps,
     articleCount,
     isMarkupMode,
     autoReplayActive,
-    transactionHistory,
-    calculatorGrandTotal,
     lastPressedButton,
     handleCalculatorInput: handleIndependentCalculatorInput,
     handleResetCalculator: handleIndependentResetCalculator
   } = useIndependentCalculator();
-
-  // Create calculator engine instance
-  const [calculatorEngine] = useState(() => new CalculatorEngine());
 
   // Listen for credit data changes and duplicate card events
   useEffect(() => {
@@ -306,9 +295,9 @@ const CreditManagement: React.FC = () => {
   }, [clientFilter, getClientTransactions, getClientTotalDebt, searchClients]);
 
   // Helper function to check for unreturned items
-  const hasUnreturnedItems = React.useCallback((clientTransactions: any[], clientName?: string) => {
+  const hasUnreturnedItems = React.useCallback((clientTransactions: any[], _clientName?: string) => {
     // Use the shared utility function to calculate returnable items
-    const returnableItemsStrings = calculateReturnableItems(clientTransactions, clientName);
+    const returnableItemsStrings = calculateReturnableItems(clientTransactions);
       
     // If there are any returnable items left after accounting for returns, return true
     return returnableItemsStrings.length > 0;
@@ -582,10 +571,7 @@ const CreditManagement: React.FC = () => {
       // Show wobble effect for the client that received the transaction
       setRecentTransactionClient(client);
       
-      // Check if the description contains returnable items to ensure arrows are shown
-      const hasReturnables = description.toLowerCase().includes('chopine') || description.toLowerCase().includes('bouteille');
-      
-      setDuplicateCard({ 
+      setDuplicateCard({
         ...client, 
         transactionAmount: amount, 
         transactionDescription: description
@@ -887,7 +873,6 @@ const CreditManagement: React.FC = () => {
 
                     // Fallback to localStorage method
                     const currentStepIndex = parseInt(localStorage.getItem('currentCheckIndex') || '0');
-                    const hasResult = calculationSteps.length > 0 && calculationSteps.some(step => step.isComplete);
 
                     // Check if we're showing the final result (display starts with "=")
                     if (calculatorValue.startsWith('=')) {
@@ -1232,7 +1217,7 @@ const CreditManagement: React.FC = () => {
                 
                 // Get returnable items for this client using the shared utility function
                 const clientTransactions = getClientTransactions(duplicateCard.id);
-                const returnableItems = calculateReturnableItems(clientTransactions, duplicateCard.name);
+                const returnableItems = calculateReturnableItems(clientTransactions);
                 const hasReturnables = returnableItems.length > 0;
                 
                // Check if the transaction description contains returnable items AND there are still items to return

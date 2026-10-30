@@ -234,7 +234,7 @@ export class SyncEngine {
     }
   }
 
-  private attemptMerge(event: SyncEvent): boolean {
+  private attemptMerge(_event: SyncEvent): boolean {
     // Simple merge strategy - could be enhanced based on data structure
     return true; // For now, always apply
   }
@@ -315,13 +315,6 @@ export class SyncEngine {
    */
   private async sendSyncEvent(event: SyncEvent): Promise<boolean> {
     try {
-      // Add device metadata to the actual database operation
-      const eventWithMetadata = {
-        ...event.data,
-        sync_device_id: this.deviceId,
-        sync_timestamp: event.timestamp
-      };
-
       // The actual database operation will trigger the real-time event
       // This is handled by the individual context providers
       return true;

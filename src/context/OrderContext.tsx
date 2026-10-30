@@ -104,13 +104,12 @@ export const OrderProvider: React.FC<{ children: React.ReactNode }> = ({ childre
             // Load from Supabase
             
             // Test connection first
-            let connectionTest, connectionError;
+            let connectionError;
             try {
               const result = await Promise.race([
                 supabase.from('order_categories').select('id').limit(1),
                 new Promise((_, reject) => setTimeout(() => reject(new Error('Connection timeout')), 5000))
               ]);
-              connectionTest = result.data;
               connectionError = result.error;
             } catch (timeoutError) {
               connectionError = timeoutError;
@@ -126,7 +125,7 @@ export const OrderProvider: React.FC<{ children: React.ReactNode }> = ({ childre
             }
             
             // Check if tables exist by trying to query one record
-            const { data: testData, error: testError } = await supabase
+            const { error: testError } = await supabase
               .from('order_categories')
               .select('id')
               .limit(1);

@@ -26,13 +26,6 @@ const OverManagement: React.FC = () => {
 
   const { showAlert } = useNotification();
 
-  // Helper function to capitalize text after spaces, parentheses, and slashes
-  const capitalizeText = (text: string): string => {
-    return text.replace(/(^|\s|\/|\()([a-z])/g, (match, separator, letter) => {
-      return separator + letter.toUpperCase();
-    });
-  };
-
   // Form state
   const [showAddForm, setShowAddForm] = useState(false);
   const [newItemName, setNewItemName] = useState('');
@@ -135,7 +128,7 @@ const OverManagement: React.FC = () => {
     setEditingItemId(id);
     // Format the name with proper capitalization (capitalize after spaces, parentheses, and slashes)
     // Handle both cases: with space after separator and without space (e.g., "(vindaye)")
-    const formattedName = currentName.replace(/(^|\s|\/|\()([a-z])/g, (match, separator, letter) => {
+    const formattedName = currentName.replace(/(^|\s|\/|\()([a-z])/g, (_match, separator, letter) => {
       return separator + letter.toUpperCase();
     });
     setEditingItemName(formattedName);
@@ -271,7 +264,7 @@ const OverManagement: React.FC = () => {
                   // Smart capitalization - capitalize first letter and after spaces, parentheses
                   const value = e.target.value;
                   // Capitalize first letter of each word and after "/", "("
-                  const formatted = value.replace(/(^|\s|\/|[()]) ([a-z])/g, (match, separator, letter) => {
+                  const formatted = value.replace(/(^|\s|\/|[()]) ([a-z])/g, (_match, separator, letter) => {
                     return separator + letter.toUpperCase();
                   });
                   setNewItemName(formatted);
@@ -334,7 +327,7 @@ const OverManagement: React.FC = () => {
                   // Smart capitalization - capitalize first letter and after spaces, parentheses
                   const value = e.target.value;
                   // Capitalize first letter of each word and after "/", "("
-                  const formatted = value.replace(/(^|\s|\/|\()([a-z])/g, (match, separator, letter) => {
+                  const formatted = value.replace(/(^|\s|\/|\()([a-z])/g, (_match, separator, letter) => {
                     return separator + letter.toUpperCase();
                   });
                   setSearchQuery(formatted);
@@ -578,7 +571,7 @@ const OverItemCard: React.FC<OverItemCardProps> = ({
 }) => {
   // Helper function to capitalize text after spaces, parentheses, and slashes
   const capitalizeText = (text: string): string => {
-    return text.replace(/(^|\s|\/|\()([a-z])/g, (match, separator, letter) => {
+    return text.replace(/(^|\s|\/|\()([a-z])/g, (_match, separator, letter) => {
       return separator + letter.toUpperCase();
     });
   };
@@ -611,7 +604,7 @@ const OverItemCard: React.FC<OverItemCardProps> = ({
                     // Smart capitalization - capitalize first letter and after spaces, parentheses (same as add mode)
                     const value = e.target.value;
                     // Capitalize first letter of each word and after "/", "("
-                    const formatted = value.replace(/(^|\s|\/|\()([a-z])/g, (match, separator, letter) => {
+                    const formatted = value.replace(/(^|\s|\/|\()([a-z])/g, (_match, separator, letter) => {
                       return separator + letter.toUpperCase();
                     });
                     onEditNameChange(formatted);

@@ -29,7 +29,6 @@
 import React, { createContext, useContext, useState, useEffect } from 'react';
 import { PriceItem, SortOption } from '../types';
 import { supabase } from '../lib/supabase';
-import { useAuth } from './AuthContext';
 import { appDBManager } from '../utils/appIndexedDB';
 
 /**
@@ -182,8 +181,7 @@ const capitalizeWords = (str: string): string => {
  * @param children - React components to wrap with context
  */
 export const PriceListProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
-  const { user } = useAuth();
-  
+
   // STATE DECLARATIONS
   // ==================
   
@@ -233,7 +231,7 @@ export const PriceListProvider: React.FC<{ children: React.ReactNode }> = ({ chi
           try {
             
             // Test connection first with timeout
-            const connectionTest = await Promise.race([
+            await Promise.race([
               supabase.from('price_items').select('id').limit(1),
               new Promise((_, reject) => setTimeout(() => reject(new Error('Connection timeout')), 10000))
             ]);

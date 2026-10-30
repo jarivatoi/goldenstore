@@ -1,6 +1,6 @@
 import React, { useState, useRef, useEffect } from 'react';
 import { createPortal } from 'react-dom';
-import { X, Edit2, Check, Calculator, Plus, Minus, Maximize2 } from 'lucide-react';
+import { X, Edit2, Check, Calculator, Minus, Maximize2 } from 'lucide-react';
 import { gsap } from 'gsap';
 // @ts-ignore
 import { DraggableCalculator } from '../../lib/draggableCalculator.js';
@@ -78,9 +78,7 @@ const MiniCalculator: React.FC<MiniCalculatorProps> = ({
   const [label, setLabel] = useState(initialLabel);
   const [isEditingLabel, setIsEditingLabel] = useState(false);
   const [editedLabel, setEditedLabel] = useState(label);
-  const [description, setDescription] = useState('');
-  const [showAddForm, setShowAddForm] = useState(false);
-  const [error, setError] = useState('');
+  const [, setError] = useState('');
   const [showClientSearch, setShowClientSearch] = useState(false);
   const [isVisible, setIsVisible] = useState(false);
   const [isMinimized, setIsMinimized] = useState(false);
@@ -187,31 +185,6 @@ const MiniCalculator: React.FC<MiniCalculatorProps> = ({
   const handleCancelEditLabel = () => {
     setEditedLabel(label);
     setIsEditingLabel(false);
-  };
-
-  const handleAddTransaction = () => {
-    if (!description.trim()) {
-      setError('Please enter a description');
-      return;
-    }
-
-    const amount = parseFloat(calculatorState.display);
-    if (isNaN(amount) || !isFinite(amount) || amount < 0) {
-      setError('Please enter a valid amount');
-      return;
-    }
-
-    // Show client search modal instead of directly adding
-    setShowClientSearch(true);
-    setShowAddForm(false);
-  };
-
-  const handleQuickAction = (action: string) => {
-    if (description.trim() === '') {
-      setDescription(action);
-    } else {
-      setDescription(prev => prev + ', ' + action);
-    }
   };
 
   // Don't render until visible to prevent React warnings

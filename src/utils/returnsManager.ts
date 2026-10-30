@@ -16,7 +16,6 @@ export interface ReturnData {
   lastEditedAt?: string;
 }
 
-const RETURNS_STORAGE_KEY = 'order_returns'; // Kept for backward compatibility with localStorage
 
 /**
  * Initialize IndexedDB (call this during app initialization)

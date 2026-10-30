@@ -1,6 +1,5 @@
 import React from 'react';
-import { Users, UserCheck, Database, Settings, ArrowUpDown, Calculator, RotateCcw, ArrowDown, Search } from 'lucide-react';
-import MiniCalculatorManager from './MiniCalculatorManager';
+import { Database, Settings, ArrowUpDown, RotateCcw } from 'lucide-react';
 
 interface CreditHeaderProps {
   totalDebtAllClients: number;
@@ -29,8 +28,6 @@ interface CreditHeaderProps {
  */
 const CreditHeader: React.FC<CreditHeaderProps> = ({
   totalDebtAllClients,
-  showAllClients,
-  onToggleAllClients,
   clientFilter,
   onFilterChange,
   showFilterDropdown,
@@ -41,7 +38,6 @@ const CreditHeader: React.FC<CreditHeaderProps> = ({
   onSortChange,
   showSortDropdown,
   onToggleSortDropdown,
-  onAddToClientFromMini,
   onRefreshTimeline,
   onScrollToBottomAndSearch
 }) => {

@@ -33,7 +33,7 @@ interface ModalState {
  * Handles import/export of ALL app data across all modules
  */
 const UnifiedDataManager: React.FC<UnifiedDataManagerProps> = ({ isOpen, onClose }) => {
-  const { items: priceItems, importItems: importPriceItems } = usePriceList();
+  const { items: priceItems } = usePriceList();
   const { clients, transactions, payments } = useCredit();
   const { items: overItems } = useOver();
   const { categories, itemTemplates, orders } = useOrder();
@@ -41,7 +41,6 @@ const UnifiedDataManager: React.FC<UnifiedDataManagerProps> = ({ isOpen, onClose
   const [isProcessing, setIsProcessing] = useState(false);
   const [modal, setModal] = useState<ModalState>({ type: null, title: '', message: '' });
   const [pendingExportData, setPendingExportData] = useState<any>(null);
-  const [pendingImportData, setPendingImportData] = useState<any>(null);
   const [lastBackupDate, setLastBackupDate] = useState<Date | null>(null);
   const [lastManualBackupDate, setLastManualBackupDate] = useState<Date | null>(null);
 
@@ -56,12 +55,6 @@ const UnifiedDataManager: React.FC<UnifiedDataManagerProps> = ({ isOpen, onClose
 
   // Prepare export data
   const prepareExportData = () => {
-    const now = new Date();
-    const day = now.getDate().toString().padStart(2, '0');
-    const month = (now.getMonth() + 1).toString().padStart(2, '0');
-    const year = now.getFullYear();
-    const dateString = `${day}-${month}-${year}`;
-    
     // Collect all data from all modules
     const exportData = {
       version: '2.0',

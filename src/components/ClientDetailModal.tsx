@@ -1,6 +1,6 @@
-import React, { useState, useEffect, useRef } from 'react';
+import React, { useState, useRef } from 'react';
 import { createPortal } from 'react-dom';
-import { X, Edit2, Minus, Plus, CheckCircle, AlertTriangle, Receipt, Calendar, CreditCard, Filter as FilterIcon, Camera, Upload } from 'lucide-react';
+import { X, Edit2, Minus, Plus, CheckCircle, AlertTriangle, Receipt, Calendar, CreditCard, Filter as FilterIcon, Camera } from 'lucide-react';
 import { useCredit } from '../context/CreditContext';
 import { Client } from '../types';
 import { useNotification } from '../context/NotificationContext';
@@ -55,7 +55,7 @@ const ClientDetailModal: React.FC<ClientDetailModalProps> = ({ client, onClose }
   // Get returnable items for client using the same logic as ClientCard
   const returnableItems = React.useMemo(() => {
     // Use the utility function to get returnable items as strings
-    const returnableItemsStrings = calculateReturnableItems(transactions, client.name);
+    const returnableItemsStrings = calculateReturnableItems(transactions);
     
     // Convert the string format back to the object format used by the modal
     const returnableItems: {[key: string]: number} = {};
@@ -207,7 +207,7 @@ const ClientDetailModal: React.FC<ClientDetailModalProps> = ({ client, onClose }
         return str
           .trim()
           .toLowerCase()
-          .replace(/(^|\s|\/|\(|\)|-|\[|\]|\{|\})([a-zA-Z])/g, (match, separator, letter) => {
+          .replace(/(^|\s|\/|\(|\)|-|\[|\]|\{|\})([a-zA-Z])/g, (_match, separator, letter) => {
             return separator + letter.toUpperCase();
           });
       };
@@ -821,7 +821,7 @@ interface ReturnableItemRowProps {
   onUpdate: () => void;
 }
 
-const ReturnableItemRow: React.FC<ReturnableItemRowProps> = ({ itemType, quantity, client, showAlert, onUpdate }) => {
+const ReturnableItemRow: React.FC<ReturnableItemRowProps> = ({ itemType, quantity, client, showAlert }) => {
   const { addTransaction } = useCredit();
   const [isProcessing, setIsProcessing] = useState(false);
   const [pendingQuantity, setPendingQuantity] = useState(0);

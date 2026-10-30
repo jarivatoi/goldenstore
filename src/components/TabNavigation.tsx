@@ -1,5 +1,5 @@
 import React from 'react';
-import { BarChart3, List, ShoppingCart, CreditCard, Download, Upload } from 'lucide-react';
+import { BarChart3, List, ShoppingCart, CreditCard } from 'lucide-react';
 
 type TabType = 'Over' | 'PriceList' | 'Order' | 'Credit';
 

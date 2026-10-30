@@ -126,6 +126,8 @@ export const OverProvider: React.FC<{ children: React.ReactNode }> = ({ children
         setIsLoading(false);
       }
     }
+
+    loadItems();
   }
   )
   // Add new item

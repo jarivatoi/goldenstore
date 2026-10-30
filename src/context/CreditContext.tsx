@@ -1,6 +1,5 @@
 import React, { createContext, useContext, useState, useEffect, useMemo, useCallback, ReactNode } from 'react';
 import { flushSync } from 'react-dom';
-import { supabase } from '../lib/supabase';
 import { Client, CreditTransaction, PaymentRecord } from '../types';
 import { creditDBManager } from '../utils/creditIndexedDB';
 
@@ -190,9 +189,19 @@ export const CreditProvider: React.FC<CreditProviderProps> = ({ children }) => {
       // Save migrated data back to IndexedDB if any IDs changed
       if (clientsNeedingMigration.length > 0) {
         console.log('Saving migrated client IDs to IndexedDB...');
-        await creditDBManager.saveAllClients(transformedClients);
-        await creditDBManager.saveAllTransactions(transformedTransactions);
-        await creditDBManager.saveAllPayments(transformedPayments);
+        await creditDBManager.saveAllClients(transformedClients.map(client => ({
+          ...client,
+          createdAt: client.createdAt.toISOString(),
+          lastTransactionAt: client.lastTransactionAt.toISOString()
+        })));
+        await creditDBManager.saveAllTransactions(transformedTransactions.map(transaction => ({
+          ...transaction,
+          date: transaction.date.toISOString()
+        })));
+        await creditDBManager.saveAllPayments(transformedPayments.map(payment => ({
+          ...payment,
+          date: payment.date.toISOString()
+        })));
         console.log('Client ID migration complete!');
       }
 
@@ -695,12 +704,6 @@ export const CreditProvider: React.FC<CreditProviderProps> = ({ children }) => {
     } catch (err) {
       throw err;
     }
-  };
-
-  // Parse bottles from description
-  const parseBottlesFromDescription = (description: string) => {
-    // No automatic bottle parsing - bottles are tracked manually if needed
-    return { beer: 0, guinness: 0, malta: 0, coca: 0, chopines: 0 };
   };
 
   // Add partial payment

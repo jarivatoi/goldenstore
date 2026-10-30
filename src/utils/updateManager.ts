@@ -47,8 +47,13 @@ class UpdateManager {
       return;
     }
 
+    // Background Sync is not part of the DOM lib, so the shape is declared here
+    const registration = this.serviceWorker as ServiceWorkerRegistration & {
+      sync?: { register(tag: string): Promise<void> };
+    };
+
     try {
-      await this.serviceWorker.sync.register(tag);
+      await registration.sync?.register(tag);
     } catch (error) {
     }
   }

@@ -239,11 +239,11 @@ const AddItemForm: React.FC = () => {
                   const value = e.target.value;
                   const formatted = value
                     // Capitalize letters after spaces, slashes, or start
-                    .replace(/(^|\s|\/)([a-zA-Z])/g, (match, separator, letter) => {
+                    .replace(/(^|\s|\/)([a-zA-Z])/g, (_match, separator, letter) => {
                       return separator + letter.toUpperCase();
                     })
                     // Capitalize letters immediately after numbers
-                    .replace(/(\d)([a-z])/g, (match, digit, letter) => {
+                    .replace(/(\d)([a-z])/g, (_match, digit, letter) => {
                       return digit + letter.toUpperCase();
                     });
                   setName(formatted);

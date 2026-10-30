@@ -22,7 +22,7 @@ export const ScrollingText: React.FC<ScrollingTextProps> = ({
 }) => {
   const containerRef = useRef<HTMLDivElement>(null);
   const textRef = useRef<HTMLDivElement>(null);
-  const [needsScrolling, setNeedsScrolling] = useState(false);
+  const [, setNeedsScrolling] = useState(false);
   const animatorRef = useRef<ScrollingTextAnimator | null>(null);
   const scrollListenerRef = useRef<(() => void) | null>(null);
 

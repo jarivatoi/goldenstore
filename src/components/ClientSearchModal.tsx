@@ -44,7 +44,7 @@ const ClientSearchModal: React.FC<ClientSearchModalProps> = ({
   const wasOpenedRef = useRef(false); // Track if modal was opened before
   const descriptionInputRef = useRef<HTMLInputElement>(null); // Reference to description input
   const [returnableSuggestions, setReturnableSuggestions] = useState<Array<{brand: string, typeWithSize: string}>>([]);
-  const [isDescriptionFocused, setIsDescriptionFocused] = useState(false);
+  const [, setIsDescriptionFocused] = useState(false);
 
   // Sync local description with prop when it changes
   useEffect(() => {

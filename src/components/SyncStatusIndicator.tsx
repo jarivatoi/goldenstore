@@ -6,7 +6,7 @@
  */
 
 import React from 'react';
-import { Wifi, WifiOff, Clock, CheckCircle, AlertCircle } from 'lucide-react';
+import { WifiOff, CheckCircle } from 'lucide-react';
 
 const SyncStatusIndicator: React.FC = () => {
   // Simplified status indicator without sync hook to prevent infinite loops

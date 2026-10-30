@@ -12,10 +12,6 @@ const IndependentCalculator: React.FC = () => {
   const {
     calculatorValue,
     calculatorMemory,
-    lastOperation,
-    lastOperand,
-    isNewNumber,
-    calculationSteps,
     articleCount,
     isMarkupMode,
     lastPressedButton,

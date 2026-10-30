@@ -39,10 +39,9 @@ const ScrollingTabs: React.FC<ScrollingTabsProps> = ({
   const draggableRef = useRef<DraggableInstance[] | null>(null);
   const [selectedClientForAction, setSelectedClientForAction] = React.useState<Client | null>(null);
   const [selectedClientForDetail, setSelectedClientForDetail] = React.useState<Client | null>(null);
-  const [isDragging, setIsDragging] = React.useState(false);
+  const [isDragging] = React.useState(false);
   const pausedPositionRef = useRef<number | null>(null);
   const [clickedTabId, setClickedTabId] = React.useState<string | null>(null);
-  const { getClientTransactions } = useCredit();
   const [forceUpdate, setForceUpdate] = React.useState(0);
   const [recentlyUpdatedClient, setRecentlyUpdatedClient] = React.useState<string | null>(null);
   const [visibleClientIds, setVisibleClientIds] = React.useState<Set<string>>(new Set());
@@ -231,7 +230,7 @@ const ScrollingTabs: React.FC<ScrollingTabsProps> = ({
 
     clientsToCalculate.forEach(client => {
       const clientTransactions = getTransactions(client.id);
-      const fullReturnableItems = calculateReturnableItems(clientTransactions, client.name);
+      const fullReturnableItems = calculateReturnableItems(clientTransactions);
 
       // Truncate for display
       const truncatedItems = fullReturnableItems.map(itemText => {
@@ -254,25 +253,6 @@ const ScrollingTabs: React.FC<ScrollingTabsProps> = ({
 
     return map;
   }, [virtualizedClients, stableSortedClients, getTransactions, forceUpdate]);
-
-  // Helper function to check if client has overdue returnables (3+ weeks old)
-  const hasOverdueReturnables = (client: Client): boolean => {
-    const clientTransactions = getTransactions(client.id);
-    const threeWeeksAgo = Date.now() - (21 * 24 * 60 * 60 * 1000); // 3 weeks in milliseconds
-
-    return clientTransactions.some(transaction => {
-      // Only check debt transactions (not payments) and exclude already returned items
-      if (transaction.type === 'payment' || transaction.description.toLowerCase().includes('returned')) {
-        return false;
-      }
-
-      const description = transaction.description.toLowerCase();
-      const hasReturnableItems = description.includes('chopine') || description.includes('bouteille') || description.includes('caisse');
-      const isOlderThan3Weeks = transaction.date.getTime() < threeWeeksAgo;
-
-      return hasReturnableItems && isOlderThan3Weeks;
-    });
-  };
 
   // Helper function to calculate timeline progress from current position
 
@@ -722,7 +702,7 @@ const ScrollingTabs: React.FC<ScrollingTabsProps> = ({
               })
             }}
           >
-            {stableSortedClients.map((client, index) => {
+            {stableSortedClients.map((client) => {
               // Check if this client should be rendered (virtualization)
               const isVirtualized = virtualizedClients.some(vc => vc.id === client.id);
               if (!isVirtualized && virtualizedClients.length > 0) {

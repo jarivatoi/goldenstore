@@ -328,7 +328,7 @@ const SwipeableItem: React.FC<SwipeableItemProps> = ({ item, onEdit, onDelete })
     handleDragMove(e.touches[0].clientX, e.touches[0].clientY);
   };
 
-  const handleTouchEnd = (e: React.TouchEvent) => {
+  const handleTouchEnd = (_e: React.TouchEvent) => {
     handleDragEnd();
   };
 

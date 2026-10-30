@@ -17,7 +17,6 @@ export interface ScrollingTextConfig {
 export class ScrollingTextAnimator {
   private container: HTMLElement;
   private textElement: HTMLElement;
-  private text: string;
   private pauseDuration: number;
   private scrollDuration: number;
   private easing: string;
@@ -31,7 +30,6 @@ export class ScrollingTextAnimator {
   constructor(config: ScrollingTextConfig) {
     this.container = config.container;
     this.textElement = config.textElement;
-    this.text = config.text;
     this.pauseDuration = config.pauseDuration * 1000; // Convert to ms
     this.scrollDuration = config.scrollDuration * 1000; // Convert to ms
     this.easing = config.easing;

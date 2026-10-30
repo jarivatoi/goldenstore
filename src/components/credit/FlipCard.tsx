@@ -27,7 +27,7 @@ const FlipCard: React.FC<FlipCardProps> = ({
   const cardRef = useRef<HTMLDivElement>(null);
   const frontRef = useRef<HTMLDivElement>(null);
   const backRef = useRef<HTMLDivElement>(null);
-  const [isFlipped, setIsFlipped] = useState(false);
+  const [, setIsFlipped] = useState(false);
   const timelineRef = useRef<gsap.core.Timeline | null>(null);
 
   useEffect(() => {
