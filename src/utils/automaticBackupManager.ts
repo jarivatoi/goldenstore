@@ -12,6 +12,8 @@ import { SupabaseBackupManager } from './supabaseBackupManager';
 import { creditDBManager } from './creditIndexedDB';
 import { appDBManager } from './appIndexedDB';
 import { getDeviceIdentity, getDeviceDisplayName, isServerBackupEnabled, getServerBackupDisabledMessage } from './deviceIdentity';
+import { saveLocalSnapshot } from './localSnapshotStore';
+import { getUnfinishedRestore } from './databaseRestore';
 
 export type BackupRunStatus = 'success' | 'skipped' | 'offline' | 'blocked' | 'failed';
 
@@ -123,6 +125,14 @@ export class AutomaticBackupManager {
       return { status: 'skipped', message: 'Database restore in progress' };
     }
 
+    // A restore that never finished leaves the stores partly written, which still
+    // reads as a valid database - refuse to publish that state anywhere
+    const unfinishedRestore = this.getUnfinishedRestoreBlock();
+    if (unfinishedRestore) {
+      this.setLastError(unfinishedRestore);
+      return { status: 'blocked', message: unfinishedRestore };
+    }
+
     // Only a device that is allowed to upload may write the server snapshot
     if (!isServerBackupEnabled()) {
       if (!this.hasWarnedAboutDisabledBackup) {
@@ -151,14 +161,15 @@ export class AutomaticBackupManager {
         return { status: 'skipped', message: 'No data found on this device to back up.' };
       }
 
-      // Keep a local JSON copy of every snapshot that is uploaded
-      this.createLocalBackup(exportData);
-
       // Create backup name with timestamp and device label
       const backupName = `Auto Backup (${getDeviceDisplayName()}) ${new Date().toLocaleDateString('en-GB')} ${new Date().toLocaleTimeString('en-GB', { hour: '2-digit', minute: '2-digit' })}`;
 
       // Perform backup to Supabase
       await SupabaseBackupManager.saveToSupabase(exportData, backupName);
+
+      // Replace the single local copy only after the upload is accepted, so the
+      // server guards protect both copies
+      await this.updateLocalSnapshot(exportData);
 
       // Update last backup timestamp
       this.setLastBackupDate(new Date());
@@ -192,37 +203,30 @@ export class AutomaticBackupManager {
   }
 
   /**
-   * Save the snapshot as a local JSON file on this device.
-   * Browser downloads may be blocked on some platforms; this never fails the upload.
+   * Replace the single device-local copy of this snapshot.
+   * Supplementary only: a failure here is logged and never fails the upload.
    */
-  private createLocalBackup(databaseJson: any): void {
-    try {
-      const jsonString = JSON.stringify(databaseJson, null, 2);
-      const dataBlob = new Blob([jsonString], { type: 'application/json' });
+  private async updateLocalSnapshot(databaseJson: any): Promise<void> {
+    const result = await saveLocalSnapshot(databaseJson);
 
-      const now = new Date();
-      const dateStr = now.toLocaleDateString('en-GB').replace(/\//g, '-');
-      const timeStr = now.toLocaleTimeString('en-GB', { hour: '2-digit', minute: '2-digit' }).replace(/:/g, '-');
-      const filename = `GoldenStore_Complete_${dateStr}_${timeStr}.json`;
-
-      const url = URL.createObjectURL(dataBlob);
-      const link = document.createElement('a');
-      link.href = url;
-      link.download = filename;
-
-      // Temporarily add to DOM, click, and remove
-      document.body.appendChild(link);
-      link.click();
-      document.body.removeChild(link);
-
-      // Give the browser time to start the download before releasing the blob
-      setTimeout(() => URL.revokeObjectURL(url), 10000);
-
-      console.log(`💾 Local backup file created: ${filename}`);
-    } catch (error) {
-      // Supplementary copy only - never fail the upload because of this
-      console.error('❌ Local backup file failed:', error);
+    if (result.status === 'failed') {
+      console.warn(`⚠️ Local copy not updated, previous file kept: ${result.message}`);
+    } else if (result.status === 'downloaded') {
+      console.warn(`⚠️ ${result.message} Saved a dated download instead.`);
     }
+  }
+
+  /**
+   * Reason a backup must not run yet when a restore was left unfinished, or null
+   */
+  private getUnfinishedRestoreBlock(): string | null {
+    const marker = getUnfinishedRestore();
+    if (!marker) {
+      return null;
+    }
+
+    const started = new Date(marker.startedAt).toLocaleString('en-GB');
+    return `An earlier restore did not finish (started ${started}). Import the server backup again so this device holds a complete database, then backups resume.`;
   }
 
   /**
@@ -397,6 +401,12 @@ export class AutomaticBackupManager {
       return;
     }
 
+    const unfinishedRestore = this.getUnfinishedRestoreBlock();
+    if (unfinishedRestore) {
+      this.setLastError(unfinishedRestore);
+      return;
+    }
+
     console.log(`📤 Processing ${pendingBackups.length} pending backup(s)...`);
 
     this.isRunning = true;
@@ -413,14 +423,15 @@ export class AutomaticBackupManager {
         return;
       }
 
-      // Keep a local JSON copy of every snapshot that is uploaded
-      this.createLocalBackup(exportData);
-
       // Create backup name indicating it was delayed
       const backupName = `Delayed Backup (${getDeviceDisplayName()}) ${new Date().toLocaleDateString('en-GB')} ${new Date().toLocaleTimeString('en-GB', { hour: '2-digit', minute: '2-digit' })}`;
 
       // Perform backup to Supabase
       await SupabaseBackupManager.saveToSupabase(exportData, backupName);
+
+      // Replace the single local copy only after the upload is accepted, so the
+      // server guards protect both copies
+      await this.updateLocalSnapshot(exportData);
 
       // Update last backup timestamp
       this.setLastBackupDate(new Date());

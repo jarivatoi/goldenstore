@@ -2,7 +2,9 @@ import React, { useState } from 'react';
 import { createPortal } from 'react-dom';
 import { Clock, TestTube, CheckCircle, AlertTriangle, X, ChevronDown, ChevronUp } from 'lucide-react';
 import { automaticBackupManager } from '../utils/automaticBackupManager';
-import { getDeviceIdentity, isServerBackupEnabled, setServerBackupEnabled } from '../utils/deviceIdentity';
+import { readLocalSnapshotMeta, LocalSnapshotMeta } from '../utils/localSnapshotStore';
+import { getUnfinishedRestore } from '../utils/databaseRestore';
+import { getDeviceIdentity, isServerBackupEnabled, setServerBackupEnabled, getServerBackupDisabledMessage } from '../utils/deviceIdentity';
 
 interface ModalState {
   isOpen: boolean;
@@ -26,6 +28,7 @@ const AutoBackupSettings: React.FC = () => {
   const [isTesting, setIsTesting] = useState(false);
   const [device] = useState(() => getDeviceIdentity());
   const [deviceBackupsEnabled, setDeviceBackupsEnabled] = useState<boolean>(() => isServerBackupEnabled());
+  const [localSnapshot, setLocalSnapshot] = useState<LocalSnapshotMeta | null>(() => readLocalSnapshotMeta());
   const [modal, setModal] = useState<ModalState>({
     isOpen: false,
     type: 'success',
@@ -52,6 +55,7 @@ const AutoBackupSettings: React.FC = () => {
     setIsTesting(true);
     try {
       const result = await automaticBackupManager.forceBackupNow();
+      setLocalSnapshot(readLocalSnapshotMeta());
 
       if (result.status === 'success') {
         setModal({
@@ -67,7 +71,7 @@ const AutoBackupSettings: React.FC = () => {
         isOpen: true,
         type: 'error',
         title: result.status === 'blocked'
-          ? 'Backups Disabled on This Device'
+          ? (result.message === getServerBackupDisabledMessage() ? 'Backups Disabled on This Device' : 'Backup Blocked')
           : result.status === 'skipped'
             ? 'Nothing to Back Up'
             : 'Test Backup Failed',
@@ -91,6 +95,10 @@ const AutoBackupSettings: React.FC = () => {
     setModal(prev => ({ ...prev, isOpen: false, onConfirm: undefined, confirmLabel: undefined }));
   };
 
+  // Read on every render: the marker is cleared by a successful import, and the
+  // warning has to disappear without a reload
+  const unfinishedRestore = getUnfinishedRestore();
+
   return (
     <>
       <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-4">
@@ -110,6 +118,20 @@ const AutoBackupSettings: React.FC = () => {
           </button>
         </div>
 
+        {/* Stays visible while collapsed: backups are paused until it is fixed */}
+        {unfinishedRestore && (
+          <div className="mb-4 bg-yellow-50 border border-yellow-300 rounded-lg p-3 flex items-start gap-2">
+            <AlertTriangle size={16} className="text-yellow-600 shrink-0 mt-0.5" />
+            <div>
+              <p className="text-sm font-medium text-yellow-800">Automatic backups are paused</p>
+              <p className="text-xs text-yellow-700 mt-1">
+                A restore started on {new Date(unfinishedRestore.startedAt).toLocaleString('en-GB')} did not finish,
+                so this device may hold a partial database. Import the server backup again to resume backups.
+              </p>
+            </div>
+          </div>
+        )}
+
         <div 
           className={`space-y-4 overflow-hidden transition-all duration-300 ease-in-out ${
             isMinimized ? 'max-h-0 opacity-0' : 'max-h-[48rem] opacity-100'
@@ -123,10 +145,15 @@ const AutoBackupSettings: React.FC = () => {
             <ul className="text-xs text-blue-600 mt-1 space-y-1 ml-4">
               <li>• Backs up all modules (price list, credit, over, orders, returns)</li>
               <li>• Runs on app start, at most once per day</li>
-              <li>• Saves a JSON file in this device's downloads on every upload</li>
+              <li>• Keeps one local copy on this device, replaced on every backup</li>
               <li>• If offline, backup is queued until connection restored</li>
               <li>• Only the latest snapshot is kept on the server, so today's backup replaces yesterday's</li>
             </ul>
+            <p className="text-xs text-blue-600 mt-2">
+              Local copy: {localSnapshot
+                ? `${new Date(localSnapshot.savedAt).toLocaleString('en-GB')} · ${Math.max(1, Math.round(localSnapshot.bytes / 1024))} KB`
+                : 'not created yet'}
+            </p>
           </div>
 
           {/* Device specific backup switch */}

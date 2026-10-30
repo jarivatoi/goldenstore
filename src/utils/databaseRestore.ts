@@ -9,6 +9,46 @@
 import { appDBManager } from './appIndexedDB';
 import { creditDBManager } from './creditIndexedDB';
 
+const RESTORE_MARKER_KEY = 'gsRestoreInFlight';
+
+export interface RestoreMarker {
+  startedAt: string;
+}
+
+/**
+ * Does a restore need to be finished before this device is backed up again?
+ *
+ * A restore replaces the stores one at a time, so a crash or a failed write
+ * leaves a database that is only partly restored - every read still succeeds,
+ * which makes it indistinguishable from a real database when it is uploaded.
+ * The marker is written before the first store is touched and cleared only
+ * after the last one, so a backup can refuse to publish that state.
+ */
+export const getUnfinishedRestore = (): RestoreMarker | null => {
+  try {
+    const raw = localStorage.getItem(RESTORE_MARKER_KEY);
+    return raw ? (JSON.parse(raw) as RestoreMarker) : null;
+  } catch {
+    return null;
+  }
+};
+
+const markRestoreStarted = (): void => {
+  try {
+    localStorage.setItem(RESTORE_MARKER_KEY, JSON.stringify({ startedAt: new Date().toISOString() }));
+  } catch {
+    // Diagnostics only - a marker failure must not stop the restore
+  }
+};
+
+const clearRestoreMarker = (): void => {
+  try {
+    localStorage.removeItem(RESTORE_MARKER_KEY);
+  } catch {
+    // Diagnostics only
+  }
+};
+
 export interface SnapshotCounts {
   priceList: number;
   clients: number;
@@ -157,6 +197,8 @@ export const restoreDatabase = async (
   const counts = countSnapshotRecords(data);
   const report = (percent: number, label: string) => onProgress?.(percent, label);
 
+  markRestoreStarted();
+
   await creditDBManager.initDB();
   await appDBManager.initDB();
 
@@ -204,6 +246,10 @@ export const restoreDatabase = async (
     await appDBManager.importReturns(data.returns);
   }
   report(100, `Restored ${counts.total} records`);
+
+  // Only reached when every store was written; a throw above keeps the marker so
+  // the next launch knows this database is not complete
+  clearRestoreMarker();
 
   return counts;
 };
