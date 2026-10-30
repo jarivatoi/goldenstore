@@ -164,21 +164,10 @@ const AutoBackupSettings: React.FC = () => {
                 : 'bg-red-500/50 border-red-600/50'
             }`}
           >
-            <div className="flex items-start justify-between gap-3">
-              <div>
-                <p className="text-sm font-medium text-gray-800">Backup device</p>
-                <p className="text-xs text-gray-700 mt-1">
-                  {deviceBackupsEnabled
-                    ? 'This device uploads the server backup.'
-                    : 'Server backups are disabled on this device.'}
-                </p>
-                <p className="text-xs text-gray-600 mt-1">
-                  This device: {device.label} · {device.id.slice(0, 8)}
-                </p>
-              </div>
+            <div className="flex justify-center mb-3">
               <button
                 onClick={handleDeviceBackupToggle}
-                className={`shrink-0 px-3 py-2 text-xs font-medium rounded-lg transition-colors ${
+                className={`px-3 py-2 text-xs font-medium rounded-lg transition-colors ${
                   deviceBackupsEnabled
                     ? 'bg-gray-100 text-gray-700 hover:bg-gray-200'
                     : 'bg-blue-500 text-white hover:bg-blue-600'
@@ -186,6 +175,17 @@ const AutoBackupSettings: React.FC = () => {
               >
                 {deviceBackupsEnabled ? 'Disable on this device' : 'Enable on this device'}
               </button>
+            </div>
+            <div>
+              <p className="text-sm font-medium text-gray-800">Backup device</p>
+              <p className="text-xs text-gray-700 mt-1">
+                {deviceBackupsEnabled
+                  ? 'This device uploads the server backup.'
+                  : 'Server backups are disabled on this device.'}
+              </p>
+              <p className="text-xs text-gray-600 mt-1">
+                This device: {device.label} · {device.id.slice(0, 8)}
+              </p>
             </div>
             <p className="text-xs text-gray-700 mt-2">
               Enable this only on the device that should own the server backup (for example the shop tablet). New devices start disabled.
